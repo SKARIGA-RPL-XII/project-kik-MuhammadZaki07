@@ -9,99 +9,69 @@ export interface MenuQuery {
   stock_max?: number;
 }
 
+export interface MenuResponse<T> {
+  data: T | null;
+  page?: number;
+  size?: number;
+  total?: number;
+  error: string | null;
+}
+
 export class MenuService {
-  static async getMenus(query?: MenuQuery) {
+  private static async request<T>(
+    method: "get" | "post" | "put" | "delete",
+    url: string,
+    options?: any,
+  ): Promise<MenuResponse<T>> {
     try {
-      const res = await apiClient.get("/menus", { params: query });
-
+      const res = await apiClient[method](url, options);
+      const payload = res.data?.data;
       return {
-        data: res.data.data.menus,
-        page: Number(res.data.data.metadata.page),
-        size: Number(res.data.data.metadata.size),
-        total: Number(res.data.data.metadata.total),
+        data: payload?.menus || payload || null,
+        page: payload?.metadata?.page
+          ? Number(payload.metadata.page)
+          : undefined,
+        size: payload?.metadata?.size
+          ? Number(payload.metadata.size)
+          : undefined,
+        total: payload?.metadata?.total
+          ? Number(payload.metadata.total)
+          : undefined,
         error: null,
       };
     } catch (err: any) {
       return {
         data: null,
-        error: err?.response?.data?.message || "Failed to fetch menus",
+        error:
+          err?.response?.data?.errors ||
+          err?.response?.data?.message ||
+          "Request failed",
       };
     }
   }
 
-  static async getMenusAdmin(query?: MenuQuery) {
-    try {
-      const res = await apiClient.get("/menu-admin", { params: query });
-
-      return {
-        data: res.data.data.menus,
-        page: Number(res.data.data.metadata.page),
-        size: Number(res.data.data.metadata.size),
-        total: Number(res.data.data.metadata.total),
-        error: null,
-      };
-    } catch (err: any) {
-      return {
-        data: null,
-        error: err?.response?.data?.message || "Failed to fetch menus",
-      };
-    }
+  static getMenus(query?: MenuQuery) {
+    return this.request<any[]>("get", "/menus", { params: query });
   }
 
-  static async getMenuById(id?: MenuQuery) {
-    try {
-      const res = await apiClient.get(`/menus/${id}`);
-      return { data: res.data, error: null };
-    } catch (err: any) {
-      return {
-        data: null,
-        error: err?.response?.data?.message || "Failed to fetch menu by id",
-      };
-    }
+  static getMenusAdmin(query?: MenuQuery) {
+    return this.request<any[]>("get", "/menu-admin", { params: query });
+  }
+
+  static async getMenuById(id: number) {
+    return this.request<any>("get", `/menus/${id}`);
   }
 
   static async createMenu(formData: FormData) {
-    try {
-      const res = await apiClient.post("/menus", formData);
-      return { data: res.data, error: null };
-    } catch (err: any) {
-      return {
-        data: null,
-        error:
-          err?.response?.data?.errors ||
-          err?.response?.data?.message ||
-          "Failed to create menu",
-      };
-    }
+    return this.request<any>("post", "/menus", formData);
   }
 
   static async updateMenu(id: number, formData: FormData) {
-    try {
-      formData.append("_method", "PUT");
-
-      const res = await apiClient.post(`/menus/${id}`, formData);
-
-      return { data: res.data, error: null };
-    } catch (err: any) {
-      return {
-        data: null,
-        error:
-          err?.response?.data?.errors ||
-          err?.response?.data?.message ||
-          "Failed to update menu",
-      };
-    }
+    formData.append("_method", "PUT");
+    return this.request<any>("post", `/menus/${id}`, formData);
   }
 
   static async deleteMenu(id: number) {
-    try {
-      const res = await apiClient.delete(`/menus/${id}`);
-      return { data: res.data, error: null };
-    } catch (err: any) {
-      return {
-        data: null,
-        error: err?.response?.data?.message || "Failed to delete menu",
-      };
-    }
+    return this.request<any>("delete", `/menus/${id}`);
   }
 }

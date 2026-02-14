@@ -40,8 +40,6 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     const fetchSettings = async () => {
       const data = await SettingsService.getAll();
-      console.log(data);
-
       setSettings({
         ...data.data,
         sidebar_config: JSON.parse(data.data.sidebar_config || "{}"),
@@ -51,8 +49,6 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
 
     fetchSettings();
   }, []);
-
-  console.log(settings);
 
   useEffect(() => {
     if (!settings) return;

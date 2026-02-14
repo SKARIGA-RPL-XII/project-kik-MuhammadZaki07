@@ -30,13 +30,11 @@ function Menu() {
     { label: string; value: string }[]
   >([]);
 
-  // filters
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("");
   const [stockMin, setStockMin] = useState<number | undefined>();
   const [stockMax, setStockMax] = useState<number | undefined>();
 
-  // debounced filters
   const [debounced, setDebounced] = useState({
     search: "",
     category: "",
@@ -46,9 +44,6 @@ function Menu() {
 
   const [loading, setLoading] = useState(false);
 
-  /* =========================
-      DEBOUNCE FILTER
-     ========================= */
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebounced({
@@ -62,24 +57,18 @@ function Menu() {
     return () => clearTimeout(timer);
   }, [search, category, stockMin, stockMax]);
 
-  /* =========================
-      FETCH CATEGORIES
-     ========================= */
   const fetchCategories = async () => {
     const res = await CategoryService.getCategories();
 
     const cats =
       res.data?.map((c: any) => ({
         label: c.name,
-        value: c.name,
+        value: c.id,
       })) || [];
 
     setCategories(cats);
   };
 
-  /* =========================
-      FETCH MENUS
-     ========================= */
   const fetchMenus = async () => {
     setLoading(true);
 
@@ -87,10 +76,8 @@ function Menu() {
 
     if (debounced.search) query.search = debounced.search;
     if (debounced.category) query.category = debounced.category;
-    if (debounced.stockMin !== undefined)
-      query.stock_min = debounced.stockMin;
-    if (debounced.stockMax !== undefined)
-      query.stock_max = debounced.stockMax;
+    if (debounced.stockMin !== undefined) query.stock_min = debounced.stockMin;
+    if (debounced.stockMax !== undefined) query.stock_max = debounced.stockMax;
 
     const res = await MenuService.getMenusAdmin(query);
 
@@ -98,9 +85,6 @@ function Menu() {
     setLoading(false);
   };
 
-  /* =========================
-      EFFECTS
-     ========================= */
   useEffect(() => {
     fetchCategories();
   }, []);
@@ -113,12 +97,15 @@ function Menu() {
     <>
       <PageMeta
         title="Menu Management"
-        description="Manage all menus in the admin panel"
+        description="Comprehensive management of menu items, including creation, updates, pricing, categories, and availability."
       />
 
-      <PageBreadcrumb pageTitle="Menu" />
+      <PageBreadcrumb pageTitle="Menu Management" />
 
-      <ComponentCard title="Management Menu" desc="manage menu">
+      <ComponentCard
+        title="Menu Management"
+        desc="View, create, update, and manage all menu items, including pricing, categories, stock levels, and availability status."
+      >
         <div className="flex justify-between items-center mb-4 gap-4">
           <div className="grid grid-cols-6 gap-2 flex-1">
             <Input
@@ -139,9 +126,7 @@ function Menu() {
               placeholder="Stock min"
               value={stockMin ?? ""}
               onChange={(e) =>
-                setStockMin(
-                  e.target.value ? Number(e.target.value) : undefined
-                )
+                setStockMin(e.target.value ? Number(e.target.value) : undefined)
               }
             />
 
@@ -150,9 +135,7 @@ function Menu() {
               placeholder="Stock max"
               value={stockMax ?? ""}
               onChange={(e) =>
-                setStockMax(
-                  e.target.value ? Number(e.target.value) : undefined
-                )
+                setStockMax(e.target.value ? Number(e.target.value) : undefined)
               }
             />
           </div>
@@ -164,11 +147,7 @@ function Menu() {
           </Link>
         </div>
 
-        <MenuTable
-          menus={menus}
-          loading={loading}
-          onRefresh={fetchMenus}
-        />
+        <MenuTable menus={menus} loading={loading} onRefresh={fetchMenus} />
       </ComponentCard>
     </>
   );

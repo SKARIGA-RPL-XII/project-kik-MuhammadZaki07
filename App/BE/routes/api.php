@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AdminController;
+use App\Http\Controllers\AttributeController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BadgeController;
 use App\Http\Controllers\BannerController;
@@ -105,6 +106,8 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
 
     // Employe Management
     Route::resource('employes', EmployeController::class);
+
+    Route::resource('attributes', AttributeController::class);
 
     // Settings
     Route::prefix('settings')->group(function () {

@@ -9,7 +9,7 @@ export class DiscountService {
   }) {
     try {
       const res = await apiClient.get("/discounts", { params });
-      return { data: res.data, error: null };
+      return { data: res.data.data, error: null };
     } catch (err: any) {
       return {
         data: null,
