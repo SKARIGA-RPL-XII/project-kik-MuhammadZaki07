@@ -72,10 +72,10 @@ export default function RestaurantLayoutPage() {
   return (
     <div className="flex flex-col h-[calc(100vh-120px)] overflow-hidden">
       <PageMeta
-        title="Interactive Floor Plan"
-        description="Interactive Floor Plan"
+        title="Spatial Layout & Asset Configuration"
+        description="Manage and optimize physical infrastructure, room distribution, and asset placement."
       />
-      <PageBreadcrumb pageTitle="Floor Plan Manager" />
+      <PageBreadcrumb pageTitle="Physical Space Manager" />
 
       <div className="flex flex-1 gap-6 overflow-hidden p-2">
         <SidebarRoomNav
