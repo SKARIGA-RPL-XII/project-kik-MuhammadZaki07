@@ -14,11 +14,14 @@ return new class extends Migration
         Schema::create('rooms', function (Blueprint $table) {
             $table->id();
             $table->string('name')->unique();
-            $table->string('color')->nullable()->default("#000");
-            $table->integer('capacity')->default(1);
+            $table->string('color')->default('#3B82F6');
+            $table->integer('width')->default(800);
+            $table->integer('height')->default(600);
+            $table->string("capacity")->default(0);
             $table->timestamps();
         });
     }
+
 
     /**
      * Reverse the migrations.

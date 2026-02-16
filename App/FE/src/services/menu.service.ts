@@ -28,9 +28,10 @@ export class MenuService {
       const payload = res.data?.data;
       return {
         data: payload?.menus || payload || null,
-        page: payload?.metadata?.page
-          ? Number(payload.metadata.page)
-          : undefined,
+        page:
+          payload?.metadata?.page !== undefined
+            ? Number(payload.metadata.page)
+            : undefined,
         size: payload?.metadata?.size
           ? Number(payload.metadata.size)
           : undefined,

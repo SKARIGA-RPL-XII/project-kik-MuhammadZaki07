@@ -18,7 +18,7 @@ import Banner from "./pages/Banner/Banner";
 import Discount from "./pages/Discount/Discount";
 import Badge from "./pages/Badge/Badge";
 import Employe from "./pages/Employe/Employe";
-import Table from "./pages/Tables/Table";
+import Table from "./pages/Restaurant-layout/Table";
 import Admin from "./pages/Admin/Admin";
 import GeneralSettingsPage from "./pages/Settings/GeneralSettingsPage";
 import TaxSettingsPage from "./pages/Settings/TaxSettingsPage";
@@ -27,6 +27,7 @@ import RolesSettingsPage from "./pages/Settings/RolesSettingsPage";
 import { Cashier } from "./pages/Cashier/Cashier";
 import CustomerPage from "./pages/Customer/CustomerPage";
 import NotFound from "./pages/OtherPage/NotFound";
+import RestaurantLayoutPage from "./pages/Restaurant-layout/Index";
 
 export default function App() {
   return (
@@ -52,7 +53,7 @@ export default function App() {
           <Route path="/banner" element={<Banner />} />
           <Route path="/discount" element={<Discount />} />
           <Route path="/badge" element={<Badge />} />
-          <Route path="/table" element={<Table />} />
+          <Route path="/table" element={<RestaurantLayoutPage />} />
           <Route path="/staf" element={<Employe />} />
           <Route path="/admin" element={<Admin />} />
 

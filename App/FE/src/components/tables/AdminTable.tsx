@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Pencil, Trash2 } from "lucide-react";
+import { Loader2, Pencil, Trash2 } from "lucide-react";
 import {
   Table,
   TableHeader,
@@ -43,7 +43,7 @@ export default function AdminTable({
   onRefresh,
   onEdit,
 }: Props) {
-  const { user } = useAuth(); // 👈 ambil user login
+  const { user } = useAuth();
   const currentUserId = user?.id;
 
   const [deletingId, setDeletingId] = useState<number | null>(null);
@@ -84,8 +84,14 @@ export default function AdminTable({
         <TableBody>
           {loading && (
             <TableRow>
-              <TableCell colSpan={4} className="text-center py-6">
-                Loading...
+              <TableCell
+                colSpan={4}
+                className="text-center py-10 text-neutral-500"
+              >
+                <div className="flex items-center justify-center gap-2">
+                  <Loader2 className="animate-spin" size={18} />
+                  <span>Loading data...</span>
+                </div>
               </TableCell>
             </TableRow>
           )}
@@ -109,9 +115,7 @@ export default function AdminTable({
                   <TableCell className="font-medium">
                     {admin.email}
                     {isSelf && (
-                      <span className="ml-2 text-xs text-blue-500">
-                        (You)
-                      </span>
+                      <span className="ml-2 text-xs text-blue-500">(You)</span>
                     )}
                   </TableCell>
 
@@ -143,9 +147,7 @@ export default function AdminTable({
 
                         <AlertDialogContent>
                           <AlertDialogHeader>
-                            <AlertDialogTitle>
-                              Delete Admin
-                            </AlertDialogTitle>
+                            <AlertDialogTitle>Delete Admin</AlertDialogTitle>
                             <AlertDialogDescription>
                               This action cannot be undone.
                             </AlertDialogDescription>

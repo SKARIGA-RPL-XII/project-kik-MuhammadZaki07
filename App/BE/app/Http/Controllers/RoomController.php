@@ -5,121 +5,120 @@ namespace App\Http\Controllers;
 use App\Models\Room;
 use App\Models\Table;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class RoomController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index()
     {
-        $rooms = Room::with('tables')->get();
-        return response()->json(['data' => $rooms]);
+        $rooms = Room::with('tables')->latest()->get();
+
+        return response()->json([
+            'data' => $rooms
+        ]);
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(Request $request)
     {
-        $request->validate([
-            'name' => 'required|unique:rooms,name',
-            'capacity' => 'required|integer|min:1',
-            'table_ids' => 'required|array|min:1',
+        $validated = $request->validate([
+            'name' => 'required|string|max:100|unique:rooms,name',
+            'color' => 'nullable|string|max:20',
+            'capacity' => 'nullable|string|min:1',
+            'width' => 'required|integer|min:300|max:5000',
+            'height' => 'required|integer|min:300|max:5000',
         ]);
 
-        if (count($request->table_ids) > $request->capacity) {
-            return response()->json(['message' => 'Too many tables'], 422);
-        }
+        $room = Room::create($validated);
 
-        $usedTables = Table::whereIn('id', $request->table_ids)
-            ->whereNotNull('room_id')
-            ->exists();
-
-        if ($usedTables) {
-            return response()->json([
-                'message' => 'One or more tables already assigned to another room'
-            ], 422);
-        }
-
-        $room = Room::create($request->only(['name', 'capacity']));
-
-        Table::whereIn('id', $request->table_ids)
-            ->update(['room_id' => $room->id]);
-
-        return response()->json(['data' => $room->load('tables')]);
+        return response()->json([
+            'data' => $room
+        ], 201);
     }
 
-
-    /**
-     * Display the specified resource.
-     */
     public function show(Room $room)
     {
-        //
+        $room->load('tables');
+
+        return response()->json([
+            'data' => $room
+        ]);
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(Room $room)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
     public function update(Request $request, Room $room)
     {
-        $request->validate([
-            'name' => 'required|unique:rooms,name,' . $room->id,
-            'capacity' => 'required|integer|min:1',
-            'table_ids' => 'sometimes|array',
+        $validated = $request->validate([
+            'name' => 'required|string|max:100|unique:rooms,name,' . $room->id,
+            'color' => 'nullable|string|max:20',
+            'width' => 'required|integer|min:300|max:5000',
+            'capacity' => 'nullable|string|min:1',
+            'height' => 'required|integer|min:300|max:5000',
         ]);
 
-        $room->update($request->only(['name', 'capacity']));
+        $room->update($validated);
 
-        if ($request->has('table_ids')) {
-            if (count($request->table_ids) > $room->capacity) {
-                return response()->json(['message' => 'Too many tables'], 422);
-            }
-
-            $conflict = Table::whereIn('id', $request->table_ids)
-                ->whereNotNull('room_id')
-                ->where('room_id', '!=', $room->id)
-                ->exists();
-
-            if ($conflict) {
-                return response()->json([
-                    'message' => 'Some tables already belong to another room'
-                ], 422);
-            }
-
-            Table::where('room_id', $room->id)->update(['room_id' => null]);
-            Table::whereIn('id', $request->table_ids)
-                ->update(['room_id' => $room->id]);
-        }
-
-        return response()->json(['data' => $room->load('tables')]);
+        return response()->json([
+            'data' => $room
+        ]);
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
     public function destroy(Room $room)
     {
-        Table::where('room_id', $room->id)->update(['room_id' => null]);
-        $room->delete();
+        DB::transaction(function () use ($room) {
 
-        return response()->json(['message' => 'Room deleted']);
+            Table::where('room_id', $room->id)
+                ->update([
+                    'room_id' => null,
+                    'x_position' => null,
+                    'y_position' => null
+                ]);
+
+            $room->delete();
+        });
+
+        return response()->json([
+            'message' => 'Room deleted'
+        ]);
+    }
+
+    public function updateLayout(Request $request, Room $room)
+    {
+        $validated = $request->validate([
+            'tables' => 'required|array|min:1',
+            'tables.*.id' => 'required|exists:tables,id',
+            'tables.*.x_position' => 'required|integer|min:0',
+            'tables.*.y_position' => 'required|integer|min:0',
+            'tables.*.width' => 'required|integer|min:50|max:500',
+            'tables.*.height' => 'required|integer|min:50|max:500',
+            'tables.*.rotation' => 'required|integer|min:0|max:360',
+        ]);
+
+        DB::transaction(function () use ($validated, $room) {
+
+            foreach ($validated['tables'] as $tableData) {
+
+                Table::where('id', $tableData['id'])
+                    ->update([
+                        'room_id' => $room->id,
+                        'x_position' => $tableData['x_position'],
+                        'y_position' => $tableData['y_position'],
+                        'width' => $tableData['width'],
+                        'height' => $tableData['height'],
+                        'rotation' => $tableData['rotation'],
+                    ]);
+            }
+        });
+
+        return response()->json([
+            'message' => 'Layout saved'
+        ]);
+    }
+
+    public function availableTables()
+    {
+        $tables = Table::whereNull('room_id')->get();
+
+        return response()->json([
+            'data' => $tables
+        ]);
     }
 }

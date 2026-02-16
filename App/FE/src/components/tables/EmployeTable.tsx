@@ -2,11 +2,12 @@ import {
   Table,
   TableBody,
   TableCell,
+  TableHead,
   TableHeader,
   TableRow,
 } from "../../components/ui/table";
 import Badge from "../../components/ui/badge/Badge";
-import { Pencil, Trash2 } from "lucide-react";
+import { Loader2, Pencil, Trash2 } from "lucide-react";
 import { EmployeService } from "../../services/employe.service";
 import {
   AlertDialog,
@@ -51,47 +52,45 @@ export default function EmployeTable({
           <Table>
             <TableHeader>
               <TableRow>
-                <TableCell
-                  isHeader
+                <TableHead
                   className="px-5 py-3 text-theme-xs text-start"
                 >
                   User
-                </TableCell>
-                <TableCell
-                  isHeader
+                </TableHead>
+                <TableHead
                   className="px-5 py-3 text-theme-xs text-start"
                 >
                   Employee Position
-                </TableCell>
-                <TableCell
-                  isHeader
+                </TableHead>
+                <TableHead
                   className="px-5 py-3 text-theme-xs text-start"
                 >
                   Phone
-                </TableCell>
-                <TableCell
-                  isHeader
+                </TableHead>
+                <TableHead
                   className="px-5 py-3 text-theme-xs text-start"
                 >
                   Gender
-                </TableCell>
-                <TableCell
-                  isHeader
+                </TableHead>
+                <TableHead
                   className="px-5 py-3 text-theme-xs text-start"
                 >
                   Action
-                </TableCell>
+                </TableHead>
               </TableRow>
             </TableHeader>
 
-           <TableBody className="divide-y divide-neutral-100 dark:divide-white/[0.05] relative">
+            <TableBody className="divide-y divide-neutral-100 dark:divide-white/[0.05] relative">
               {loading && (
                 <TableRow>
-                  <TableCell colSpan={5} className="py-10 text-center ">
-                    <span className="text-neutral-400">
-                    Loading data...
-
-                    </span>
+                  <TableCell
+                    colSpan={5}
+                    className="text-center py-10 text-neutral-500"
+                  >
+                    <div className="flex items-center justify-center gap-2">
+                      <Loader2 className="animate-spin" size={18} />
+                      <span>Loading data...</span>
+                    </div>
                   </TableCell>
                 </TableRow>
               )}
@@ -99,10 +98,7 @@ export default function EmployeTable({
               {!loading && employes.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={5} className="py-10 text-center ">
-                    <span className="text-neutral-400">
-                    No employe found
-
-                    </span>
+                    <span className="text-neutral-400">No employe found</span>
                   </TableCell>
                 </TableRow>
               )}
@@ -126,11 +122,20 @@ export default function EmployeTable({
                     </TableCell>
 
                     <TableCell className="px-4 py-3 text-theme-sm text-neutral-500 dark:text-neutral-400">
-                      <Badge variant="light" color={emp.user?.role?.name == "cashier" ? "warning" : "primary"}>
+                      <Badge
+                        variant="light"
+                        color={
+                          emp.user?.role?.name == "cashier"
+                            ? "warning"
+                            : "primary"
+                        }
+                      >
                         {emp.user?.role?.name}
                       </Badge>
                     </TableCell>
-                    <TableCell className="px-4 py-3 text-theme-sm text-neutral-500 dark:text-neutral-400">{emp.no_tlp}</TableCell>
+                    <TableCell className="px-4 py-3 text-theme-sm text-neutral-500 dark:text-neutral-400">
+                      {emp.no_tlp}
+                    </TableCell>
 
                     <TableCell className="px-4 py-3 text-theme-sm text-neutral-500 dark:text-neutral-400">
                       <Badge color={emp.gender === "LK" ? "info" : "success"}>

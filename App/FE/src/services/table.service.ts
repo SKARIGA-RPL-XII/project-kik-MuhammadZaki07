@@ -7,6 +7,16 @@ export interface TableQuery {
   status?: string;
 }
 
+export interface TableInterface {
+  id: number;
+  table_number: string;
+  status: "available" | "occupied";
+  qr_code: string | null;
+  room_id: number | null;
+  position_x: number;
+  position_y: number;
+}
+
 export class TableService {
   static async getTables(query?: TableQuery) {
     try {
@@ -19,20 +29,30 @@ export class TableService {
         },
       });
 
-      return { data: res.data, error: null };
+      return {
+        data: res.data.data,
+        error: null,
+      };
     } catch (err: any) {
       return {
         data: null,
         error:
-          err?.response?.data?.message || "Failed to fetch tables",
+          err?.response?.data?.message ||
+          "Failed to fetch tables",
       };
     }
   }
 
-  static async createTable(data: FormData) {
+  static async createTable(payload: {
+    table_number: string;
+  }) {
     try {
-      const res = await apiClient.post("/tables", data);
-      return { data: res.data, error: null };
+      const res = await apiClient.post("/tables", payload);
+
+      return {
+        data: res.data.data,
+        error: null,
+      };
     } catch (err: any) {
       return {
         data: null,
@@ -44,10 +64,26 @@ export class TableService {
     }
   }
 
-  static async updateTable(id: number, data: FormData) {
+  static async updateTable(
+    id: number,
+    payload: {
+      table_number?: string;
+      status?: "available" | "occupied";
+      position_x?: number;
+      position_y?: number;
+      room_id?: number | null;
+    }
+  ) {
     try {
-      const res = await apiClient.post(`/tables/${id}?_method=PUT`, data);
-      return { data: res.data, error: null };
+      const res = await apiClient.put(
+        `/tables/${id}`,
+        payload
+      );
+
+      return {
+        data: res.data.data,
+        error: null,
+      };
     } catch (err: any) {
       return {
         data: null,
@@ -62,12 +98,17 @@ export class TableService {
   static async deleteTable(id: number) {
     try {
       const res = await apiClient.delete(`/tables/${id}`);
-      return { data: res.data, error: null };
+
+      return {
+        data: res.data,
+        error: null,
+      };
     } catch (err: any) {
       return {
         data: null,
         error:
-          err?.response?.data?.message || "Failed to delete table",
+          err?.response?.data?.message ||
+          "Failed to delete table",
       };
     }
   }

@@ -17,11 +17,13 @@ export class CategoryService {
         },
       });
 
+      const { category, metadata } = res.data.data;
+
       return {
-        data: res.data.data.category,
-        page: Number(res.data.data.metadata.page),
-        size: Number(res.data.data.metadata.size),
-        total: Number(res.data.data.metadata.total),
+        data: category,
+        page: Number(metadata.page),
+        size: Number(metadata.size),
+        total: Number(metadata.total),
         error: null,
       };
     } catch (err: any) {
@@ -32,45 +34,18 @@ export class CategoryService {
     }
   }
 
-  static async createCategory(formData: FormData) {
-    try {
-      const res = await apiClient.post("/category", formData);
-      return { data: res.data, error: null };
-    } catch (err: any) {
-      return {
-        data: null,
-        error:
-          err?.response?.data?.errors ||
-          err?.response?.data?.message ||
-          "Failed to create category",
-      };
-    }
+  static async createCategory(payload: any) {
+    const res = await apiClient.post("/category", payload);
+    return res.data;
   }
 
-  static async updateCategory(id: number, formData: FormData) {
-    try {
-      const res = await apiClient.put(`/category/${id}`, formData);
-      return { data: res.data, error: null };
-    } catch (err: any) {
-      return {
-        data: null,
-        error:
-          err?.response?.data?.errors ||
-          err?.response?.data?.message ||
-          "Failed to update category",
-      };
-    }
+  static async updateCategory(id: number, payload: any) {
+    const res = await apiClient.put(`/category/${id}`, payload);
+    return res.data;
   }
 
   static async deleteCategory(id: number) {
-    try {
-      const res = await apiClient.delete(`/category/${id}`);
-      return { data: res.data, error: null };
-    } catch (err: any) {
-      return {
-        data: null,
-        error: err?.response?.data?.message || "Failed to delete category",
-      };
-    }
+    const res = await apiClient.delete(`/category/${id}`);
+    return res.data;
   }
 }

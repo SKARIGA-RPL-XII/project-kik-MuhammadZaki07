@@ -28,7 +28,7 @@ export default function DatePicker({
   maxDate,
 }: PropsType) {
   useEffect(() => {
-    const flatPickr = flatpickr(`#${id}`, {
+    const instance = flatpickr(`#${id}`, {
       mode: mode || "single",
       static: true,
       monthSelectorType: "static",
@@ -39,9 +39,13 @@ export default function DatePicker({
       onChange,
     });
 
+    if (defaultDate && !Array.isArray(instance)) {
+      instance.setDate(defaultDate);
+    }
+
     return () => {
-      if (!Array.isArray(flatPickr)) {
-        flatPickr.destroy();
+      if (!Array.isArray(instance)) {
+        instance.destroy();
       }
     };
   }, [mode, onChange, id, defaultDate, minDate, maxDate]);
@@ -49,14 +53,12 @@ export default function DatePicker({
   return (
     <div>
       {label && <Label htmlFor={id}>{label}</Label>}
-
       <div className="relative">
         <input
           id={id}
           placeholder={placeholder}
           className="h-11 w-full rounded-lg border appearance-none px-4 py-2.5 text-sm shadow-theme-xs placeholder:text-neutral-400 focus:outline-hidden focus:ring-3 dark:bg-neutral-900 dark:text-white/90 dark:placeholder:text-white/30 bg-transparent text-neutral-800 border-neutral-300 focus:border-brand-300 focus:ring-brand-500/20 dark:border-neutral-700 dark:focus:border-brand-800"
         />
-
         <span className="absolute text-neutral-500 -translate-y-1/2 pointer-events-none right-3 top-1/2 dark:text-neutral-400">
           <CalenderIcon className="size-6" />
         </span>

@@ -4,10 +4,12 @@ use App\Http\Controllers\Controller;
 use App\Http\Middleware\AdminMiddleware;
 use App\Http\Middleware\CustomerMidlleware;
 use App\Http\Middleware\EmployeMiddleware;
+use App\Http\Middleware\ForceCors;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Http\Middleware\HandleCors;
 use Illuminate\Validation\ValidationException;
 
 return Application::configure(basePath: dirname(__DIR__))
@@ -23,6 +25,8 @@ return Application::configure(basePath: dirname(__DIR__))
             "employe" => EmployeMiddleware::class,
             "customer" => CustomerMidlleware::class,
         ]);
+        $middleware->prepend(HandleCors::class);
+        $middleware->prepend(ForceCors::class);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->render(function (AuthenticationException $auth) {
@@ -36,6 +40,6 @@ return Application::configure(basePath: dirname(__DIR__))
             return response()->json([
                 "message" => "error validations",
                 "errors" => $ex->errors()
-            ],400);
+            ], 400);
         });
     })->create();

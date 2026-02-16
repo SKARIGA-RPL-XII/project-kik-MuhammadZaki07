@@ -2,11 +2,12 @@ import {
   Table,
   TableBody,
   TableCell,
+  TableHead,
   TableHeader,
   TableRow,
 } from "../../components/ui/table";
 import Badge from "../../components/ui/badge/Badge";
-import { Pencil, Trash2 } from "lucide-react";
+import { Loader2, Pencil, Trash2 } from "lucide-react";
 import { BannerService } from "../../services/banner.service";
 
 interface BannerTableProps {
@@ -34,24 +35,15 @@ export default function BannerTable({
         <Table>
           <TableHeader className="border-b border-neutral-100 dark:border-white/[0.05]">
             <TableRow>
-              <TableCell
-                isHeader
-                className="px-5 py-3 font-medium text-neutral-500 text-start text-theme-xs dark:text-neutral-400"
-              >
+              <TableHead className="px-5 py-3 font-medium text-neutral-500 text-start text-theme-xs dark:text-neutral-400">
                 Banner
-              </TableCell>
-              <TableCell
-                isHeader
-                className="px-5 py-3 font-medium text-neutral-500 text-start text-theme-xs dark:text-neutral-400"
-              >
+              </TableHead>
+              <TableHead className="px-5 py-3 font-medium text-neutral-500 text-start text-theme-xs dark:text-neutral-400">
                 Status
-              </TableCell>
-              <TableCell
-                isHeader
-                className="px-5 py-3 font-medium text-neutral-500 text-start text-theme-xs dark:text-neutral-400"
-              >
+              </TableHead>
+              <TableHead className="px-5 py-3 font-medium text-neutral-500 text-start text-theme-xs dark:text-neutral-400">
                 Action
-              </TableCell>
+              </TableHead>
             </TableRow>
           </TableHeader>
 
@@ -60,9 +52,12 @@ export default function BannerTable({
               <TableRow>
                 <TableCell
                   colSpan={5}
-                  className="py-10 text-center text-neutral-500"
+                  className="text-center py-10 text-neutral-500"
                 >
-                  Loading data...
+                  <div className="flex items-center justify-center gap-2">
+                    <Loader2 className="animate-spin" size={18} />
+                    <span>Loading data...</span>
+                  </div>
                 </TableCell>
               </TableRow>
             )}

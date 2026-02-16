@@ -2,12 +2,13 @@ import {
   Table,
   TableBody,
   TableCell,
+  TableHead,
   TableHeader,
   TableRow,
 } from "../../components/ui/table";
 import Badge from "../../components/ui/badge/Badge";
 import { CategoryService } from "../../services/category.service";
-import { Pencil, Trash2 } from "lucide-react";
+import { Loader2, Pencil, Trash2 } from "lucide-react";
 
 interface CategoryTableProps {
   categories: any[];
@@ -34,38 +35,32 @@ export default function CategoryTable({
         <Table>
           <TableHeader className="border-b border-neutral-100 dark:border-white/[0.05]">
             <TableRow>
-              <TableCell
-                isHeader
-                className="px-5 py-3 text-start text-theme-xs"
-              >
+              <TableHead className="px-5 py-3 text-start text-theme-xs">
                 Category
-              </TableCell>
-              <TableCell
-                isHeader
-                className="px-5 py-3 text-start text-theme-xs"
-              >
+              </TableHead>
+              <TableHead className="px-5 py-3 text-start text-theme-xs">
                 Slug
-              </TableCell>
-              <TableCell
-                isHeader
-                className="px-5 py-3 text-start text-theme-xs"
-              >
+              </TableHead>
+              <TableHead className="px-5 py-3 text-start text-theme-xs">
                 Status
-              </TableCell>
-              <TableCell
-                isHeader
-                className="px-5 py-3 text-start text-theme-xs"
-              >
+              </TableHead>
+              <TableHead className="px-5 py-3 text-start text-theme-xs">
                 Action
-              </TableCell>
+              </TableHead>
             </TableRow>
           </TableHeader>
 
           <TableBody className="divide-y divide-neutral-100 dark:divide-white/[0.05]">
             {loading && (
               <TableRow>
-                <TableCell colSpan={4} className="py-10 text-center">
-                  <span className="text-neutral-500">Loading data...</span>
+                <TableCell
+                  colSpan={4}
+                  className="text-center py-10 text-neutral-500"
+                >
+                  <div className="flex items-center justify-center gap-2">
+                    <Loader2 className="animate-spin" size={18} />
+                    <span>Loading data...</span>
+                  </div>
                 </TableCell>
               </TableRow>
             )}

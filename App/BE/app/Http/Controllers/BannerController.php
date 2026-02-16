@@ -13,8 +13,13 @@ class BannerController extends Controller
      */
     public function index()
     {
-        $data = Banner::all();
+        $data = Banner::where("is_active" , true)->get();
         return Controller::OKE('success', 'success get data', $data, 200);
+    }
+
+    public function getBannerAdmin(){
+        $data = Banner::all();
+        return Controller::OKE('success', 'success get data banners', $data, 200);
     }
 
     /**

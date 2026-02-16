@@ -8,9 +8,19 @@ export class BannerService {
     } catch (err: any) {
       return {
         data: null,
-        error:
-          err?.response?.data?.message ||
-          "Failed to fetch banners",
+        error: err?.response?.data?.message || "Failed to fetch banners",
+      };
+    }
+  }
+
+  static async getBannerAdmin() {
+    try {
+      const res = await apiClient.get("/banners-admin");
+      return { data: res.data, error: null };
+    } catch (err) {
+      return {
+        data: null,
+        error: err?.response?.data?.message || "Failed to fetch banners",
       };
     }
   }
@@ -34,10 +44,7 @@ export class BannerService {
     try {
       formData.append("_method", "PUT");
 
-      const res = await apiClient.post(
-        `/banners/${id}`,
-        formData
-      );
+      const res = await apiClient.post(`/banners/${id}`, formData);
 
       return { data: res.data, error: null };
     } catch (err: any) {
@@ -58,9 +65,7 @@ export class BannerService {
     } catch (err: any) {
       return {
         data: null,
-        error:
-          err?.response?.data?.message ||
-          "Failed to delete banner",
+        error: err?.response?.data?.message || "Failed to delete banner",
       };
     }
   }

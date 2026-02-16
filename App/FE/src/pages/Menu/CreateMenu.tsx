@@ -14,6 +14,7 @@ import { CategoryService } from "../../services/category.service";
 import { DiscountService } from "../../services/discount.service";
 import { useToast } from "@/context/ToastContext";
 import { useNavigate } from "react-router";
+import LoadingSpinner from "@/components/skeleton/LoadingSpinner";
 
 interface AttributeLevel {
   id: number;
@@ -51,6 +52,7 @@ function CreateMenu() {
     { label: string; value: string }[]
   >([]);
   const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -135,35 +137,52 @@ function CreateMenu() {
 
   const handleSubmit = async () => {
     setErrors({});
+    setLoading(true);
 
-    const fd = new FormData();
-    Object.entries(form).forEach(([k, v]) => {
-      if (v !== null && v !== "") fd.append(k, v as any);
-    });
+    try {
+      const fd = new FormData();
 
-    Object.entries(selectedLevels).forEach(([attrId, levels]) => {
-      levels.forEach((level, index) => {
-        fd.append(`attributes[${attrId}][${index}]`, level.toString());
+      Object.entries(form).forEach(([k, v]) => {
+        if (v !== null && v !== "" && v !== undefined) {
+          if (k === "is_active") {
+            fd.append(k, v ? "1" : "0");
+          } else {
+            fd.append(k, v as any);
+          }
+        }
       });
-    });
 
-    const response = await MenuService.createMenu(fd);
-
-    if (response.error) {
-      if (typeof response.error === "object") {
-        const validationErrors: Record<string, string> = {};
-        Object.entries(response.error).forEach(([key, messages]) => {
-          validationErrors[key] = Array.isArray(messages)
-            ? messages[0]
-            : (messages as string);
+      Object.entries(selectedLevels).forEach(([attrId, levels]) => {
+        levels.forEach((level, index) => {
+          fd.append(`attributes[${attrId}][${index}]`, level.toString());
         });
-        setErrors(validationErrors);
+      });
+
+      const response = await MenuService.createMenu(fd);
+
+      if (response.error) {
+        if (typeof response.error === "object") {
+          const validationErrors: Record<string, string> = {};
+          Object.entries(response.error).forEach(([key, messages]) => {
+            validationErrors[key] = Array.isArray(messages)
+              ? messages[0]
+              : (messages as string);
+          });
+          setErrors(validationErrors);
+          toast("error", "Validation Error", "Please check the form again.");
+        } else {
+          toast("error", "Failed", response.error);
+        }
       } else {
-        toast("error", "Failed", response.error);
+        toast("success", "Success", "Menu created successfully!");
+        navigate("/menu");
       }
-    } else {
-      toast("success", "Success Create Menu", `Menu created successfully!`);
-      navigate("/menu")
+    } catch (err: any) {
+      const errorMessage =
+        err?.response?.data?.message || "An unexpected error occurred";
+      toast("error", "Error", errorMessage);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -473,9 +492,10 @@ function CreateMenu() {
             <div className="pt-6">
               <Button
                 onClick={handleSubmit}
+                disabled={loading}
                 className="w-full py-4 rounded-2xl shadow-lg shadow-brand-100 dark:shadow-none font-bold text-sm tracking-wide transition-transform active:scale-[0.98]"
               >
-                Create & Save Menu
+                {loading ? <LoadingSpinner /> : <span>Create & Save Menu</span>}
               </Button>
             </div>
           </div>

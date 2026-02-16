@@ -14,12 +14,25 @@ return new class extends Migration
         Schema::create('tables', function (Blueprint $table) {
             $table->id();
             $table->string('table_number')->unique();
-            $table->enum('status', ['available', 'occupied'])->default('available');
+            $table->enum('status', ['available', 'occupied'])
+                ->default('available');
             $table->string('qr_code')->nullable();
-             $table->foreignId('room_id')->nullable()->constrained()->nullOnDelete();;
+            $table->foreignId('room_id')
+                ->nullable()
+                ->constrained()
+                ->nullOnDelete();
+            $table->integer('capacity')->default(4);
+            $table->integer('x_position')->nullable();
+            $table->integer('y_position')->nullable();
+            $table->integer('width')->default(80);
+            $table->integer('height')->default(80);
+            $table->enum('shape', ['square', 'round', 'rectangle'])
+                ->default('square');
+            $table->integer('rotation')->default(0);
             $table->timestamps();
         });
     }
+
 
     /**
      * Reverse the migrations.

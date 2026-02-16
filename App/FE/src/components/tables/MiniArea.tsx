@@ -1,5 +1,5 @@
 import { Download, Utensils } from "lucide-react";
-import { TableInterface } from "../../pages/Tables/Table";
+import { TableInterface } from "../../pages/Restaurant-layout/Table";
 
 const MiniTable = ({
   table,

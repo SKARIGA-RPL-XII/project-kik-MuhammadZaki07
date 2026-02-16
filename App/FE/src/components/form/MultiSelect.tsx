@@ -7,7 +7,7 @@ interface Option {
 }
 
 interface MultiSelectProps {
-  label: string;
+  label?: string;
   options: Option[];
   defaultSelected?: string[];
   value?: string[];

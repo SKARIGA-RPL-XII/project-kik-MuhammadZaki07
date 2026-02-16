@@ -19,6 +19,9 @@ import { BannerService } from "../../services/banner.service";
 import { useDropzone } from "react-dropzone";
 import BannerTable from "../../components/tables/BannerTable";
 import BannerCarousel from "../../components/carousel/BannerCarousel";
+import { Plus, UploadCloud, Image as ImageIcon } from "lucide-react";
+import LoadingSpinner from "@/components/skeleton/LoadingSpinner";
+import { useToast } from "@/context/ToastContext";
 
 function Banner() {
   const [banners, setBanners] = useState<any[]>([]);
@@ -33,18 +36,24 @@ function Banner() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
   const [bannerPreview, setBannerPreview] = useState<string | null>(null);
+  const { toast } = useToast();
 
   const fetchBanners = async () => {
     setLoading(true);
-    const { data } = await BannerService.getBanners();
-    if (data) {
-      const mapped = data.data.map((b: any) => ({
-        ...b,
-        banner_image: `${import.meta.env.VITE_STORAGE_URL}/${b.banner_image}`,
-      }));
-      setBanners(mapped);
+    try {
+      const { data } = await BannerService.getBannerAdmin();
+      if (data) {
+        const mapped = data.data.map((b: any) => ({
+          ...b,
+          banner_image: `${import.meta.env.VITE_STORAGE_URL}/${b.banner_image}`,
+        }));
+        setBanners(mapped);
+      }
+    } catch (err: any) {
+      toast("error", "Error", "Failed to fetch banners");
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   useEffect(() => {
@@ -52,7 +61,10 @@ function Banner() {
   }, []);
 
   const onDrop = (files: File[]) => {
-    if (files.length) setBannerImage(files[0]);
+    if (files.length) {
+      setBannerImage(files[0]);
+      setBannerPreview(URL.createObjectURL(files[0]));
+    }
   };
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
@@ -70,6 +82,7 @@ function Banner() {
     setTitle("");
     setDescription("");
     setBannerImage(null);
+    setBannerPreview(null);
     setIsActive(true);
     setErrors({});
   };
@@ -77,6 +90,7 @@ function Banner() {
   const handleSubmit = async () => {
     setSubmitting(true);
     setErrors({});
+
     const fd = new FormData();
     fd.append("title", title);
     fd.append("description", description);
@@ -84,22 +98,40 @@ function Banner() {
     if (bannerImage) fd.append("banner_image", bannerImage);
 
     try {
-      let error = null;
+      let response;
       if (editingId) {
-        const res = await BannerService.updateBanner(editingId, fd);
-        error = res.error;
+        response = await BannerService.updateBanner(editingId, fd);
       } else {
-        const res = await BannerService.createBanner(fd);
-        error = res.error;
+        response = await BannerService.createBanner(fd);
       }
 
-      if (error) {
-        setErrors(typeof error === "object" ? error : { form: error });
+      if (response.error) {
+        if (typeof response.error === "object") {
+          const validationErrors: Record<string, string> = {};
+          Object.entries(response.error).forEach(([key, messages]) => {
+            validationErrors[key] = Array.isArray(messages)
+              ? messages[0]
+              : (messages as string);
+          });
+          setErrors(validationErrors);
+          toast("error", "Validation Error", "Please check your input");
+        } else {
+          toast("error", "Failed", response.error);
+        }
       } else {
+        toast(
+          "success",
+          "Success",
+          editingId
+            ? "Banner updated successfully"
+            : "Banner published successfully",
+        );
         resetForm();
         setOpenDialog(false);
         fetchBanners();
       }
+    } catch (err: any) {
+      toast("error", "System Error", "An unexpected error occurred");
     } finally {
       setSubmitting(false);
     }
@@ -109,117 +141,176 @@ function Banner() {
     setEditingId(banner.id);
     setTitle(banner.title);
     setDescription(banner.description);
-    setIsActive(banner.is_active);
+    setIsActive(banner.is_active === 1 || banner.is_active === true);
     setOpenDialog(true);
     setBannerImage(null);
-    setBannerPreview(
-      `${banner.banner_image}`,
-    );
+    setBannerPreview(banner.banner_image);
   };
 
   return (
     <>
-      <PageMeta title="Banner Management" description="Manage banners" />
-      <PageBreadcrumb pageTitle="Banner" />
-      {banners.length > 0 && (
-        <BannerCarousel banners={banners} autoLoop loopInterval={3000} />
-      )}
-      <ComponentCard
+      <PageMeta
         title="Banner Management"
-        desc="Create, edit, delete banners"
-        className="mt-5"
+        description="Manage high-impact marketing banners"
+      />
+      <PageBreadcrumb pageTitle="Marketing Banners" />
+
+      {banners.length > 0 && (
+        <div className="mb-8 overflow-hidden rounded-2xl shadow-sm border border-gray-100 dark:border-white/5">
+          <BannerCarousel banners={banners} autoLoop loopInterval={4000} />
+        </div>
+      )}
+
+      <ComponentCard
+        title="Active Banners"
+        desc="Visual promotion items displayed on the homepage"
+        className="shadow-sm border-gray-100 dark:border-white/5"
       >
-        <div className="flex justify-between items-center mb-4">
-          <AlertDialog open={openDialog} onOpenChange={setOpenDialog}>
+        <div className="flex justify-between items-center mb-6">
+          <div className="space-y-1">
+            <h4 className="text-lg font-semibold text-gray-900 dark:text-white">
+              Banner List
+            </h4>
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              Manage your promotional content
+            </p>
+          </div>
+          <AlertDialog
+            open={openDialog}
+            onOpenChange={(val) => {
+              setOpenDialog(val);
+              if (!val) resetForm();
+            }}
+          >
             <AlertDialogTrigger asChild>
-              <Button onClick={resetForm} className="h-10">
-                {editingId ? "Edit Banner" : "Create Banner"}
+              <Button
+                onClick={resetForm}
+                className="flex items-center gap-2 bg-brand-500 hover:bg-brand-600 transition-all shadow-md shadow-brand-500/20"
+              >
+                <Plus size={18} />
+                <span>Create New Banner</span>
               </Button>
             </AlertDialogTrigger>
 
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>
-                  {editingId ? "Edit Banner" : "Create Banner"}
+            <AlertDialogContent className="max-w-xl border-none shadow-2xl">
+              <AlertDialogHeader className="mb-4">
+                <AlertDialogTitle className="text-2xl font-bold">
+                  {editingId ? "Modify Banner" : "New Promotion Banner"}
                 </AlertDialogTitle>
+                <p className="text-sm text-gray-500">
+                  Enter details below to publish your banner
+                </p>
               </AlertDialogHeader>
 
-              <div className="space-y-4">
+              <div className="space-y-5">
                 <div
                   {...getRootProps()}
-                  className={`border rounded-xl p-6 text-center ${
+                  className={`relative group border-2 border-dashed rounded-2xl transition-all flex flex-col items-center justify-center cursor-pointer min-h-[240px] overflow-hidden ${
                     isDragActive
-                      ? "border-brand-500 border-dashed bg-neutral-100 dark:bg-neutral-800"
-                      : "border-neutral-300 dark:border-neutral-500 border-dashed bg-neutral-50 dark:bg-neutral-800"
+                      ? "border-brand-500 bg-brand-50/50 dark:bg-brand-500/5"
+                      : "border-gray-200 dark:border-gray-700 hover:border-brand-400 bg-gray-50/50 dark:bg-neutral-900/50"
                   }`}
                 >
                   <input {...getInputProps()} />
-                  {bannerImage ? (
-                    <>
+                  {bannerPreview ? (
+                    <div className="relative w-full h-full group">
                       <img
-                        src={URL.createObjectURL(bannerImage)}
-                        className="w-full h-52 object-cover rounded-lg mb-2"
+                        src={bannerPreview}
+                        className="w-full h-60 object-cover"
+                        alt="Preview"
                       />
-                      <p className="text-green-600">{bannerImage.name}</p>
-                    </>
-                  ) : bannerPreview ? (
-                    <img
-                      src={bannerPreview}
-                      className="w-full h-52 object-cover rounded-lg mb-2"
-                    />
+                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                        <div className="bg-white/20 backdrop-blur-md p-3 rounded-full">
+                          <UploadCloud className="text-white" />
+                        </div>
+                      </div>
+                    </div>
                   ) : (
-                    <p>Drag & drop image here</p>
+                    <div className="p-10 flex flex-col items-center text-center">
+                      <div className="w-16 h-16 bg-brand-50 dark:bg-brand-500/10 rounded-full flex items-center justify-center mb-4">
+                        <ImageIcon className="text-brand-500" size={28} />
+                      </div>
+                      <p className="text-gray-700 dark:text-gray-300 font-medium">
+                        Click to upload or drag and drop
+                      </p>
+                      <p className="text-xs text-gray-500 mt-1">
+                        SVG, PNG, JPG or WEBP (Max. 2MB)
+                      </p>
+                    </div>
                   )}
                 </div>
                 {errors.banner_image && (
-                  <p className="text-sm text-red-500">{errors.banner_image}</p>
+                  <p className="text-xs font-medium text-red-500 -mt-2 ml-1">
+                    {errors.banner_image}
+                  </p>
                 )}
 
-                <Input
-                  placeholder="Title"
-                  value={title}
-                  onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                    setTitle(e.target.value)
-                  }
-                />
-                {errors.title && (
-                  <p className="text-sm text-red-500">{errors.title}</p>
-                )}
+                <div className="space-y-4">
+                  <div>
+                    <Input
+                      label="Banner Title"
+                      placeholder="e.g. Summer Special 2026"
+                      value={title}
+                      error={!!errors.title}
+                      onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                        setTitle(e.target.value)
+                      }
+                    />
+                    {errors.title && (
+                      <p className="text-xs font-medium text-red-500 mt-1 ml-1">
+                        {errors.title}
+                      </p>
+                    )}
+                  </div>
 
-                <Textarea
-                  placeholder="Description"
-                  value={description}
-                  onChange={(val) => setDescription(val)}
-                />
-                {errors.description && (
-                  <p className="text-sm text-red-500">{errors.description}</p>
-                )}
+                  <div>
+                    <Textarea
+                      label="Description"
+                      placeholder="Describe your promotion briefly..."
+                      value={description}
+                      onChange={(val) => setDescription(val)}
+                    />
+                    {errors.description && (
+                      <p className="text-xs font-medium text-red-500 mt-1 ml-1">
+                        {errors.description}
+                      </p>
+                    )}
+                  </div>
 
-                <div className="flex items-center gap-2">
-                  <Switch
-                    checked={isActive}
-                    label="Active"
-                    onChange={(v) => setIsActive(v)}
-                  />
-                  {errors.is_active && (
-                    <p className="text-sm text-red-500">{errors.is_active}</p>
-                  )}
+                  <div className="p-4 bg-gray-100 dark:bg-neutral-900/50 rounded-xl border border-gray-100 dark:border-white/5">
+                    <div className="flex items-center justify-between">
+                      <div className="space-y-0.5">
+                        <p className="text-sm font-semibold">
+                          Visibility Status
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          Toggle to show/hide this banner
+                        </p>
+                      </div>
+                      <Switch
+                        checked={isActive}
+                        onChange={(v) => setIsActive(v)}
+                      />
+                    </div>
+                  </div>
                 </div>
 
-                <AlertDialogFooter className="justify-between mt-4 items-center">
+                <AlertDialogFooter className="gap-3 mt-6 flex items-center">
                   <AlertDialogCancel onClick={resetForm} disabled={submitting}>
-                    Cancel
+                    Discard
                   </AlertDialogCancel>
                   <Button
                     onClick={handleSubmit}
                     disabled={submitting}
-                    className="h-10"
+                    className="h-10 min-w-[140px]"
                   >
-                    {submitting
-                      ? "Saving..."
-                      : editingId
-                        ? "Update Banner"
-                        : "Create Banner"}
+                    {submitting ? (
+                      <LoadingSpinner />
+                    ) : (
+                      <span>
+                        {editingId ? "Save Changes" : "Publish Banner"}
+                      </span>
+                    )}
                   </Button>
                 </AlertDialogFooter>
               </div>

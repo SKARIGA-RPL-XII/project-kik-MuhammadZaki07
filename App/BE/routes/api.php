@@ -93,6 +93,7 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
     // Banner Management
     Route::resource('banners', BannerController::class)
         ->only('store', 'update', 'destroy');
+    Route::get("banners-admin",  [BannerController::class, 'getBannerAdmin']);
 
     // Menu Management
     Route::resource('menus', MenuController::class)
@@ -116,6 +117,14 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
         Route::put('/', [SettingController::class, 'update']);
         Route::delete('/{key}', [SettingController::class, 'destroy']);
     });
+
+    // Room Management
+    Route::put('rooms/{room}/update-layout', [RoomController::class, 'updateLayout']);
+    Route::get('rooms/available-tables', [RoomController::class, 'availableTables']);
+
+
+    Route::resource('tables', TableController::class)->only("store", 'update', 'destroy');
+    Route::resource('rooms', RoomController::class)->only("store", 'update', 'destroy', 'updateLayout', 'availableTables');
 });
 
 
@@ -125,6 +134,9 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
 |--------------------------------------------------------------------------
 */
 
-Route::resource('tables', TableController::class);
-Route::resource('rooms', RoomController::class);
+
 Route::resource('transactions', TransactionController::class);
+Route::get('tables', [TableController::class, 'index']);
+Route::get('tables/{id}', [TableController::class, 'show']);
+Route::get('rooms', [RoomController::class, 'index']);
+Route::get('rooms/{id}', [RoomController::class, 'show']);

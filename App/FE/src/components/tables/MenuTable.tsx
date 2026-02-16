@@ -2,12 +2,13 @@ import {
   Table,
   TableBody,
   TableCell,
+  TableHead,
   TableHeader,
   TableRow,
 } from "../../components/ui/table";
 import Badge from "../ui/badge/Badge";
 import { MenuService } from "../../services/menu.service";
-import { Eye, Pencil, Trash2 } from "lucide-react";
+import { Eye, Loader2, Pencil, Trash2 } from "lucide-react";
 import { Link } from "react-router";
 import { formatCurrency } from "@/lib/currency";
 import DeleteAlertDialog from "@/components/dialog/DeleteAlertDialog";
@@ -29,37 +30,43 @@ export default function MenuTable({
         <Table>
           <TableHeader className="border-b border-neutral-100 dark:text-white dark:border-white/[0.05]">
             <TableRow>
-              <TableCell className="px-5 py-3 text-theme-xs text-start">
+              <TableHead className="px-5 py-3 text-theme-xs text-start">
                 Menu
-              </TableCell>
+              </TableHead>
 
-              <TableCell className="px-5 py-3 text-theme-xs text-start">
+              <TableHead className="px-5 py-3 text-theme-xs text-start">
                 Price
-              </TableCell>
+              </TableHead>
 
-              <TableCell className="px-5 py-3 text-theme-xs text-start">
+              <TableHead className="px-5 py-3 text-theme-xs text-start">
                 Discount
-              </TableCell>
+              </TableHead>
 
-              <TableCell className="px-5 py-3 text-theme-xs text-start">
+              <TableHead className="px-5 py-3 text-theme-xs text-start">
                 Stock
-              </TableCell>
+              </TableHead>
 
-              <TableCell className="px-5 py-3 text-theme-xs text-start">
+              <TableHead className="px-5 py-3 text-theme-xs text-start">
                 Status
-              </TableCell>
+              </TableHead>
 
-              <TableCell className="px-5 py-3 text-theme-xs text-start">
+              <TableHead className="px-5 py-3 text-theme-xs text-start">
                 Action
-              </TableCell>
+              </TableHead>
             </TableRow>
           </TableHeader>
 
           <TableBody className="divide-y divide-neutral-100 dark:divide-white/[0.05] relative">
             {loading && (
               <TableRow>
-                <TableCell colSpan={7} className="text-center py-10">
-                  <span className="text-neutral-500">Loading data...</span>
+                <TableCell
+                  colSpan={7}
+                  className="text-center py-10 text-neutral-500"
+                >
+                  <div className="flex items-center justify-center gap-2">
+                    <Loader2 className="animate-spin" size={18} />
+                    <span>Loading data...</span>
+                  </div>
                 </TableCell>
               </TableRow>
             )}
@@ -123,7 +130,6 @@ export default function MenuTable({
                         <span className="text-neutral-400 text-xs">—</span>
                       )}
                     </TableCell>
-
 
                     <TableCell>
                       <Badge

@@ -18,6 +18,8 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "../../components/ui/alert-dialog";
+import { useToast } from "@/context/ToastContext";
+import LoadingSpinner from "@/components/skeleton/LoadingSpinner";
 
 function Category() {
   const [categories, setCategories] = useState<any[]>([]);
@@ -27,28 +29,31 @@ function Category() {
   const [debouncedSearch, setDebouncedSearch] = useState("");
 
   const [page, setPage] = useState(0);
-  const size = 10;
+  const [pageSize, setPageSize] = useState(10);
+  const [totalItems, setTotalItems] = useState(0);
 
-  const [total, setTotal] = useState(0);
-  const totalPage = Math.ceil(total / size);
+  const totalPage = Math.ceil(totalItems / pageSize) || 1;
 
   const [openDialog, setOpenDialog] = useState(false);
   const [categoryName, setCategoryName] = useState("");
   const [isActive, setIsActive] = useState(true);
   const [editingId, setEditingId] = useState<number | null>(null);
-  const [error, setError] = useState("");
+  const [error, setError] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
+  const { toast } = useToast();
 
   const fetchCategories = async () => {
     setLoading(true);
     const res = await CategoryService.getCategories({
       page,
-      size,
+      size: pageSize,
       search: debouncedSearch,
     });
+
     if (res.data) {
       setCategories(res.data);
-      setTotal(res.total);
+      setTotalItems(res.total);
+      setPageSize(res.size);
     }
     setLoading(false);
   };
@@ -65,41 +70,45 @@ function Category() {
     return () => clearTimeout(timeout);
   }, [search]);
 
+  const resetForm = () => {
+    setCategoryName("");
+    setIsActive(true);
+    setEditingId(null);
+    setError({});
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!categoryName.trim()) {
-      setError("Category name wajib diisi");
-      return;
-    }
-
     setSubmitting(true);
-    setError("");
+    setError({});
 
     try {
-      const payload = { name: categoryName, is_active: isActive };
+      const payload = { name: categoryName, is_active: isActive ? 1 : 0 };
 
       if (editingId) {
         await CategoryService.updateCategory(editingId, payload);
+        toast("success", "Success", "Category updated successfully");
       } else {
         await CategoryService.createCategory(payload);
+        toast("success", "Success", "Category created successfully");
       }
 
       setOpenDialog(false);
-      setCategoryName("");
-      setIsActive(true);
-      setEditingId(null);
+      resetForm();
       fetchCategories();
-    } catch (e: any) {
-      if (e?.response?.data?.data?.errors) {
-        const messages = Object.values(e.response.data.data.errors)
-          .flat()
-          .join(", ");
-        setError(messages);
-      } else if (e?.response?.data?.message) {
-        setError(e.response.data.message);
-      } else {
-        setError("Gagal menyimpan category");
+    } catch (err: any) {
+      const serverErrors = err?.response?.data?.errors;
+      const message = err?.response?.data?.message || "Something went wrong";
+
+      if (serverErrors) {
+        const validationErrors: Record<string, string> = {};
+        Object.entries(serverErrors).forEach(([key, val]) => {
+          validationErrors[key] = Array.isArray(val) ? val[0] : (val as string);
+        });
+        setError(validationErrors);
       }
+      
+      toast("error", "Action Failed", message);
     } finally {
       setSubmitting(false);
     }
@@ -108,18 +117,10 @@ function Category() {
   const handleEdit = (cat: any) => {
     setEditingId(cat.id);
     setCategoryName(cat.name);
-    setIsActive(cat.is_active ?? true);
-    setError("");
+    setIsActive(cat.is_active === 1 || cat.is_active === true);
+    setError({});
     setOpenDialog(true);
   };
-
-  //   const { toast } = useToast();
-
-  // toast(
-  //   "success",
-  //   "Success 🎉",
-  //   "Room created successfully"
-  // );
 
   return (
     <>
@@ -141,17 +142,15 @@ function Category() {
             className="w-full max-w-sm rounded border px-3 py-2 text-sm"
           />
 
-          <AlertDialog open={openDialog} onOpenChange={setOpenDialog}>
+          <AlertDialog
+            open={openDialog}
+            onOpenChange={(val) => {
+              setOpenDialog(val);
+              if (!val) resetForm();
+            }}
+          >
             <AlertDialogTrigger asChild>
-              <Button
-                className="h-10"
-                onClick={() => {
-                  setEditingId(null);
-                  setCategoryName("");
-                  setIsActive(true);
-                  setError("");
-                }}
-              >
+              <Button className="h-10" onClick={resetForm}>
                 Create <Plus className="ml-1" />
               </Button>
             </AlertDialogTrigger>
@@ -166,14 +165,20 @@ function Category() {
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-1">
                   <Input
-                    placeholder="Category name"
+                    label="Category Name"
+                    placeholder="Enter category name"
                     value={categoryName}
+                    error={!!error.name}
                     onChange={(e) => {
                       setCategoryName(e.target.value);
-                      setError("");
+                      if (error.name) {
+                        const newErrors = { ...error };
+                        delete newErrors.name;
+                        setError(newErrors);
+                      }
                     }}
                   />
-                  {error && <p className="text-sm text-red-500">{error}</p>}
+                  {error.name && <p className="text-sm text-red-500">{error.name}</p>}
                 </div>
 
                 <Switch
@@ -182,21 +187,17 @@ function Category() {
                   onChange={(checked) => setIsActive(checked)}
                 />
 
-                <AlertDialogFooter className="justify-between mt-4">
+                <AlertDialogFooter className="gap-2 mt-4 flex items-center">
                   <AlertDialogCancel
+                    type="button"
                     disabled={submitting}
-                    onClick={() => {
-                      setCategoryName("");
-                      setIsActive(true);
-                      setEditingId(null);
-                      setError("");
-                    }}
+                    onClick={resetForm}
                   >
                     Batal
                   </AlertDialogCancel>
 
-                  <Button type="submit" disabled={submitting}>
-                    {submitting ? "Menyimpan..." : "Submit"}
+                  <Button type="submit" className="h-10" disabled={submitting}>
+                    {submitting ? <LoadingSpinner/> : "Submit"}
                   </Button>
                 </AlertDialogFooter>
               </form>
@@ -212,15 +213,15 @@ function Category() {
         />
 
         <div className="flex items-center justify-between mt-6">
-          <p className="text-sm text-neutral-500">
-            Page {page + 1} of {totalPage} — Total {total} data
+          <p className="text-sm text-neutral-500 font-medium">
+            Showing {categories.length} of {totalItems} items (Page {page + 1} of {totalPage})
           </p>
 
           <div className="flex gap-2">
             <Button
               size="sm"
               variant="outline"
-              disabled={page === 0}
+              disabled={page === 0 || loading}
               onClick={() => setPage((p) => p - 1)}
             >
               Prev
@@ -229,7 +230,7 @@ function Category() {
             <Button
               size="sm"
               variant="outline"
-              disabled={page + 1 >= totalPage}
+              disabled={page + 1 >= totalPage || loading}
               onClick={() => setPage((p) => p + 1)}
             >
               Next

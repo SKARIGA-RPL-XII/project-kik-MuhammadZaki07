@@ -41,6 +41,8 @@ export class DiscountService {
 
       return { data: res.data, error: null };
     } catch (err: any) {
+      console.dir(err);
+      
       return {
         data: null,
         error:

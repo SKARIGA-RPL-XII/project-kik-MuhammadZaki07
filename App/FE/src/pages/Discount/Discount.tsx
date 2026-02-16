@@ -6,6 +6,7 @@ import Button from "../../components/ui/button/Button";
 import Input from "../../components/form/input/InputField";
 import Textarea from "../../components/form/input/TextArea";
 import Switch from "../../components/form/switch/Switch";
+import Label from "../../components/form/Label";
 import {
   AlertDialog,
   AlertDialogCancel,
@@ -20,6 +21,7 @@ import DiscountTable from "../../components/tables/DiscountTable";
 import Select from "../../components/form/Select";
 import DatePicker from "../../components/form/date-picker";
 import useDebounce from "../../hooks/useDebounce";
+import { useToast } from "@/context/ToastContext";
 
 function Discount() {
   const [discounts, setDiscounts] = useState<any[]>([]);
@@ -40,23 +42,29 @@ function Discount() {
     start?: string;
     end?: string;
   }>({});
+
   const debouncedSearch = useDebounce(search, 500);
+  const { toast } = useToast();
 
   const fetchDiscounts = async () => {
     setLoading(true);
-    const { data, error } = await DiscountService.getDiscounts({
-      search,
-      status: statusFilter ?? undefined,
-      start_date: dateFilter.start ?? undefined,
-      end_date: dateFilter.end ?? undefined,
-    });
-
-    if (data) setDiscounts(data.data);
-    setLoading(false);
+    try {
+      const { data } = await DiscountService.getDiscounts({
+        search: debouncedSearch,
+        status: statusFilter ?? undefined,
+        start_date: dateFilter.start ?? undefined,
+        end_date: dateFilter.end ?? undefined,
+      });
+      if (data) setDiscounts(data);
+    } catch (err) {
+      toast("error", "Error", "Failed to fetch discounts");
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
-    fetchDiscounts({ search: debouncedSearch });
+    fetchDiscounts();
   }, [debouncedSearch, statusFilter, dateFilter]);
 
   const resetForm = () => {
@@ -73,31 +81,48 @@ function Discount() {
   const handleSubmit = async () => {
     setSubmitting(true);
     setErrors({});
-    const fd = new FormData();
-    fd.append("title", title);
-    fd.append("description", description);
-    fd.append("value_discount", valueDiscount.toString());
-    fd.append("start_date", startDate);
-    fd.append("end_date", endDate);
-    fd.append("is_active", isActive ? "1" : "0");
+
+    const formData = new FormData();
+    formData.append("title", title);
+    formData.append("description", description);
+    formData.append("value_discount", valueDiscount.toString());
+    formData.append("start_date", startDate);
+    formData.append("end_date", endDate);
+    formData.append("is_active", isActive ? "1" : "0");
 
     try {
-      let error = null;
+      let response;
       if (editingId) {
-        const res = await DiscountService.updateDiscount(editingId, fd);
-        error = res.error;
+        response = await DiscountService.updateDiscount(editingId, formData);
       } else {
-        const res = await DiscountService.createDiscount(fd);
-        error = res.error;
+        response = await DiscountService.createDiscount(formData);
       }
 
-      if (error) {
-        setErrors(typeof error === "object" ? error : { form: error });
+      if (response.error) {
+        if (typeof response.error === "object") {
+          const validationErrors: Record<string, string> = {};
+          Object.entries(response.error).forEach(([key, messages]) => {
+            validationErrors[key] = Array.isArray(messages)
+              ? messages[0]
+              : (messages as string);
+          });
+          setErrors(validationErrors);
+          toast("error", "Validation Error", "Please check your inputs");
+        } else {
+          toast("error", "Failed", response.error);
+        }
       } else {
-        resetForm();
+        toast(
+          "success",
+          "Success",
+          editingId ? "Discount updated" : "Discount created",
+        );
         setOpenDialog(false);
+        resetForm();
         fetchDiscounts();
       }
+    } catch (err) {
+      toast("error", "System Error", "Something went wrong");
     } finally {
       setSubmitting(false);
     }
@@ -110,7 +135,8 @@ function Discount() {
     setValueDiscount(discount.value_discount);
     setStartDate(discount.start_date);
     setEndDate(discount.end_date);
-    setIsActive(discount.is_active);
+    setIsActive(discount.is_active === 1 || discount.is_active === true);
+    setErrors({});
     setOpenDialog(true);
   };
 
@@ -123,15 +149,17 @@ function Discount() {
         title="Discount Management"
         desc="Create, edit, delete discounts"
       >
-        <div className="flex justify-between items-center mb-4">
-          <div className="flex gap-2">
-            <Input
-              placeholder="Search..."
-              value={search}
-              onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                setSearch(e.target.value)
-              }
-            />
+        <div className="flex flex-wrap justify-between items-center gap-4 mb-6">
+          <div className="flex flex-wrap gap-3">
+            <div className="w-64">
+              <Input
+                placeholder="Search by title..."
+                value={search}
+                onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                  setSearch(e.target.value)
+                }
+              />
+            </div>
 
             <div className="w-40">
               <Select
@@ -142,145 +170,150 @@ function Discount() {
                 ]}
                 value={statusFilter ?? ""}
                 onChange={(v) => setStatusFilter(v || null)}
-                className="dark:bg-dark-900"
-                placeholder="Select Status"
+                placeholder="Status"
               />
             </div>
 
-            <div className="w-52">
+            <div className="w-44">
               <DatePicker
-                id="start-date"
-                placeholder="Select start date"
+                id="filter-start"
+                placeholder="Start Date"
                 value={dateFilter.start ?? ""}
-                onChange={(dates, dateStr) =>
+                onChange={(_, dateStr) =>
                   setDateFilter((p) => ({ ...p, start: dateStr }))
                 }
               />
             </div>
 
-            <div className="w-52">
+            <div className="w-44">
               <DatePicker
-                id="end-date"
-                placeholder="Select end date"
-                defaultDate={dateFilter.end ?? undefined}
+                id="filter-end"
+                placeholder="End Date"
+                value={dateFilter.end ?? ""}
                 minDate={dateFilter.start ?? undefined}
-                onChange={(selectedDates) => {
-                  setDateFilter((p) => ({
-                    ...p,
-                    end: selectedDates[0]?.toISOString().split("T")[0],
-                  }));
-                }}
+                onChange={(_, dateStr) =>
+                  setDateFilter((p) => ({ ...p, end: dateStr }))
+                }
               />
             </div>
           </div>
 
-          <AlertDialog open={openDialog} onOpenChange={setOpenDialog}>
+          <AlertDialog
+            open={openDialog}
+            onOpenChange={(val) => {
+              setOpenDialog(val);
+              if (!val) resetForm();
+            }}
+          >
             <AlertDialogTrigger asChild>
-              <Button onClick={resetForm}>Create Discount</Button>
+              <Button
+                onClick={resetForm}
+                className="bg-brand-500 hover:bg-brand-600"
+              >
+                Create Discount
+              </Button>
             </AlertDialogTrigger>
 
-            <AlertDialogContent>
+            <AlertDialogContent className="max-w-lg">
               <AlertDialogHeader>
-                <AlertDialogTitle>
-                  {editingId ? "Edit Discount" : "Create Discount"}
+                <AlertDialogTitle className="text-xl font-bold">
+                  {editingId ? "Edit Discount" : "Create New Discount"}
                 </AlertDialogTitle>
               </AlertDialogHeader>
 
-              <div className="space-y-4 mt-2">
-                <Input
-                  placeholder="Title"
-                  value={title}
-                  onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                    setTitle(e.target.value)
-                  }
-                />
-                {errors.title && (
-                  <p className="text-sm text-red-500">{errors.title}</p>
-                )}
-
-                <div className="grid grid-cols-2 gap-2">
-                  <div>
-                    <DatePicker
-                      id="form-start-date"
-                      placeholder="Select start date"
-                      defaultDate={startDate || undefined}
-                      onChange={(dates, dateStr) => {
-                        setStartDate(dateStr);
-                        if (endDate && new Date(endDate) < new Date(dateStr)) {
-                          setEndDate(dateStr);
-                        }
-                      }}
-                    />
-                    {errors.start_date && (
-                      <p className="text-sm text-red-500">
-                        {errors.start_date}
-                      </p>
-                    )}
-                  </div>
-
-                  <div>
-                    <DatePicker
-                      id="form-end-date"
-                      placeholder="Select end date"
-                      defaultDate={endDate || undefined}
-                      minDate={startDate ?? undefined}
-                      onChange={(dates, dateStr) => setEndDate(dateStr)}
-                      options={{
-                        minDate: startDate || undefined,
-                      }}
-                    />
-
-                    {errors.end_date && (
-                      <p className="text-sm text-red-500">{errors.end_date}</p>
-                    )}
-                  </div>
-                </div>
-
-                <Input
-                  type="number"
-                  placeholder="Value Discount %"
-                  value={valueDiscount}
-                  onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                    setValueDiscount(Math.max(0, parseInt(e.target.value, 10)))
-                  }
-                />
-
-                {errors.value_discount && (
-                  <p className="text-sm text-red-500">
-                    {errors.value_discount}
-                  </p>
-                )}
-
-                <Textarea
-                  placeholder="Description"
-                  value={description}
-                  onChange={(val) => setDescription(val)}
-                />
-                {errors.description && (
-                  <p className="text-sm text-red-500">{errors.description}</p>
-                )}
-
-                <div className="flex items-center gap-2">
-                  <Switch
-                    checked={isActive}
-                    label="Active"
-                    onChange={(v) => setIsActive(v)}
+              <div className="space-y-4 mt-2 text-left">
+                <div>
+                  <Label htmlFor="form-title">Discount Title</Label>
+                  <Input
+                    id="form-title"
+                    placeholder="Promo Summer"
+                    value={title}
+                    error={!!errors.title}
+                    onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                      setTitle(e.target.value)
+                    }
                   />
-                  {errors.is_active && (
-                    <p className="text-sm text-red-500">{errors.is_active}</p>
+                  {errors.title && (
+                    <p className="text-xs text-red-500 mt-1">{errors.title}</p>
                   )}
                 </div>
 
-                <AlertDialogFooter className="justify-between mt-4 items-center">
+                <div className="grid grid-cols-2 gap-4">
+                  <DatePicker
+                    id="form-start-date"
+                    label="Start Date"
+                    placeholder="Select date"
+                    defaultDate={startDate}
+                    onChange={(_, dateStr) => setStartDate(dateStr)}
+                  />
+                  <DatePicker
+                    id="form-end-date"
+                    label="End Date"
+                    placeholder="Select date"
+                    defaultDate={endDate}
+                    minDate={startDate || undefined}
+                    onChange={(_, dateStr) => setEndDate(dateStr)}
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="form-value">Discount Value (%)</Label>
+                  <Input
+                    id="form-value"
+                    type="number"
+                    placeholder="0"
+                    value={valueDiscount}
+                    error={!!errors.value_discount}
+                    onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                      setValueDiscount(
+                        Math.max(0, parseInt(e.target.value, 10) || 0),
+                      )
+                    }
+                  />
+                  {errors.value_discount && (
+                    <p className="text-xs text-red-500 mt-1">
+                      {errors.value_discount}
+                    </p>
+                  )}
+                </div>
+
+                <div>
+                  <Label htmlFor="form-desc">Description</Label>
+                  <Textarea
+                    id="form-desc"
+                    placeholder="Short description..."
+                    value={description}
+                    onChange={(val: any) =>
+                      setDescription(
+                        typeof val === "string" ? val : val.target.value,
+                      )
+                    }
+                  />
+                  {errors.description && (
+                    <p className="text-xs text-red-500 mt-1">
+                      {errors.description}
+                    </p>
+                  )}
+                </div>
+
+                <div className="p-3 bg-gray-50 dark:bg-white/5 rounded-lg">
+                  <Switch
+                    checked={isActive}
+                    label="Enable Discount Status"
+                    onChange={(v) => setIsActive(v)}
+                  />
+                </div>
+
+                <AlertDialogFooter className="gap-3 mt-4">
                   <AlertDialogCancel onClick={resetForm} disabled={submitting}>
                     Cancel
                   </AlertDialogCancel>
-                  <Button onClick={handleSubmit} disabled={submitting}>
-                    {submitting
-                      ? "Saving..."
-                      : editingId
-                        ? "Update Discount"
-                        : "Create Discount"}
+                  <Button
+                    onClick={handleSubmit}
+                    disabled={submitting}
+                    className="min-w-[120px]"
+                  >
+                    {submitting ? "Saving..." : editingId ? "Update" : "Create"}
                   </Button>
                 </AlertDialogFooter>
               </div>

@@ -23,6 +23,7 @@ class DatabaseSeeder extends Seeder
             CategorySeeder::class,
             BadgeSeeder::class,
             DiscountSeeder::class,
+            RoomSeeder::class,
             TableSeeder::class,
             SettingSeeder::class,
             AttributeSeeder::class,

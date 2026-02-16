@@ -5,41 +5,62 @@ namespace App\Http\Controllers;
 use App\Models\Table;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
-use BaconQrCode\Writer;
-use BaconQrCode\Renderer\ImageRenderer;
-use BaconQrCode\Renderer\RendererStyle\RendererStyle;
-use BaconQrCode\Renderer\Image\GdImageBackEnd;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class TableController extends Controller
 {
+
     public function index(Request $request)
     {
         $search = $request->query('search');
         $status = $request->query('status');
+        $roomId = $request->query('room_id');
+        $available = $request->query('available');
+
         $page = max(1, (int) $request->query('page', 1));
         $size = (int) $request->query('size', 10);
 
-        $query = Table::query()
-            ->when($search, function ($q) use ($search) {
-                $q->where('table_number', 'like', "%{$search}%");
-            })
-            ->when($status, function ($q) use ($status) {
-                $q->where('status', $status);
-            });
+        $query = Table::with('room')
+
+            ->when(
+                $search,
+                fn($q) =>
+                $q->where('table_number', 'like', "%{$search}%")
+            )
+
+            ->when(
+                $status,
+                fn($q) =>
+                $q->where('status', $status)
+            )
+
+            ->when(
+                $roomId,
+                fn($q) =>
+                $q->where('room_id', $roomId)
+            )
+
+            ->when(
+                $available,
+                fn($q) =>
+                $q->whereNull('room_id')
+            );
+
 
         $total = $query->count();
 
-        $data = $query
+        $tables = $query
             ->latest()
             ->skip(($page - 1) * $size)
             ->take($size)
             ->get();
 
+
         return response()->json([
+
             "message" => "success get tables",
             "data" => [
-                "tables" => $data,
+                "tables" => $tables,
                 "metadata" => [
                     "page" => $page,
                     "size" => $size,
@@ -49,46 +70,73 @@ class TableController extends Controller
         ]);
     }
 
-public function store(Request $request)
-{
-    $request->validate([
-        'table_number' => 'required|string|unique:tables,table_number',
-    ]);
+    public function store(Request $request)
+    {
 
-    $table = Table::create([
-        'table_number' => $request->table_number,
-        'status' => 'available',
-        'qr_code' => null
-    ]);
+        $validated = $request->validate([
+            'table_number' => 'required|string|max:50|unique:tables'
+        ]);
 
-    $qrUrl = env('FRONTEND_URL') . "/order/{$table->id}";
 
-    $fileName = "qrcodes/table_{$table->id}.svg";
+        $table = Table::create([
 
-    $qr = QrCode::format('svg')
-        ->size(300)
-        ->generate($qrUrl);
+            'table_number' => $validated['table_number'],
+            'status' => 'available',
+            'qr_code' => null,
+            'room_id' => null,
+            'x_position' => null,
+            'y_position' => null,
+            'width' => 100,
+            'height' => 100,
+            'rotation' => 0
+        ]);
 
-    Storage::disk('public')->put($fileName, $qr);
 
-    $table->update([
-        'qr_code' => $fileName
-    ]);
+        $qrUrl = env('FRONTEND_URL') . "/order/{$table->id}";
+        $fileName = "qrcodes/table_{$table->id}.svg";
 
-    return response()->json([
-        "message" => "success create table",
-        "data" => $table
-    ], 201);
-}
+        $qr = QrCode::format('svg')
+            ->size(300)
+            ->generate($qrUrl);
+
+        Storage::disk('public')->put($fileName, $qr);
+
+        $table->update([
+            'qr_code' => $fileName
+        ]);
+
+
+        return response()->json([
+            "message" => "success create table",
+            "data" => $table
+        ], 201);
+    }   
+
+    public function show(Table $table)
+    {
+
+        $table->load('room');
+
+        return response()->json([
+            "data" => $table
+        ]);
+    }
 
     public function update(Request $request, Table $table)
     {
-        $request->validate([
-            'table_number' => 'sometimes|string|unique:tables,table_number,' . $table->id,
-            'status' => 'sometimes|in:available,occupied'
+
+        $validated = $request->validate([
+            'table_number' => 'sometimes|string|max:50|unique:tables,table_number,' . $table->id,
+            'status' => 'sometimes|in:available,occupied',
+            'room_id' => 'nullable|exists:rooms,id',
+            'x_position' => 'nullable|integer|min:0',
+            'y_position' => 'nullable|integer|min:0',
+            'width' => 'nullable|integer|min:50|max:500',
+            'height' => 'nullable|integer|min:50|max:500',
+            'rotation' => 'nullable|integer|min:0|max:360'
         ]);
 
-        $table->update($request->only(['table_number', 'status']));
+        $table->update($validated);
 
         return response()->json([
             "message" => "success update table",
@@ -103,7 +151,6 @@ public function store(Request $request)
         }
 
         $table->delete();
-
         return response()->json([
             "message" => "success delete table"
         ]);
