@@ -110,7 +110,7 @@ class TableController extends Controller
             "message" => "success create table",
             "data" => $table
         ], 201);
-    }   
+    }
 
     public function show(Table $table)
     {
@@ -129,11 +129,11 @@ class TableController extends Controller
             'table_number' => 'sometimes|string|max:50|unique:tables,table_number,' . $table->id,
             'status' => 'sometimes|in:available,occupied',
             'room_id' => 'nullable|exists:rooms,id',
-            'x_position' => 'nullable|integer|min:0',
-            'y_position' => 'nullable|integer|min:0',
+            'x_position' => 'nullable|integer',
+            'y_position' => 'nullable|integer',
             'width' => 'nullable|integer|min:50|max:500',
             'height' => 'nullable|integer|min:50|max:500',
-            'rotation' => 'nullable|integer|min:0|max:360'
+            'rotation' => 'nullable|integer|max:360'
         ]);
 
         $table->update($validated);

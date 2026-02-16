@@ -85,11 +85,11 @@ class RoomController extends Controller
         $validated = $request->validate([
             'tables' => 'required|array|min:1',
             'tables.*.id' => 'required|exists:tables,id',
-            'tables.*.x_position' => 'required|integer|min:0',
-            'tables.*.y_position' => 'required|integer|min:0',
+            'tables.*.x_position' => 'required|integer',
+            'tables.*.y_position' => 'required|integer',
             'tables.*.width' => 'required|integer|min:50|max:500',
             'tables.*.height' => 'required|integer|min:50|max:500',
-            'tables.*.rotation' => 'required|integer|min:0|max:360',
+            'tables.*.rotation' => 'required|integer|max:360',
         ]);
 
         DB::transaction(function () use ($validated, $room) {
