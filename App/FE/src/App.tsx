@@ -28,15 +28,15 @@ import { Cashier } from "./pages/Cashier/Cashier";
 import CustomerPage from "./pages/Customer/CustomerPage";
 import NotFound from "./pages/OtherPage/NotFound";
 import RestaurantLayoutPage from "./pages/Restaurant-layout/Index";
+import NotificationPage from "./pages/Notifications/Index";
+import NotificationShow from "./pages/Notifications/NotificationShow";
 
 export default function App() {
   return (
     <Router>
       <ScrollToTop />
       <Routes>
-
         <Route element={<AppLayout />}>
-
           <Route path="/dashboard" element={<Home />} />
           <Route path="/profile" element={<UserProfiles />} />
           <Route path="/calendar" element={<Calendar />} />
@@ -56,6 +56,8 @@ export default function App() {
           <Route path="/table" element={<RestaurantLayoutPage />} />
           <Route path="/staf" element={<Employe />} />
           <Route path="/admin" element={<Admin />} />
+          <Route path="/notifications" element={<NotificationPage />} />
+          <Route path="/notifications/:id" element={<NotificationShow />} />
 
           <Route path="/settings">
             <Route path="general" element={<GeneralSettingsPage />} />
@@ -65,20 +67,16 @@ export default function App() {
           </Route>
         </Route>
 
-
         <Route path="/auth" element={<GuestMiddleware />}>
           <Route path="sign-in" element={<SignIn />} />
           <Route path="sign-up" element={<SignUp />} />
         </Route>
 
-
         <Route path="/" element={<CustomerLayout />}>
           <Route index element={<CustomerPage />} />
         </Route>
 
-
         <Route path="*" element={<NotFound />} />
-
       </Routes>
     </Router>
   );

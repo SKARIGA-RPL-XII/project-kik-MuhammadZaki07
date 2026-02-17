@@ -24,7 +24,6 @@ const Header: React.FC<HeaderProps> = ({ onClick, onToggle }) => {
             className="block w-10 h-10 text-neutral-500 lg:hidden dark:text-neutral-400"
             onClick={onToggle}
           >
-            {/* Hamburger Icon */}
             <svg
               className={`block`}
               width="16"
@@ -55,7 +54,6 @@ const Header: React.FC<HeaderProps> = ({ onClick, onToggle }) => {
                 fill="currentColor"
               />
             </svg>
-            {/* Cross Icon */}
           </button>
           <button
             onClick={onClick}
@@ -171,13 +169,9 @@ const Header: React.FC<HeaderProps> = ({ onClick, onToggle }) => {
           } items-center justify-between w-full gap-4 px-5 py-4 lg:flex shadow-theme-md lg:justify-end lg:px-0 lg:shadow-none`}
         >
           <div className="flex items-center gap-2 2xsm:gap-3">
-            {/* <!-- Dark Mode Toggler --> */}
             <ThemeToggleButton />
-            {/* <!-- Dark Mode Toggler --> */}
             <NotificationDropdown />
-            {/* <!-- Notification Menu Area --> */}
           </div>
-          {/* <!-- User Area --> */}
           <UserDropdown />
         </div>
       </div>

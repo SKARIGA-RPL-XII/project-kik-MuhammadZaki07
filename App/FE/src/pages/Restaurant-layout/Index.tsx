@@ -7,18 +7,20 @@ import { useToast } from "@/context/ToastContext";
 import { RoomInterface, TableInterface } from "@/types/layout-table";
 import SidebarRoomNav from "@/components/restaurant-layout/SidebarRoomNav";
 import LayoutCanvas from "@/components/restaurant-layout/LayoutCanvas";
+import LayoutRoomSkeleton from "@/components/restaurant-layout/LayoutRoomSkeleton";
 
 export default function RestaurantLayoutPage() {
   const [rooms, setRooms] = useState<RoomInterface[]>([]);
   const [tables, setTables] = useState<TableInterface[]>([]);
   const [activeRoomId, setActiveRoomId] = useState<number | "all">("all");
-
+  const [loading, setLoading] = useState(false);
   const [selectedTableIds, setSelectedTableIds] = useState<number[]>([]);
   const [isSelectionMode, setIsSelectionMode] = useState(false);
 
   const { toast } = useToast();
 
   const fetchData = useCallback(async () => {
+    setLoading(true);
     try {
       const [rRes, tRes] = await Promise.all([
         RoomService.getRooms(),
@@ -28,6 +30,8 @@ export default function RestaurantLayoutPage() {
       setTables(tRes.data?.tables || []);
     } catch {
       toast("error", "Error", "Failed to fetch data");
+    } finally {
+      setLoading(false);
     }
   }, [toast]);
 
@@ -68,6 +72,10 @@ export default function RestaurantLayoutPage() {
     setSelectedTableIds([]);
     setIsSelectionMode(false);
   };
+
+  if (loading && tables.length === 0) {
+    return <LayoutRoomSkeleton />;
+  }
 
   return (
     <div className="flex flex-col h-[calc(100vh-120px)] overflow-hidden">

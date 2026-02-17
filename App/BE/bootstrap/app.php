@@ -13,20 +13,28 @@ use Illuminate\Http\Middleware\HandleCors;
 use Illuminate\Validation\ValidationException;
 
 return Application::configure(basePath: dirname(__DIR__))
-    ->withRouting(
+   ->withRouting(
         web: __DIR__ . '/../routes/web.php',
         api: __DIR__ . '/../routes/api.php',
         commands: __DIR__ . '/../routes/console.php',
+        channels: __DIR__.'/../routes/channels.php',
         health: '/up',
     )
-    ->withMiddleware(function (Middleware $middleware): void {
+ ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
             "admin" => AdminMiddleware::class,
             "employe" => EmployeMiddleware::class,
             "customer" => CustomerMidlleware::class,
         ]);
-        $middleware->prepend(HandleCors::class);
-        $middleware->prepend(ForceCors::class);
+
+        $middleware->api(prepend: [
+            \Illuminate\Routing\Middleware\SubstituteBindings::class,
+        ]);
+
+    $middleware->validateCsrfTokens(except: [
+        'broadcasting/auth',
+        'api/broadcasting/auth',
+    ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->render(function (AuthenticationException $auth) {

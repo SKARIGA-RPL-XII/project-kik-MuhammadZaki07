@@ -6,17 +6,17 @@ import { Button } from "@/components/ui/button";
 import Alert from "@/components/ui/alert/Alert";
 import Input from "@/components/form/input/InputField";
 import TextArea from "@/components/form/input/TextArea";
+import { subscribeToPush } from "@/utils/pushSubscription";
 
 export default function GeneralSettingsPage() {
-const [form, setForm] = useState({
-  store_name: "",
-  phone: "",
-  address: "",
-  theme: "light",
-  sidebar_config: {},
-  pages_config: {},
-});
-
+  const [form, setForm] = useState({
+    store_name: "",
+    phone: "",
+    address: "",
+    theme: "light",
+    sidebar_config: {},
+    pages_config: {},
+  });
 
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState("");
@@ -65,7 +65,6 @@ const [form, setForm] = useState({
         )}
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          
           {/* Store Name */}
           <div>
             <Label>Store Name</Label>
@@ -92,9 +91,7 @@ const [form, setForm] = useState({
               onChange={handleChange}
             />
             {errors.phone && (
-              <p className="text-sm text-red-500 mt-1">
-                {errors.phone[0]}
-              </p>
+              <p className="text-sm text-red-500 mt-1">{errors.phone[0]}</p>
             )}
           </div>
 
@@ -112,9 +109,7 @@ const [form, setForm] = useState({
               <option value="dark">Dark</option>
             </select>
             {errors.theme && (
-              <p className="text-sm text-red-500 mt-1">
-                {errors.theme[0]}
-              </p>
+              <p className="text-sm text-red-500 mt-1">{errors.theme[0]}</p>
             )}
           </div>
 
@@ -128,13 +123,14 @@ const [form, setForm] = useState({
               onChange={handleChange}
             />
             {errors.address && (
-              <p className="text-sm text-red-500 mt-1">
-                {errors.address[0]}
-              </p>
+              <p className="text-sm text-red-500 mt-1">{errors.address[0]}</p>
             )}
           </div>
-
         </div>
+
+        <button onClick={() => subscribeToPush()}>
+          Aktifkan Notifikasi di Perangkat Ini
+        </button>
 
         <div className="mt-6">
           <Button

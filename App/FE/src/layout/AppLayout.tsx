@@ -4,6 +4,7 @@ import AppHeader from "./AppHeader";
 import Backdrop from "./Backdrop";
 import AppSidebar from "./AppSidebar";
 import { AuthMiddleware } from "../middleware/midleware";
+import { useEffect } from "react";
 
 const LayoutContent: React.FC = () => {
   const { isExpanded, isHovered, isMobileOpen } = useSidebar();
@@ -29,6 +30,22 @@ const LayoutContent: React.FC = () => {
 };
 
 const AppLayout: React.FC = () => {
+  useEffect(() => {
+    if ("serviceWorker" in navigator) {
+      const handleMessage = (event: MessageEvent) => {
+        if (event.data && event.data.type === "PLAY_SOUND") {
+          const audioPath = window.location.origin + event.data.file;
+          const audio = new Audio(audioPath);
+          audio.play().catch(() => {});
+        }
+      };
+
+      navigator.serviceWorker.addEventListener("message", handleMessage);
+      return () =>
+        navigator.serviceWorker.removeEventListener("message", handleMessage);
+    }
+  }, []);
+
   return (
     <SidebarProvider>
       <AuthMiddleware>

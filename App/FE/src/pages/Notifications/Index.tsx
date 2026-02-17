@@ -1,0 +1,304 @@
+import React, { useEffect, useState } from "react";
+import { Notification } from "../../types/notification";
+import { useNotification } from "../../hooks/useNotification";
+import {
+  CheckCheck,
+  Clock,
+  Trash2,
+  Filter,
+  MoreVertical,
+  ChevronRight,
+  ChevronLeft,
+} from "lucide-react";
+import dayjs from "dayjs";
+import relativeTime from "dayjs/plugin/relativeTime";
+import { notificationService } from "@/services/notification.service";
+import { useAuth } from "@/context/AuthContext";
+import { requestNotificationPermission } from "@/utils/notificationHelper";
+import { useNavigate } from "react-router";
+import PageMeta from "@/components/common/PageMeta";
+import PageBreadcrumb from "@/components/common/PageBreadCrumb";
+import ComponentCard from "@/components/common/ComponentCard";
+
+dayjs.extend(relativeTime);
+
+const NotificationPage: React.FC = () => {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const { notifications, setNotifications, unreadCount, setUnreadCount } =
+    useNotification(user?.id, user?.role_id);
+
+  const [loading, setLoading] = useState(true);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+
+  useEffect(() => {
+    requestNotificationPermission();
+    loadData(currentPage);
+  }, [currentPage]);
+
+  const loadData = async (page: number) => {
+    setLoading(true);
+    try {
+      const res = await notificationService.getAll(page);
+      setNotifications(res.data.notifications);
+      setUnreadCount(res.data.metadata.unread_count);
+      setTotalPages(res.data.metadata.last_page || 1);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSelectAll = () => {
+    if (selectedIds.length === notifications.length) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(notifications.map((n) => n.id));
+    }
+  };
+
+  const toggleSelect = (e: React.MouseEvent, id: string) => {
+    e.stopPropagation();
+    setSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
+    );
+  };
+
+  const openDetail = (notif: Notification) => {
+    navigate(`/notifications/${notif.id}`);
+  };
+
+  const handleBulkMarkRead = async () => {
+    if (selectedIds.length === 0) return;
+    try {
+      await Promise.all(
+        selectedIds.map((id) => notificationService.markAsRead(id))
+      );
+      setNotifications((prev) =>
+        prev.map((n) =>
+          selectedIds.includes(n.id)
+            ? { ...n, read_at: dayjs().toISOString() }
+            : n
+        )
+      );
+      setUnreadCount((prev) => Math.max(0, prev - selectedIds.length));
+      setSelectedIds([]);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (
+      selectedIds.length === 0 ||
+      !confirm(`Hapus ${selectedIds.length} notifikasi?`)
+    )
+      return;
+    try {
+      await Promise.all(
+        selectedIds.map((id) => notificationService.delete(id))
+      );
+      const deletedUnread = notifications.filter(
+        (n) => selectedIds.includes(n.id) && !n.read_at
+      ).length;
+      setNotifications((prev) =>
+        prev.filter((n) => !selectedIds.includes(n.id))
+      );
+      setUnreadCount((prev) => Math.max(0, prev - deletedUnread));
+      setSelectedIds([]);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  return (
+    <div className="mx-auto max-w-screen-2xl p-4 md:p-6 2xl:p-10">
+      <PageMeta
+        title="Notifications | Admin Dashboard"
+        description="List of all notifications that come into your account."
+      />
+      <PageBreadcrumb pageTitle="Notifications" />
+
+      <ComponentCard
+        title="Inboxes"
+        desc="List of all notifications that come into your account."
+      >
+        <div className="flex flex-wrap items-center justify-between border-b border-stroke px-4 pb-4 dark:border-strokedark sm:px-6 xl:px-7.5">
+          <div className="flex items-center gap-4">
+            <button className="flex items-center gap-2 rounded border border-stroke px-3 py-1.5 text-sm font-medium text-black hover:shadow-1 dark:border-strokedark dark:text-white transition">
+              <Filter size={16} /> Filter
+            </button>
+
+            {selectedIds.length > 0 && (
+              <div className="flex items-center gap-4 animate-in fade-in slide-in-from-left-2">
+                <div className="h-6 w-px bg-stroke dark:bg-strokedark" />
+                <button
+                  onClick={handleBulkMarkRead}
+                  className="flex items-center gap-1 text-sm font-semibold text-primary hover:opacity-80 transition"
+                >
+                  <CheckCheck size={16} /> Mark as Read
+                </button>
+                <button
+                  onClick={handleBulkDelete}
+                  className="flex items-center gap-1 text-sm font-semibold text-danger hover:opacity-80 transition"
+                >
+                  <Trash2 size={16} /> Delete
+                </button>
+              </div>
+            )}
+          </div>
+
+          <div className="text-sm font-medium text-body">
+            Unread: <span className="text-black dark:text-white font-bold">{unreadCount}</span>
+          </div>
+        </div>
+
+        <div className="max-w-full overflow-x-auto">
+          <table className="w-full table-auto">
+            <thead>
+              <tr className="bg-gray-2 text-left dark:bg-meta-4">
+                <th className="w-[50px] px-4 py-4 xl:pl-11">
+                  <input
+                    type="checkbox"
+                    className="h-4 w-4 rounded border-stroke accent-primary cursor-pointer"
+                    checked={
+                      notifications.length > 0 &&
+                      selectedIds.length === notifications.length
+                    }
+                    onChange={handleSelectAll}
+                  />
+                </th>
+                <th className="min-w-[250px] px-4 py-4 font-medium text-black dark:text-white">
+                  Message
+                </th>
+                <th className="px-4 py-4 font-medium text-black dark:text-white">
+                  Type
+                </th>
+                <th className="px-4 py-4 font-medium text-black dark:text-white">
+                  Date
+                </th>
+                <th className="px-4 py-4 text-right font-medium text-black dark:text-white xl:pr-11">
+                  Actions
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {loading ? (
+                <tr>
+                  <td colSpan={5} className="py-20 text-center text-sm font-medium">
+                    <div className="flex flex-col items-center gap-2 text-body">
+                      <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                      Loading notifications...
+                    </div>
+                  </td>
+                </tr>
+              ) : notifications.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="py-20 text-center text-body">
+                    No notifications found.
+                  </td>
+                </tr>
+              ) : (
+                notifications.map((notif) => (
+                  <tr
+                    key={notif.id}
+                    onClick={() => openDetail(notif)}
+                    className={`group cursor-pointer border-b border-[#eee] dark:border-strokedark hover:bg-gray-1 dark:hover:bg-white/5 transition-colors ${
+                      !notif.read_at ? "bg-primary/[0.02]" : ""
+                    }`}
+                  >
+                    <td
+                      className="px-4 py-4 xl:pl-11"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <input
+                        type="checkbox"
+                        className="h-4 w-4 rounded border-stroke accent-primary cursor-pointer"
+                        checked={selectedIds.includes(notif.id)}
+                        onChange={(e) => toggleSelect(e as any, notif.id)}
+                      />
+                    </td>
+                    <td className="px-4 py-4">
+                      <div className="flex flex-col gap-0.5">
+                        <p
+                          className={`text-sm ${
+                            !notif.read_at
+                              ? "font-bold text-black dark:text-white"
+                              : "text-body font-medium"
+                          }`}
+                        >
+                          {notif.title}
+                        </p>
+                        <p className="text-xs text-body font-normal line-clamp-1">
+                          {notif.message}
+                        </p>
+                      </div>
+                    </td>
+                    <td className="px-4 py-4">
+                      <span
+                        className={`inline-flex rounded-full px-3 py-1 text-xs font-medium uppercase ${
+                          notif.is_global
+                            ? "bg-primary/10 text-primary"
+                            : "bg-success/10 text-success"
+                        }`}
+                      >
+                        {notif.is_global ? "Global" : "System"}
+                      </span>
+                    </td>
+                    <td className="px-4 py-4 text-sm text-body">
+                      <div className="flex items-center gap-1.5 whitespace-nowrap">
+                        <Clock size={12} className="opacity-60" />
+                        {dayjs(notif.created_at).fromNow()}
+                      </div>
+                    </td>
+                    <td className="px-4 py-4 xl:pr-11">
+                      <div className="flex items-center justify-end">
+                        <button className="text-body hover:text-primary transition p-1">
+                          <ChevronRight size={18} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        {totalPages > 1 && (
+          <div className="flex flex-col items-center justify-between border-t border-stroke p-4 dark:border-strokedark sm:flex-row sm:px-6">
+            <p className="mb-4 text-sm font-medium text-body sm:mb-0">
+              Showing Page {currentPage} of {totalPages}
+            </p>
+            <div className="flex items-center gap-2">
+              <button
+                disabled={currentPage === 1}
+                onClick={() => setCurrentPage((prev) => prev - 1)}
+                className="flex h-8 w-8 items-center justify-center rounded border border-stroke hover:bg-gray dark:border-strokedark dark:hover:bg-meta-4 disabled:opacity-30 disabled:cursor-not-allowed transition"
+              >
+                <ChevronLeft size={16} />
+              </button>
+              
+              <div className="flex items-center gap-1 mx-2 text-sm font-semibold text-black dark:text-white">
+                Page {currentPage}
+              </div>
+
+              <button
+                disabled={currentPage === totalPages}
+                onClick={() => setCurrentPage((prev) => prev + 1)}
+                className="flex h-8 w-8 items-center justify-center rounded border border-stroke hover:bg-gray dark:border-strokedark dark:hover:bg-meta-4 disabled:opacity-30 disabled:cursor-not-allowed transition"
+              >
+                <ChevronRight size={16} />
+              </button>
+            </div>
+          </div>
+        )}
+      </ComponentCard>
+    </div>
+  );
+};
+
+export default NotificationPage;

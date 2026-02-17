@@ -6,6 +6,7 @@ type User = {
   email: string;
   username: string;
   role_name: string;
+  role_id: number;
   gender: "LK" | "PR";
 };
 

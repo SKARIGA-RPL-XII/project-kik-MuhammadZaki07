@@ -17,7 +17,6 @@ import {
   UserSquare,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
-import { useSettings } from "@/context/SettingsContext";
 
 type NavItem = {
   name: string;
@@ -34,6 +33,7 @@ const navItems: NavItem[] = [
     role: ["admin", "cashier"],
     subItems: [
       { name: "Dashboard", path: "/dashboard" },
+      { name: "Notifications", path: "/notifications" },
       { name: "Calendar", path: "/calendar" },
     ],
   },

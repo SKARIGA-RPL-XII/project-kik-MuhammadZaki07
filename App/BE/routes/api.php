@@ -11,6 +11,7 @@ use App\Http\Controllers\DutyScheduleController;
 use App\Http\Controllers\EmployeController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\MenuController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\RoomController;
 use App\Http\Controllers\SettingController;
@@ -18,6 +19,7 @@ use App\Http\Controllers\TableController;
 use App\Http\Controllers\TasksController;
 use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\UserController;
+use Illuminate\Support\Facades\Broadcast;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -30,11 +32,6 @@ Route::prefix('auth')->controller(AuthController::class)->group(function () {
     Route::post('login', 'login');
     Route::post('register', 'register');
     Route::post('logout', 'logout')->middleware('auth:sanctum');
-});
-
-Route::middleware('auth:sanctum')->group(function () {
-    Route::post('updateProfile', [UserController::class, 'updateProfile']);
-    Route::get('user/me', [UserController::class, 'me']);
 });
 
 
@@ -57,24 +54,21 @@ Route::get('discounts', [DiscountController::class, 'index']);
 */
 
 Route::middleware('auth:sanctum')->group(function () {
-
-    // Tasks
+    Route::post('updateProfile', [UserController::class, 'updateProfile']);
+    Route::get('user/me', [UserController::class, 'me']);
     Route::resource('tasks', TasksController::class);
-
-    // Badges
     Route::resource('badges', BadgeController::class);
-
-    // Events
     Route::resource('events', EventController::class);
-
-    // Duty Schedules
     Route::resource('duty-schedules', DutyScheduleController::class);
-
-    // Roles
     Route::get('roles', [RoleController::class, 'index']);
-
-    // Admin Resource
-    Route::apiResource('admins', AdminController::class);
+    Route::prefix('notifications')->group(function () {
+        Route::get('/', [NotificationController::class, 'index']);
+        Route::post('/subscribe', [NotificationController::class, 'subscribe']);
+        Route::put('/read-all', [NotificationController::class, 'markAllAsRead']);
+        Route::get('/{id}', [NotificationController::class, 'show']);
+        Route::put('/{id}/read', [NotificationController::class, 'markAsRead']);
+        Route::delete('/{id}', [NotificationController::class, 'destroy']);
+    });
 });
 
 
@@ -98,6 +92,7 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
     // Menu Management
     Route::resource('menus', MenuController::class)
         ->only('store', 'update', 'destroy', 'show');
+    Route::apiResource('admins', AdminController::class);
 
     Route::get('menu-admin', [MenuController::class, 'GetAllAdmin']);
 
@@ -140,3 +135,4 @@ Route::get('tables', [TableController::class, 'index']);
 Route::get('tables/{id}', [TableController::class, 'show']);
 Route::get('rooms', [RoomController::class, 'index']);
 Route::get('rooms/{id}', [RoomController::class, 'show']);
+Broadcast::routes(['middleware' => ['auth:sanctum']]);
