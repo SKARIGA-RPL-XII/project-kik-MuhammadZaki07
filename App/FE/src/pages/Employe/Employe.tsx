@@ -4,8 +4,9 @@ import PageBreadcrumb from "../../components/common/PageBreadCrumb";
 import PageMeta from "../../components/common/PageMeta";
 import Button from "../../components/ui/button/Button";
 import Input from "../../components/form/input/InputField";
-import { Plus, Upload } from "lucide-react";
+import { Plus, Upload, Download, FileSpreadsheet, Loader2 } from "lucide-react";
 import { EmployeService } from "../../services/employe.service";
+import * as XLSX from "xlsx";
 import {
   AlertDialog,
   AlertDialogCancel,
@@ -13,30 +14,28 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import Select from "../../components/form/Select";
 import EmployeTable from "../../components/tables/EmployeTable";
 import TextArea from "../../components/form/input/TextArea";
+import { useToast } from "@/context/ToastContext";
 
 function Employe() {
   const [employes, setEmployes] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
-
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
-
   const [genderFilter, setGenderFilter] = useState("");
-
+  const [roleFilter, setRoleFilter] = useState("");
   const [page, setPage] = useState(1);
-  const size = 10;
-
   const [total, setTotal] = useState(0);
+  const size = 10;
   const totalPage = Math.ceil(total / size);
 
   const [openDialog, setOpenDialog] = useState(false);
+  const [openImport, setOpenImport] = useState(false);
   const [editingData, setEditingData] = useState<any | null>(null);
-  const [roleFilter, setRoleFilter] = useState("");
+  const { toast } = useToast();
 
   const [form, setForm] = useState({
     username: "",
@@ -46,20 +45,29 @@ function Employe() {
     addres: "",
     no_tlp: "",
     gender: "",
-    role: "",
+    role_id: "",
   });
 
   const [profileImage, setProfileImage] = useState<File | null>(null);
   const [identityCard, setIdentityCard] = useState<File | null>(null);
-
   const [profilePreview, setProfilePreview] = useState<string | null>(null);
   const [identityPreview, setIdentityPreview] = useState<string | null>(null);
 
   const [errors, setErrors] = useState<any>({});
   const [submitting, setSubmitting] = useState(false);
+  const [exporting, setExporting] = useState(false);
 
-  const profileRef = useRef<HTMLInputElement>(null);
-  const identityRef = useRef<HTMLInputElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const [excelData, setExcelData] = useState<any[]>([]);
+  const [excelHeaders, setExcelHeaders] = useState<string[]>([]);
+  const [mapping, setMapping] = useState({
+    username: "",
+    email: "",
+    gender: "",
+    no_tlp: "",
+    addres: "",
+  });
 
   const fetchEmployes = async () => {
     setLoading(true);
@@ -70,12 +78,10 @@ function Employe() {
       gender: genderFilter || undefined,
       role_id: roleFilter || undefined,
     });
-
     if (res.data) {
       setEmployes(res.data.data.employes);
       setTotal(res.data.data.metadata.total);
     }
-
     setLoading(false);
   };
 
@@ -91,9 +97,69 @@ function Employe() {
     return () => clearTimeout(timeout);
   }, [search]);
 
-  useEffect(() => {
-    setPage(1);
-  }, [genderFilter, roleFilter]);
+  const handleFileImportChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (evt) => {
+        const bstr = evt.target?.result;
+        const wb = XLSX.read(bstr, { type: "binary" });
+        const wsname = wb.SheetNames[0];
+        const ws = wb.Sheets[wsname];
+        const data = XLSX.utils.sheet_to_json(ws);
+        if (data.length > 0) {
+          setExcelData(data);
+          setExcelHeaders(Object.keys(data[0] as object));
+          setOpenImport(true);
+        }
+      };
+      reader.readAsBinaryString(file);
+    }
+    e.target.value = "";
+  };
+
+  const handleProcessImport = async () => {
+    if (excelData.length === 0) return;
+    setSubmitting(true);
+
+    const formattedData = excelData.map((row) => ({
+      username: row[mapping.username],
+      email: row[mapping.email],
+      gender: row[mapping.gender],
+      no_tlp: row[mapping.no_tlp],
+      addres: row[mapping.addres],
+    }));
+
+    const res = await EmployeService.importMapping({ data: formattedData });
+
+    if (res.error) {
+      toast("error", "Import Gagal", "Periksa kembali mapping kolom Anda.");
+      setErrors(res.error);
+    } else {
+      toast("success", "Berhasil", "Data employee berhasil diimport.");
+      setOpenImport(false);
+      setExcelData([]);
+      setExcelHeaders([]);
+      fetchEmployes();
+    }
+    setSubmitting(false);
+  };
+
+  const handleExport = async () => {
+    setExporting(true);
+    const res = await EmployeService.exportEmploye();
+
+    if (res.data) {
+      toast(
+        "success",
+        "Export Diproses",
+        "Silakan cek menu notifikasi untuk mendownload file.",
+      );
+    } else if (res.error) {
+      toast("error", "Export Gagal", res.error);
+    }
+    setExporting(false);
+  };
 
   const resetForm = () => {
     setForm({
@@ -104,7 +170,7 @@ function Employe() {
       addres: "",
       no_tlp: "",
       gender: "",
-      role: "",
+      role_id: "",
     });
     setProfileImage(null);
     setIdentityCard(null);
@@ -114,29 +180,14 @@ function Employe() {
     setEditingData(null);
   };
 
-  const handleCloseDialog = () => {
-    setOpenDialog(false);
-    resetForm();
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
-    setErrors({});
-
     const formData = new FormData();
-
-    formData.append("username", form.username);
-    formData.append("email", form.email);
-    formData.append("addres", form.addres);
-    formData.append("no_tlp", form.no_tlp);
-    formData.append("gender", form.gender);
-
-    if (!editingData) {
-      formData.append("password", form.password);
-      formData.append("password_confirmation", form.password_confirmation);
-    }
-
+    Object.entries(form).forEach(([key, value]) => {
+      if (value) formData.append(key, value);
+    });
+    if (editingData) formData.append("_method", "PUT");
     if (profileImage) formData.append("profile_image", profileImage);
     if (identityCard) formData.append("identity_card", identityCard);
 
@@ -146,52 +197,13 @@ function Employe() {
 
     if (res.error) {
       setErrors(res.error);
-      setSubmitting(false);
-      return;
-    }
-
-    handleCloseDialog();
-    fetchEmployes();
-    setSubmitting(false);
-  };
-
-  const handleEdit = (data: any) => {
-    setEditingData(data);
-    setForm({
-      username: data.user?.username ?? "",
-      email: data.user?.email ?? "",
-      password: "",
-      password_confirmation: "",
-      addres: data.addres ?? "",
-      no_tlp: data.no_tlp?.toString() ?? "",
-      gender: data.gender ?? "",
-      role: data.role ?? "",
-    });
-
-    setProfilePreview(
-      data.profile_image
-        ? `${import.meta.env.VITE_STORAGE_URL}/${data.profile_image}`
-        : null,
-    );
-
-    setIdentityPreview(
-      data.identity_card
-        ? `${import.meta.env.VITE_STORAGE_URL}/${data.identity_card}`
-        : null,
-    );
-
-    setOpenDialog(true);
-  };
-
-  const handleFile = (file: File, type: "profile" | "identity") => {
-    const preview = URL.createObjectURL(file);
-    if (type === "profile") {
-      setProfileImage(file);
-      setProfilePreview(preview);
     } else {
-      setIdentityCard(file);
-      setIdentityPreview(preview);
+      setOpenDialog(false);
+      resetForm();
+      fetchEmployes();
+      toast("success", "Success", "Data berhasil disimpan");
     }
+    setSubmitting(false);
   };
 
   return (
@@ -202,268 +214,82 @@ function Employe() {
       <ComponentCard title="Management Employe" desc="Manage all employe data">
         <div className="flex flex-wrap justify-between items-center gap-4 mb-4">
           <div className="flex gap-3">
-            <div className="">
-              <Input
-                type="text"
-                placeholder="Search username..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="w-full"
-              />
-            </div>
-
-            <div className="">
-              <Select
-                value={genderFilter}
-                onChange={(val: any) => setGenderFilter(val)}
-                placeholder="Filter Gender"
-                options={[
-                  { label: "All Gender", value: "" },
-                  { label: "Laki-laki", value: "LK" },
-                  { label: "Perempuan", value: "PR" },
-                ]}
-              />
-            </div>
-            <div className="">
-              <Select
-                value={roleFilter}
-                onChange={(val: any) => setRoleFilter(val)}
-                placeholder="Filter Role"
-                options={[
-                  { label: "All Role", value: "" },
-                  { label: "Employe", value: "2" },
-                  { label: "Cashier", value: "5" },
-                ]}
-              />
-            </div>
+            <Input
+              placeholder="Search username..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+            <Select
+              value={genderFilter}
+              onChange={(val: any) => setGenderFilter(val)}
+              placeholder="Gender"
+              options={[
+                { label: "All", value: "" },
+                { label: "Laki-laki", value: "LK" },
+                { label: "Perempuan", value: "PR" },
+              ]}
+            />
           </div>
 
-          <AlertDialog open={openDialog} onOpenChange={setOpenDialog}>
-            <AlertDialogTrigger asChild>
-              <Button className="h-10" onClick={resetForm}>
-                Create <Plus className="ml-1" />
-              </Button>
-            </AlertDialogTrigger>
-
-            <AlertDialogContent
-              size="xl"
-              className="max-h-[90vh] max-w-3xl overflow-y-auto"
+          <div className="flex gap-2">
+            <input
+              type="file"
+              ref={fileInputRef}
+              className="hidden"
+              accept=".xlsx,.xls,.csv"
+              onChange={handleFileImportChange}
+            />
+            <Button
+              variant="outline"
+              onClick={() => fileInputRef.current?.click()}
             >
-              <AlertDialogHeader>
-                <AlertDialogTitle>
-                  {editingData ? "Edit Employe" : "Create Employe"}
-                </AlertDialogTitle>
-              </AlertDialogHeader>
-
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="grid grid-cols-3 gap-3">
-                  <div>
-                    <label className="text-sm font-medium">
-                      Username <span className="text-red-500">*</span>
-                    </label>
-                    <Input
-                      value={form.username}
-                      onChange={(e) =>
-                        setForm({ ...form, username: e.target.value })
-                      }
-                    />
-                    {errors?.username && (
-                      <p className="text-sm text-red-500">
-                        {errors.username[0]}
-                      </p>
-                    )}
-                  </div>
-
-                  <div>
-                    <label className="text-sm font-medium">
-                      Email <span className="text-red-500">*</span>
-                    </label>
-                    <Input
-                      type="email"
-                      value={form.email}
-                      onChange={(e) =>
-                        setForm({ ...form, email: e.target.value })
-                      }
-                    />
-                    {errors?.email && (
-                      <p className="text-sm text-red-500">{errors.email[0]}</p>
-                    )}
-                  </div>
-
-                  <div>
-                    <label className="text-sm font-medium">
-                      Role <span className="text-red-500">*</span>
-                    </label>
-                    <Select
-                      value={form.role}
-                      onChange={(val: any) => setForm({ ...form, role: val })}
-                      options={[
-                        { label: "Employe", value: "2" },
-                        { label: "Cashier", value: "5" },
-                      ]}
-                    />
-                    {errors?.role && (
-                      <p className="text-sm text-red-500">{errors.role[0]}</p>
-                    )}
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="text-sm font-medium">
-                      Phone <span className="text-red-500">*</span>
-                    </label>
-                    <Input
-                      type="number"
-                      min={0}
-                      value={form.no_tlp}
-                      onChange={(e) =>
-                        setForm({ ...form, no_tlp: e.target.value })
-                      }
-                    />
-                    {errors?.no_tlp && (
-                      <p className="text-sm text-red-500">{errors.no_tlp[0]}</p>
-                    )}
-                  </div>
-
-                  <div>
-                    <label className="text-sm font-medium">
-                      Gender <span className="text-red-500">*</span>
-                    </label>
-                    <Select
-                      value={form.gender}
-                      onChange={(val: any) => setForm({ ...form, gender: val })}
-                      options={[
-                        { label: "Laki-laki", value: "LK" },
-                        { label: "Perempuan", value: "PR" },
-                      ]}
-                    />
-                    {errors?.gender && (
-                      <p className="text-sm text-red-500">{errors.gender[0]}</p>
-                    )}
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="text-sm font-medium">
-                      Profile Image{" "}
-                      {!editingData && <span className="text-red-500">*</span>}
-                    </label>
-                    <div
-                      onClick={() => profileRef.current?.click()}
-                      onDragOver={(e) => e.preventDefault()}
-                      onDrop={(e) => {
-                        e.preventDefault();
-                        if (e.dataTransfer.files[0])
-                          handleFile(e.dataTransfer.files[0], "profile");
-                      }}
-                      className="border-2 border-dashed rounded-lg p-4 text-center cursor-pointer"
-                    >
-                      {profilePreview ? (
-                        <img
-                          src={profilePreview}
-                          className="h-24 mx-auto object-cover"
-                        />
-                      ) : (
-                        <div className="flex flex-col items-center text-sm text-neutral-500">
-                          <Upload size={20} />
-                          Drag & drop or click to upload
-                        </div>
-                      )}
-                    </div>
-                    <input
-                      type="file"
-                      hidden
-                      ref={profileRef}
-                      onChange={(e) =>
-                        e.target.files &&
-                        handleFile(e.target.files[0], "profile")
-                      }
-                    />
-                  </div>
-
-                  <div>
-                    <label className="text-sm font-medium">
-                      Identity Card{" "}
-                      {!editingData && <span className="text-red-500">*</span>}
-                    </label>
-                    <div
-                      onClick={() => identityRef.current?.click()}
-                      onDragOver={(e) => e.preventDefault()}
-                      onDrop={(e) => {
-                        e.preventDefault();
-                        if (e.dataTransfer.files[0])
-                          handleFile(e.dataTransfer.files[0], "identity");
-                      }}
-                      className="border-2 border-dashed rounded-lg p-4 text-center cursor-pointer"
-                    >
-                      {identityPreview ? (
-                        <img
-                          src={identityPreview}
-                          className="h-24 mx-auto object-cover"
-                        />
-                      ) : (
-                        <div className="flex flex-col items-center text-sm text-neutral-500">
-                          <Upload size={20} />
-                          Drag & drop or click to upload
-                        </div>
-                      )}
-                    </div>
-                    <input
-                      type="file"
-                      hidden
-                      ref={identityRef}
-                      onChange={(e) =>
-                        e.target.files &&
-                        handleFile(e.target.files[0], "identity")
-                      }
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="text-sm font-medium">
-                    Address <span className="text-red-500">*</span>
-                  </label>
-                  <TextArea
-                    value={form.addres}
-                    onChange={(value) => setForm({ ...form, addres: value })}
-                  />
-                  {errors?.addres && (
-                    <p className="text-sm text-red-500">{errors.addres[0]}</p>
-                  )}
-                </div>
-
-                <AlertDialogFooter className="flex mt-4">
-                  <AlertDialogCancel
-                    disabled={submitting}
-                    onClick={handleCloseDialog}
-                  >
-                    Batal
-                  </AlertDialogCancel>
-
-                  <Button className="h-9" type="submit" disabled={submitting}>
-                    {submitting ? "Menyimpan..." : "Submit"}
-                  </Button>
-                </AlertDialogFooter>
-              </form>
-            </AlertDialogContent>
-          </AlertDialog>
+              Import <FileSpreadsheet className="ml-2" size={18} />
+            </Button>
+            <Button
+              variant="outline"
+              onClick={handleExport}
+              disabled={exporting}
+            >
+              {exporting ? (
+                <Loader2 className="animate-spin mr-2" size={18} />
+              ) : (
+                <Download className="mr-2" size={18} />
+              )}{" "}
+              Export
+            </Button>
+            <Button
+              onClick={() => {
+                resetForm();
+                setOpenDialog(true);
+              }}
+            >
+              <Plus className="mr-2" size={18} /> Create
+            </Button>
+          </div>
         </div>
 
         <EmployeTable
           employes={employes}
           loading={loading}
           onRefresh={fetchEmployes}
-          onEdit={handleEdit}
+          onEdit={(data) => {
+            setEditingData(data);
+            setForm({
+              username: data.user?.username ?? "",
+              email: data.user?.email ?? "",
+              password: "",
+              password_confirmation: "",
+              addres: data.addres ?? "",
+              no_tlp: data.no_tlp?.toString() ?? "",
+              gender: data.gender ?? "",
+              role_id: data.user?.role_id?.toString() ?? "",
+            });
+            setOpenDialog(true);
+          }}
         />
 
         <div className="flex items-center justify-between mt-6">
-          <p className="text-sm text-neutral-500">
-            Page {page} of {totalPage || 1} — Total {total} data
-          </p>
-
+          <p className="text-sm text-neutral-500">Total {total} data</p>
           <div className="flex gap-2">
             <Button
               size="sm"
@@ -473,7 +299,6 @@ function Employe() {
             >
               Prev
             </Button>
-
             <Button
               size="sm"
               variant="outline"
@@ -485,6 +310,107 @@ function Employe() {
           </div>
         </div>
       </ComponentCard>
+
+      <AlertDialog open={openDialog} onOpenChange={setOpenDialog}>
+        <AlertDialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {editingData ? "Edit Employe" : "Create Employe"}
+            </AlertDialogTitle>
+          </AlertDialogHeader>
+          <form onSubmit={handleSubmit} className="space-y-4 pt-4">
+            <div className="grid grid-cols-2 gap-4">
+              <Input
+                label="Username"
+                value={form.username}
+                onChange={(e) => setForm({ ...form, username: e.target.value })}
+                error={errors?.username?.[0]}
+              />
+              <Input
+                label="Email"
+                type="email"
+                value={form.email}
+                onChange={(e) => setForm({ ...form, email: e.target.value })}
+                error={errors?.email?.[0]}
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <Input
+                label="No Tlp"
+                value={form.no_tlp}
+                onChange={(e) => setForm({ ...form, no_tlp: e.target.value })}
+                error={errors?.no_tlp?.[0]}
+              />
+              <Select
+                label="Gender"
+                value={form.gender}
+                onChange={(val: any) => setForm({ ...form, gender: val })}
+                options={[
+                  { label: "Laki-laki", value: "LK" },
+                  { label: "Perempuan", value: "PR" },
+                ]}
+                error={errors?.gender?.[0]}
+              />
+            </div>
+            <TextArea
+              label="Address"
+              value={form.addres}
+              onChange={(val) => setForm({ ...form, addres: val })}
+              error={errors?.addres?.[0]}
+            />
+            <AlertDialogFooter>
+              <AlertDialogCancel onClick={() => setOpenDialog(false)}>
+                Cancel
+              </AlertDialogCancel>
+              <Button type="submit" disabled={submitting}>
+                {submitting ? "Saving..." : "Submit"}
+              </Button>
+            </AlertDialogFooter>
+          </form>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={openImport} onOpenChange={setOpenImport}>
+        <AlertDialogContent className="max-w-2xl">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Import Mapping (Role: Employe)</AlertDialogTitle>
+          </AlertDialogHeader>
+          <div className="grid grid-cols-2 gap-4 py-4">
+            {Object.keys(mapping).map((key) => (
+              <div key={key} className="space-y-1">
+                <label className="text-xs font-bold uppercase text-neutral-500">
+                  {key.replace("_", " ")}
+                </label>
+                <select
+                  className="w-full h-10 border rounded-md px-3 text-sm"
+                  value={(mapping as any)[key]}
+                  onChange={(e) =>
+                    setMapping({ ...mapping, [key]: e.target.value })
+                  }
+                >
+                  <option value="">-- Pilih Kolom Excel --</option>
+                  {excelHeaders.map((head, idx) => (
+                    <option key={idx} value={head}>
+                      {head}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            ))}
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setOpenImport(false)}>
+              Batal
+            </AlertDialogCancel>
+            <Button
+              onClick={handleProcessImport}
+              disabled={submitting || !mapping.username || !mapping.email}
+            >
+              {submitting ? "Processing..." : "Mulai Import"}
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }

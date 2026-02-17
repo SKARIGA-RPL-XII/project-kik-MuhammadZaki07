@@ -69,6 +69,10 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::put('/{id}/read', [NotificationController::class, 'markAsRead']);
         Route::delete('/{id}', [NotificationController::class, 'destroy']);
     });
+    Route::prefix('employes')->group(function () {
+        Route::get('/export', [EmployeController::class, 'export']);
+        Route::post('/import', [EmployeController::class, 'import']);
+    });
     Route::post('/admins/export', [AdminController::class, 'export']);
     Route::post('/admins/import-mapping', [AdminController::class, 'importMapping']);
 });

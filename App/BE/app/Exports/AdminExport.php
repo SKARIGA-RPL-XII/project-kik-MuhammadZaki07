@@ -20,6 +20,7 @@ class AdminExport implements FromCollection, WithHeadings, WithMapping
             'ID',
             'Username',
             'Email',
+            'Role',
             'Dibuat Pada'
         ];
     }
@@ -30,6 +31,7 @@ class AdminExport implements FromCollection, WithHeadings, WithMapping
             $user->id,
             $user->username,
             $user->email,
+            $user->role->name,
             $user->created_at->format('Y-m-d H:i:s'),
         ];
     }

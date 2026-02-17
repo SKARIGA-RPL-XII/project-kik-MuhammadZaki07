@@ -52,29 +52,19 @@ export default function EmployeTable({
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead
-                  className="px-5 py-3 text-theme-xs text-start"
-                >
+                <TableHead className="px-5 py-3 text-theme-xs text-start">
                   User
                 </TableHead>
-                <TableHead
-                  className="px-5 py-3 text-theme-xs text-start"
-                >
+                <TableHead className="px-5 py-3 text-theme-xs text-start">
                   Employee Position
                 </TableHead>
-                <TableHead
-                  className="px-5 py-3 text-theme-xs text-start"
-                >
+                <TableHead className="px-5 py-3 text-theme-xs text-start">
                   Phone
                 </TableHead>
-                <TableHead
-                  className="px-5 py-3 text-theme-xs text-start"
-                >
+                <TableHead className="px-5 py-3 text-theme-xs text-start">
                   Gender
                 </TableHead>
-                <TableHead
-                  className="px-5 py-3 text-theme-xs text-start"
-                >
+                <TableHead className="px-5 py-3 text-theme-xs text-start">
                   Action
                 </TableHead>
               </TableRow>
@@ -109,7 +99,11 @@ export default function EmployeTable({
                     <TableCell className="px-5 py-4">
                       <div className="flex items-center gap-3">
                         <img
-                          src={`${import.meta.env.VITE_STORAGE_URL}/${emp.profile_image}`}
+                          src={
+                            emp.profile_image == null
+                              ? "profile.png"
+                              : `${import.meta.env.VITE_STORAGE_URL}/${emp.profile_image}`
+                          }
                           className="h-10 w-10 rounded-full object-cover"
                         />
                         <div>

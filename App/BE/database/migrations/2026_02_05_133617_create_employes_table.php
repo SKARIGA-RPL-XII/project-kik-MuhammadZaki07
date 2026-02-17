@@ -13,12 +13,12 @@ return new class extends Migration
     {
         Schema::create('employes', function (Blueprint $table) {
             $table->id();
-            $table->integer('no_induk')->unique();
-            $table->text('addres');
-            $table->string('no_tlp');
-            $table->string('profile_image');
+            $table->string('no_induk')->unique();
+            $table->text('addres')->nullable();
+            $table->string('no_tlp')->nullable();
+            $table->string('profile_image')->nullable();
             $table->string('identity_card')->nullable();
-            $table->enum('gender', ['LK', 'PR']);
+            $table->enum('gender', ['LK', 'PR'])->nullable();
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
             $table->timestamps();
         });

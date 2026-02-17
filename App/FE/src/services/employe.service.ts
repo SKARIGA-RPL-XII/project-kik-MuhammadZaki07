@@ -48,9 +48,7 @@ export class EmployeService {
   static async updateEmploye(id: number, formData: FormData) {
     try {
       formData.append("_method", "PUT");
-
       const res = await apiClient.post(`/employes/${id}`, formData);
-
       return { data: res.data, error: null };
     } catch (err: any) {
       return {
@@ -71,6 +69,32 @@ export class EmployeService {
       return {
         data: null,
         error: err?.response?.data?.message || "Failed to delete employe",
+      };
+    }
+  }
+
+  static async exportEmploye() {
+    try {
+      const response = await apiClient.get("/employes/export", {
+        responseType: "blob",
+      });
+      return { data: response.data, error: null };
+    } catch (error: any) {
+      return { data: null, error: error.response?.data || "Export failed" };
+    }
+  }
+
+  static async importMapping(payload: { data: any[] }) {
+    try {
+      const res = await apiClient.post("/employes/import", payload);
+      return { data: res.data, error: null };
+    } catch (err: any) {
+      return {
+        data: null,
+        error:
+          err?.response?.data?.errors ||
+          err?.response?.data?.message ||
+          "Import failed",
       };
     }
   }
