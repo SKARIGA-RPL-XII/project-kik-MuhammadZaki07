@@ -26,7 +26,15 @@ export interface PaginatedResponse<T> {
 export const AdminService = {
   async getAll(params?: { search?: string; page?: number }) {
     const res = await apiClient.get("/admins", { params });
-    return res.data;
+
+    const paginate = res.data.data;
+
+    return {
+      admins: paginate.data,
+      currentPage: paginate.current_page,
+      totalPage: paginate.last_page,
+      total: paginate.total,
+    };
   },
 
   async create(payload: { email: string; password: string }) {

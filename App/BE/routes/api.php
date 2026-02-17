@@ -54,7 +54,7 @@ Route::get('discounts', [DiscountController::class, 'index']);
 */
 
 Route::middleware('auth:sanctum')->group(function () {
-    Route::post('updateProfile', [UserController::class, 'updateProfile']);
+   Route::match(['post', 'put'], 'users/{id}', [UserController::class, 'updateProfile']);
     Route::get('user/me', [UserController::class, 'me']);
     Route::resource('tasks', TasksController::class);
     Route::resource('badges', BadgeController::class);

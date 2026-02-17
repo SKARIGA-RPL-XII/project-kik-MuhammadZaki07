@@ -79,9 +79,10 @@ class EmployeController extends Controller
         ]);
 
         return DB::transaction(function () use ($request) {
-            $role = Role::whereIn('name', ['employe', 'cashier'])
-                ->where('id', $request->role_id)
-                ->first();
+            $role = Role::where('id', $request->role_id)
+                ->whereIn('name', ['employe', 'cashier'])
+                ->firstOrFail();
+
 
             if (!$role) {
                 return Controller::ERROR('error', 'Invalid role selected', 400);

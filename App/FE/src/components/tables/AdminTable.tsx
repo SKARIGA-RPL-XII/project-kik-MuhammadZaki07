@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Loader2, Pencil, Trash2 } from "lucide-react";
+import { Loader2, Pencil, Trash2, Trash2Icon } from "lucide-react";
+
 import {
   Table,
   TableHeader,
@@ -8,9 +9,9 @@ import {
   TableRow,
   TableCell,
 } from "@/components/ui/table";
+
 import {
   AlertDialog,
-  AlertDialogTrigger,
   AlertDialogContent,
   AlertDialogHeader,
   AlertDialogFooter,
@@ -18,7 +19,9 @@ import {
   AlertDialogDescription,
   AlertDialogCancel,
   AlertDialogAction,
+  AlertDialogMedia,
 } from "@/components/ui/alert-dialog";
+
 import { AdminService } from "@/services/admin.service";
 import { Button } from "../ui/button";
 import { useAuth } from "@/context/AuthContext";
@@ -35,6 +38,7 @@ interface Props {
   loading: boolean;
   onRefresh: () => void;
   onEdit: (data: Admin) => void;
+  page: number;
 }
 
 export default function AdminTable({
@@ -42,6 +46,7 @@ export default function AdminTable({
   loading,
   onRefresh,
   onEdit,
+  page
 }: Props) {
   const { user } = useAuth();
   const currentUserId = user?.id;
@@ -49,8 +54,11 @@ export default function AdminTable({
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
+  const selectedAdmin = admins.find((admin) => admin.id === deletingId);
+
   const handleDelete = async () => {
     if (!deletingId) return;
+
     if (deletingId === currentUserId) {
       alert("You cannot delete your own account.");
       return;
@@ -58,7 +66,9 @@ export default function AdminTable({
 
     try {
       setSubmitting(true);
+
       await AdminService.delete(deletingId);
+
       onRefresh();
     } catch (error) {
       console.error(error);
@@ -70,111 +80,136 @@ export default function AdminTable({
   };
 
   return (
-    <div className="rounded-lg border">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>NO</TableHead>
-            <TableHead>Email</TableHead>
-            <TableHead>Created At</TableHead>
-            <TableHead className="text-right">Action</TableHead>
-          </TableRow>
-        </TableHeader>
-
-        <TableBody>
-          {loading && (
+    <>
+      <div className="rounded-lg border">
+        <Table>
+          <TableHeader>
             <TableRow>
-              <TableCell
-                colSpan={4}
-                className="text-center py-10 text-neutral-500"
-              >
-                <div className="flex items-center justify-center gap-2">
-                  <Loader2 className="animate-spin" size={18} />
-                  <span>Loading data...</span>
-                </div>
-              </TableCell>
+              <TableHead>NO</TableHead>
+              <TableHead>Email</TableHead>
+              <TableHead>Created At</TableHead>
+              <TableHead className="text-right">Action</TableHead>
             </TableRow>
-          )}
+          </TableHeader>
 
-          {!loading && admins.length === 0 && (
-            <TableRow>
-              <TableCell colSpan={4} className="text-center py-6">
-                No admin data found
-              </TableCell>
-            </TableRow>
-          )}
+          <TableBody>
+            {loading && (
+              <TableRow>
+                <TableCell
+                  colSpan={4}
+                  className="text-center py-10 text-neutral-500"
+                >
+                  <div className="flex items-center justify-center gap-2">
+                    <Loader2 className="animate-spin" size={18} />
 
-          {!loading &&
-            admins.map((admin, i) => {
-              const isSelf = admin.id === currentUserId;
+                    <span>Loading data...</span>
+                  </div>
+                </TableCell>
+              </TableRow>
+            )}
 
-              return (
-                <TableRow key={admin.id}>
-                  <TableCell>{i + 1}</TableCell>
+            {!loading && admins.length === 0 && (
+              <TableRow>
+                <TableCell colSpan={4} className="text-center py-6">
+                  No admin data found
+                </TableCell>
+              </TableRow>
+            )}
 
-                  <TableCell className="font-medium">
-                    {admin.email}
-                    {isSelf && (
-                      <span className="ml-2 text-xs text-blue-500">(You)</span>
-                    )}
-                  </TableCell>
+            {!loading &&
+              admins.map((admin, i) => {
+                const isSelf = admin.id === currentUserId;
 
-                  <TableCell>
-                    {new Date(admin.created_at).toLocaleDateString()}
-                  </TableCell>
+                return (
+                  <TableRow key={admin.id}>
+                    <TableCell>{(page - 1) * 10 + i + 1}</TableCell>
 
-                  <TableCell className="text-right space-x-2">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => onEdit(admin)}
-                      className="bg-yellow-400 hover:bg-yellow-400/50 text-white border-none shadow-none"
-                    >
-                      <Pencil size={16} />
-                    </Button>
+                    <TableCell className="font-medium">
+                      {admin.email}
 
-                    {!isSelf && (
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button
-                            size="sm"
-                            variant="destructive"
-                            onClick={() => setDeletingId(admin.id)}
-                          >
-                            <Trash2 size={16} />
-                          </Button>
-                        </AlertDialogTrigger>
+                      {isSelf && (
+                        <span className="ml-2 text-xs text-blue-500">
+                          (You)
+                        </span>
+                      )}
+                    </TableCell>
 
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>Delete Admin</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              This action cannot be undone.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
+                    <TableCell>
+                      {new Date(admin.created_at).toLocaleDateString()}
+                    </TableCell>
 
-                          <AlertDialogFooter>
-                            <AlertDialogCancel disabled={submitting}>
-                              Cancel
-                            </AlertDialogCancel>
+                    <TableCell className="text-right space-x-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => onEdit(admin)}
+                        className="bg-yellow-400 hover:bg-yellow-400/50 text-white border-none shadow-none"
+                      >
+                        <Pencil size={16} />
+                      </Button>
 
-                            <AlertDialogAction
-                              variant="destructive"
-                              disabled={submitting}
-                              onClick={handleDelete}
-                            >
-                              {submitting ? "Deleting..." : "Delete"}
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
-                    )}
-                  </TableCell>
-                </TableRow>
-              );
-            })}
-        </TableBody>
-      </Table>
-    </div>
+                      {!isSelf && (
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          onClick={() => setDeletingId(admin.id)}
+                        >
+                          <Trash2 size={16} />
+                        </Button>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+          </TableBody>
+        </Table>
+      </div>
+
+
+      <AlertDialog open={!!deletingId} onOpenChange={() => setDeletingId(null)}>
+        <AlertDialogContent size="sm">
+          <AlertDialogHeader>
+            <AlertDialogMedia
+              className="
+              bg-destructive/10
+              text-destructive
+              dark:bg-destructive/20
+              dark:text-destructive"
+            >
+              <Trash2Icon />
+            </AlertDialogMedia>
+
+            <AlertDialogTitle>Delete admin?</AlertDialogTitle>
+
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete
+              <span className="font-semibold">
+                {" "}
+                {selectedAdmin?.email}
+              </span>{" "}
+              from the system.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+
+          <AlertDialogFooter>
+            <AlertDialogCancel variant="outline" disabled={submitting}>
+              Cancel
+            </AlertDialogCancel>
+
+            <AlertDialogAction
+              variant="destructive"
+              disabled={submitting}
+              onClick={handleDelete}
+            >
+              {submitting ? (
+                <Loader2 className="animate-spin" size={16} />
+              ) : (
+                "Delete"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }

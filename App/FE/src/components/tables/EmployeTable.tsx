@@ -7,17 +7,21 @@ import {
   TableRow,
 } from "../../components/ui/table";
 import Badge from "../../components/ui/badge/Badge";
-import { Loader2, Pencil, Trash2 } from "lucide-react";
 import { EmployeService } from "../../services/employe.service";
 import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
+  AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
+  AlertDialogMedia,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+
+import { Loader2, Pencil, Trash2, Trash2Icon } from "lucide-react";
+
 import { useState } from "react";
 
 interface Props {
@@ -35,6 +39,7 @@ export default function EmployeTable({
 }: Props) {
   const [deleteId, setDeleteId] = useState<number | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const selectedEmploye = employes.find((e) => e.id === deleteId);
 
   const handleDelete = async () => {
     if (!deleteId) return;
@@ -162,17 +167,45 @@ export default function EmployeTable({
       </div>
 
       <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
-        <AlertDialogContent>
+        <AlertDialogContent size="sm">
           <AlertDialogHeader>
-            <AlertDialogTitle>
-              Are you sure want to delete this employe?
-            </AlertDialogTitle>
+            <AlertDialogMedia
+              className="
+        bg-destructive/10
+        text-destructive
+        dark:bg-destructive/20
+        dark:text-destructive"
+            >
+              <Trash2Icon />
+            </AlertDialogMedia>
+
+            <AlertDialogTitle>Delete employee?</AlertDialogTitle>
+
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete
+              <span className="font-semibold">
+                {" "}
+                {selectedEmploye?.user?.username}
+              </span>{" "}
+              from the system.
+            </AlertDialogDescription>
           </AlertDialogHeader>
 
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
-            <AlertDialogAction disabled={deleting} onClick={handleDelete}>
-              {deleting ? "Deleting..." : "Delete"}
+            <AlertDialogCancel disabled={deleting} variant="outline">
+              Cancel
+            </AlertDialogCancel>
+
+            <AlertDialogAction
+              variant="destructive"
+              disabled={deleting}
+              onClick={handleDelete}
+            >
+              {deleting ? (
+                <Loader2 className="animate-spin" size={16} />
+              ) : (
+                "Delete"
+              )}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

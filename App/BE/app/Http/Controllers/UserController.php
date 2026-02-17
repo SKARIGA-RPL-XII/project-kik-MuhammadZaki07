@@ -11,17 +11,18 @@ class UserController extends Controller
 {
     public function updateProfile(Request $request, $id)
     {
+        $user = User::findOrFail($id);
+
         $validated = $request->validate([
             "email" => "sometimes|email|unique:users,email," . $id,
-            "password" => "sometimes|string|min:6",
-            "no_tlp" => "sometimes|integer|unique:users,no_tlp," . $id,
-            "addres" => "sometimes|string",
+            "password" => "sometimes|nullable|string|min:6",
+            "no_tlp" => "sometimes|nullable|string|unique:users,no_tlp," . $id,
+            "addres" => "sometimes|nullable|string",
             "gender" => "sometimes|in:LK,PR",
-            "profile_image" => "sometimes|file|mimes:png,jpg,jpeg,webp|max:2040",
+            "profile_image" => "sometimes|nullable|file|mimes:png,jpg,jpeg,webp|max:2048",
             "username" => "sometimes|string",
         ]);
 
-        $user = User::findOrFail($id);
         if ($request->filled('password')) {
             $validated['password'] = Hash::make($request->password);
         } else {
@@ -40,12 +41,13 @@ class UserController extends Controller
 
         $user->update($validated);
 
-        return Controller::OKE(
-            'success',
-            'Profile updated successfully',
-            $user,
-            200
-        );
+        $user->profile_image = $user->profile_image ? asset('storage/' . $user->profile_image) : null;
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Profile updated successfully',
+            'data' => $user
+        ], 200);
     }
 
     public function me(Request $request)
@@ -59,10 +61,6 @@ class UserController extends Controller
             ], 404);
         }
 
-        $profileImageUrl = $user->profile_image
-            ? asset('storage/' . $user->profile_image)
-            : null;
-
         return response()->json([
             "status" => "success",
             "data" => [
@@ -72,7 +70,7 @@ class UserController extends Controller
                 "no_tlp" => $user->no_tlp,
                 "addres" => $user->addres,
                 "gender" => $user->gender,
-                "profile_image" => $profileImageUrl,
+                "profile_image" => $user->profile_image ? asset('storage/' . $user->profile_image) : null,
             ],
         ], 200);
     }
