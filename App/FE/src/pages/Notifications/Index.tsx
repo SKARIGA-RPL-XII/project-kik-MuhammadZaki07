@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { Notification } from "../../types/notification";
 import { useNotification } from "../../hooks/useNotification";
 import {
@@ -6,9 +6,10 @@ import {
   Clock,
   Trash2,
   Filter,
-  MoreVertical,
   ChevronRight,
   ChevronLeft,
+  Loader2,
+  Trash2Icon,
 } from "lucide-react";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
@@ -19,23 +20,45 @@ import { useNavigate } from "react-router";
 import PageMeta from "@/components/common/PageMeta";
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
 import ComponentCard from "@/components/common/ComponentCard";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogMedia,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { useToast } from "@/context/ToastContext";
 
 dayjs.extend(relativeTime);
 
 const NotificationPage: React.FC = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { toast } = useToast();
   const { notifications, setNotifications, unreadCount, setUnreadCount } =
     useNotification(user?.id, user?.role_id);
 
   const [loading, setLoading] = useState(true);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  
+  const channelRef = useRef<BroadcastChannel | null>(null);
 
   useEffect(() => {
+    channelRef.current = new BroadcastChannel("notification_system");
     requestNotificationPermission();
     loadData(currentPage);
+
+    return () => {
+      channelRef.current?.close();
+    };
   }, [currentPage]);
 
   const loadData = async (page: number) => {
@@ -77,6 +100,11 @@ const NotificationPage: React.FC = () => {
       await Promise.all(
         selectedIds.map((id) => notificationService.markAsRead(id))
       );
+
+      const newlyReadCount = notifications.filter(
+        (n) => selectedIds.includes(n.id) && !n.read_at
+      ).length;
+
       setNotifications((prev) =>
         prev.map((n) =>
           selectedIds.includes(n.id)
@@ -84,33 +112,44 @@ const NotificationPage: React.FC = () => {
             : n
         )
       );
-      setUnreadCount((prev) => Math.max(0, prev - selectedIds.length));
+
+      setUnreadCount((prev) => Math.max(0, prev - newlyReadCount));
+      
+      channelRef.current?.postMessage({ type: 'REFRESH_NOTIFICATIONS' });
+      
       setSelectedIds([]);
+      toast("success", "Success", "Notifications marked as read.");
     } catch (err) {
-      console.error(err);
+      toast("error", "Error", "Failed to update notifications.");
     }
   };
 
   const handleBulkDelete = async () => {
-    if (
-      selectedIds.length === 0 ||
-      !confirm(`Hapus ${selectedIds.length} notifikasi?`)
-    )
-      return;
+    if (selectedIds.length === 0) return;
+    setIsDeleting(true);
     try {
       await Promise.all(
         selectedIds.map((id) => notificationService.delete(id))
       );
+      
       const deletedUnread = notifications.filter(
         (n) => selectedIds.includes(n.id) && !n.read_at
       ).length;
+
       setNotifications((prev) =>
         prev.filter((n) => !selectedIds.includes(n.id))
       );
+      
       setUnreadCount((prev) => Math.max(0, prev - deletedUnread));
+      
+      channelRef.current?.postMessage({ type: 'REFRESH_NOTIFICATIONS' });
+      
       setSelectedIds([]);
+      toast("success", "Deleted", "Notifications have been removed.");
     } catch (err) {
-      console.error(err);
+      toast("error", "Error", "Failed to delete notifications.");
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -137,22 +176,45 @@ const NotificationPage: React.FC = () => {
                 <div className="h-6 w-px bg-stroke dark:bg-strokedark" />
                 <button
                   onClick={handleBulkMarkRead}
-                  className="flex items-center gap-1 text-sm font-semibold text-primary hover:opacity-80 transition"
+                  className="flex items-center gap-1 text-sm font-semibold text-brand-500 hover:opacity-80 transition"
                 >
                   <CheckCheck size={16} /> Mark as Read
                 </button>
-                <button
-                  onClick={handleBulkDelete}
-                  className="flex items-center gap-1 text-sm font-semibold text-danger hover:opacity-80 transition"
-                >
-                  <Trash2 size={16} /> Delete
-                </button>
+
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <button className="flex items-center gap-1 text-sm font-semibold text-red-500 hover:opacity-80 transition">
+                      <Trash2 size={16} /> Delete
+                    </button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent size="sm">
+                    <AlertDialogHeader>
+                      <AlertDialogMedia className="bg-destructive/10 text-destructive dark:bg-destructive/20 dark:text-destructive">
+                        <Trash2Icon />
+                      </AlertDialogMedia>
+                      <AlertDialogTitle>Delete notifications?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        This will permanently delete <strong>{selectedIds.length}</strong> selected notifications. This action cannot be undone.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel variant="outline">Cancel</AlertDialogCancel>
+                      <AlertDialogAction 
+                        variant="destructive" 
+                        onClick={handleBulkDelete}
+                        disabled={isDeleting}
+                      >
+                        {isDeleting ? "Deleting..." : "Delete"}
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
               </div>
             )}
           </div>
 
           <div className="text-sm font-medium text-body">
-            Unread: <span className="text-black dark:text-white font-bold">{unreadCount}</span>
+            Unread: <span className="text-brand-500 font-bold">{unreadCount}</span>
           </div>
         </div>
 
@@ -163,7 +225,7 @@ const NotificationPage: React.FC = () => {
                 <th className="w-[50px] px-4 py-4 xl:pl-11">
                   <input
                     type="checkbox"
-                    className="h-4 w-4 rounded border-stroke accent-primary cursor-pointer"
+                    className="h-4 w-4 rounded border-stroke accent-brand-500 cursor-pointer"
                     checked={
                       notifications.length > 0 &&
                       selectedIds.length === notifications.length
@@ -188,17 +250,11 @@ const NotificationPage: React.FC = () => {
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={5} className="py-20 text-center text-sm font-medium">
-                    <div className="flex flex-col items-center gap-2 text-body">
-                      <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-                      Loading notifications...
+                  <td colSpan={5} className="py-20 text-center">
+                    <div className="flex flex-col items-center gap-2">
+                      <Loader2 className="h-6 w-6 animate-spin text-brand-500" />
+                      <span className="text-sm font-medium">Loading...</span>
                     </div>
-                  </td>
-                </tr>
-              ) : notifications.length === 0 ? (
-                <tr>
-                  <td colSpan={5} className="py-20 text-center text-body">
-                    No notifications found.
                   </td>
                 </tr>
               ) : (
@@ -207,7 +263,7 @@ const NotificationPage: React.FC = () => {
                     key={notif.id}
                     onClick={() => openDetail(notif)}
                     className={`group cursor-pointer border-b border-[#eee] dark:border-strokedark hover:bg-gray-1 dark:hover:bg-white/5 transition-colors ${
-                      !notif.read_at ? "bg-primary/[0.02]" : ""
+                      !notif.read_at ? "bg-brand-500/[0.03]" : ""
                     }`}
                   >
                     <td
@@ -216,20 +272,14 @@ const NotificationPage: React.FC = () => {
                     >
                       <input
                         type="checkbox"
-                        className="h-4 w-4 rounded border-stroke accent-primary cursor-pointer"
+                        className="h-4 w-4 rounded border-stroke accent-brand-500 cursor-pointer"
                         checked={selectedIds.includes(notif.id)}
                         onChange={(e) => toggleSelect(e as any, notif.id)}
                       />
                     </td>
                     <td className="px-4 py-4">
                       <div className="flex flex-col gap-0.5">
-                        <p
-                          className={`text-sm ${
-                            !notif.read_at
-                              ? "font-bold text-black dark:text-white"
-                              : "text-body font-medium"
-                          }`}
-                        >
+                        <p className={`text-sm ${!notif.read_at ? "font-bold text-black dark:text-white" : "text-body font-medium"}`}>
                           {notif.title}
                         </p>
                         <p className="text-xs text-body font-normal line-clamp-1">
@@ -238,13 +288,7 @@ const NotificationPage: React.FC = () => {
                       </div>
                     </td>
                     <td className="px-4 py-4">
-                      <span
-                        className={`inline-flex rounded-full px-3 py-1 text-xs font-medium uppercase ${
-                          notif.is_global
-                            ? "bg-primary/10 text-primary"
-                            : "bg-success/10 text-success"
-                        }`}
-                      >
+                      <span className={`inline-flex rounded-full px-3 py-1 text-xs font-medium uppercase ${notif.is_global ? "bg-brand-500/10 text-brand-500" : "bg-success/10 text-success"}`}>
                         {notif.is_global ? "Global" : "System"}
                       </span>
                     </td>
@@ -256,7 +300,7 @@ const NotificationPage: React.FC = () => {
                     </td>
                     <td className="px-4 py-4 xl:pr-11">
                       <div className="flex items-center justify-end">
-                        <button className="text-body hover:text-primary transition p-1">
+                        <button className="text-body hover:text-brand-500 transition p-1">
                           <ChevronRight size={18} />
                         </button>
                       </div>
@@ -277,19 +321,17 @@ const NotificationPage: React.FC = () => {
               <button
                 disabled={currentPage === 1}
                 onClick={() => setCurrentPage((prev) => prev - 1)}
-                className="flex h-8 w-8 items-center justify-center rounded border border-stroke hover:bg-gray dark:border-strokedark dark:hover:bg-meta-4 disabled:opacity-30 disabled:cursor-not-allowed transition"
+                className="flex h-8 w-8 items-center justify-center rounded border border-stroke hover:bg-gray dark:border-strokedark dark:hover:bg-meta-4 disabled:opacity-30 transition"
               >
                 <ChevronLeft size={16} />
               </button>
-              
-              <div className="flex items-center gap-1 mx-2 text-sm font-semibold text-black dark:text-white">
+              <div className="flex items-center gap-1 mx-2 text-sm font-semibold text-brand-500">
                 Page {currentPage}
               </div>
-
               <button
                 disabled={currentPage === totalPages}
                 onClick={() => setCurrentPage((prev) => prev + 1)}
-                className="flex h-8 w-8 items-center justify-center rounded border border-stroke hover:bg-gray dark:border-strokedark dark:hover:bg-meta-4 disabled:opacity-30 disabled:cursor-not-allowed transition"
+                className="flex h-8 w-8 items-center justify-center rounded border border-stroke hover:bg-gray dark:border-strokedark dark:hover:bg-meta-4 disabled:opacity-30 transition"
               >
                 <ChevronRight size={16} />
               </button>

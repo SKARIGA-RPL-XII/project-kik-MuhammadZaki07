@@ -69,6 +69,8 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::put('/{id}/read', [NotificationController::class, 'markAsRead']);
         Route::delete('/{id}', [NotificationController::class, 'destroy']);
     });
+    Route::post('/admins/export', [AdminController::class, 'export']);
+    Route::post('/admins/import-mapping', [AdminController::class, 'importMapping']);
 });
 
 

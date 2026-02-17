@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Jobs\ExportAdminJob;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
 
@@ -29,24 +31,50 @@ class AdminController extends Controller
         ]);
     }
 
+    public function export()
+    {
+        ExportAdminJob::dispatch((Auth::user()->id));
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Proses export dimulai. Silakan cek notifikasi Anda beberapa saat lagi.'
+        ]);
+    }
+
+    public function importMapping(Request $request)
+    {
+        $request->validate([
+            'data' => 'required|array',
+            'data.*.email' => 'required|email|unique:users,email',
+            'data.*.username' => 'required|string|min:3'
+        ]);
+
+        foreach ($request->data as $item) {
+            User::create([
+                'email' => $item['email'],
+                'username' => $item['username'],
+                'password' => Hash::make('password123'),
+                'role_id' => self::ADMIN_ROLE_ID
+            ]);
+        }
+
+        return response()->json([
+            'status' => 'success',
+            'message' => count($request->data) . ' data admin berhasil diimport.'
+        ]);
+    }
+
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'email' => [
-                'required',
-                'email',
-                'max:255',
-                'unique:users,email'
-            ],
-            'password' => [
-                'required',
-                'string',
-                'min:6'
-            ]
+            'email' => ['required', 'email', 'max:255', 'unique:users,email'],
+            'password' => ['required', 'string', 'min:6'],
+            'username' => ['required', 'string', 'min:3', 'unique:users,username']
         ]);
 
         $admin = User::create([
             'email' => $validated['email'],
+            'username' => $validated['username'],
             'password' => Hash::make($validated['password']),
             'role_id' => self::ADMIN_ROLE_ID
         ]);
@@ -60,8 +88,7 @@ class AdminController extends Controller
 
     public function show($id)
     {
-        $admin = User::where('role_id', self::ADMIN_ROLE_ID)
-            ->findOrFail($id);
+        $admin = User::where('role_id', self::ADMIN_ROLE_ID)->findOrFail($id);
 
         return response()->json([
             'status' => 'success',
@@ -72,30 +99,17 @@ class AdminController extends Controller
 
     public function update(Request $request, $id)
     {
-        $admin = User::where('role_id', self::ADMIN_ROLE_ID)
-            ->findOrFail($id);
+        $admin = User::where('role_id', self::ADMIN_ROLE_ID)->findOrFail($id);
 
         $validated = $request->validate([
-            'email' => [
-                'sometimes',
-                'email',
-                'max:255',
-                Rule::unique('users')->ignore($admin->id)
-            ],
-            'password' => [
-                'nullable',
-                'string',
-                'min:6'
-            ]
+            'email' => ['sometimes', 'email', 'max:255', Rule::unique('users')->ignore($admin->id)],
+            'username' => ['sometimes', 'string', 'min:3', Rule::unique('users')->ignore($admin->id)],
+            'password' => ['nullable', 'string', 'min:6']
         ]);
 
-        if (isset($validated['email'])) {
-            $admin->email = $validated['email'];
-        }
-
-        if (!empty($validated['password'])) {
-            $admin->password = Hash::make($validated['password']);
-        }
+        if (isset($validated['email'])) $admin->email = $validated['email'];
+        if (isset($validated['username'])) $admin->username = $validated['username'];
+        if (!empty($validated['password'])) $admin->password = Hash::make($validated['password']);
 
         $admin->save();
 
@@ -109,16 +123,12 @@ class AdminController extends Controller
     public function destroy($id)
     {
         if (auth()->id() == $id) {
-            return response()->json([
-                'message' => 'You cannot delete your own account.'
-            ], 403);
+            return response()->json(['message' => 'You cannot delete your own account.'], 403);
         }
 
-        $admin = User::where('role_id', 1)->findOrFail($id);
+        $admin = User::where('role_id', self::ADMIN_ROLE_ID)->findOrFail($id);
         $admin->delete();
 
-        return response()->json([
-            'message' => 'Admin deleted successfully'
-        ]);
+        return response()->json(['message' => 'Admin deleted successfully']);
     }
 }

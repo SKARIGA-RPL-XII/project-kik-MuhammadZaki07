@@ -42,10 +42,7 @@ export const AdminService = {
     }
   },
 
-  async update(
-    id: number,
-    payload: { email?: string; password?: string }
-  ) {
+  async update(id: number, payload: { email?: string; password?: string }) {
     try {
       const res = await apiClient.put(`/admins/${id}`, payload);
       return { data: res.data };
@@ -61,5 +58,22 @@ export const AdminService = {
   async delete(id: number) {
     await apiClient.delete(`/admins/${id}`);
   },
-};
 
+  export: async () => {
+    try {
+      const response = await apiClient.post("/admins/export");
+      return response.data;
+    } catch (error: any) {
+      return { error: "Failed to process export" };
+    }
+  },
+
+  importMapping: async (payload: { data: any[] }) => {
+    try {
+      const response = await apiClient.post("/admins/import-mapping", payload);
+      return response.data;
+    } catch (error: any) {
+      return { error: error.response?.data?.errors || "Failed to import data" };
+    }
+  },
+};
