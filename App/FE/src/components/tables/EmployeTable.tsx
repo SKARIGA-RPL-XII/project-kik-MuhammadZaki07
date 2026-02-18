@@ -23,6 +23,7 @@ import {
 import { Loader2, Pencil, Trash2, Trash2Icon } from "lucide-react";
 
 import { useState } from "react";
+import { ActionGuard } from "../guard/ActionGuard";
 
 interface Props {
   employes: any[];
@@ -144,19 +145,23 @@ export default function EmployeTable({
 
                     <TableCell className="px-4 py-3 text-theme-sm text-neutral-500 dark:text-neutral-400">
                       <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => onEdit(emp)}
-                          className="p-2 rounded text-yellow-500 hover:bg-yellow-50 dark:text-yellow-400 dark:hover:bg-yellow-500/10"
-                        >
-                          <Pencil size={18} />
-                        </button>
+                        <ActionGuard module="staff" action="write">
+                          <button
+                            onClick={() => onEdit(emp)}
+                            className="p-2 rounded text-yellow-500 hover:bg-yellow-50 dark:text-yellow-400 dark:hover:bg-yellow-500/10"
+                          >
+                            <Pencil size={18} />
+                          </button>
+                        </ActionGuard>
 
-                        <button
-                          onClick={() => setDeleteId(emp.id)}
-                          className="p-2 rounded text-red-500 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-500/10"
-                        >
-                          <Trash2 size={18} />
-                        </button>
+                        <ActionGuard module="staff" action="delete">
+                          <button
+                            onClick={() => setDeleteId(emp.id)}
+                            className="p-2 rounded text-red-500 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-500/10"
+                          >
+                            <Trash2 size={18} />
+                          </button>
+                        </ActionGuard>
                       </div>
                     </TableCell>
                   </TableRow>
@@ -170,11 +175,7 @@ export default function EmployeTable({
         <AlertDialogContent size="sm">
           <AlertDialogHeader>
             <AlertDialogMedia
-              className="
-        bg-destructive/10
-        text-destructive
-        dark:bg-destructive/20
-        dark:text-destructive"
+              className="bg-destructive/10 text-destructive dark:bg-destructive/20 dark:text-destructive"
             >
               <Trash2Icon />
             </AlertDialogMedia>

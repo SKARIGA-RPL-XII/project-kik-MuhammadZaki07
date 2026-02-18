@@ -5,11 +5,14 @@ import { useSidebar } from "../context/SidebarContext";
 import { useAuth } from "@/context/AuthContext";
 import { navConfig, NavItem } from "../config/navigation";
 import { SidebarItem } from "@/components/sidebar/SidebarItem";
+import { usePermission } from "@/hooks/usePermission";
+import SidebarSkeleton from "@/components/skeleton/SidebarSkeleton";
 
 const AppSidebar: React.FC = () => {
   const { isExpanded, isMobileOpen, isHovered, setIsHovered } = useSidebar();
   const { pathname } = useLocation();
   const { user } = useAuth();
+  const { can, loading: permissionLoading } = usePermission();
   
   const [openKey, setOpenKey] = useState<string | null>(null);
   const [heights, setHeights] = useState<Record<string, number>>({});
@@ -34,32 +37,63 @@ const AppSidebar: React.FC = () => {
     }
   }, [openKey]);
 
-  const filterRole = (items: NavItem[]) => items.filter(i => i.role.includes(user?.role_name || ""));
+  const filterRole = (items: NavItem[]) => {
+    return items
+      .map((item) => {
+        const parentKey = item.name.toLowerCase();
+        const hasParentAccess = can(parentKey, "view");
 
-  const renderSection = (title: string, items: NavItem[], type: "main" | "others") => (
-    <div className="mb-6">
-      <h2 className={`mb-4 text-xs uppercase flex text-neutral-400 ${!showFull ? "lg:justify-center" : "justify-start"}`}>
-        {showFull ? title : <HorizontaLDots className="size-6" />}
-      </h2>
-      <ul className="flex flex-col gap-4">
-        {filterRole(items).map((item, idx) => {
-          const key = `${type}-${idx}`;
-          return (
-            <SidebarItem
-              key={item.name}
-              item={item}
-              isActive={isActive}
-              isExpanded={showFull}
-              isOpen={openKey === key}
-              onToggle={() => setOpenKey(openKey === key ? null : key)}
-              subMenuRef={(el) => (subMenuRefs.current[key] = el)}
-              height={heights[key] || 0}
-            />
-          );
-        })}
-      </ul>
-    </div>
-  );
+        if (item.subItems) {
+          const filteredSubItems = item.subItems.filter((sub) => {
+            return can(sub.name.toLowerCase(), "view");
+          });
+
+          if (!hasParentAccess || filteredSubItems.length === 0) return null;
+          
+          return { 
+            ...item, 
+            subItems: filteredSubItems 
+          };
+        }
+
+        return hasParentAccess ? item : null;
+      })
+      .filter((item): item is NavItem => item !== null);
+  };
+
+  const renderSection = (title: string, items: NavItem[], type: "main" | "others") => {
+    const allowedItems = filterRole(items);
+    if (allowedItems.length === 0) return null;
+
+    return (
+      <div className="mb-6">
+        <h2 className={`mb-4 text-xs uppercase flex text-neutral-400 ${!showFull ? "lg:justify-center" : "justify-start"}`}>
+          {showFull ? title : <HorizontaLDots className="size-6" />}
+        </h2>
+        <ul className="flex flex-col gap-4">
+          {allowedItems.map((item, idx) => {
+            const key = `${type}-${idx}`;
+            return (
+              <SidebarItem
+                key={item.name}
+                item={item}
+                isActive={isActive}
+                isExpanded={showFull}
+                isOpen={openKey === key}
+                onToggle={() => setOpenKey(openKey === key ? null : key)}
+                subMenuRef={(el) => (subMenuRefs.current[key] = el)}
+                height={heights[key] || 0}
+              />
+            );
+          })}
+        </ul>
+      </div>
+    );
+  };
+
+  if (permissionLoading) {
+    return <SidebarSkeleton />;
+  }
 
   return (
     <aside
@@ -69,7 +103,7 @@ const AppSidebar: React.FC = () => {
     >
       <div className={`py-8 flex ${!showFull ? "lg:justify-center" : "justify-start"}`}>
         <Link to="/" className="flex items-center gap-3">
-          <img src={showFull ? "/black-logo.png" : "/white-logo.png"} alt="Logo" width={showFull ? 50 : 32} height={showFull ? 50 : 32} className="dark:hidden" />
+          <img src={showFull ? "/black-logo.png" : "/black-logo.png"} alt="Logo" width={showFull ? 50 : 32} height={showFull ? 50 : 32} className="dark:hidden" />
           <img src="/white-logo.png" alt="Logo" width={showFull ? 50 : 32} height={showFull ? 50 : 32} className="hidden dark:block" />
           {showFull && (
             <div className="flex flex-col">

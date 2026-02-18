@@ -10,6 +10,7 @@ import {
 } from "../ui/table";
 import { DiscountService } from "../../services/discount.service";
 import { Pencil, Trash2, Loader2 } from "lucide-react";
+import { ActionGuard } from "../guard/ActionGuard";
 
 interface Discount {
   id: number;
@@ -55,7 +56,7 @@ const DiscountTable: React.FC<DiscountTableProps> = ({
   return (
     <div className="overflow-hidden rounded-xl border border-neutral-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
       <div className="max-w-full overflow-x-auto">
-   <Table>
+        <Table>
           <TableHeader className="border-b border-neutral-100 dark:border-white/[0.05]">
             <TableRow>
               <TableHead className="px-5 py-3 font-medium text-neutral-500 text-start text-theme-xs dark:text-neutral-400">
@@ -85,7 +86,10 @@ const DiscountTable: React.FC<DiscountTableProps> = ({
           <TableBody className="divide-y divide-neutral-100 dark:divide-white/[0.05] relative">
             {loading ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center py-10 text-neutral-500">
+                <TableCell
+                  colSpan={7}
+                  className="text-center py-10 text-neutral-500"
+                >
                   <div className="flex items-center justify-center gap-2">
                     <Loader2 className="animate-spin" size={18} />
                     <span>Loading data...</span>
@@ -94,7 +98,10 @@ const DiscountTable: React.FC<DiscountTableProps> = ({
               </TableRow>
             ) : discounts.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center py-10 text-neutral-400">
+                <TableCell
+                  colSpan={7}
+                  className="text-center py-10 text-neutral-400"
+                >
                   No discount data found
                 </TableCell>
               </TableRow>
@@ -102,8 +109,12 @@ const DiscountTable: React.FC<DiscountTableProps> = ({
               discounts.map((discount) => (
                 <TableRow key={discount.id}>
                   <TableCell className="px-5 py-4">{discount.title}</TableCell>
-                  <TableCell className="px-5 py-4">{discount.description}</TableCell>
-                  <TableCell className="px-5 py-4">{discount.value_discount}%</TableCell>
+                  <TableCell className="px-5 py-4">
+                    {discount.description}
+                  </TableCell>
+                  <TableCell className="px-5 py-4">
+                    {discount.value_discount}%
+                  </TableCell>
                   <TableCell className="px-5 py-4">
                     {new Date(discount.start_date).toLocaleDateString()}
                   </TableCell>
@@ -111,25 +122,33 @@ const DiscountTable: React.FC<DiscountTableProps> = ({
                     {new Date(discount.end_date).toLocaleDateString()}
                   </TableCell>
                   <TableCell className="px-5 py-4">
-                    <Badge size="sm" color={discount.is_active ? "success" : "error"}>
+                    <Badge
+                      size="sm"
+                      color={discount.is_active ? "success" : "error"}
+                    >
                       {discount.is_active ? "Active" : "Inactive"}
                     </Badge>
                   </TableCell>
                   <TableCell className="px-5 py-4">
                     <div className="flex gap-2">
-                      <button 
-                        onClick={() => onEdit?.(discount)}
-                        className="p-2 text-yellow-500 hover:bg-yellow-50 rounded"
-                      >
-                        <Pencil size={18} />
-                      </button>
-                      <button 
-                        onClick={() => handleDelete(discount.id)}
-                        disabled={deletingId === discount.id}
-                        className="p-2 text-red-500 hover:bg-red-50 rounded disabled:opacity-50"
-                      >
-                        <Trash2 size={18} />
-                      </button>
+                      <ActionGuard module="discount" action="write">
+                        <button
+                          onClick={() => onEdit?.(discount)}
+                          className="p-2 text-yellow-500 hover:bg-yellow-50 rounded"
+                        >
+                          <Pencil size={18} />
+                        </button>
+                      </ActionGuard>
+
+                      <ActionGuard module="discount" action="delete">
+                        <button
+                          onClick={() => handleDelete(discount.id)}
+                          disabled={deletingId === discount.id}
+                          className="p-2 text-red-500 hover:bg-red-50 rounded disabled:opacity-50"
+                        >
+                          <Trash2 size={18} />
+                        </button>
+                      </ActionGuard>
                     </div>
                   </TableCell>
                 </TableRow>

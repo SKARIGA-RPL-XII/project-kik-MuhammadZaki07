@@ -15,6 +15,7 @@ import {
   Receipt,
 } from "lucide-react";
 import TaxPaymentSkeleton from "@/components/skeleton/settings/TaxPaymentSkeleton";
+import { ActionGuard } from "@/components/guard/ActionGuard";
 
 export default function TaxSettingsPage() {
   const { refreshSettings } = useSettings();
@@ -97,23 +98,25 @@ export default function TaxSettingsPage() {
   if (fetching) return <TaxPaymentSkeleton/>
 
   return (
-    <div className="w-full space-y-8 px-2 pb-10">
-      <PageMeta 
-        title="Tax & Billing | Dashboard" 
-        description="Configure restaurant tax parameters and operational service charges." 
-      />
+<ActionGuard module="tax & service" action="view">
+  <div className="w-full space-y-8 px-2 pb-10">
+    <PageMeta 
+      title="Tax & Billing | Dashboard" 
+      description="Configure restaurant tax parameters and operational service charges." 
+    />
 
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 border-b border-neutral-200 dark:border-neutral-800 pb-8">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-neutral-900 dark:text-white">
-            Tax & Billing
-          </h1>
-          <p className="text-neutral-500 dark:text-neutral-400 text-sm mt-1">
-            Configure restaurant tax parameters and operational service charges.
-          </p>
-        </div>
+    <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 border-b border-neutral-200 dark:border-neutral-800 pb-8">
+      <div>
+        <h1 className="text-2xl font-bold tracking-tight text-neutral-900 dark:text-white">
+          Tax & Billing
+        </h1>
+        <p className="text-neutral-500 dark:text-neutral-400 text-sm mt-1">
+          Configure restaurant tax parameters and operational service charges.
+        </p>
+      </div>
 
-        <div className="flex items-center gap-3">
+      <div className="flex items-center gap-3">
+        <ActionGuard module="tax & service" action="write">
           <Button
             className="bg-brand-500 text-white hover:bg-brand-500 h-11 px-8 text-sm transition-all gap-3 rounded-lg"
             onClick={handleSubmit}
@@ -126,25 +129,27 @@ export default function TaxSettingsPage() {
             )}
             Save Changes
           </Button>
-        </div>
+        </ActionGuard>
       </div>
+    </div>
 
-      {success && (
-        <Alert title="Success" variant="success" message={success} />
-      )}
+    {success && (
+      <Alert title="Success" variant="success" message={success} />
+    )}
 
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-8 items-start">
-        <div className="xl:col-span-2 space-y-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Card className="border-neutral-200 shadow-none dark:border-neutral-800 bg-white dark:bg-neutral-900 overflow-hidden">
-              <div className="p-5 border-b border-neutral-100 dark:border-neutral-800 flex justify-between items-center bg-neutral-50/50 dark:bg-neutral-900/50">
-                <div className="flex items-center gap-3">
-                  <Receipt className="h-5 w-5 text-brand-500" />
-                  <span className="text-sm font-semibold text-muted-foreground dark:text-neutral-300">
-                    Restaurant Tax
-                  </span>
-                </div>
+    <div className="grid grid-cols-1 xl:grid-cols-3 gap-8 items-start">
+      <div className="xl:col-span-2 space-y-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <Card className="border-neutral-200 shadow-none dark:border-neutral-800 bg-white dark:bg-neutral-900 overflow-hidden">
+            <div className="p-5 border-b border-neutral-100 dark:border-neutral-800 flex justify-between items-center bg-neutral-50/50 dark:bg-neutral-900/50">
+              <div className="flex items-center gap-3">
+                <Receipt className="h-5 w-5 text-brand-500" />
+                <span className="text-sm font-semibold text-muted-foreground dark:text-neutral-300">
+                  Restaurant Tax
+                </span>
+              </div>
 
+              <ActionGuard module="tax & service" action="write">
                 <button
                   type="button"
                   onClick={() =>
@@ -165,52 +170,54 @@ export default function TaxSettingsPage() {
                     }`}
                   />
                 </button>
-              </div>
+              </ActionGuard>
+            </div>
 
-              <div className="p-6 space-y-5">
-                <div className="space-y-2">
-                  <Label className="text-xs uppercase font-bold text-neutral-500 tracking-wide">
-                    Tax Amount
-                  </Label>
+            <div className="p-6 space-y-5">
+              <div className="space-y-2">
+                <Label className="text-xs uppercase font-bold text-neutral-500 tracking-wide">
+                  Tax Amount
+                </Label>
 
-                  <div
-                    className={`flex items-center overflow-hidden rounded-lg border-2 transition-all ${
-                      form.is_tax_active
-                        ? "border-neutral-200 dark:border-neutral-700 focus-within:border-brand-500"
-                        : "bg-neutral-50 dark:bg-neutral-800/50 opacity-50"
-                    }`}
-                  >
-                    <input
-                      type="text"
-                      inputMode="numeric"
-                      className="w-full bg-transparent px-4 py-3 text-lg font-bold outline-none"
-                      value={form.tax_percent}
-                      disabled={!form.is_tax_active}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        if (/^\d*\.?\d*$/.test(val)) {
-                          setForm({ ...form, tax_percent: val });
-                        }
-                      }}
-                    />
+                <div
+                  className={`flex items-center overflow-hidden rounded-lg border-2 transition-all ${
+                    form.is_tax_active
+                      ? "border-neutral-200 dark:border-neutral-700 focus-within:border-brand-500"
+                      : "bg-neutral-50 dark:bg-neutral-800/50 opacity-50"
+                  }`}
+                >
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    className="w-full bg-transparent px-4 py-3 text-lg font-bold outline-none"
+                    value={form.tax_percent}
+                    disabled={!form.is_tax_active}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (/^\d*\.?\d*$/.test(val)) {
+                        setForm({ ...form, tax_percent: val });
+                      }
+                    }}
+                  />
 
-                    <div className="px-5 text-base font-black text-neutral-400 border-l border-neutral-100 dark:border-neutral-800 bg-neutral-50/30 dark:bg-neutral-900/30">
-                      %
-                    </div>
+                  <div className="px-5 text-base font-black text-neutral-400 border-l border-neutral-100 dark:border-neutral-800 bg-neutral-50/30 dark:bg-neutral-900/30">
+                    %
                   </div>
                 </div>
               </div>
-            </Card>
+            </div>
+          </Card>
 
-            <Card className="shadow-none border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 overflow-hidden">
-              <div className="p-5 border-b border-neutral-100 dark:border-neutral-800 flex justify-between items-center bg-neutral-50/50 dark:bg-neutral-900/50">
-                <div className="flex items-center gap-3">
-                  <HandCoins className="h-5 w-5 text-brand-500" />
-                  <span className="text-sm font-semibold text-muted-foreground">
-                    Service Charge
-                  </span>
-                </div>
+          <Card className="shadow-none border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 overflow-hidden">
+            <div className="p-5 border-b border-neutral-100 dark:border-neutral-800 flex justify-between items-center bg-neutral-50/50 dark:bg-neutral-900/50">
+              <div className="flex items-center gap-3">
+                <HandCoins className="h-5 w-5 text-brand-500" />
+                <span className="text-sm font-semibold text-muted-foreground">
+                  Service Charge
+                </span>
+              </div>
 
+              <ActionGuard module="tax & service" action="write">
                 <button
                   type="button"
                   onClick={() =>
@@ -231,65 +238,66 @@ export default function TaxSettingsPage() {
                     }`}
                   />
                 </button>
-              </div>
-
-              <div className="p-6 space-y-5">
-                <Label className="text-xs uppercase font-bold text-neutral-500 tracking-wide">
-                  Service Fee
-                </Label>
-
-                <div
-                  className={`flex items-center overflow-hidden rounded-lg border-2 transition-all ${
-                    form.is_service_active
-                      ? "border-neutral-200 dark:border-neutral-700 focus-within:border-brand-500"
-                      : "bg-neutral-50 dark:bg-neutral-800/50 opacity-50"
-                  }`}
-                >
-                  <input
-                    type="text"
-                    inputMode="numeric"
-                    className="w-full bg-transparent px-4 py-3 text-lg font-bold outline-none"
-                    value={form.service_percent}
-                    disabled={!form.is_service_active}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      if (/^\d*\.?\d*$/.test(val)) {
-                        setForm({ ...form, service_percent: val });
-                      }
-                    }}
-                  />
-
-                  <div className="px-5 text-base font-black text-neutral-400 border-l border-neutral-100 dark:border-neutral-800 bg-neutral-50/30 dark:bg-neutral-900/30">
-                    %
-                  </div>
-                </div>
-              </div>
-            </Card>
-          </div>
-
-          <div className="space-y-4">
-            <div className="flex items-center gap-3 px-1">
-              <Calculator className="h-5 w-5 text-brand-500" />
-              <span className="text-sm font-semibold text-muted-foreground">
-                Calculation Method
-              </span>
+              </ActionGuard>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {[
-                {
-                  id: "after_service",
-                  title: "Standard Resto",
-                  formula: "(Price + Service) x Tax",
-                },
-                {
-                  id: "subtotal_only",
-                  title: "Flat Rate",
-                  formula: "Price x (Tax + Service)",
-                },
-              ].map((item) => (
+            <div className="p-6 space-y-5">
+              <Label className="text-xs uppercase font-bold text-neutral-500 tracking-wide">
+                Service Fee
+              </Label>
+
+              <div
+                className={`flex items-center overflow-hidden rounded-lg border-2 transition-all ${
+                  form.is_service_active
+                    ? "border-neutral-200 dark:border-neutral-700 focus-within:border-brand-500"
+                    : "bg-neutral-50 dark:bg-neutral-800/50 opacity-50"
+                }`}
+              >
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  className="w-full bg-transparent px-4 py-3 text-lg font-bold outline-none"
+                  value={form.service_percent}
+                  disabled={!form.is_service_active}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (/^\d*\.?\d*$/.test(val)) {
+                      setForm({ ...form, service_percent: val });
+                    }
+                  }}
+                />
+
+                <div className="px-5 text-base font-black text-neutral-400 border-l border-neutral-100 dark:border-neutral-800 bg-neutral-50/30 dark:bg-neutral-900/30">
+                  %
+                </div>
+              </div>
+            </div>
+          </Card>
+        </div>
+
+        <div className="space-y-4">
+          <div className="flex items-center gap-3 px-1">
+            <Calculator className="h-5 w-5 text-brand-500" />
+            <span className="text-sm font-semibold text-muted-foreground">
+              Calculation Method
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {[
+              {
+                id: "after_service",
+                title: "Standard Resto",
+                formula: "(Price + Service) x Tax",
+              },
+              {
+                id: "subtotal_only",
+                title: "Flat Rate",
+                formula: "Price x (Tax + Service)",
+              },
+            ].map((item) => (
+              <ActionGuard key={item.id} module="tax & service" action="write">
                 <div
-                  key={item.id}
                   onClick={() =>
                     setForm({
                       ...form,
@@ -315,49 +323,51 @@ export default function TaxSettingsPage() {
                     <Check className="h-5 w-5 text-brand-500 stroke-[3px]" />
                   )}
                 </div>
-              ))}
-            </div>
+              </ActionGuard>
+            ))}
           </div>
         </div>
+      </div>
 
-        <div className="xl:col-span-1 sticky top-8">
-          <Card className="border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900/40 p-6 shadow-none space-y-6">
-            <h3 className="text-xs font-bold uppercase tracking-[0.15em] text-neutral-400 border-b border-neutral-200 dark:border-neutral-800 pb-3">
-              Calculation Preview
-            </h3>
-            <div className="space-y-4">
-              <div className="flex justify-between text-sm">
-                <span className="text-neutral-500">Subtotal Simulation</span>
-                <span className="font-semibold text-neutral-900 dark:text-neutral-200">
-                  100,000
-                </span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-neutral-500">Service Charge</span>
-                <span className="font-semibold text-neutral-900 dark:text-neutral-200">
-                  +{preview.service.toLocaleString()}
-                </span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-neutral-500">
-                  Tax ({form.tax_percent || "0"}%)
-                </span>
-                <span className="font-semibold text-neutral-900 dark:text-neutral-200">
-                  +{preview.tax.toLocaleString()}
-                </span>
-              </div>
-              <div className="pt-5 border-t border-neutral-200 dark:border-neutral-800 flex justify-between items-baseline">
-                <span className="text-xs font-bold uppercase text-neutral-400 tracking-wider">
-                  Total
-                </span>
-                <span className="text-3xl font-bold text-neutral-900 dark:text-white tracking-tighter italic">
-                  {preview.total.toLocaleString()}
-                </span>
-              </div>
+      <div className="xl:col-span-1 sticky top-8">
+        <Card className="border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900/40 p-6 shadow-none space-y-6">
+          <h3 className="text-xs font-bold uppercase tracking-[0.15em] text-neutral-400 border-b border-neutral-200 dark:border-neutral-800 pb-3">
+            Calculation Preview
+          </h3>
+          <div className="space-y-4">
+            <div className="flex justify-between text-sm">
+              <span className="text-neutral-500">Subtotal Simulation</span>
+              <span className="font-semibold text-neutral-900 dark:text-neutral-200">
+                100,000
+              </span>
             </div>
-          </Card>
-        </div>
+            <div className="flex justify-between text-sm">
+              <span className="text-neutral-500">Service Charge</span>
+              <span className="font-semibold text-neutral-900 dark:text-neutral-200">
+                +{preview.service.toLocaleString()}
+              </span>
+            </div>
+            <div className="flex justify-between text-sm">
+              <span className="text-neutral-500">
+                Tax ({form.tax_percent || "0"}%)
+              </span>
+              <span className="font-semibold text-neutral-900 dark:text-neutral-200">
+                +{preview.tax.toLocaleString()}
+              </span>
+            </div>
+            <div className="pt-5 border-t border-neutral-200 dark:border-neutral-800 flex justify-between items-baseline">
+              <span className="text-xs font-bold uppercase text-neutral-400 tracking-wider">
+                Total
+              </span>
+              <span className="text-3xl font-bold text-neutral-900 dark:text-white tracking-tighter italic">
+                {preview.total.toLocaleString()}
+              </span>
+            </div>
+          </div>
+        </Card>
       </div>
     </div>
+  </div>
+</ActionGuard>
   );
 }

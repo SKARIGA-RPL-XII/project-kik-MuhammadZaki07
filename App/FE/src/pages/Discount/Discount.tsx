@@ -22,6 +22,7 @@ import Select from "../../components/form/Select";
 import DatePicker from "../../components/form/date-picker";
 import useDebounce from "../../hooks/useDebounce";
 import { useToast } from "@/context/ToastContext";
+import { ActionGuard } from "@/components/guard/ActionGuard";
 
 function Discount() {
   const [discounts, setDiscounts] = useState<any[]>([]);
@@ -141,194 +142,196 @@ function Discount() {
   };
 
   return (
-    <>
-      <PageMeta title="Discount Management" description="Manage discounts" />
-      <PageBreadcrumb pageTitle="Discounts" />
+  <>
+  <PageMeta title="Discount Management" description="Manage discounts" />
+  <PageBreadcrumb pageTitle="Discounts" />
 
-      <ComponentCard
-        title="Discount Management"
-        desc="Create, edit, delete discounts"
-      >
-        <div className="flex flex-wrap justify-between items-center gap-4 mb-6">
-          <div className="flex flex-wrap gap-3">
-            <div className="w-64">
-              <Input
-                placeholder="Search by title..."
-                value={search}
-                onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                  setSearch(e.target.value)
-                }
-              />
-            </div>
-
-            <div className="w-40">
-              <Select
-                options={[
-                  { label: "All Status", value: "" },
-                  { label: "Active", value: "active" },
-                  { label: "Inactive", value: "inactive" },
-                ]}
-                value={statusFilter ?? ""}
-                onChange={(v) => setStatusFilter(v || null)}
-                placeholder="Status"
-              />
-            </div>
-
-            <div className="w-44">
-              <DatePicker
-                id="filter-start"
-                placeholder="Start Date"
-                value={dateFilter.start ?? ""}
-                onChange={(_, dateStr) =>
-                  setDateFilter((p) => ({ ...p, start: dateStr }))
-                }
-              />
-            </div>
-
-            <div className="w-44">
-              <DatePicker
-                id="filter-end"
-                placeholder="End Date"
-                value={dateFilter.end ?? ""}
-                minDate={dateFilter.start ?? undefined}
-                onChange={(_, dateStr) =>
-                  setDateFilter((p) => ({ ...p, end: dateStr }))
-                }
-              />
-            </div>
-          </div>
-
-          <AlertDialog
-            open={openDialog}
-            onOpenChange={(val) => {
-              setOpenDialog(val);
-              if (!val) resetForm();
-            }}
-          >
-            <AlertDialogTrigger asChild>
-              <Button
-                onClick={resetForm}
-                className="bg-brand-500 hover:bg-brand-600"
-              >
-                Create Discount
-              </Button>
-            </AlertDialogTrigger>
-
-            <AlertDialogContent className="max-w-lg">
-              <AlertDialogHeader>
-                <AlertDialogTitle className="text-xl font-bold">
-                  {editingId ? "Edit Discount" : "Create New Discount"}
-                </AlertDialogTitle>
-              </AlertDialogHeader>
-
-              <div className="space-y-4 mt-2 text-left">
-                <div>
-                  <Label htmlFor="form-title">Discount Title</Label>
-                  <Input
-                    id="form-title"
-                    placeholder="Promo Summer"
-                    value={title}
-                    error={!!errors.title}
-                    onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                      setTitle(e.target.value)
-                    }
-                  />
-                  {errors.title && (
-                    <p className="text-xs text-red-500 mt-1">{errors.title}</p>
-                  )}
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <DatePicker
-                    id="form-start-date"
-                    label="Start Date"
-                    placeholder="Select date"
-                    defaultDate={startDate}
-                    onChange={(_, dateStr) => setStartDate(dateStr)}
-                  />
-                  <DatePicker
-                    id="form-end-date"
-                    label="End Date"
-                    placeholder="Select date"
-                    defaultDate={endDate}
-                    minDate={startDate || undefined}
-                    onChange={(_, dateStr) => setEndDate(dateStr)}
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="form-value">Discount Value (%)</Label>
-                  <Input
-                    id="form-value"
-                    type="number"
-                    placeholder="0"
-                    value={valueDiscount}
-                    error={!!errors.value_discount}
-                    onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                      setValueDiscount(
-                        Math.max(0, parseInt(e.target.value, 10) || 0),
-                      )
-                    }
-                  />
-                  {errors.value_discount && (
-                    <p className="text-xs text-red-500 mt-1">
-                      {errors.value_discount}
-                    </p>
-                  )}
-                </div>
-
-                <div>
-                  <Label htmlFor="form-desc">Description</Label>
-                  <Textarea
-                    id="form-desc"
-                    placeholder="Short description..."
-                    value={description}
-                    onChange={(val: any) =>
-                      setDescription(
-                        typeof val === "string" ? val : val.target.value,
-                      )
-                    }
-                  />
-                  {errors.description && (
-                    <p className="text-xs text-red-500 mt-1">
-                      {errors.description}
-                    </p>
-                  )}
-                </div>
-
-                <div className="p-3 bg-gray-50 dark:bg-white/5 rounded-lg">
-                  <Switch
-                    checked={isActive}
-                    label="Enable Discount Status"
-                    onChange={(v) => setIsActive(v)}
-                  />
-                </div>
-
-                <AlertDialogFooter className="gap-3 mt-4">
-                  <AlertDialogCancel onClick={resetForm} disabled={submitting}>
-                    Cancel
-                  </AlertDialogCancel>
-                  <Button
-                    onClick={handleSubmit}
-                    disabled={submitting}
-                    className="min-w-[120px]"
-                  >
-                    {submitting ? "Saving..." : editingId ? "Update" : "Create"}
-                  </Button>
-                </AlertDialogFooter>
-              </div>
-            </AlertDialogContent>
-          </AlertDialog>
+  <ComponentCard
+    title="Discount Management"
+    desc="Create, edit, delete discounts"
+  >
+    <div className="flex flex-wrap justify-between items-center gap-4 mb-6">
+      <div className="flex flex-wrap gap-3">
+        <div className="w-64">
+          <Input
+            placeholder="Search by title..."
+            value={search}
+            onChange={(e: ChangeEvent<HTMLInputElement>) =>
+              setSearch(e.target.value)
+            }
+          />
         </div>
 
-        <DiscountTable
-          discounts={discounts}
-          loading={loading}
-          onRefresh={fetchDiscounts}
-          onEdit={handleEdit}
-        />
-      </ComponentCard>
-    </>
+        <div className="w-40">
+          <Select
+            options={[
+              { label: "All Status", value: "" },
+              { label: "Active", value: "active" },
+              { label: "Inactive", value: "inactive" },
+            ]}
+            value={statusFilter ?? ""}
+            onChange={(v) => setStatusFilter(v || null)}
+            placeholder="Status"
+          />
+        </div>
+
+        <div className="w-44">
+          <DatePicker
+            id="filter-start"
+            placeholder="Start Date"
+            value={dateFilter.start ?? ""}
+            onChange={(_, dateStr) =>
+              setDateFilter((p) => ({ ...p, start: dateStr }))
+            }
+          />
+        </div>
+
+        <div className="w-44">
+          <DatePicker
+            id="filter-end"
+            placeholder="End Date"
+            value={dateFilter.end ?? ""}
+            minDate={dateFilter.start ?? undefined}
+            onChange={(_, dateStr) =>
+              setDateFilter((p) => ({ ...p, end: dateStr }))
+            }
+          />
+        </div>
+      </div>
+
+      <ActionGuard module="discount" action="write">
+        <AlertDialog
+          open={openDialog}
+          onOpenChange={(val) => {
+            setOpenDialog(val);
+            if (!val) resetForm();
+          }}
+        >
+          <AlertDialogTrigger asChild>
+            <Button
+              onClick={resetForm}
+              className="bg-brand-500 hover:bg-brand-600"
+            >
+              Create Discount
+            </Button>
+          </AlertDialogTrigger>
+
+          <AlertDialogContent className="max-w-lg">
+            <AlertDialogHeader>
+              <AlertDialogTitle className="text-xl font-bold">
+                {editingId ? "Edit Discount" : "Create New Discount"}
+              </AlertDialogTitle>
+            </AlertDialogHeader>
+
+            <div className="space-y-4 mt-2 text-left">
+              <div>
+                <Label htmlFor="form-title">Discount Title</Label>
+                <Input
+                  id="form-title"
+                  placeholder="Promo Summer"
+                  value={title}
+                  error={!!errors.title}
+                  onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                    setTitle(e.target.value)
+                  }
+                />
+                {errors.title && (
+                  <p className="text-xs text-red-500 mt-1">{errors.title}</p>
+                )}
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <DatePicker
+                  id="form-start-date"
+                  label="Start Date"
+                  placeholder="Select date"
+                  defaultDate={startDate}
+                  onChange={(_, dateStr) => setStartDate(dateStr)}
+                />
+                <DatePicker
+                  id="form-end-date"
+                  label="End Date"
+                  placeholder="Select date"
+                  defaultDate={endDate}
+                  minDate={startDate || undefined}
+                  onChange={(_, dateStr) => setEndDate(dateStr)}
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="form-value">Discount Value (%)</Label>
+                <Input
+                  id="form-value"
+                  type="number"
+                  placeholder="0"
+                  value={valueDiscount}
+                  error={!!errors.value_discount}
+                  onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                    setValueDiscount(
+                      Math.max(0, parseInt(e.target.value, 10) || 0),
+                    )
+                  }
+                />
+                {errors.value_discount && (
+                  <p className="text-xs text-red-500 mt-1">
+                    {errors.value_discount}
+                  </p>
+                )}
+              </div>
+
+              <div>
+                <Label htmlFor="form-desc">Description</Label>
+                <Textarea
+                  id="form-desc"
+                  placeholder="Short description..."
+                  value={description}
+                  onChange={(val: any) =>
+                    setDescription(
+                      typeof val === "string" ? val : val.target.value,
+                    )
+                  }
+                />
+                {errors.description && (
+                  <p className="text-xs text-red-500 mt-1">
+                    {errors.description}
+                  </p>
+                )}
+              </div>
+
+              <div className="p-3 bg-gray-50 dark:bg-white/5 rounded-lg">
+                <Switch
+                  checked={isActive}
+                  label="Enable Discount Status"
+                  onChange={(v) => setIsActive(v)}
+                />
+              </div>
+
+              <AlertDialogFooter className="gap-3 mt-4">
+                <AlertDialogCancel onClick={resetForm} disabled={submitting}>
+                  Cancel
+                </AlertDialogCancel>
+                <Button
+                  onClick={handleSubmit}
+                  disabled={submitting}
+                  className="min-w-[120px]"
+                >
+                  {submitting ? "Saving..." : editingId ? "Update" : "Create"}
+                </Button>
+              </AlertDialogFooter>
+            </div>
+          </AlertDialogContent>
+        </AlertDialog>
+      </ActionGuard>
+    </div>
+
+    <DiscountTable
+      discounts={discounts}
+      loading={loading}
+      onRefresh={fetchDiscounts}
+      onEdit={handleEdit}
+    />
+  </ComponentCard>
+</>
   );
 }
 

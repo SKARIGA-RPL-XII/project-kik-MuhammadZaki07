@@ -27,6 +27,7 @@ import {
 } from "lucide-react";
 import DeleteAlertDialog from "@/components/dialog/DeleteAlertDialog";
 import TaxPaymentSkeleton from "@/components/skeleton/settings/TaxPaymentSkeleton";
+import { ActionGuard } from "@/components/guard/ActionGuard";
 
 interface PaymentMethod {
   id: string;
@@ -124,28 +125,30 @@ export default function PaymentSettingsPage() {
   if (fetching) return <TaxPaymentSkeleton/>
 
   return (
-    <div className="w-full space-y-8 px-2 pb-10">
-      <PageMeta 
-        title="Payment Configuration | Dashboard" 
-        description="Manage the active payment rails for your point of sale terminals." 
-      />
+<ActionGuard module="payment methods" action="view">
+  <div className="w-full space-y-8 px-2 pb-10">
+    <PageMeta 
+      title="Payment Configuration | Dashboard" 
+      description="Manage the active payment rails for your point of sale terminals." 
+    />
 
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 border-b border-neutral-200 dark:border-neutral-800 pb-8">
-        <div className="flex items-center gap-4">
-          <button className="p-2 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-lg transition-colors md:hidden">
-            <ChevronLeft className="h-5 w-5" />
-          </button>
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight text-neutral-900 dark:text-white">
-              Gateways
-            </h1>
-            <p className="text-neutral-500 dark:text-neutral-400 text-sm mt-1">
-              Manage the active payment rails for your point of sale terminals.
-            </p>
-          </div>
+    <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 border-b border-neutral-200 dark:border-neutral-800 pb-8">
+      <div className="flex items-center gap-4">
+        <button className="p-2 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-lg transition-colors md:hidden">
+          <ChevronLeft className="h-5 w-5" />
+        </button>
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-neutral-900 dark:text-white">
+            Gateways
+          </h1>
+          <p className="text-neutral-500 dark:text-neutral-400 text-sm mt-1">
+            Manage the active payment rails for your point of sale terminals.
+          </p>
         </div>
+      </div>
 
-        <div className="flex items-center gap-3">
+      <div className="flex items-center gap-3">
+        <ActionGuard module="payment methods" action="write">
           <Button
             onClick={handleSubmit}
             disabled={loading}
@@ -158,18 +161,21 @@ export default function PaymentSettingsPage() {
             )}
             Save Changes
           </Button>
-        </div>
+        </ActionGuard>
       </div>
+    </div>
 
-      {success && (
-        <Alert title="Success" variant="success" message={success} />
-      )}
+    {success && (
+      <Alert title="Success" variant="success" message={success} />
+    )}
 
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <h3 className="text-md font-semibold text-muted-foreground">
-            Registry List
-          </h3>
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h3 className="text-md font-semibold text-muted-foreground">
+          Registry List
+        </h3>
+        
+        <ActionGuard module="payment methods" action="write">
           <AlertDialog
             open={isAddDialogOpen}
             onOpenChange={setIsAddDialogOpen}
@@ -216,52 +222,54 @@ export default function PaymentSettingsPage() {
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>
-        </div>
+        </ActionGuard>
+      </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {methods.length > 0 ? (
-            methods.map((method) => (
-              <div
-                key={method.id}
-                className={`flex items-center justify-between p-5 rounded-sm border transition-all duration-200 ${
-                  method.active
-                    ? "bg-white dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800"
-                    : "bg-neutral-50/50 dark:bg-neutral-900/20 opacity-60"
-                }`}
-              >
-                <div className="flex items-center gap-4">
-                  <div
-                    className={`w-12 h-12 flex justify-center items-center rounded-full ${
-                      method.active 
-                        ? "bg-brand-50 text-brand-500 dark:bg-brand-500/10" 
-                        : "bg-neutral-200 dark:bg-neutral-800 text-neutral-400"
-                    }`}
-                  >
-                    {method.id === "cash" ? (
-                      <Wallet className="h-6 w-6" />
-                    ) : (
-                      <CreditCard className="h-6 w-6" />
-                    )}
-                  </div>
-                  <div>
-                    <h4 className="text-base font-bold text-neutral-900 dark:text-white tracking-tight">
-                      {method.name}
-                    </h4>
-                    <div className="flex items-center gap-2 mt-1">
-                      <div
-                        className={`w-1.5 h-1.5 rounded-full animate-caret-blink ${
-                          method.active ? "bg-green-500" : "bg-neutral-400"
-                        }`}
-                      ></div>
-                      <p className="text-[10px] font-bold uppercase tracking-widest text-neutral-500">
-                        {method.active ? "Active" : "Disabled"}
-                      </p>
-                    </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {methods.length > 0 ? (
+          methods.map((method) => (
+            <div
+              key={method.id}
+              className={`flex items-center justify-between p-5 rounded-sm border transition-all duration-200 ${
+                method.active
+                  ? "bg-white dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800"
+                  : "bg-neutral-50/50 dark:bg-neutral-900/20 opacity-60"
+              }`}
+            >
+              <div className="flex items-center gap-4">
+                <div
+                  className={`w-12 h-12 flex justify-center items-center rounded-full ${
+                    method.active 
+                      ? "bg-brand-50 text-brand-500 dark:bg-brand-500/10" 
+                      : "bg-neutral-200 dark:bg-neutral-800 text-neutral-400"
+                  }`}
+                >
+                  {method.id === "cash" ? (
+                    <Wallet className="h-6 w-6" />
+                  ) : (
+                    <CreditCard className="h-6 w-6" />
+                  )}
+                </div>
+                <div>
+                  <h4 className="text-base font-bold text-neutral-900 dark:text-white tracking-tight">
+                    {method.name}
+                  </h4>
+                  <div className="flex items-center gap-2 mt-1">
+                    <div
+                      className={`w-1.5 h-1.5 rounded-full animate-caret-blink ${
+                        method.active ? "bg-green-500" : "bg-neutral-400"
+                      }`}
+                    ></div>
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-neutral-500">
+                      {method.active ? "Active" : "Disabled"}
+                    </p>
                   </div>
                 </div>
+              </div>
 
-                <div className="flex items-center gap-3">
-                  {method.id !== "cash" && (
+              <div className="flex items-center gap-3">
+                {method.id !== "cash" && (
+                  <ActionGuard module="payment methods" action="delete">
                     <DeleteAlertDialog
                       title={`Remove ${method.name}?`}
                       description="This will permanently delete this payment method from the system."
@@ -271,7 +279,10 @@ export default function PaymentSettingsPage() {
                         <Trash2 className="h-4 w-4" />
                       </button>
                     </DeleteAlertDialog>
-                  )}
+                  </ActionGuard>
+                )}
+                
+                <ActionGuard module="payment methods" action="write">
                   <button
                     onClick={() => handleToggle(method.id)}
                     className={`w-10 h-5 rounded-full transition-all duration-300 relative ${
@@ -284,18 +295,20 @@ export default function PaymentSettingsPage() {
                       }`}
                     />
                   </button>
-                </div>
+                </ActionGuard>
               </div>
-            ))
-          ) : (
-            <div className="col-span-full py-16 text-center border border-dashed border-neutral-200 dark:border-neutral-800 rounded-xl bg-neutral-50/50 dark:bg-neutral-900/20">
-              <p className="text-xs text-neutral-400 font-bold uppercase tracking-[0.2em]">
-                No Payment Methods Configured
-              </p>
             </div>
-          )}
-        </div>
+          ))
+        ) : (
+          <div className="col-span-full py-16 text-center border border-dashed border-neutral-200 dark:border-neutral-800 rounded-xl bg-neutral-50/50 dark:bg-neutral-900/20">
+            <p className="text-xs text-neutral-400 font-bold uppercase tracking-[0.2em]">
+              No Payment Methods Configured
+            </p>
+          </div>
+        )}
       </div>
     </div>
+  </div>
+</ActionGuard>
   );
 }

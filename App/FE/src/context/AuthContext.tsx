@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, ReactNode } from "react";
+import { createContext, useContext, useState, ReactNode, useEffect, useCallback } from "react";
 import { apiClient } from "../lib/apiClient";
 
 type User = {
@@ -8,55 +8,67 @@ type User = {
   role_name: string;
   role_id: number;
   gender: "LK" | "PR";
-};
-
-type AuthError = {
-  errorMessage?: string;
-  errorField?: Record<string, string[]>;
+  profile_image?: string;
+  no_tlp?: string;
 };
 
 type AuthContextType = {
   user: User | null;
   loading: boolean;
-  errors: AuthError | null;
-  login: (payload: FormData) => Promise<void>;
-  register: (payload: FormData) => Promise<void>;
+  errors: any;
+  login: (payload: FormData) => Promise<any>;
+  register: (payload: FormData) => Promise<any>;
   logout: () => Promise<void>;
+  refreshUser: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(
-    JSON.parse(localStorage.getItem("user")) || null,
+    JSON.parse(localStorage.getItem("user") || "null")
   );
-  const [loading, setLoading] = useState(false);
-  const [errors, setErrors] = useState<AuthError | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [errors, setErrors] = useState<any>(null);
+
+  const refreshUser = useCallback(async () => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const res = await apiClient.get("/user/me");
+      const userData = res.data.data;
+      setUser(userData);
+      localStorage.setItem("user", JSON.stringify(userData));
+    } catch (err) {
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      setUser(null);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    refreshUser();
+  }, [refreshUser]);
 
   const login = async (payload: FormData) => {
     try {
       setLoading(true);
-      setErrors(null);
-
       const res = await apiClient.post("/auth/login", payload);
-      const { user, token } = res.data.data;
+      const { user: userData, token } = res.data.data;
 
-      setUser(user);
+      setUser(userData);
       localStorage.setItem("token", token);
-      localStorage.setItem("user", JSON.stringify(user));
-
-      return {
-        status: "success",
-        user,
-      };
+      localStorage.setItem("user", JSON.stringify(userData));
+      return { status: "success", user: userData };
     } catch (err: any) {
       const response = err.response?.data;
-
-      setErrors({
-        errorMessage: response?.message,
-        errorField: response?.errors,
-      });
-
+      setErrors({ errorMessage: response?.message, errorField: response?.errors });
       return response;
     } finally {
       setLoading(false);
@@ -66,27 +78,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const register = async (payload: FormData) => {
     try {
       setLoading(true);
-      setErrors(null);
-
       const res = await apiClient.post("/auth/register", payload);
-      const { user, token } = res.data.data;
+      const { user: userData, token } = res.data.data;
 
-      setUser(user);
+      setUser(userData);
       localStorage.setItem("token", token);
-      localStorage.setItem("user", JSON.stringify(user));
-
-      return {
-        status: "success",
-        user,
-      };
+      localStorage.setItem("user", JSON.stringify(userData));
+      return { status: "success", user: userData };
     } catch (err: any) {
       const response = err.response?.data;
-
-      setErrors({
-        errorMessage: response?.message,
-        errorField: response?.errors,
-      });
-
+      setErrors({ errorMessage: response?.message, errorField: response?.errors });
       return response;
     } finally {
       setLoading(false);
@@ -97,18 +98,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       setLoading(true);
       await apiClient.post("/auth/logout");
+    } finally {
       setUser(null);
       localStorage.removeItem("token");
       localStorage.removeItem("user");
-    } finally {
       setLoading(false);
     }
   };
 
   return (
-    <AuthContext.Provider
-      value={{ user, loading, errors, login, register, logout }}
-    >
+    <AuthContext.Provider value={{ user, loading, errors, login, register, logout, refreshUser }}>
       {children}
     </AuthContext.Provider>
   );

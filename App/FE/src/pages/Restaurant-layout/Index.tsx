@@ -8,6 +8,21 @@ import { RoomInterface, TableInterface } from "@/types/layout-table";
 import SidebarRoomNav from "@/components/restaurant-layout/SidebarRoomNav";
 import LayoutCanvas from "@/components/restaurant-layout/LayoutCanvas";
 import LayoutRoomSkeleton from "@/components/restaurant-layout/LayoutRoomSkeleton";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogMedia,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import Input from "@/components/form/input/InputField";
+import Button from "@/components/ui/button/Button";
+import DeleteAlertDialog from "@/components/dialog/DeleteAlertDialog";
+import { Trash2Icon } from "lucide-react";
 
 export default function RestaurantLayoutPage() {
   const [rooms, setRooms] = useState<RoomInterface[]>([]);
@@ -16,6 +31,11 @@ export default function RestaurantLayoutPage() {
   const [loading, setLoading] = useState(false);
   const [selectedTableIds, setSelectedTableIds] = useState<number[]>([]);
   const [isSelectionMode, setIsSelectionMode] = useState(false);
+
+  const [openEdit, setOpenEdit] = useState(false);
+  const [openDelete, setOpenDelete] = useState(false);
+  const [selectedRoom, setSelectedRoom] = useState<RoomInterface | null>(null);
+  const [editName, setEditName] = useState("");
 
   const { toast } = useToast();
 
@@ -39,50 +59,48 @@ export default function RestaurantLayoutPage() {
     fetchData();
   }, [fetchData]);
 
-  const toggleSelectTable = (id: number) => {
-    setSelectedTableIds((prev) =>
-      prev.includes(id)
-        ? prev.filter((itemId) => itemId !== id)
-        : [...prev, id],
-    );
-  };
-
-  const handleSelectAll = () => {
-    const currentVisibleTableIds =
-      activeRoomId === "all"
-        ? tables.map((t) => t.id)
-        : tables.filter((t) => t.room_id === activeRoomId).map((t) => t.id);
-
-    const isAllSelected = currentVisibleTableIds.every((id) =>
-      selectedTableIds.includes(id),
-    );
-
-    if (isAllSelected) {
-      setSelectedTableIds((prev) =>
-        prev.filter((id) => !currentVisibleTableIds.includes(id)),
-      );
+  const onHandleDelete = async () => {
+    if (!selectedRoom) return;
+    const res = await RoomService.deleteRoom(selectedRoom.id);
+    if (res.error) {
+      toast("error", "Failed", res.error);
     } else {
-      setSelectedTableIds((prev) =>
-        Array.from(new Set([...prev, ...currentVisibleTableIds])),
-      );
+      toast("success", "Deleted", "Room deleted successfully");
+      if (activeRoomId === selectedRoom.id) setActiveRoomId("all");
+      fetchData();
+      setOpenDelete(false);
     }
   };
 
-  const clearSelection = () => {
-    setSelectedTableIds([]);
-    setIsSelectionMode(false);
+  const onConfirmEdit = async () => {
+    if (!selectedRoom) return;
+    setLoading(true);
+    try {
+      const res = await RoomService.updateRoom(selectedRoom.id, {
+        name: editName,
+        width: selectedRoom.width,
+        height: selectedRoom.height,
+        color: selectedRoom.color,
+        capacity: selectedRoom.capacity
+      });
+
+      if (res.error) throw new Error(res.error);
+
+      toast("success", "Success", "Room updated successfully");
+      fetchData();
+      setOpenEdit(false);
+    } catch (err: any) {
+      toast("error", "Error", err.message || "Failed to update room");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  if (loading && tables.length === 0) {
-    return <LayoutRoomSkeleton />;
-  }
+  if (loading && tables.length === 0) return <LayoutRoomSkeleton />;
 
   return (
     <div className="flex flex-col h-[calc(100vh-120px)] overflow-hidden">
-      <PageMeta
-        title="Spatial Layout & Asset Configuration"
-        description="Manage and optimize physical infrastructure, room distribution, and asset placement."
-      />
+      <PageMeta title="Spatial Layout" description="Manage physical infrastructure." />
       <PageBreadcrumb pageTitle="Physical Space Manager" />
 
       <div className="flex flex-1 gap-6 overflow-hidden p-2">
@@ -92,6 +110,15 @@ export default function RestaurantLayoutPage() {
           onSelect={(id) => {
             setActiveRoomId(id);
             if (isSelectionMode) setSelectedTableIds([]);
+          }}
+          onDelete={(room) => {
+            setSelectedRoom(room);
+            setOpenDelete(true);
+          }}
+          onEdit={(room) => {
+            setSelectedRoom(room);
+            setEditName(room.name);
+            setOpenEdit(true);
           }}
         />
 
@@ -104,12 +131,56 @@ export default function RestaurantLayoutPage() {
             selectedTableIds={selectedTableIds}
             isSelectionMode={isSelectionMode}
             onToggleSelectionMode={() => setIsSelectionMode(!isSelectionMode)}
-            onSelectTable={toggleSelectTable}
-            onSelectAll={handleSelectAll}
-            onClearSelection={clearSelection}
+            onSelectTable={(id) => setSelectedTableIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id])}
+            onSelectAll={() => {}}
+            onClearSelection={() => { setSelectedTableIds([]); setIsSelectionMode(false); }}
           />
         </div>
       </div>
+
+      <AlertDialog open={openEdit} onOpenChange={setOpenEdit}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Edit Room</AlertDialogTitle>
+          </AlertDialogHeader>
+          <div className="space-y-3">
+            <Input label="Room Name" value={editName} onChange={(e) => setEditName(e.target.value)} />
+          </div>
+          <div className="flex justify-end gap-2 pt-4">
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <Button loading={loading} onClick={onConfirmEdit}>Save Changes</Button>
+          </div>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Gunakan state openDelete untuk mengontrol DeleteAlertDialog */}
+      <AlertDialog open={openDelete} onOpenChange={setOpenDelete}>
+        <AlertDialogContent size="sm">
+          <AlertDialogHeader>
+            <AlertDialogMedia className="bg-destructive/10 text-destructive dark:bg-destructive/20 dark:text-destructive">
+              <Trash2Icon />
+            </AlertDialogMedia>
+            <AlertDialogTitle>Delete Room?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete <strong>{selectedRoom?.name}</strong>? 
+              This will permanently delete the room and release all tables inside.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel variant="outline">Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              variant="destructive" 
+              onClick={(e) => {
+                e.preventDefault();
+                onHandleDelete();
+              }}
+              disabled={loading}
+            >
+              {loading ? "Deleting..." : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

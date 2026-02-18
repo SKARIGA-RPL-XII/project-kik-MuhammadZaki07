@@ -25,6 +25,7 @@ import {
 import { AdminService } from "@/services/admin.service";
 import { Button } from "../ui/button";
 import { useAuth } from "@/context/AuthContext";
+import { ActionGuard } from "../guard/ActionGuard";
 
 interface Admin {
   id: number;
@@ -139,23 +140,27 @@ export default function AdminTable({
                     </TableCell>
 
                     <TableCell className="text-right space-x-2">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => onEdit(admin)}
-                        className="bg-yellow-400 hover:bg-yellow-400/50 text-white border-none shadow-none"
-                      >
-                        <Pencil size={16} />
-                      </Button>
-
-                      {!isSelf && (
+                      <ActionGuard module="admin" action="write">
                         <Button
                           size="sm"
-                          variant="destructive"
-                          onClick={() => setDeletingId(admin.id)}
+                          variant="outline"
+                          onClick={() => onEdit(admin)}
+                          className="bg-yellow-400 hover:bg-yellow-400/50 text-white border-none shadow-none"
                         >
-                          <Trash2 size={16} />
+                          <Pencil size={16} />
                         </Button>
+                      </ActionGuard>
+
+                      {!isSelf && (
+                        <ActionGuard module="admin" action="delete">
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            onClick={() => setDeletingId(admin.id)}
+                          >
+                            <Trash2 size={16} />
+                          </Button>
+                        </ActionGuard>
                       )}
                     </TableCell>
                   </TableRow>
@@ -169,19 +174,15 @@ export default function AdminTable({
       <AlertDialog open={!!deletingId} onOpenChange={() => setDeletingId(null)}>
         <AlertDialogContent size="sm">
           <AlertDialogHeader>
-            <AlertDialogMedia
-              className="
-              bg-destructive/10
-              text-destructive
-              dark:bg-destructive/20
-              dark:text-destructive"
-            >
-              <Trash2Icon />
-            </AlertDialogMedia>
+            <div className="flex justify-center mb-4">
+              <div className="bg-destructive/10 text-destructive dark:bg-destructive/20 dark:text-destructive p-3 rounded-full">
+                <Trash2 size={24} />
+              </div>
+            </div>
 
-            <AlertDialogTitle>Delete admin?</AlertDialogTitle>
+            <AlertDialogTitle className="text-center">Delete admin?</AlertDialogTitle>
 
-            <AlertDialogDescription>
+            <AlertDialogDescription className="text-center">
               This action cannot be undone. This will permanently delete
               <span className="font-semibold">
                 {" "}
@@ -191,7 +192,7 @@ export default function AdminTable({
             </AlertDialogDescription>
           </AlertDialogHeader>
 
-          <AlertDialogFooter>
+          <AlertDialogFooter className="sm:justify-center gap-2">
             <AlertDialogCancel variant="outline" disabled={submitting}>
               Cancel
             </AlertDialogCancel>

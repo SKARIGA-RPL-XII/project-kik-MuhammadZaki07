@@ -19,6 +19,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
+import { ActionGuard } from "@/components/guard/ActionGuard";
 
 export interface Menu {
   id: number;
@@ -35,13 +36,15 @@ export interface Menu {
 
 function Menu() {
   const [menus, setMenus] = useState<Menu[]>([]);
-  const [categories, setCategories] = useState<{ label: string; value: string }[]>([]);
+  const [categories, setCategories] = useState<
+    { label: string; value: string }[]
+  >([]);
 
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("");
   const [stockMin, setStockMin] = useState<number | undefined>();
   const [stockMax, setStockMax] = useState<number | undefined>();
-  
+
   const [currentPage, setCurrentPage] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
   const [pageSize, setPageSize] = useState(10);
@@ -73,10 +76,11 @@ function Menu() {
 
   const fetchCategories = async () => {
     const res = await CategoryService.getCategories();
-    const cats = res.data?.map((c: any) => ({
-      label: c.name,
-      value: c.id,
-    })) || [];
+    const cats =
+      res.data?.map((c: any) => ({
+        label: c.name,
+        value: c.id,
+      })) || [];
     setCategories(cats);
   };
 
@@ -85,7 +89,7 @@ function Menu() {
 
     const query: any = {
       page: currentPage - 1,
-      size: 10
+      size: 10,
     };
 
     if (debounced.search) query.search = debounced.search;
@@ -164,11 +168,13 @@ function Menu() {
             />
           </div>
 
-          <Link to="create-menu">
-            <Button className="h-10">
-              Create <Plus />
-            </Button>
-          </Link>
+          <ActionGuard module="menu" action="write">
+            <Link to="create-menu">
+              <Button className="h-10">
+                Create <Plus />
+              </Button>
+            </Link>
+          </ActionGuard>
         </div>
 
         <MenuTable menus={menus} loading={loading} onRefresh={fetchMenus} />
@@ -177,7 +183,8 @@ function Menu() {
           <Pagination>
             <PaginationContent className="flex w-full justify-between items-center">
               <p className="text-xs text-gray-500 font-medium">
-                Showing {menus.length} of {totalItems} items (Page {currentPage} of {totalPage})
+                Showing {menus.length} of {totalItems} items (Page {currentPage}{" "}
+                of {totalPage})
               </p>
 
               <div className="flex gap-1">

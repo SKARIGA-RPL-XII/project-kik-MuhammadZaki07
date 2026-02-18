@@ -9,6 +9,7 @@ import {
 import Badge from "../../components/ui/badge/Badge";
 import { CategoryService } from "../../services/category.service";
 import { Loader2, Pencil, Trash2 } from "lucide-react";
+import { ActionGuard } from "../guard/ActionGuard";
 
 interface CategoryTableProps {
   categories: any[];
@@ -76,44 +77,43 @@ export default function CategoryTable({
             {!loading &&
               categories.map((cat) => (
                 <TableRow key={cat.id}>
-                  {/* NAME */}
                   <TableCell className="px-5 py-4">
                     <span className="font-medium text-neutral-800 dark:text-white/90">
                       {cat.name}
                     </span>
                   </TableCell>
 
-                  {/* SLUG */}
                   <TableCell className="px-4 py-3 text-theme-sm text-neutral-500 dark:text-neutral-400">
                     {cat.slug}
                   </TableCell>
 
-                  {/* STATUS */}
                   <TableCell className="px-4 py-3">
                     <Badge color={cat.is_active ? "success" : "error"}>
                       {cat.is_active ? "Active" : "Inactive"}
                     </Badge>
                   </TableCell>
 
-                  {/* ACTION */}
                   <TableCell className="px-4 py-3">
                     <div className="flex items-center gap-2">
-                      <button
-                        title="Edit"
-                        className="p-2 rounded text-yellow-500 hover:bg-yellow-50 dark:text-yellow-400 dark:hover:bg-yellow-500/10"
-                        onClick={() => onEdit(cat)}
-                      >
-                        <Pencil size={18} />
-                      </button>
+                      <ActionGuard module="category" action="write">
+                        <button
+                          title="Edit"
+                          className="p-2 rounded text-yellow-500 hover:bg-yellow-50 dark:text-yellow-400 dark:hover:bg-yellow-500/10"
+                          onClick={() => onEdit(cat)}
+                        >
+                          <Pencil size={18} />
+                        </button>
+                      </ActionGuard>
 
-                      <button
-                        title="Delete"
-                        onClick={() => handleDelete(cat.id)}
-                        className="p-2 rounded text-red-500 hover:bg-red-50
-                        dark:text-red-400 dark:hover:bg-red-500/10"
-                      >
-                        <Trash2 size={18} />
-                      </button>
+                      <ActionGuard module="category" action="delete">
+                        <button
+                          title="Delete"
+                          onClick={() => handleDelete(cat.id)}
+                          className="p-2 rounded text-red-500 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-500/10"
+                        >
+                          <Trash2 size={18} />
+                        </button>
+                      </ActionGuard>
                     </div>
                   </TableCell>
                 </TableRow>

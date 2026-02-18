@@ -22,6 +22,7 @@ import BannerCarousel from "../../components/carousel/BannerCarousel";
 import { Plus, UploadCloud, Image as ImageIcon } from "lucide-react";
 import LoadingSpinner from "@/components/skeleton/LoadingSpinner";
 import { useToast } from "@/context/ToastContext";
+import { ActionGuard } from "@/components/guard/ActionGuard";
 
 function Banner() {
   const [banners, setBanners] = useState<any[]>([]);
@@ -148,184 +149,187 @@ function Banner() {
   };
 
   return (
-    <>
-      <PageMeta
-        title="Banner Management"
-        description="Manage high-impact marketing banners"
-      />
-      <PageBreadcrumb pageTitle="Marketing Banners" />
+<>
+  <PageMeta
+    title="Banner Management"
+    description="Manage high-impact marketing banners"
+  />
+  <PageBreadcrumb pageTitle="Marketing Banners" />
 
-      {banners.length > 0 && (
-        <div className="mb-8 overflow-hidden rounded-2xl shadow-sm border border-gray-100 dark:border-white/5">
-          <BannerCarousel banners={banners} autoLoop loopInterval={4000} />
-        </div>
-      )}
+  {banners.length > 0 && (
+    <div className="mb-8 overflow-hidden rounded-2xl shadow-sm border border-gray-100 dark:border-white/5">
+      <BannerCarousel banners={banners} autoLoop loopInterval={4000} />
+    </div>
+  )}
 
-      <ComponentCard
-        title="Active Banners"
-        desc="Visual promotion items displayed on the homepage"
-        className="shadow-sm border-gray-100 dark:border-white/5"
-      >
-        <div className="flex justify-between items-center mb-6">
-          <div className="space-y-1">
-            <h4 className="text-lg font-semibold text-gray-900 dark:text-white">
-              Banner List
-            </h4>
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-              Manage your promotional content
-            </p>
-          </div>
-          <AlertDialog
-            open={openDialog}
-            onOpenChange={(val) => {
-              setOpenDialog(val);
-              if (!val) resetForm();
-            }}
-          >
-            <AlertDialogTrigger asChild>
-              <Button
-                onClick={resetForm}
-                className="flex items-center gap-2 bg-brand-500 hover:bg-brand-600 transition-all shadow-md shadow-brand-500/20"
+  <ComponentCard
+    title="Active Banners"
+    desc="Visual promotion items displayed on the homepage"
+    className="shadow-sm border-gray-100 dark:border-white/5"
+  >
+    <div className="flex justify-between items-center mb-6">
+      <div className="space-y-1">
+        <h4 className="text-lg font-semibold text-gray-900 dark:text-white">
+          Banner List
+        </h4>
+        <p className="text-sm text-gray-500 dark:text-gray-400">
+          Manage your promotional content
+        </p>
+      </div>
+
+      <ActionGuard module="banner" action="write">
+        <AlertDialog
+          open={openDialog}
+          onOpenChange={(val) => {
+            setOpenDialog(val);
+            if (!val) resetForm();
+          }}
+        >
+          <AlertDialogTrigger asChild>
+            <Button
+              onClick={resetForm}
+              className="flex items-center gap-2 bg-brand-500 hover:bg-brand-600 transition-all shadow-md shadow-brand-500/20"
+            >
+              <Plus size={18} />
+              <span>Create New Banner</span>
+            </Button>
+          </AlertDialogTrigger>
+
+          <AlertDialogContent className="max-w-xl border-none shadow-2xl">
+            <AlertDialogHeader className="mb-4">
+              <AlertDialogTitle className="text-2xl font-bold">
+                {editingId ? "Modify Banner" : "New Promotion Banner"}
+              </AlertDialogTitle>
+              <p className="text-sm text-gray-500">
+                Enter details below to publish your banner
+              </p>
+            </AlertDialogHeader>
+
+            <div className="space-y-5">
+              <div
+                {...getRootProps()}
+                className={`relative group border-2 border-dashed rounded-2xl transition-all flex flex-col items-center justify-center cursor-pointer min-h-[240px] overflow-hidden ${
+                  isDragActive
+                    ? "border-brand-500 bg-brand-50/50 dark:bg-brand-500/5"
+                    : "border-gray-200 dark:border-gray-700 hover:border-brand-400 bg-gray-50/50 dark:bg-neutral-900/50"
+                }`}
               >
-                <Plus size={18} />
-                <span>Create New Banner</span>
-              </Button>
-            </AlertDialogTrigger>
-
-            <AlertDialogContent className="max-w-xl border-none shadow-2xl">
-              <AlertDialogHeader className="mb-4">
-                <AlertDialogTitle className="text-2xl font-bold">
-                  {editingId ? "Modify Banner" : "New Promotion Banner"}
-                </AlertDialogTitle>
-                <p className="text-sm text-gray-500">
-                  Enter details below to publish your banner
+                <input {...getInputProps()} />
+                {bannerPreview ? (
+                  <div className="relative w-full h-full group">
+                    <img
+                      src={bannerPreview}
+                      className="w-full h-60 object-cover"
+                      alt="Preview"
+                    />
+                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                      <div className="bg-white/20 backdrop-blur-md p-3 rounded-full">
+                        <UploadCloud className="text-white" />
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="p-10 flex flex-col items-center text-center">
+                    <div className="w-16 h-16 bg-brand-50 dark:bg-brand-500/10 rounded-full flex items-center justify-center mb-4">
+                      <ImageIcon className="text-brand-500" size={28} />
+                    </div>
+                    <p className="text-gray-700 dark:text-gray-300 font-medium">
+                      Click to upload or drag and drop
+                    </p>
+                    <p className="text-xs text-gray-500 mt-1">
+                      SVG, PNG, JPG or WEBP (Max. 2MB)
+                    </p>
+                  </div>
+                )}
+              </div>
+              {errors.banner_image && (
+                <p className="text-xs font-medium text-red-500 -mt-2 ml-1">
+                  {errors.banner_image}
                 </p>
-              </AlertDialogHeader>
+              )}
 
-              <div className="space-y-5">
-                <div
-                  {...getRootProps()}
-                  className={`relative group border-2 border-dashed rounded-2xl transition-all flex flex-col items-center justify-center cursor-pointer min-h-[240px] overflow-hidden ${
-                    isDragActive
-                      ? "border-brand-500 bg-brand-50/50 dark:bg-brand-500/5"
-                      : "border-gray-200 dark:border-gray-700 hover:border-brand-400 bg-gray-50/50 dark:bg-neutral-900/50"
-                  }`}
-                >
-                  <input {...getInputProps()} />
-                  {bannerPreview ? (
-                    <div className="relative w-full h-full group">
-                      <img
-                        src={bannerPreview}
-                        className="w-full h-60 object-cover"
-                        alt="Preview"
-                      />
-                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                        <div className="bg-white/20 backdrop-blur-md p-3 rounded-full">
-                          <UploadCloud className="text-white" />
-                        </div>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="p-10 flex flex-col items-center text-center">
-                      <div className="w-16 h-16 bg-brand-50 dark:bg-brand-500/10 rounded-full flex items-center justify-center mb-4">
-                        <ImageIcon className="text-brand-500" size={28} />
-                      </div>
-                      <p className="text-gray-700 dark:text-gray-300 font-medium">
-                        Click to upload or drag and drop
-                      </p>
-                      <p className="text-xs text-gray-500 mt-1">
-                        SVG, PNG, JPG or WEBP (Max. 2MB)
-                      </p>
-                    </div>
+              <div className="space-y-4">
+                <div>
+                  <Input
+                    label="Banner Title"
+                    placeholder="e.g. Summer Special 2026"
+                    value={title}
+                    error={!!errors.title}
+                    onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                      setTitle(e.target.value)
+                    }
+                  />
+                  {errors.title && (
+                    <p className="text-xs font-medium text-red-500 mt-1 ml-1">
+                      {errors.title}
+                    </p>
                   )}
                 </div>
-                {errors.banner_image && (
-                  <p className="text-xs font-medium text-red-500 -mt-2 ml-1">
-                    {errors.banner_image}
-                  </p>
-                )}
 
-                <div className="space-y-4">
-                  <div>
-                    <Input
-                      label="Banner Title"
-                      placeholder="e.g. Summer Special 2026"
-                      value={title}
-                      error={!!errors.title}
-                      onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                        setTitle(e.target.value)
-                      }
-                    />
-                    {errors.title && (
-                      <p className="text-xs font-medium text-red-500 mt-1 ml-1">
-                        {errors.title}
-                      </p>
-                    )}
-                  </div>
-
-                  <div>
-                    <Textarea
-                      label="Description"
-                      placeholder="Describe your promotion briefly..."
-                      value={description}
-                      onChange={(val) => setDescription(val)}
-                    />
-                    {errors.description && (
-                      <p className="text-xs font-medium text-red-500 mt-1 ml-1">
-                        {errors.description}
-                      </p>
-                    )}
-                  </div>
-
-                  <div className="p-4 bg-gray-100 dark:bg-neutral-900/50 rounded-xl border border-gray-100 dark:border-white/5">
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-0.5">
-                        <p className="text-sm font-semibold">
-                          Visibility Status
-                        </p>
-                        <p className="text-xs text-gray-500">
-                          Toggle to show/hide this banner
-                        </p>
-                      </div>
-                      <Switch
-                        checked={isActive}
-                        onChange={(v) => setIsActive(v)}
-                      />
-                    </div>
-                  </div>
+                <div>
+                  <Textarea
+                    label="Description"
+                    placeholder="Describe your promotion briefly..."
+                    value={description}
+                    onChange={(val) => setDescription(val)}
+                  />
+                  {errors.description && (
+                    <p className="text-xs font-medium text-red-500 mt-1 ml-1">
+                      {errors.description}
+                    </p>
+                  )}
                 </div>
 
-                <AlertDialogFooter className="gap-3 mt-6 flex items-center">
-                  <AlertDialogCancel onClick={resetForm} disabled={submitting}>
-                    Discard
-                  </AlertDialogCancel>
-                  <Button
-                    onClick={handleSubmit}
-                    disabled={submitting}
-                    className="h-10 min-w-[140px]"
-                  >
-                    {submitting ? (
-                      <LoadingSpinner />
-                    ) : (
-                      <span>
-                        {editingId ? "Save Changes" : "Publish Banner"}
-                      </span>
-                    )}
-                  </Button>
-                </AlertDialogFooter>
+                <div className="p-4 bg-gray-100 dark:bg-neutral-900/50 rounded-xl border border-gray-100 dark:border-white/5">
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <p className="text-sm font-semibold">
+                        Visibility Status
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        Toggle to show/hide this banner
+                      </p>
+                    </div>
+                    <Switch
+                      checked={isActive}
+                      onChange={(v) => setIsActive(v)}
+                    />
+                  </div>
+                </div>
               </div>
-            </AlertDialogContent>
-          </AlertDialog>
-        </div>
 
-        <BannerTable
-          banners={banners}
-          loading={loading}
-          onRefresh={fetchBanners}
-          onEdit={handleEdit}
-        />
-      </ComponentCard>
-    </>
+              <AlertDialogFooter className="gap-3 mt-6 flex items-center">
+                <AlertDialogCancel onClick={resetForm} disabled={submitting}>
+                  Discard
+                </AlertDialogCancel>
+                <Button
+                  onClick={handleSubmit}
+                  disabled={submitting}
+                  className="h-10 min-w-[140px]"
+                >
+                  {submitting ? (
+                    <LoadingSpinner />
+                  ) : (
+                    <span>
+                      {editingId ? "Save Changes" : "Publish Banner"}
+                    </span>
+                  )}
+                </Button>
+              </AlertDialogFooter>
+            </div>
+          </AlertDialogContent>
+        </AlertDialog>
+      </ActionGuard>
+    </div>
+
+    <BannerTable
+      banners={banners}
+      loading={loading}
+      onRefresh={fetchBanners}
+      onEdit={handleEdit}
+    />
+  </ComponentCard>
+</>
   );
 }
 

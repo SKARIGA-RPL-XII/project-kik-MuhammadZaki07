@@ -18,6 +18,7 @@ import {
 import BadgeTable from "../../components/tables/BadgeTable";
 import { BadgeService } from "../../services/badge.service";
 import useDebounce from "../../hooks/useDebounce";
+import { ActionGuard } from "@/components/guard/ActionGuard";
 
 export default function BadgePage() {
   const [badges, setBadges] = useState<any[]>([]);
@@ -123,108 +124,112 @@ export default function BadgePage() {
             </div>
           </div>
 
-          <AlertDialog open={open} onOpenChange={setOpen}>
-            <AlertDialogTrigger asChild>
-              <Button className="h-10" onClick={resetForm}>Create Badge</Button>
-            </AlertDialogTrigger>
+          <ActionGuard module="badge" action="write">
+            <AlertDialog open={open} onOpenChange={setOpen}>
+              <AlertDialogTrigger asChild>
+                <Button className="h-10" onClick={resetForm}>
+                  Create Badge
+                </Button>
+              </AlertDialogTrigger>
 
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>
-                  {editingId ? "Edit Badge" : "Create Badge"}
-                </AlertDialogTitle>
-              </AlertDialogHeader>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>
+                    {editingId ? "Edit Badge" : "Create Badge"}
+                  </AlertDialogTitle>
+                </AlertDialogHeader>
 
-              <div className="space-y-4 mt-2">
-                <div>
-                  <label className="text-sm font-medium">
-                    Name <span className="text-red-500">*</span>
-                  </label>
-                  <Input
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                  />
-                  {errors.name && (
-                    <p className="text-sm text-red-500">{errors.name}</p>
-                  )}
-                </div>
-
-                <div>
-                  <label className="text-sm font-medium">Icon</label>
-                  <Input
-                    value={icon}
-                    onChange={(e) => setIcon(e.target.value)}
-                  />
-                </div>
-
-                <div>
-                  <label className="text-sm font-medium">
-                    Color <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="color"
-                    value={color}
-                    onChange={(e) => setColor(e.target.value)}
-                    className="w-full h-10 rounded-md"
-                  />
-                </div>
-
-                <div>
-                  <label className="text-sm font-medium">Image</label>
-
-                  <input
-                    type="file"
-                    accept="image/*"
-                    hidden
-                    ref={fileInputRef}
-                    onChange={(e) => {
-                      if (e.target.files?.[0]) {
-                        handleImage(e.target.files[0]);
-                      }
-                    }}
-                  />
-
-                  <div
-                    onClick={() => fileInputRef.current?.click()}
-                    onDragOver={(e) => e.preventDefault()}
-                    onDrop={(e) => {
-                      e.preventDefault();
-                      if (e.dataTransfer.files[0]) {
-                        handleImage(e.dataTransfer.files[0]);
-                      }
-                    }}
-                    className="border-2 border-dashed rounded-lg p-6 text-center cursor-pointer hover:border-brand-500 transition"
-                  >
-                    {preview ? (
-                      <img
-                         src={`${import.meta.env.VITE_STORAGE_URL}/${preview}`}
-                        className="w-24 h-24 object-cover mx-auto rounded-lg"
-                      />
-                    ) : (
-                      <p className="text-neutral-500">
-                        Drag & drop image here or click to browse
-                      </p>
+                <div className="space-y-4 mt-2">
+                  <div>
+                    <label className="text-sm font-medium">
+                      Name <span className="text-red-500">*</span>
+                    </label>
+                    <Input
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                    />
+                    {errors.name && (
+                      <p className="text-sm text-red-500">{errors.name}</p>
                     )}
                   </div>
+
+                  <div>
+                    <label className="text-sm font-medium">Icon</label>
+                    <Input
+                      value={icon}
+                      onChange={(e) => setIcon(e.target.value)}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-sm font-medium">
+                      Color <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="color"
+                      value={color}
+                      onChange={(e) => setColor(e.target.value)}
+                      className="w-full h-10 rounded-md"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-sm font-medium">Image</label>
+
+                    <input
+                      type="file"
+                      accept="image/*"
+                      hidden
+                      ref={fileInputRef}
+                      onChange={(e) => {
+                        if (e.target.files?.[0]) {
+                          handleImage(e.target.files[0]);
+                        }
+                      }}
+                    />
+
+                    <div
+                      onClick={() => fileInputRef.current?.click()}
+                      onDragOver={(e) => e.preventDefault()}
+                      onDrop={(e) => {
+                        e.preventDefault();
+                        if (e.dataTransfer.files[0]) {
+                          handleImage(e.dataTransfer.files[0]);
+                        }
+                      }}
+                      className="border-2 border-dashed rounded-lg p-6 text-center cursor-pointer hover:border-brand-500 transition"
+                    >
+                      {preview ? (
+                        <img
+                          src={`${import.meta.env.VITE_STORAGE_URL}/${preview}`}
+                          className="w-24 h-24 object-cover mx-auto rounded-lg"
+                        />
+                      ) : (
+                        <p className="text-neutral-500">
+                          Drag & drop image here or click to browse
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  <Switch
+                    checked={isActive}
+                    label="Active"
+                    onChange={(v) => setIsActive(v)}
+                  />
+
+                  <AlertDialogFooter className="flex items-center">
+                    <AlertDialogCancel onClick={resetForm}>
+                      Cancel
+                    </AlertDialogCancel>
+                    <Button className="h-10" onClick={handleSubmit}>
+                      {editingId ? "Update" : "Create"}
+                    </Button>
+                  </AlertDialogFooter>
                 </div>
-
-                <Switch
-                  checked={isActive}
-                  label="Active"
-                  onChange={(v) => setIsActive(v)}
-                />
-
-                <AlertDialogFooter className="flex items-center">
-                  <AlertDialogCancel onClick={resetForm}>
-                    Cancel
-                  </AlertDialogCancel>
-                  <Button className="h-10" onClick={handleSubmit}>
-                    {editingId ? "Update" : "Create"}
-                  </Button>
-                </AlertDialogFooter>
-              </div>
-            </AlertDialogContent>
-          </AlertDialog>
+              </AlertDialogContent>
+            </AlertDialog>
+          </ActionGuard>
         </div>
 
         <BadgeTable

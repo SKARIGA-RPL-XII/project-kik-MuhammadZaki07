@@ -8,9 +8,8 @@ export default function UserDropdown() {
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const { user, logout } = useAuth();  
-  
-  
+  const { user, logout } = useAuth();
+
   const navigate = useNavigate();
 
   const toggleDropdown = () => setIsOpen(!isOpen);
@@ -26,7 +25,9 @@ export default function UserDropdown() {
     }
   };
 
-  const profile_image = `${import.meta.env.VITE_STORAGE_URL}/${user.profile_image}`
+  const profile_image = user?.profile_image?.startsWith("http")
+    ? user.profile_image
+    : `${import.meta.env.VITE_STORAGE_URL}/${user?.profile_image}`;
 
   return (
     <div className="relative">
@@ -35,7 +36,10 @@ export default function UserDropdown() {
         className="flex items-center text-neutral-700 dropdown-toggle dark:text-neutral-400"
       >
         <span className="mr-3 overflow-hidden rounded-full h-11 w-11">
-          <img src={user.profile_image == null ? "/profile.png" : profile_image} alt="User" />
+          <img
+            src={user?.profile_image ? profile_image : "/profile.png"}
+            alt="User"
+          />
         </span>
 
         <span className="block mr-1 font-medium text-theme-sm">

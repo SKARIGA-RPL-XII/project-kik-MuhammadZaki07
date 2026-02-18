@@ -26,6 +26,7 @@ import { AdminService } from "../../services/admin.service";
 import AdminTable from "@/components/tables/AdminTable";
 import Select from "@/components/form/Select";
 import { useToast } from "@/context/ToastContext";
+import { ActionGuard } from "@/components/guard/ActionGuard";
 
 function Admin() {
   const [admins, setAdmins] = useState<any[]>([]);
@@ -194,7 +195,7 @@ function Admin() {
   };
 
   return (
-    <>
+   <>
       <PageMeta title="Admin Management" description="Manage Admins" />
       <PageBreadcrumb pageTitle="Admin" />
 
@@ -217,125 +218,131 @@ function Admin() {
               onChange={handleFileChange}
             />
 
-            <Button
-              variant="outline"
-              className="flex-1 md:flex-none gap-2 h-10"
-              onClick={() => fileInputRef.current?.click()}
-            >
-              Import <FileSpreadsheet className="ml-2" size={18} />
-            </Button>
+            <ActionGuard module="admin" action="write">
+              <Button
+                variant="outline"
+                className="flex-1 md:flex-none gap-2 h-10"
+                onClick={() => fileInputRef.current?.click()}
+              >
+                Import <FileSpreadsheet className="ml-2" size={18} />
+              </Button>
+            </ActionGuard>
 
-            <Button
-              variant="outline"
-              className="flex-1 md:flex-none gap-2 h-10"
-              onClick={handleExport}
-              disabled={exporting}
-            >
-              {exporting ? (
-                <Loader2 className="animate-spin" size={18} />
-              ) : (
-                <Download size={18} />
-              )}
-              Export
-            </Button>
+            <ActionGuard module="admin" action="view">
+              <Button
+                variant="outline"
+                className="flex-1 md:flex-none gap-2 h-10"
+                onClick={handleExport}
+                disabled={exporting}
+              >
+                {exporting ? (
+                  <Loader2 className="animate-spin" size={18} />
+                ) : (
+                  <Download size={18} />
+                )}
+                Export
+              </Button>
+            </ActionGuard>
 
-            <AlertDialog open={openDialog} onOpenChange={setOpenDialog}>
-              <AlertDialogTrigger asChild>
-                <Button
-                  className="flex-1 md:flex-none gap-2 h-10"
-                  onClick={() => {
-                    setEditingData(null);
-                    setForm({ email: "", username: "", password: "" });
-                    setErrors({});
-                  }}
-                >
-                  <Plus size={18} /> Create
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent className="max-w-md">
-                <AlertDialogHeader>
-                  <AlertDialogTitle>
-                    {editingData ? "Update Admin" : "Register Admin"}
-                  </AlertDialogTitle>
-                </AlertDialogHeader>
-                <form onSubmit={handleSubmit} className="space-y-4 pt-4">
-                  <div className="space-y-1.5">
-                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                      Username <span className="text-red-500">*</span>
-                    </label>
-                    <Input
-                      placeholder="Enter username"
-                      value={form.username}
-                      onChange={(e) =>
-                        setForm({ ...form, username: e.target.value })
-                      }
-                    />
-                    {errors?.username && (
-                      <p className="text-xs text-red-500">
-                        {errors.username[0]}
-                      </p>
-                    )}
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                      Email Address <span className="text-red-500">*</span>
-                    </label>
-                    <Input
-                      type="email"
-                      placeholder="admin@example.com"
-                      value={form.email}
-                      onChange={(e) =>
-                        setForm({ ...form, email: e.target.value })
-                      }
-                    />
-                    {errors?.email && (
-                      <p className="text-xs text-red-500">{errors.email[0]}</p>
-                    )}
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                      Password{" "}
-                      {!editingData && <span className="text-red-500">*</span>}
-                    </label>
-                    <Input
-                      type="password"
-                      placeholder={
-                        editingData
-                          ? "Leave blank to keep current"
-                          : "Min. 6 characters"
-                      }
-                      value={form.password}
-                      onChange={(e) =>
-                        setForm({ ...form, password: e.target.value })
-                      }
-                    />
-                    {errors?.password && (
-                      <p className="text-xs text-red-500">
-                        {errors.password[0]}
-                      </p>
-                    )}
-                  </div>
-
-                  <AlertDialogFooter className="pt-4 gap-2">
-                    <AlertDialogCancel onClick={() => setOpenDialog(false)}>
-                      Cancel
-                    </AlertDialogCancel>
-                    <Button type="submit" disabled={submitting}>
-                      {submitting ? (
-                        <div className="flex items-center gap-2">
-                          <Loader2 className="animate-spin" size={16} />{" "}
-                          Saving...
-                        </div>
-                      ) : (
-                        "Save Admin"
+            <ActionGuard module="admin" action="write">
+              <AlertDialog open={openDialog} onOpenChange={setOpenDialog}>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    className="flex-1 md:flex-none gap-2 h-10"
+                    onClick={() => {
+                      setEditingData(null);
+                      setForm({ email: "", username: "", password: "" });
+                      setErrors({});
+                    }}
+                  >
+                    <Plus size={18} /> Create
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent className="max-w-md">
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>
+                      {editingData ? "Update Admin" : "Register Admin"}
+                    </AlertDialogTitle>
+                  </AlertDialogHeader>
+                  <form onSubmit={handleSubmit} className="space-y-4 pt-4">
+                    <div className="space-y-1.5">
+                      <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                        Username <span className="text-red-500">*</span>
+                      </label>
+                      <Input
+                        placeholder="Enter username"
+                        value={form.username}
+                        onChange={(e) =>
+                          setForm({ ...form, username: e.target.value })
+                        }
+                      />
+                      {errors?.username && (
+                        <p className="text-xs text-red-500">
+                          {errors.username[0]}
+                        </p>
                       )}
-                    </Button>
-                  </AlertDialogFooter>
-                </form>
-              </AlertDialogContent>
-            </AlertDialog>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                        Email Address <span className="text-red-500">*</span>
+                      </label>
+                      <Input
+                        type="email"
+                        placeholder="admin@example.com"
+                        value={form.email}
+                        onChange={(e) =>
+                          setForm({ ...form, email: e.target.value })
+                        }
+                      />
+                      {errors?.email && (
+                        <p className="text-xs text-red-500">{errors.email[0]}</p>
+                      )}
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                        Password{" "}
+                        {!editingData && <span className="text-red-500">*</span>}
+                      </label>
+                      <Input
+                        type="password"
+                        placeholder={
+                          editingData
+                            ? "Leave blank to keep current"
+                            : "Min. 6 characters"
+                        }
+                        value={form.password}
+                        onChange={(e) =>
+                          setForm({ ...form, password: e.target.value })
+                        }
+                      />
+                      {errors?.password && (
+                        <p className="text-xs text-red-500">
+                          {errors.password[0]}
+                        </p>
+                      )}
+                    </div>
+
+                    <AlertDialogFooter className="pt-4 gap-2">
+                      <AlertDialogCancel onClick={() => setOpenDialog(false)}>
+                        Cancel
+                      </AlertDialogCancel>
+                      <Button type="submit" disabled={submitting}>
+                        {submitting ? (
+                          <div className="flex items-center gap-2">
+                            <Loader2 className="animate-spin" size={16} />{" "}
+                            Saving...
+                          </div>
+                        ) : (
+                          "Save Admin"
+                        )}
+                      </Button>
+                    </AlertDialogFooter>
+                  </form>
+                </AlertDialogContent>
+              </AlertDialog>
+            </ActionGuard>
           </div>
         </div>
 
@@ -353,7 +360,7 @@ function Admin() {
             setErrors({});
             setOpenDialog(true);
           }}
-           page={page}
+          page={page}
         />
 
         <div className="flex items-center justify-between mt-6">

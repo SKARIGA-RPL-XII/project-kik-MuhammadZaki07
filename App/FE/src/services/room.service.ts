@@ -20,35 +20,27 @@ export class RoomService {
   static async getRooms() {
     try {
       const res = await apiClient.get("/rooms");
-
-      return {
-        data: res.data.data,
-        error: null,
-      };
+      return { data: res.data.data, error: null };
     } catch (err: any) {
-      return {
-        data: null,
-        error: err?.response?.data?.message || "Failed to fetch rooms",
-      };
+      return { data: null, error: err?.response?.data?.message || "Failed to fetch rooms" };
     }
   }
 
   static async createRoom(payload: RoomPayload) {
     try {
       const res = await apiClient.post("/rooms", payload);
-
-      return {
-        data: res.data.data,
-        error: null,
-      };
+      return { data: res.data.data, error: null };
     } catch (err: any) {
-      return {
-        data: null,
-        error:
-          err?.response?.data?.errors ||
-          err?.response?.data?.message ||
-          "Failed to create room",
-      };
+      return { data: null, error: err?.response?.data?.errors || err?.response?.data?.message || "Failed to create room" };
+    }
+  }
+
+  static async updateRoom(id: number, data: any) {
+    try {
+      const res = await apiClient.put(`/rooms/${id}`, data);
+      return { data: res.data.data, error: null };
+    } catch (err: any) {
+      return { data: null, error: err?.response?.data?.message || "Failed to update room" };
     }
   }
 
@@ -74,14 +66,9 @@ export class RoomService {
   static async deleteRoom(id: number) {
     try {
       await apiClient.delete(`/rooms/${id}`);
-
-      return {
-        error: null,
-      };
+      return { error: null };
     } catch (err: any) {
-      return {
-        error: err?.response?.data?.message || "Failed to delete room",
-      };
+      return { error: err?.response?.data?.message || "Failed to delete room" };
     }
   }
 }

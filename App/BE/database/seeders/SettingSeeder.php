@@ -51,6 +51,14 @@ class SettingSeeder extends Seeder
             ['key' => 'auto_print_receipt', 'value' => '1', 'group' => 'system'],
             ['key' => 'session_timeout', 'value' => '120', 'group' => 'system'],
             ['key' => 'maintenance_mode', 'value' => '0', 'group' => 'system'],
+
+            [
+                ['key' => 'enable_negative_stock', 'value' => '0', 'group' => 'inventory'],
+                ['key' => 'stock_warning_email', 'value' => 'admin@nero-coffee.com', 'group' => 'inventory'],
+                ['key' => 'kitchen_display_refresh', 'value' => '10', 'group' => 'operation'],
+                ['key' => 'reservation_timeout', 'value' => '30', 'group' => 'operation'],
+                ['key' => 'log_retention', 'value' => '30', 'group' => 'security'],
+            ]
         ];
 
         foreach ($settings as $setting) {

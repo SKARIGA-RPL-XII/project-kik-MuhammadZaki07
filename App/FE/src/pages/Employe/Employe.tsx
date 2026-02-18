@@ -21,6 +21,7 @@ import TextArea from "../../components/form/input/TextArea";
 import { useToast } from "@/context/ToastContext";
 import Label from "@/components/form/Label";
 import LoadingSpinner from "@/components/skeleton/LoadingSpinner";
+import { ActionGuard } from "@/components/guard/ActionGuard";
 
 function Employe() {
   const [employes, setEmployes] = useState<any[]>([]);
@@ -220,325 +221,325 @@ function Employe() {
   };
 
   return (
-    <>
-      <PageMeta title="Employe Management" description="Manage employes" />
-      <PageBreadcrumb pageTitle="Employe" />
+  <>
+    <PageMeta title="Employe Management" description="Manage employes" />
+    <PageBreadcrumb pageTitle="Employe" />
 
-      <ComponentCard title="Management Employe" desc="Manage all employe data">
-        <div className="flex flex-wrap justify-between items-center gap-4 mb-4">
-          <div className="flex gap-3">
-            <Input
-              placeholder="Search username..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-            <Select
-              value={genderFilter}
-              onChange={(val: any) => setGenderFilter(val)}
-              placeholder="Gender"
-              options={[
-                { label: "All", value: "" },
-                { label: "Laki-laki", value: "LK" },
-                { label: "Perempuan", value: "PR" },
-              ]}
-            />
-          </div>
+    <ComponentCard title="Management Employe" desc="Manage all employe data">
+      <div className="flex flex-wrap justify-between items-center gap-4 mb-4">
+        <div className="flex gap-3">
+          <Input
+            placeholder="Search username..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+          <Select
+            value={genderFilter}
+            onChange={(val: any) => setGenderFilter(val)}
+            placeholder="Gender"
+            options={[
+              { label: "All", value: "" },
+              { label: "Laki-laki", value: "LK" },
+              { label: "Perempuan", value: "PR" },
+            ]}
+          />
+        </div>
 
-          <div className="flex gap-2">
-            <input
-              type="file"
-              ref={fileInputRef}
-              className="hidden"
-              accept=".xlsx,.xls,.csv"
-              onChange={handleFileImportChange}
-            />
+        <div className="flex gap-2">
+          <input
+            type="file"
+            ref={fileInputRef}
+            className="hidden"
+            accept=".xlsx,.xls,.csv"
+            onChange={handleFileImportChange}
+          />
+
+          <ActionGuard module="staff" action="write">
             <Button variant="outline" onClick={() => fileInputRef.current?.click()}>
               Import <FileSpreadsheet className="ml-2" size={18} />
             </Button>
+          </ActionGuard>
+
+          <ActionGuard module="staff" action="view">
             <Button variant="outline" onClick={handleExport} disabled={exporting}>
               {exporting ? <Loader2 className="animate-spin mr-2" size={18} /> : <Download className="mr-2" size={18} />} Export
             </Button>
+          </ActionGuard>
+
+          <ActionGuard module="staff" action="write">
             <Button onClick={() => { resetForm(); setOpenDialog(true); }}>
               <Plus className="mr-2" size={18} /> Create
             </Button>
-          </div>
+          </ActionGuard>
+        </div>
+      </div>
+
+      <EmployeTable
+        employes={employes}
+        loading={loading}
+        onRefresh={fetchEmployes}
+        onEdit={(data) => {
+          setEditingData(data);
+          setForm({
+            username: data.user?.username ?? "",
+            email: data.user?.email ?? "",
+            password: "",
+            password_confirmation: "",
+            addres: data.addres ?? "",
+            no_tlp: data.no_tlp?.toString() ?? "",
+            gender: data.gender ?? "",
+            role_id: data.user?.role_id?.toString() ?? "",
+          });
+          setOpenDialog(true);
+        }}
+      />
+
+      {/* Pagination dan Modal tetap di luar ActionGuard agar logic state tetap berjalan normal */}
+      <div className="flex flex-col sm:flex-row items-center justify-between mt-6 gap-4 border-t border-gray-100 pt-6">
+        <div className="text-sm text-neutral-500">
+          Showing <span className="font-semibold text-neutral-700">{Math.min((page - 1) * size + 1, total)}</span> to{" "}
+          <span className="font-semibold text-neutral-700">{Math.min(page * size, total)}</span> of{" "}
+          <span className="font-semibold text-neutral-700">{total}</span> entries
         </div>
 
-        <EmployeTable
-          employes={employes}
-          loading={loading}
-          onRefresh={fetchEmployes}
-          onEdit={(data) => {
-            setEditingData(data);
-            setForm({
-              username: data.user?.username ?? "",
-              email: data.user?.email ?? "",
-              password: "",
-              password_confirmation: "",
-              addres: data.addres ?? "",
-              no_tlp: data.no_tlp?.toString() ?? "",
-              gender: data.gender ?? "",
-              role_id: data.user?.role_id?.toString() ?? "",
-            });
-            setOpenDialog(true);
-          }}
-        />
-
-     <div className="flex flex-col sm:flex-row items-center justify-between mt-6 gap-4 border-t border-gray-100 pt-6">
-  {/* Info Total Data */}
-  <div className="text-sm text-neutral-500">
-    Showing <span className="font-semibold text-neutral-700">{Math.min((page - 1) * size + 1, total)}</span> to{" "}
-    <span className="font-semibold text-neutral-700">{Math.min(page * size, total)}</span> of{" "}
-    <span className="font-semibold text-neutral-700">{total}</span> entries
-  </div>
-
-  <div className="flex items-center gap-2">
-    <Button
-      size="sm"
-      variant="outline"
-      className="h-9 w-9 p-0"
-      disabled={page === 1}
-      onClick={() => setPage((p) => p - 1)}
-    >
-      <span className="sr-only">Previous</span>
-      &lt;
-    </Button>
-
-    <div className="flex items-center gap-1">
-      {page > 2 && (
-        <>
+        <div className="flex items-center gap-2">
           <Button
             size="sm"
-            variant={page === 1 ? "primary" : "outline"}
-            className={`h-9 w-9 p-0 ${page === 1 ? "bg-blue-600 text-white" : ""}`}
-            onClick={() => setPage(1)}
+            variant="outline"
+            className="h-9 w-9 p-0"
+            disabled={page === 1}
+            onClick={() => setPage((p) => p - 1)}
           >
-            1
+            &lt;
           </Button>
-          {page > 3 && <span className="px-1 text-neutral-400">...</span>}
-        </>
-      )}
 
-      {Array.from({ length: totalPage }, (_, i) => i + 1)
-        .filter((p) => p >= page - 1 && p <= page + 1)
-        .map((p) => (
-          <Button
-            key={p}
-            size="sm"
-            variant={page === p ? "primary" : "outline"}
-            className={`h-9 w-9 p-0 ${page === p ? "bg-blue-600 text-white" : ""}`}
-            onClick={() => setPage(p)}
-          >
-            {p}
-          </Button>
-        ))}
-
-      {page < totalPage - 1 && (
-        <>
-          {page < totalPage - 2 && <span className="px-1 text-neutral-400">...</span>}
-          <Button
-            size="sm"
-            variant={page === totalPage ? "primary" : "outline"}
-            className={`h-9 w-9 p-0 ${page === totalPage ? "bg-blue-600 text-white" : ""}`}
-            onClick={() => setPage(totalPage)}
-          >
-            {totalPage}
-          </Button>
-        </>
-      )}
-    </div>
-
-    <Button
-      size="sm"
-      variant="outline"
-      className="h-9 w-9 p-0"
-      disabled={page >= totalPage}
-      onClick={() => setPage((p) => p + 1)}
-    >
-      <span className="sr-only">Next</span>
-      &gt;
-    </Button>
-  </div>
-</div>
-      </ComponentCard>
-
-      <AlertDialog open={openDialog} onOpenChange={setOpenDialog}>
-        <AlertDialogContent size="" className="w-5xl max-h-[90vh] overflow-y-auto">
-          <AlertDialogHeader>
-            <AlertDialogTitle>{editingData ? "Edit Employe" : "Create Employe"}</AlertDialogTitle>
-          </AlertDialogHeader>
-          <form onSubmit={handleSubmit} className="space-y-4 pt-4">
-            
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="username">Username</Label>
-                <Input
-                  id="username"
-                  placeholder="Enter username"
-                  value={form.username}
-                  error={errors?.username?.[0]}
-                  onChange={(e) => setForm({ ...form, username: e.target.value })}
-                />
-                {errors?.username?.[0] && <p className="text-xs text-red-500 mt-1">{errors.username[0]}</p>}
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="Enter email address"
-                  value={form.email}
-                  error={errors?.email?.[0]}
-                  onChange={(e) => setForm({ ...form, email: e.target.value })}
-                />
-                {errors?.email?.[0] && <p className="text-xs text-red-500 mt-1">{errors.email[0]}</p>}
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  placeholder="••••••••"
-                  value={form.password}
-                  error={errors?.password?.[0]}
-                  onChange={(e) => setForm({ ...form, password: e.target.value })}
-                />
-                {errors?.password?.[0] && <p className="text-xs text-red-500 mt-1">{errors.password[0]}</p>}
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="password_confirmation">Confirm Password</Label>
-                <Input
-                  id="password_confirmation"
-                  type="password"
-                  placeholder="••••••••"
-                  value={form.password_confirmation}
-                  onChange={(e) => setForm({ ...form, password_confirmation: e.target.value })}
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="no_tlp">No Tlp</Label>
-                <Input
-                  id="no_tlp"
-                  placeholder="Enter phone number"
-                  value={form.no_tlp}
-                  error={errors?.no_tlp?.[0]}
-                  onChange={(e) => setForm({ ...form, no_tlp: e.target.value })}
-                />
-                {errors?.no_tlp?.[0] && <p className="text-xs text-red-500 mt-1">{errors.no_tlp[0]}</p>}
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="role_id">Role</Label>
-                <Select
-                  placeholder="Select role"
-                  value={form.role_id}
-                  error={errors?.role_id?.[0]}
-                  onChange={(val: any) => setForm({ ...form, role_id: val })}
-                  options={[
-                    { label: "Employe", value: "2" },
-                    { label: "Cashier", value: "5" },
-                  ]}
-                />
-                {errors?.role_id?.[0] && <p className="text-xs text-red-500 mt-1">{errors.role_id[0]}</p>}
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="gender">Gender</Label>
-                <Select
-                  placeholder="Select gender"
-                  value={form.gender}
-                  error={errors?.gender?.[0]}
-                  onChange={(val: any) => setForm({ ...form, gender: val })}
-                  options={[
-                    { label: "Laki-laki", value: "LK" },
-                    { label: "Perempuan", value: "PR" },
-                  ]}
-                />
-                {errors?.gender?.[0] && <p className="text-xs text-red-500 mt-1">{errors.gender[0]}</p>}
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="addres">Address</Label>
-                <TextArea
-                  placeholder="Enter full address"
-                  value={form.addres}
-                  error={errors?.addres?.[0]}
-                  onChange={(val) => setForm({ ...form, addres: val })}
-                />
-                {errors?.addres?.[0] && <p className="text-xs text-red-500 mt-1">{errors.addres[0]}</p>}
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4 border-t pt-4">
-              <div className="space-y-2">
-                <Label>Profile Image</Label>
-                <div className="flex items-center gap-4">
-                  {profilePreview && <img src={profilePreview} className="w-16 h-16 rounded-full object-cover border" alt="Profile" />}
-                  <input type="file" accept="image/*" className="text-xs" onChange={(e) => handleImageChange(e, "profile")} />
-                </div>
-                {errors?.profile_image?.[0] && <p className="text-xs text-red-500 mt-1">{errors.profile_image[0]}</p>}
-              </div>
-
-              <div className="space-y-2">
-                <Label>Identity Card (KTP)</Label>
-                <div className="flex items-center gap-4">
-                  {identityPreview && <img src={identityPreview} className="w-16 h-10 rounded object-cover border" alt="KTP" />}
-                  <input type="file" accept="image/*" className="text-xs" onChange={(e) => handleImageChange(e, "identity")} />
-                </div>
-                {errors?.identity_card?.[0] && <p className="text-xs text-red-500 mt-1">{errors.identity_card[0]}</p>}
-              </div>
-            </div>
-
-            <AlertDialogFooter>
-              <AlertDialogCancel onClick={() => setOpenDialog(false)}>Cancel</AlertDialogCancel>
-              <Button className="h-10" type="submit" disabled={submitting}>
-                {submitting ? <LoadingSpinner /> : "Submit"}
-              </Button>
-            </AlertDialogFooter>
-          </form>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      {/* Import Modal Tetap Sama */}
-      <AlertDialog open={openImport} onOpenChange={setOpenImport}>
-        <AlertDialogContent className="max-w-2xl">
-          <AlertDialogHeader>
-            <AlertDialogTitle>Import Mapping (Role: Employe)</AlertDialogTitle>
-          </AlertDialogHeader>
-          <div className="grid grid-cols-2 gap-4 py-4">
-            {Object.keys(mapping).map((key) => (
-              <div key={key} className="space-y-1">
-                <label className="text-xs font-bold uppercase text-neutral-500">{key.replace("_", " ")}</label>
-                <select
-                  className="w-full h-10 border rounded-md px-3 text-sm"
-                  value={(mapping as any)[key]}
-                  onChange={(e) => setMapping({ ...mapping, [key]: e.target.value })}
+          <div className="flex items-center gap-1">
+            {page > 2 && (
+              <>
+                <Button
+                  size="sm"
+                  variant={page === 1 ? "primary" : "outline"}
+                  className={`h-9 w-9 p-0 ${page === 1 ? "bg-blue-600 text-white" : ""}`}
+                  onClick={() => setPage(1)}
                 >
-                  <option value="">-- Pilih Kolom Excel --</option>
-                  {excelHeaders.map((head, idx) => (
-                    <option key={idx} value={head}>{head}</option>
-                  ))}
-                </select>
-              </div>
-            ))}
+                  1
+                </Button>
+                {page > 3 && <span className="px-1 text-neutral-400">...</span>}
+              </>
+            )}
+
+            {Array.from({ length: totalPage }, (_, i) => i + 1)
+              .filter((p) => p >= page - 1 && p <= page + 1)
+              .map((p) => (
+                <Button
+                  key={p}
+                  size="sm"
+                  variant={page === p ? "primary" : "outline"}
+                  className={`h-9 w-9 p-0 ${page === p ? "bg-blue-600 text-white" : ""}`}
+                  onClick={() => setPage(p)}
+                >
+                  {p}
+                </Button>
+              ))}
+
+            {page < totalPage - 1 && (
+              <>
+                {page < totalPage - 2 && <span className="px-1 text-neutral-400">...</span>}
+                <Button
+                  size="sm"
+                  variant={page === totalPage ? "primary" : "outline"}
+                  className={`h-9 w-9 p-0 ${page === totalPage ? "bg-blue-600 text-white" : ""}`}
+                  onClick={() => setPage(totalPage)}
+                >
+                  {totalPage}
+                </Button>
+              </>
+            )}
           </div>
+
+          <Button
+            size="sm"
+            variant="outline"
+            className="h-9 w-9 p-0"
+            disabled={page >= totalPage}
+            onClick={() => setPage((p) => p + 1)}
+          >
+            &gt;
+          </Button>
+        </div>
+      </div>
+    </ComponentCard>
+
+    {/* Form Modal */}
+    <AlertDialog open={openDialog} onOpenChange={setOpenDialog}>
+      <AlertDialogContent size="" className="w-5xl max-h-[90vh] overflow-y-auto">
+        <AlertDialogHeader>
+          <AlertDialogTitle>{editingData ? "Edit Employe" : "Create Employe"}</AlertDialogTitle>
+        </AlertDialogHeader>
+        <form onSubmit={handleSubmit} className="space-y-4 pt-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="username">Username</Label>
+              <Input
+                id="username"
+                placeholder="Enter username"
+                value={form.username}
+                onChange={(e) => setForm({ ...form, username: e.target.value })}
+              />
+              {errors?.username?.[0] && <p className="text-xs text-red-500 mt-1">{errors.username[0]}</p>}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="Enter email address"
+                value={form.email}
+                onChange={(e) => setForm({ ...form, email: e.target.value })}
+              />
+              {errors?.email?.[0] && <p className="text-xs text-red-500 mt-1">{errors.email[0]}</p>}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="password">Password</Label>
+              <Input
+                id="password"
+                type="password"
+                placeholder="••••••••"
+                value={form.password}
+                onChange={(e) => setForm({ ...form, password: e.target.value })}
+              />
+              {errors?.password?.[0] && <p className="text-xs text-red-500 mt-1">{errors.password[0]}</p>}
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="password_confirmation">Confirm Password</Label>
+              <Input
+                id="password_confirmation"
+                type="password"
+                placeholder="••••••••"
+                value={form.password_confirmation}
+                onChange={(e) => setForm({ ...form, password_confirmation: e.target.value })}
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="no_tlp">No Tlp</Label>
+              <Input
+                id="no_tlp"
+                placeholder="Enter phone number"
+                value={form.no_tlp}
+                onChange={(e) => setForm({ ...form, no_tlp: e.target.value })}
+              />
+              {errors?.no_tlp?.[0] && <p className="text-xs text-red-500 mt-1">{errors.no_tlp[0]}</p>}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="role_id">Role</Label>
+              <Select
+                placeholder="Select role"
+                value={form.role_id}
+                onChange={(val: any) => setForm({ ...form, role_id: val })}
+                options={[
+                  { label: "Employe", value: "2" },
+                  { label: "Cashier", value: "5" },
+                ]}
+              />
+              {errors?.role_id?.[0] && <p className="text-xs text-red-500 mt-1">{errors.role_id[0]}</p>}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="gender">Gender</Label>
+              <Select
+                placeholder="Select gender"
+                value={form.gender}
+                onChange={(val: any) => setForm({ ...form, gender: val })}
+                options={[
+                  { label: "Laki-laki", value: "LK" },
+                  { label: "Perempuan", value: "PR" },
+                ]}
+              />
+              {errors?.gender?.[0] && <p className="text-xs text-red-500 mt-1">{errors.gender[0]}</p>}
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="addres">Address</Label>
+              <TextArea
+                placeholder="Enter full address"
+                value={form.addres}
+                onChange={(val) => setForm({ ...form, addres: val })}
+              />
+              {errors?.addres?.[0] && <p className="text-xs text-red-500 mt-1">{errors.addres[0]}</p>}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4 border-t pt-4">
+            <div className="space-y-2">
+              <Label>Profile Image</Label>
+              <div className="flex items-center gap-4">
+                {profilePreview && <img src={profilePreview} className="w-16 h-16 rounded-full object-cover border" alt="Profile" />}
+                <input type="file" accept="image/*" className="text-xs" onChange={(e) => handleImageChange(e, "profile")} />
+              </div>
+              {errors?.profile_image?.[0] && <p className="text-xs text-red-500 mt-1">{errors.profile_image[0]}</p>}
+            </div>
+
+            <div className="space-y-2">
+              <Label>Identity Card (KTP)</Label>
+              <div className="flex items-center gap-4">
+                {identityPreview && <img src={identityPreview} className="w-16 h-10 rounded object-cover border" alt="KTP" />}
+                <input type="file" accept="image/*" className="text-xs" onChange={(e) => handleImageChange(e, "identity")} />
+              </div>
+              {errors?.identity_card?.[0] && <p className="text-xs text-red-500 mt-1">{errors.identity_card[0]}</p>}
+            </div>
+          </div>
+
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setOpenImport(false)}>Batal</AlertDialogCancel>
-            <Button onClick={handleProcessImport} disabled={submitting || !mapping.username || !mapping.email}>
-              {submitting ? "Processing..." : "Mulai Import"}
+            <AlertDialogCancel onClick={() => setOpenDialog(false)}>Cancel</AlertDialogCancel>
+            <Button className="h-10" type="submit" disabled={submitting}>
+              {submitting ? <LoadingSpinner /> : "Submit"}
             </Button>
           </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </>
+        </form>
+      </AlertDialogContent>
+    </AlertDialog>
+
+    {/* Import Modal */}
+    <AlertDialog open={openImport} onOpenChange={setOpenImport}>
+      <AlertDialogContent className="max-w-2xl">
+        <AlertDialogHeader>
+          <AlertDialogTitle>Import Mapping (Role: Employe)</AlertDialogTitle>
+        </AlertDialogHeader>
+        <div className="grid grid-cols-2 gap-4 py-4">
+          {Object.keys(mapping).map((key) => (
+            <div key={key} className="space-y-1">
+              <label className="text-sm font-bold uppercase text-neutral-500">{key.replace("_", " ")}</label>
+              <select
+                className="w-full h-10 border rounded-md px-3 text-sm"
+                value={(mapping as any)[key]}
+                onChange={(e) => setMapping({ ...mapping, [key]: e.target.value })}
+              >
+                <option value="">-- Pilih Kolom Excel --</option>
+                {excelHeaders.map((head, idx) => (
+                  <option key={idx} value={head}>{head}</option>
+                ))}
+              </select>
+            </div>
+          ))}
+        </div>
+        <AlertDialogFooter>
+          <AlertDialogCancel onClick={() => setOpenImport(false)}>Batal</AlertDialogCancel>
+          <Button onClick={handleProcessImport} disabled={submitting || !mapping.username || !mapping.email}>
+            {submitting ? "Processing..." : "Mulai Import"}
+          </Button>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  </>
   );
 }
 

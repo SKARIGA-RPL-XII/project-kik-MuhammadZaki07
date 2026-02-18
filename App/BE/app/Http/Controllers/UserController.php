@@ -71,6 +71,8 @@ class UserController extends Controller
                 "addres" => $user->addres,
                 "gender" => $user->gender,
                 "profile_image" => $user->profile_image ? asset('storage/' . $user->profile_image) : null,
+                "role_id" => $user->role_id,
+                "role_name" => $user->role->name ?? 'user',
             ],
         ], 200);
     }

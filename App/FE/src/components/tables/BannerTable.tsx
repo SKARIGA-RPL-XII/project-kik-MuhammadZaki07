@@ -9,6 +9,7 @@ import {
 import Badge from "../../components/ui/badge/Badge";
 import { Loader2, Pencil, Trash2 } from "lucide-react";
 import { BannerService } from "../../services/banner.service";
+import { ActionGuard } from "../guard/ActionGuard";
 
 interface BannerTableProps {
   banners: any[];
@@ -108,18 +109,23 @@ export default function BannerTable({
                   </TableCell>
                   <TableCell className="px-5 py-4">
                     <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => onEdit(banner)}
-                        className="p-2 rounded text-yellow-500 hover:bg-yellow-50 dark:text-yellow-400 dark:hover:bg-yellow-500/10"
-                      >
-                        <Pencil size={18} />
-                      </button>
-                      <button
-                        onClick={() => handleDelete(banner.id)}
-                        className="p-2 rounded text-red-500 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-500/10"
-                      >
-                        <Trash2 size={18} />
-                      </button>
+                      <ActionGuard module="banner" action="write">
+                        <button
+                          onClick={() => onEdit(banner)}
+                          className="p-2 rounded text-yellow-500 hover:bg-yellow-50 dark:text-yellow-400 dark:hover:bg-yellow-500/10"
+                        >
+                          <Pencil size={18} />
+                        </button>
+                      </ActionGuard>
+
+                      <ActionGuard module="banner" action="delete">
+                        <button
+                          onClick={() => handleDelete(banner.id)}
+                          className="p-2 rounded text-red-500 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-500/10"
+                        >
+                          <Trash2 size={18} />
+                        </button>
+                      </ActionGuard>
                     </div>
                   </TableCell>
                 </TableRow>

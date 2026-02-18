@@ -8,6 +8,7 @@ import {
   TableHeader,
   TableRow,
 } from "../ui/table";
+import { ActionGuard } from "../guard/ActionGuard";
 
 interface BadgeType {
   id: number;
@@ -123,22 +124,28 @@ export default function BadgeTable({
                   </TableCell>
 
                   <TableCell className="px-4 py-3 text-theme-sm text-neutral-500 dark:text-neutral-400">
-                    <button
-                      title="Edit"
-                      className="p-2 rounded text-yellow-500 hover:bg-yellow-50 dark:text-yellow-400 dark:hover:bg-yellow-500/10"
-                      onClick={() => onEdit?.(badge)}
-                    >
-                      <Pencil size={18} />
-                    </button>
+                    <div className="flex gap-1">
+                      <ActionGuard module="badge" action="write">
+                        <button
+                          title="Edit"
+                          className="p-2 rounded text-yellow-500 hover:bg-yellow-50 dark:text-yellow-400 dark:hover:bg-yellow-500/10"
+                          onClick={() => onEdit?.(badge)}
+                        >
+                          <Pencil size={18} />
+                        </button>
+                      </ActionGuard>
 
-                    <button
-                      title="Delete"
-                      onClick={() => onDelete?.(badge.id)}
-                      className="p-2 rounded text-red-500 hover:bg-red-50
-                        dark:text-red-400 dark:hover:bg-red-500/10"
-                    >
-                      <Trash2 size={18} />
-                    </button>
+                      <ActionGuard module="badge" action="delete">
+                        <button
+                          title="Delete"
+                          onClick={() => onDelete?.(badge.id)}
+                          className="p-2 rounded text-red-500 hover:bg-red-50 
+                            dark:text-red-400 dark:hover:bg-red-500/10"
+                        >
+                          <Trash2 size={18} />
+                        </button>
+                      </ActionGuard>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}

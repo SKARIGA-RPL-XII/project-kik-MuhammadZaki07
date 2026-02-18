@@ -11,6 +11,7 @@ import Input from "@/components/form/input/InputField";
 import MultiSelect from "@/components/form/MultiSelect";
 import { TableInterface } from "@/pages/Table";
 import Button from "../ui/button/Button";
+import { ActionGuard } from "../guard/ActionGuard";
 
 interface Props {
   title: string;
@@ -55,7 +56,7 @@ const RoomArea = ({
   const selectableTables = allTables.filter(
     (t) => t.room_id === null || t.room_id === roomId,
   );
-  
+
   const options = selectableTables.map((t) => ({
     text: `Table ${t.table_number}`,
     value: t.id.toString(),
@@ -68,12 +69,17 @@ const RoomArea = ({
           <span className="font-bold text-sm">{title}</span>
 
           <div className="flex gap-2">
-            <button onClick={() => setOpenEdit(true)}>
-              <Pencil size={14} />
-            </button>
-            <button onClick={() => setOpenDelete(true)}>
-              <Trash2 size={14} />
-            </button>
+            <ActionGuard module="table" action="write">
+              <button onClick={() => setOpenEdit(true)}>
+                <Pencil size={14} />
+              </button>
+            </ActionGuard>
+
+            <ActionGuard module="table" action="delete">
+              <button onClick={() => setOpenDelete(true)}>
+                <Trash2 size={14} />
+              </button>
+            </ActionGuard>
           </div>
         </div>
 
@@ -85,7 +91,6 @@ const RoomArea = ({
         </div>
       </div>
 
-      {/* EDIT */}
       <AlertDialog open={openEdit} onOpenChange={setOpenEdit}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -113,25 +118,24 @@ const RoomArea = ({
           <div className="flex justify-end gap-2 items-center h-10 pt-4">
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <div>
-            <Button
-            className="h-10"
-              onClick={() => {
-                onEdit({
-                  name,
-                  capacity,
-                  table_ids: selectedTableIds,
-                });
-                setOpenEdit(false);
-              }}
-            >
-              Save
-            </Button>
+              <Button
+                className="h-10"
+                onClick={() => {
+                  onEdit({
+                    name,
+                    capacity,
+                    table_ids: selectedTableIds,
+                  });
+                  setOpenEdit(false);
+                }}
+              >
+                Save
+              </Button>
             </div>
           </div>
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* DELETE */}
       <AlertDialog open={openDelete} onOpenChange={setOpenDelete}>
         <AlertDialogContent>
           <AlertDialogTitle className="text-rose-600">

@@ -12,6 +12,7 @@ import { Eye, Loader2, Pencil, Trash2 } from "lucide-react";
 import { Link } from "react-router";
 import { formatCurrency } from "@/lib/currency";
 import DeleteAlertDialog from "@/components/dialog/DeleteAlertDialog";
+import { ActionGuard } from "../guard/ActionGuard";
 
 interface MenuTableProps {
   menus: any[];
@@ -33,23 +34,18 @@ export default function MenuTable({
               <TableHead className="px-5 py-3 text-theme-xs text-start">
                 Menu
               </TableHead>
-
               <TableHead className="px-5 py-3 text-theme-xs text-start">
                 Price
               </TableHead>
-
               <TableHead className="px-5 py-3 text-theme-xs text-start">
                 Discount
               </TableHead>
-
               <TableHead className="px-5 py-3 text-theme-xs text-start">
                 Stock
               </TableHead>
-
               <TableHead className="px-5 py-3 text-theme-xs text-start">
                 Status
               </TableHead>
-
               <TableHead className="px-5 py-3 text-theme-xs text-start">
                 Action
               </TableHead>
@@ -94,12 +90,10 @@ export default function MenuTable({
                           alt={menu.name}
                           className="w-12 h-12 rounded-lg object-cover border border-neutral-100 dark:border-white/10"
                         />
-
                         <div className="flex-col flex">
                           <span className="font-medium text-neutral-800 dark:text-white/90">
                             {menu.name}
                           </span>
-
                           <span className="block text-neutral-500 text-theme-xs dark:text-neutral-400">
                             {menu.category?.name || "Uncategorized"}
                           </span>
@@ -114,7 +108,6 @@ export default function MenuTable({
                             {formatCurrency(menu.price)}
                           </span>
                         )}
-
                         <span className="font-semibold text-neutral-800 dark:text-white">
                           {formatCurrency(finalPrice)}
                         </span>
@@ -155,25 +148,29 @@ export default function MenuTable({
                           <Eye size={18} />
                         </Link>
 
-                        <Link
-                          to={`/menu/edit-menu/${menu.id}`}
-                          className="p-2 rounded text-yellow-500 hover:bg-yellow-50 dark:hover:bg-yellow-500/10"
-                        >
-                          <Pencil size={18} />
-                        </Link>
+                        <ActionGuard module="menu" action="write">
+                          <Link
+                            to={`/menu/edit-menu/${menu.id}`}
+                            className="p-2 rounded text-yellow-500 hover:bg-yellow-50 dark:hover:bg-yellow-500/10"
+                          >
+                            <Pencil size={18} />
+                          </Link>
+                        </ActionGuard>
 
-                        <DeleteAlertDialog
-                          title="Delete menu?"
-                          description={`This will permanently delete "${menu.name}".`}
-                          onConfirm={async () => {
-                            await MenuService.deleteMenu(menu.id);
-                            onRefresh();
-                          }}
-                        >
-                          <button className="p-2 rounded text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10">
-                            <Trash2 size={18} />
-                          </button>
-                        </DeleteAlertDialog>
+                        <ActionGuard module="menu" action="delete">
+                          <DeleteAlertDialog
+                            title="Delete menu?"
+                            description={`This will permanently delete "${menu.name}".`}
+                            onConfirm={async () => {
+                              await MenuService.deleteMenu(menu.id);
+                              onRefresh();
+                            }}
+                          >
+                            <button className="p-2 rounded text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10">
+                              <Trash2 size={18} />
+                            </button>
+                          </DeleteAlertDialog>
+                        </ActionGuard>
                       </div>
                     </TableCell>
                   </TableRow>

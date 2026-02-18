@@ -20,6 +20,7 @@ import {
 } from "../../components/ui/alert-dialog";
 import { useToast } from "@/context/ToastContext";
 import LoadingSpinner from "@/components/skeleton/LoadingSpinner";
+import { ActionGuard } from "@/components/guard/ActionGuard";
 
 function Category() {
   const [categories, setCategories] = useState<any[]>([]);
@@ -123,122 +124,124 @@ function Category() {
   };
 
   return (
-    <>
-      <PageMeta
-        title="Category Management"
-        description="Manage product categories"
+  <>
+  <PageMeta
+    title="Category Management"
+    description="Manage product categories"
+  />
+  <PageBreadcrumb pageTitle="Category" />
+  <ComponentCard
+    title="Management Category"
+    desc="Manage categories for menu products"
+  >
+    <div className="flex justify-between items-center gap-4 mb-4">
+      <Input
+        type="text"
+        placeholder="Search category..."
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+        className="w-full max-w-sm rounded border px-3 py-2 text-sm"
       />
-      <PageBreadcrumb pageTitle="Category" />
-      <ComponentCard
-        title="Management Category"
-        desc="Manage categories for menu products"
-      >
-        <div className="flex justify-between items-center gap-4 mb-4">
-          <Input
-            type="text"
-            placeholder="Search category..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full max-w-sm rounded border px-3 py-2 text-sm"
-          />
 
-          <AlertDialog
-            open={openDialog}
-            onOpenChange={(val) => {
-              setOpenDialog(val);
-              if (!val) resetForm();
-            }}
-          >
-            <AlertDialogTrigger asChild>
-              <Button className="h-10" onClick={resetForm}>
-                Create <Plus className="ml-1" />
-              </Button>
-            </AlertDialogTrigger>
+      <ActionGuard module="category" action="write">
+        <AlertDialog
+          open={openDialog}
+          onOpenChange={(val) => {
+            setOpenDialog(val);
+            if (!val) resetForm();
+          }}
+        >
+          <AlertDialogTrigger asChild>
+            <Button className="h-10" onClick={resetForm}>
+              Create <Plus className="ml-1" />
+            </Button>
+          </AlertDialogTrigger>
 
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>
-                  {editingId ? "Edit Category" : "Create Category"}
-                </AlertDialogTitle>
-              </AlertDialogHeader>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>
+                {editingId ? "Edit Category" : "Create Category"}
+              </AlertDialogTitle>
+            </AlertDialogHeader>
 
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="space-y-1">
-                  <Input
-                    label="Category Name"
-                    placeholder="Enter category name"
-                    value={categoryName}
-                    error={!!error.name}
-                    onChange={(e) => {
-                      setCategoryName(e.target.value);
-                      if (error.name) {
-                        const newErrors = { ...error };
-                        delete newErrors.name;
-                        setError(newErrors);
-                      }
-                    }}
-                  />
-                  {error.name && <p className="text-sm text-red-500">{error.name}</p>}
-                </div>
-
-                <Switch
-                  label={isActive ? "Active" : "Inactive"}
-                  checked={isActive}
-                  onChange={(checked) => setIsActive(checked)}
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="space-y-1">
+                <Input
+                  label="Category Name"
+                  placeholder="Enter category name"
+                  value={categoryName}
+                  error={!!error.name}
+                  onChange={(e) => {
+                    setCategoryName(e.target.value);
+                    if (error.name) {
+                      const newErrors = { ...error };
+                      delete newErrors.name;
+                      setError(newErrors);
+                    }
+                  }}
                 />
+                {error.name && <p className="text-sm text-red-500">{error.name}</p>}
+              </div>
 
-                <AlertDialogFooter className="gap-2 mt-4 flex items-center">
-                  <AlertDialogCancel
-                    type="button"
-                    disabled={submitting}
-                    onClick={resetForm}
-                  >
-                    Batal
-                  </AlertDialogCancel>
+              <Switch
+                label={isActive ? "Active" : "Inactive"}
+                checked={isActive}
+                onChange={(checked) => setIsActive(checked)}
+              />
 
-                  <Button type="submit" className="h-10" disabled={submitting}>
-                    {submitting ? <LoadingSpinner/> : "Submit"}
-                  </Button>
-                </AlertDialogFooter>
-              </form>
-            </AlertDialogContent>
-          </AlertDialog>
-        </div>
+              <AlertDialogFooter className="gap-2 mt-4 flex items-center">
+                <AlertDialogCancel
+                  type="button"
+                  disabled={submitting}
+                  onClick={resetForm}
+                >
+                  Batal
+                </AlertDialogCancel>
 
-        <CategoryTable
-          categories={categories}
-          loading={loading}
-          onRefresh={fetchCategories}
-          onEdit={handleEdit}
-        />
+                <Button type="submit" className="h-10" disabled={submitting}>
+                  {submitting ? <LoadingSpinner /> : "Submit"}
+                </Button>
+              </AlertDialogFooter>
+            </form>
+          </AlertDialogContent>
+        </AlertDialog>
+      </ActionGuard>
+    </div>
 
-        <div className="flex items-center justify-between mt-6">
-          <p className="text-sm text-neutral-500 font-medium">
-            Showing {categories.length} of {totalItems} items (Page {page + 1} of {totalPage})
-          </p>
+    <CategoryTable
+      categories={categories}
+      loading={loading}
+      onRefresh={fetchCategories}
+      onEdit={handleEdit}
+    />
 
-          <div className="flex gap-2">
-            <Button
-              size="sm"
-              variant="outline"
-              disabled={page === 0 || loading}
-              onClick={() => setPage((p) => p - 1)}
-            >
-              Prev
-            </Button>
+    <div className="flex items-center justify-between mt-6">
+      <p className="text-sm text-neutral-500 font-medium">
+        Showing {categories.length} of {totalItems} items (Page {page + 1} of {totalPage})
+      </p>
 
-            <Button
-              size="sm"
-              variant="outline"
-              disabled={page + 1 >= totalPage || loading}
-              onClick={() => setPage((p) => p + 1)}
-            >
-              Next
-            </Button>
-          </div>
-        </div>
-      </ComponentCard>
-    </>
+      <div className="flex gap-2">
+        <Button
+          size="sm"
+          variant="outline"
+          disabled={page === 0 || loading}
+          onClick={() => setPage((p) => p - 1)}
+        >
+          Prev
+        </Button>
+
+        <Button
+          size="sm"
+          variant="outline"
+          disabled={page + 1 >= totalPage || loading}
+          onClick={() => setPage((p) => p + 1)}
+        >
+          Next
+        </Button>
+      </div>
+    </div>
+  </ComponentCard>
+</>
   );
 }
 
