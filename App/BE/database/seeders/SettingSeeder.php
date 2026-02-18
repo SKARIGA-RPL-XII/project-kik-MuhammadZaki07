@@ -2,46 +2,61 @@
 
 namespace Database\Seeders;
 
-use App\Models\Setting;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
 
 class SettingSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
         $settings = [
-            'store_name' => 'My Restaurant',
-            'phone' => '08123456789',
-            'address' => 'Jl. Contoh Alamat No. 123',
-            'theme' => 'light',
+            ['key' => 'tax_percent', 'value' => '10', 'group' => 'billing'],
+            ['key' => 'service_percent', 'value' => '5', 'group' => 'billing'],
+            ['key' => 'is_tax_active', 'value' => '1', 'group' => 'billing'],
+            ['key' => 'is_service_active', 'value' => '1', 'group' => 'billing'],
+            ['key' => 'tax_type', 'value' => 'subtotal_only', 'group' => 'billing'],
+            ['key' => 'store_name', 'value' => 'Gagal Lapar', 'group' => 'general'],
+            ['key' => 'phone', 'value' => '083846871126', 'group' => 'general'],
+            ['key' => 'address', 'value' => 'Jl Mega Permai VI 138 Kompl Koveri RT 002/12, Ngaliyan', 'group' => 'general'],
+            [
+                'key' => 'available_methods',
+                'value' => json_encode([
+                    ['id' => 'qris', 'name' => 'QRIS', 'active' => 1],
+                    ['id' => 'bri', 'name' => 'Transfer BRI', 'active' => 1],
+                    ['id' => 'cash', 'name' => 'Tunai', 'active' => 1]
+                ]),
+                'group' => 'payment'
+            ],
 
-            'tax_percentage' => '10',
-            'service_percentage' => '5',
+            [
+                'key' => 'role_permissions',
+                'value' => json_encode([
+                    'admin' => [
+                        'dashboard' => ['view', 'write', 'delete'],
+                        'settings' => ['view', 'write']
+                    ],
+                    'cashier' => [
+                        'overview' => ['view'],
+                        'cashier' => ['view', 'write'],
+                        'orders' => ['view']
+                    ]
+                ]),
+                'group' => 'security'
+            ],
 
-            'cash_enabled' => '1',
-            'qris_enabled' => '1',
-            'card_enabled' => '0',
-
-            'sidebar_config' => json_encode([
-                'dashboard' => true,
-                'menu' => true,
-                'reports' => true,
-            ]),
-
-            'pages_config' => json_encode([
-                'reservation' => true,
-                'kitchen_display' => true,
-            ]),
+            ['key' => 'company_name', 'value' => 'PT Nero Coffee & Roastery APP', 'group' => 'system'],
+            ['key' => 'currency_symbol', 'value' => 'Rp', 'group' => 'system'],
+            ['key' => 'timezone', 'value' => 'Asia/Jakarta', 'group' => 'system'],
+            ['key' => 'low_stock_threshold', 'value' => '10', 'group' => 'system'],
+            ['key' => 'auto_print_receipt', 'value' => '1', 'group' => 'system'],
+            ['key' => 'session_timeout', 'value' => '120', 'group' => 'system'],
+            ['key' => 'maintenance_mode', 'value' => '0', 'group' => 'system'],
         ];
 
-        foreach ($settings as $key => $value) {
-            Setting::updateOrCreate(
-                ['key' => $key],
-                ['value' => $value]
+        foreach ($settings as $setting) {
+            DB::table('settings')->updateOrInsert(
+                ['key' => $setting['key'], 'group' => $setting['group']],
+                ['value' => $setting['value']]
             );
         }
     }

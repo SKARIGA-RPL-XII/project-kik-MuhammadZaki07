@@ -1,71 +1,71 @@
-import {
+import React, {
   createContext,
   useContext,
   useEffect,
   useState,
-  ReactNode,
+  useCallback,
 } from "react";
 import { SettingsService } from "@/services/settings.service";
 
-interface SidebarConfig {
-  dashboard: boolean;
-  menu: boolean;
-  reports: boolean;
+interface SettingsContextType {
+  settings: Record<string, any>;
+  loading: boolean;
+  getSetting: (key: string, defaultValue?: any) => any;
+  refreshSettings: () => Promise<void>;
 }
 
-interface PagesConfig {
-  reservation: boolean;
-  kitchen_display: boolean;
-}
+const SettingsContext = createContext<SettingsContextType | undefined>(
+  undefined,
+);
 
-interface Settings {
-  store_name: string;
-  phone: string;
-  address: string;
-  theme: "light" | "dark";
-  tax_percentage: string;
-  service_percentage: string;
-  cash_enabled: string;
-  qris_enabled: string;
-  card_enabled: string;
-  sidebar_config: SidebarConfig;
-  pages_config: PagesConfig;
-}
+export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
+  const [settings, setSettings] = useState<Record<string, any>>({});
+  const [loading, setLoading] = useState(true);
 
-const SettingsContext = createContext<Settings | null>(null);
-
-export const SettingsProvider = ({ children }: { children: ReactNode }) => {
-  const [settings, setSettings] = useState<Settings | null>(null);
-
-  useEffect(() => {
-    const fetchSettings = async () => {
-      const data = await SettingsService.getAll();
-      setSettings({
-        ...data.data,
-        sidebar_config: JSON.parse(data.data.sidebar_config || "{}"),
-        pages_config: JSON.parse(data.data.pages_config || "{}"),
-      });
-    };
-
-    fetchSettings();
+  const fetchSettings = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await SettingsService.getAll();
+      if (res.data) {
+        const flatSettings = Object.keys(res.data).reduce((acc: any, key) => {
+          acc[key] = res.data[key].value;
+          return acc;
+        }, {});
+        setSettings(flatSettings);
+      }
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   useEffect(() => {
-    if (!settings) return;
+    fetchSettings();
+  }, [fetchSettings]);
 
-    document.documentElement.classList.remove("light", "dark");
-    document.documentElement.classList.add(settings.theme);
-  }, [settings]);
+  const getSetting = (key: string, defaultValue: any = null) => {
+    return settings[key] ?? defaultValue;
+  };
 
   return (
-    <SettingsContext.Provider value={settings}>
+    <SettingsContext.Provider
+      value={{
+        settings,
+        loading,
+        getSetting,
+        refreshSettings: fetchSettings,
+      }}
+    >
       {children}
     </SettingsContext.Provider>
   );
 };
 
 export const useSettings = () => {
-  const ctx = useContext(SettingsContext);
-  if (!ctx) throw new Error("useSettings must be used inside SettingsProvider");
-  return ctx;
+  const context = useContext(SettingsContext);
+  if (context === undefined) {
+    throw new Error("useSettings must be used within a SettingsProvider");
+  }
+  return context;
 };

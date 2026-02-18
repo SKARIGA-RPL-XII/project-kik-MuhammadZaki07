@@ -18,18 +18,18 @@ import Banner from "./pages/Banner/Banner";
 import Discount from "./pages/Discount/Discount";
 import Badge from "./pages/Badge/Badge";
 import Employe from "./pages/Employe/Employe";
-import Table from "./pages/Restaurant-layout/Table";
 import Admin from "./pages/Admin/Admin";
 import GeneralSettingsPage from "./pages/Settings/GeneralSettingsPage";
 import TaxSettingsPage from "./pages/Settings/TaxSettingsPage";
 import PaymentSettingsPage from "./pages/Settings/PaymentSettingsPage";
-import RolesSettingsPage from "./pages/Settings/RolesSettingsPage";
 import { Cashier } from "./pages/Cashier/Cashier";
 import CustomerPage from "./pages/Customer/CustomerPage";
 import NotFound from "./pages/OtherPage/NotFound";
 import RestaurantLayoutPage from "./pages/Restaurant-layout/Index";
 import NotificationPage from "./pages/Notifications/Index";
 import NotificationShow from "./pages/Notifications/NotificationShow";
+import RolesPermissionsPage from "./pages/Settings/RolesSettingsPage";
+import SystemConfigPage from "./pages/Settings/SystemConfigPage";
 
 export default function App() {
   return (
@@ -63,7 +63,8 @@ export default function App() {
             <Route path="general" element={<GeneralSettingsPage />} />
             <Route path="tax" element={<TaxSettingsPage />} />
             <Route path="payment" element={<PaymentSettingsPage />} />
-            <Route path="roles" element={<RolesSettingsPage />} />
+            <Route path="roles" element={<RolesPermissionsPage />} />
+            <Route path="system" element={<SystemConfigPage />} />
           </Route>
         </Route>
 

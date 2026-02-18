@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AdminController;
+use App\Http\Controllers\SettingController;
 use App\Http\Controllers\AttributeController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BadgeController;
@@ -14,7 +15,6 @@ use App\Http\Controllers\MenuController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\RoomController;
-use App\Http\Controllers\SettingController;
 use App\Http\Controllers\TableController;
 use App\Http\Controllers\TasksController;
 use App\Http\Controllers\TransactionController;
@@ -54,7 +54,7 @@ Route::get('discounts', [DiscountController::class, 'index']);
 */
 
 Route::middleware('auth:sanctum')->group(function () {
-   Route::match(['post', 'put'], 'users/{id}', [UserController::class, 'updateProfile']);
+    Route::match(['post', 'put'], 'users/{id}', [UserController::class, 'updateProfile']);
     Route::get('user/me', [UserController::class, 'me']);
     Route::resource('tasks', TasksController::class);
     Route::resource('badges', BadgeController::class);
@@ -111,11 +111,10 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
 
     Route::resource('attributes', AttributeController::class);
 
-    // Settings
     Route::prefix('settings')->group(function () {
         Route::get('/', [SettingController::class, 'index']);
+        Route::post('/bulk', [SettingController::class, 'updateBulk']);
         Route::get('/{key}', [SettingController::class, 'show']);
-        Route::put('/', [SettingController::class, 'update']);
         Route::delete('/{key}', [SettingController::class, 'destroy']);
     });
 

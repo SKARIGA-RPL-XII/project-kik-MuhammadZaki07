@@ -1,26 +1,20 @@
 import { apiClient } from "@/lib/apiClient";
 
 export interface SettingsPayload {
-  store_name?: string;
-  phone?: string;
-  address?: string;
-  theme?: string;
-  sidebar_config?: Record<string, any>;
-  pages_config?: Record<string, any>;
-  tax_percentage?: number;
-  service_percentage?: number;
+  group: string;
+  settings: Record<string, any>;
 }
 
 export interface SettingResponse {
   status: boolean;
   message?: string;
-  data?: Record<string, any>;
+  data?: Record<string, { value: any; type: string; group: string }>;
   errors?: Record<string, string[]>;
 }
 
 export const SettingsService = {
-  async getAll(): Promise<SettingResponse> {
-    const response = await apiClient.get("/settings");
+  async getAll(params?: { group?: string }): Promise<SettingResponse> {
+    const response = await apiClient.get("/settings", { params });
     return response.data;
   },
 
@@ -29,23 +23,19 @@ export const SettingsService = {
     return response.data;
   },
 
-  async update(payload: SettingsPayload): Promise<SettingResponse> {
+  async updateBulk(payload: SettingsPayload): Promise<SettingResponse> {
     try {
-      const response = await apiClient.put("/settings", payload, {
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-
-      return response.data;
+      const response = await apiClient.post("/settings/bulk", payload);
+      return {
+        status: true,
+        message: response.data.message,
+        data: response.data.data
+      };
     } catch (error: any) {
-      if (error.response?.data) {
-        return error.response.data;
-      }
-
       return {
         status: false,
-        message: "Unexpected error occurred",
+        message: error.response?.data?.message || "Failed to update settings",
+        errors: error.response?.data?.errors,
       };
     }
   },

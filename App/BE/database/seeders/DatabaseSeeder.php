@@ -28,7 +28,7 @@ class DatabaseSeeder extends Seeder
             SettingSeeder::class,
             AttributeSeeder::class,
             AttributeLevelSeeder::class,
-            EmployeSeeder::class
+            EmployeSeeder::class,
         ]);
 
         DB::statement('SET FOREIGN_KEY_CHECKS=1;');
