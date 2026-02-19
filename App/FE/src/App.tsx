@@ -32,8 +32,11 @@ import NotificationPage from "./pages/Notifications/Index";
 import NotificationShow from "./pages/Notifications/NotificationShow";
 import RolesPermissionsPage from "./pages/Settings/RolesSettingsPage";
 import SystemConfigPage from "./pages/Settings/SystemConfigPage";
+import StockPage from "./pages/Stock/StockPage";
 
 export default function App() {
+  const StockAdjustmentPage = () => <div className="p-6">Stock Adjustment Feature Coming Soon</div>;
+const SuppliersPage = () => <div className="p-6">Suppliers Feature Coming Soon</div>;
   return (
     <Router>
       <ScrollToTop />
@@ -48,73 +51,112 @@ export default function App() {
           <Route path="/dashboard" element={<Home />} />
           <Route path="/profile" element={<UserProfiles />} />
           <Route path="/calendar" element={<Calendar />} />
-          
-          <Route path="/cashier" element={
-            <PermissionMiddleware module="cashier">
-              <Cashier />
-            </PermissionMiddleware>
-          } />
+
+          <Route
+            path="/cashier"
+            element={
+              <PermissionMiddleware module="cashier">
+                <Cashier />
+              </PermissionMiddleware>
+            }
+          />
 
           <Route path="/menu">
-            <Route index element={
-              <PermissionMiddleware module="menu">
-                <Menu />
-              </PermissionMiddleware>
-            } />
-            <Route path="create-menu" element={
-              <PermissionMiddleware module="menu" action="write">
-                <CreateMenu />
-              </PermissionMiddleware>
-            } />
-            <Route path="edit-menu/:id" element={
-              <PermissionMiddleware module="menu" action="write">
-                <EditMenu />
-              </PermissionMiddleware>
-            } />
+            <Route
+              index
+              element={
+                <PermissionMiddleware module="menu">
+                  <Menu />
+                </PermissionMiddleware>
+              }
+            />
+            <Route
+              path="create-menu"
+              element={
+                <PermissionMiddleware module="menu" action="write">
+                  <CreateMenu />
+                </PermissionMiddleware>
+              }
+            />
+            <Route
+              path="edit-menu/:id"
+              element={
+                <PermissionMiddleware module="menu" action="write">
+                  <EditMenu />
+                </PermissionMiddleware>
+              }
+            />
             <Route path="show/:id" element={<Show />} />
           </Route>
 
-          <Route path="/category" element={
-            <PermissionMiddleware module="category">
-              <Category />
-            </PermissionMiddleware>
-          } />
+          <Route
+            path="/category"
+            element={
+              <PermissionMiddleware module="category">
+                <Category />
+              </PermissionMiddleware>
+            }
+          />
 
-          <Route path="/banner" element={
-            <PermissionMiddleware module="banner">
-              <Banner />
-            </PermissionMiddleware>
-          } />
+          <Route
+            path="/banner"
+            element={
+              <PermissionMiddleware module="banner">
+                <Banner />
+              </PermissionMiddleware>
+            }
+          />
 
-          <Route path="/discount" element={
-            <PermissionMiddleware module="discount">
-              <Discount />
-            </PermissionMiddleware>
-          } />
+          <Route
+            path="/discount"
+            element={
+              <PermissionMiddleware module="discount">
+                <Discount />
+              </PermissionMiddleware>
+            }
+          />
 
-          <Route path="/badge" element={
-            <PermissionMiddleware module="badge">
-              <Badge />
-            </PermissionMiddleware>
-          } />
+          <Route
+            path="/badge"
+            element={
+              <PermissionMiddleware module="badge">
+                <Badge />
+              </PermissionMiddleware>
+            }
+          />
 
-          <Route path="/table" element={
-            <PermissionMiddleware module="table & room">
-              <RestaurantLayoutPage />
-            </PermissionMiddleware>
-          } />
+          <Route
+            path="/table"
+            element={
+              <PermissionMiddleware module="table & room">
+                <RestaurantLayoutPage />
+              </PermissionMiddleware>
+            }
+          />
 
-          <Route path="/staf" element={
-            <PermissionMiddleware module="staff">
-              <Employe />
-            </PermissionMiddleware>
-          } />
+          <Route path="/inventory">
+            <Route path="stock" element={<StockPage />} />
+            <Route path="adjustment" element={<StockAdjustmentPage />} />
+            <Route path="suppliers" element={<SuppliersPage />} />
+          </Route>
 
-          <Route path="/admin" element={
-            <PermissionMiddleware module="admin">
-              <Admin />
-            </PermissionMiddleware>
-          } />
+          <Route
+            path="/staf"
+            element={
+              <PermissionMiddleware module="staff">
+                <Employe />
+              </PermissionMiddleware>
+            }
+          />
+
+          <Route
+            path="/admin"
+            element={
+              <PermissionMiddleware module="admin">
+                <Admin />
+              </PermissionMiddleware>
+            }
+          />
 
           <Route path="/notifications">
             <Route index element={<NotificationPage />} />
@@ -122,31 +164,46 @@ export default function App() {
           </Route>
 
           <Route path="/settings">
-            <Route path="general" element={
-              <PermissionMiddleware module="general">
-                <GeneralSettingsPage />
-              </PermissionMiddleware>
-            } />
-            <Route path="tax" element={
-              <PermissionMiddleware module="tax & service">
-                <TaxSettingsPage />
-              </PermissionMiddleware>
-            } />
-            <Route path="payment" element={
-              <PermissionMiddleware module="payment methods">
-                <PaymentSettingsPage />
-              </PermissionMiddleware>
-            } />
-            <Route path="roles" element={
-              <PermissionMiddleware module="roles & permissions">
-                <RolesPermissionsPage />
-              </PermissionMiddleware>
-            } />
-            <Route path="system" element={
-              <PermissionMiddleware module="system config">
-                <SystemConfigPage />
-              </PermissionMiddleware>
-            } />
+            <Route
+              path="general"
+              element={
+                <PermissionMiddleware module="general">
+                  <GeneralSettingsPage />
+                </PermissionMiddleware>
+              }
+            />
+            <Route
+              path="tax"
+              element={
+                <PermissionMiddleware module="tax & service">
+                  <TaxSettingsPage />
+                </PermissionMiddleware>
+              }
+            />
+            <Route
+              path="payment"
+              element={
+                <PermissionMiddleware module="payment methods">
+                  <PaymentSettingsPage />
+                </PermissionMiddleware>
+              }
+            />
+            <Route
+              path="roles"
+              element={
+                <PermissionMiddleware module="roles & permissions">
+                  <RolesPermissionsPage />
+                </PermissionMiddleware>
+              }
+            />
+            <Route
+              path="system"
+              element={
+                <PermissionMiddleware module="system config">
+                  <SystemConfigPage />
+                </PermissionMiddleware>
+              }
+            />
           </Route>
         </Route>
 

@@ -26,5 +26,13 @@ class Menu extends Model
             ->withTimestamps();
     }
 
+
+    public function stocks()
+    {
+        return $this->belongsToMany(Stock::class, 'menu_stocks')
+            ->withPivot('amount')
+            ->withTimestamps();
+    }
+
     public $hidden = ['category_id', 'discount_id'];
 }

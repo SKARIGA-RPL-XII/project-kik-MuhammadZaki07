@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AdminController;
+use App\Http\Controllers\StockController;
 use App\Http\Controllers\SettingController;
 use App\Http\Controllers\AttributeController;
 use App\Http\Controllers\AuthController;
@@ -98,6 +99,14 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
     // Menu Management
     Route::resource('menus', MenuController::class)
         ->only('store', 'update', 'destroy', 'show');
+
+
+
+    Route::apiResource('stocks', StockController::class);
+    Route::post('stocks/adjustment', [StockController::class, 'adjustment']);
+    Route::get('menus/admin', [MenuController::class, 'getALlAdmin']);
+
+
     Route::apiResource('admins', AdminController::class);
 
     Route::get('menu-admin', [MenuController::class, 'GetAllAdmin']);

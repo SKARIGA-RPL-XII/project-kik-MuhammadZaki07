@@ -34,9 +34,9 @@ export default function SignInForm() {
 
       setTimeout(() => {
         if (res.user.role_name === "admin") {
-          navigate("/dashboard");
+          window.location.href="/dashboard"
         } else if (res.user.role_name === "cashier") {
-          navigate("/cashier");
+          window.location.href="/cashier"
         } else {
           navigate("/");
         }

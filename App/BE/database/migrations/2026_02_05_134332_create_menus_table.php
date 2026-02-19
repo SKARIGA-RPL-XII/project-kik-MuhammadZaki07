@@ -17,7 +17,7 @@ return new class extends Migration
             $table->string('name');
             $table->text('description')->nullable();
             $table->integer('price')->nullable();
-            $table->integer('stock')->nullable()->default(1);
+            // $table->integer('stock')->nullable()->default(1);
             $table->boolean('is_active')->default(true);
             $table->foreignId('category_id')->constrained()->restrictOnDelete();
             $table->foreignId('discount_id')->nullable()->constrained()->restrictOnDelete();
