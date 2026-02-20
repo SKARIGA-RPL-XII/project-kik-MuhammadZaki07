@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Package, Plus, Search, Loader2 } from "lucide-react";
+import { Plus, Search } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogContent,

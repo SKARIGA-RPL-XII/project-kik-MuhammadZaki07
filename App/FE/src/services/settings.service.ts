@@ -23,13 +23,46 @@ export const SettingsService = {
     return response.data;
   },
 
+  // async updateBulk(payload: SettingsPayload): Promise<SettingResponse> {
+  //   try {
+  //     const response = await apiClient.post("/settings/bulk", payload);
+  //     return {
+  //       status: true,
+  //       message: response.data.message,
+  //       data: response.data.data
+  //     };
+  //   } catch (error: any) {
+  //     return {
+  //       status: false,
+  //       message: error.response?.data?.message || "Failed to update settings",
+  //       errors: error.response?.data?.errors,
+  //     };
+  //   }
+  // },
+
   async updateBulk(payload: SettingsPayload): Promise<SettingResponse> {
     try {
-      const response = await apiClient.post("/settings/bulk", payload);
+      const fd = new FormData();
+
+      fd.append("_method", "PUT");
+      fd.append("group", payload.group);
+
+      Object.entries(payload.settings).forEach(([key, value]) => {
+        if (value instanceof File) {
+          fd.append(`settings[${key}]`, value);
+        } else if (value !== null && value !== undefined) {
+          fd.append(`settings[${key}]`, value);
+        }
+      });
+
+      const response = await apiClient.post("/settings/bulk", fd, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+
       return {
         status: true,
         message: response.data.message,
-        data: response.data.data
+        data: response.data.data,
       };
     } catch (error: any) {
       return {

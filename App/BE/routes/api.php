@@ -16,6 +16,8 @@ use App\Http\Controllers\MenuController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\RoomController;
+use App\Http\Controllers\StockAdjustmentController;
+use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\TableController;
 use App\Http\Controllers\TasksController;
 use App\Http\Controllers\TransactionController;
@@ -103,8 +105,13 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
 
 
     Route::apiResource('stocks', StockController::class);
-    Route::post('stocks/adjustment', [StockController::class, 'adjustment']);
+    Route::apiResource('suppliers', SupplierController::class);
     Route::get('menus/admin', [MenuController::class, 'getALlAdmin']);
+
+    Route::get('/stock-adjustments', [StockAdjustmentController::class, 'index']);
+    Route::post('/stock-adjustments', [StockAdjustmentController::class, 'store']);
+    Route::get('/stock-adjustments/{id}', [StockAdjustmentController::class, 'show']);
+    Route::delete('/stock-adjustments/{id}', [StockAdjustmentController::class, 'destroy']);
 
 
     Route::apiResource('admins', AdminController::class);
@@ -122,7 +129,7 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
 
     Route::prefix('settings')->group(function () {
         Route::get('/', [SettingController::class, 'index']);
-        Route::post('/bulk', [SettingController::class, 'updateBulk']);
+       Route::match(['post', 'put'], '/bulk', [SettingController::class, 'updateBulk']);
         Route::get('/{key}', [SettingController::class, 'show']);
         Route::delete('/{key}', [SettingController::class, 'destroy']);
     });

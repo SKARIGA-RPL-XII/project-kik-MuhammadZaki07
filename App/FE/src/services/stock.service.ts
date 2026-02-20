@@ -16,21 +16,13 @@ export interface SingleStockResponse {
 }
 
 export const stockService = {
-  getAll: async (
-    page: number = 0,
-    size: number = 10,
-    search: string = "",
-  ): Promise<StockResponse> => {
-    const params = new URLSearchParams({
-      page: page.toString(),
-      size: size.toString(),
-      search: search,
-    });
-    const response = await fetch(`${API_URL}/stocks?${params}`, {
+  getAll: async (page: number = 0, size: number = 10, search: string = ""): Promise<StockResponse> => {
+    const response = await fetch(`${API_URL}/stocks?page=${page}&size=${size}&search=${search}`, {
       headers: {
-        Accept: "application/json",
-        Authorization: `Bearer ${localStorage.getItem("token")}`,
-      },
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+        "Authorization": `Bearer ${localStorage.getItem("token")}`
+      }
     });
     if (!response.ok) throw new Error("Failed to fetch stocks");
     return response.json();
@@ -41,8 +33,8 @@ export const stockService = {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Accept: "application/json",
-        Authorization: `Bearer ${localStorage.getItem("token")}`,
+        "Accept": "application/json",
+        "Authorization": `Bearer ${localStorage.getItem("token")}`
       },
       body: JSON.stringify(data),
     });
@@ -50,16 +42,13 @@ export const stockService = {
     return response.json();
   },
 
-  update: async (
-    id: number,
-    data: Partial<Stock>,
-  ): Promise<SingleStockResponse> => {
+  update: async (id: number, data: Partial<Stock>): Promise<SingleStockResponse> => {
     const response = await fetch(`${API_URL}/stocks/${id}`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
-        Accept: "application/json",
-        Authorization: `Bearer ${localStorage.getItem("token")}`,
+        "Accept": "application/json",
+        "Authorization": `Bearer ${localStorage.getItem("token")}`
       },
       body: JSON.stringify(data),
     });
@@ -71,10 +60,10 @@ export const stockService = {
     const response = await fetch(`${API_URL}/stocks/${id}`, {
       method: "DELETE",
       headers: {
-        Authorization: `Bearer ${localStorage.getItem("token")}`,
-      },
+        "Authorization": `Bearer ${localStorage.getItem("token")}`
+      }
     });
     if (!response.ok) throw new Error("Failed to delete stock");
     return response.json();
-  },
+  }
 };

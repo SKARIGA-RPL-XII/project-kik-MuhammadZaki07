@@ -80,7 +80,7 @@ function MenuEditSkeleton() {
             </div>
 
             <div className="pt-6">
-              <Skeleton className="h-14 w-full rounded-2xl shadow-md" />
+              <Skeleton className="h-14 w-full rounded-2xl" />
             </div>
           </div>
         </div>

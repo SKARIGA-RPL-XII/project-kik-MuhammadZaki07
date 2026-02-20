@@ -42,22 +42,16 @@ function Menu() {
 
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("");
-  const [stockMin, setStockMin] = useState<number | undefined>();
-  const [stockMax, setStockMax] = useState<number | undefined>();
-
   const [currentPage, setCurrentPage] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
   const [pageSize, setPageSize] = useState(10);
 
   const [debounced, setDebounced] = useState({
     search: "",
-    category: "",
-    stockMin: undefined as number | undefined,
-    stockMax: undefined as number | undefined,
+    category: ""
   });
 
   const [loading, setLoading] = useState(false);
-
   const totalPage = Math.ceil(totalItems / pageSize) || 1;
 
   useEffect(() => {
@@ -65,14 +59,12 @@ function Menu() {
       setDebounced({
         search,
         category,
-        stockMin,
-        stockMax,
       });
       setCurrentPage(1);
     }, 500);
 
     return () => clearTimeout(timer);
-  }, [search, category, stockMin, stockMax]);
+  }, [search, category]);
 
   const fetchCategories = async () => {
     const res = await CategoryService.getCategories();
@@ -147,24 +139,6 @@ function Menu() {
               placeholder="Filter by Category"
               value={category}
               onChange={(val) => setCategory(val as string)}
-            />
-
-            <Input
-              type="number"
-              placeholder="Stock min"
-              value={stockMin ?? ""}
-              onChange={(e) =>
-                setStockMin(e.target.value ? Number(e.target.value) : undefined)
-              }
-            />
-
-            <Input
-              type="number"
-              placeholder="Stock max"
-              value={stockMax ?? ""}
-              onChange={(e) =>
-                setStockMax(e.target.value ? Number(e.target.value) : undefined)
-              }
             />
           </div>
 

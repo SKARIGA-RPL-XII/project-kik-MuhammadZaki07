@@ -30,6 +30,24 @@ class SettingController extends Controller
         return response()->json($settings);
     }
 
+    // public function updateBulk(Request $request)
+    // {
+    //     $request->validate([
+    //         'settings' => 'required|array',
+    //         'group' => 'required|string'
+    //     ]);
+
+    //     foreach ($request->settings as $key => $value) {
+    //         Setting::set($key, $value, $request->group);
+    //     }
+
+    //     return response()->json([
+    //         'message' => 'Settings updated successfully',
+    //         'data' => $this->getSettingsByGroup($request->group)
+    //     ]);
+    // }
+
+
     public function updateBulk(Request $request)
     {
         $request->validate([
@@ -38,7 +56,16 @@ class SettingController extends Controller
         ]);
 
         foreach ($request->settings as $key => $value) {
-            Setting::set($key, $value, $request->group);
+            if ($request->hasFile("settings.$key")) {
+                $file = $request->file("settings.$key");
+                $path = $file->store('settings', 'public');
+
+                Setting::set($key, $path, $request->group);
+            } else {
+                if ($value !== "null" && $value !== null) {
+                    Setting::set($key, $value, $request->group);
+                }
+            }
         }
 
         return response()->json([
@@ -46,7 +73,6 @@ class SettingController extends Controller
             'data' => $this->getSettingsByGroup($request->group)
         ]);
     }
-
     private function getSettingsByGroup(string $group)
     {
         return Setting::where('group', $group)->get()->pluck('value', 'key');

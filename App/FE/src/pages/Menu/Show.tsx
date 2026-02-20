@@ -4,7 +4,18 @@ import ComponentCard from "../../components/common/ComponentCard";
 import PageBreadcrumb from "../../components/common/PageBreadCrumb";
 import Button from "../../components/ui/button/Button";
 import { MenuService } from "../../services/menu.service";
-import { ArrowLeft, Package, Tag, Calendar, Clock, Layers } from "lucide-react";
+import {
+  ArrowLeft,
+  Package,
+  Tag,
+  Calendar,
+  Clock,
+  Layers,
+  Info,
+  ChevronRight,
+  ShoppingBag,
+  Flame,
+} from "lucide-react";
 import Badge from "../../components/ui/badge/Badge";
 import MenuShowSkeleton from "@/components/skeleton/menu/MenuShowSkeleton";
 import PageMeta from "@/components/common/PageMeta";
@@ -71,172 +82,222 @@ function Show() {
 
   return (
     <>
-      <PageMeta
-        title={menu.name}
-        description={menu.description}
-      />
-        <PageBreadcrumb pageTitle="Menu Detail" />
-      <div className="mb-6">
-        <Button
-          variant="outline"
-          onClick={() => navigate(-1)}
-          className="flex items-center gap-2 text-sm"
-        >
-          <ArrowLeft size={16} /> Back
-        </Button>
-      </div>
+      <PageMeta title={menu.name} description={menu.description} />
+      <div className="max-w-6xl mx-auto">
+          <PageBreadcrumb pageTitle="Menu Detail" />
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-1 space-y-6">
-          <ComponentCard title="Menu Preview">
-            <div className="relative group rounded-lg overflow-hidden bg-neutral-100 dark:bg-neutral-800">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+          <div className="lg:col-span-5 space-y-6">
+            <div className="relative rounded-3xl overflow-hidden bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 ">
               <img
                 src={`${import.meta.env.VITE_STORAGE_URL}/${menu.menu_image}`}
                 alt={menu.name}
-                className="w-full h-auto object-cover aspect-square transition-transform duration-500 group-hover:scale-105"
+                className="w-full h-auto object-cover aspect-square"
               />
               {menu.discount && (
-                <div className="absolute top-3 right-3 bg-error-500 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-lg">
-                  -{menu.discount.value_discount}% OFF
+                <div className="absolute top-5 left-5 bg-red-500 text-white text-xs font-bold px-4 py-2 rounded-full flex items-center gap-1">
+                  <Flame size={14} />
+                  SAVE {menu.discount.value_discount}%
                 </div>
               )}
             </div>
 
-            <div className="mt-6 space-y-4">
-              <div className="flex justify-between items-center pb-3 border-b border-neutral-100 dark:border-neutral-800">
-                <span className="text-neutral-500 text-sm italic">
-                  Selling Status
-                </span>
-                <Badge color={menu.is_active ? "success" : "error"}>
-                  {menu.is_active ? "Active" : "Inactive"}
-                </Badge>
-              </div>
-              <div className="flex justify-between items-center pb-3 border-b border-neutral-100 dark:border-neutral-800">
-                <span className="text-neutral-500 text-sm italic">
-                  Remaining Stock
-                </span>
-                <div className="flex items-center gap-2 font-bold text-neutral-800 dark:text-white">
-                  <Package size={16} className="text-brand-500" />
-                  {menu.stock} Portions
-                </div>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-neutral-500 text-sm italic">
-                  Category
-                </span>
-                <Badge variant="light">
-                  {menu.category?.name || "No Category"}
-                </Badge>
-              </div>
-            </div>
-          </ComponentCard>
-        </div>
-
-        <div className="lg:col-span-2 space-y-6">
-          <ComponentCard title="Product Information">
-            <div className="mb-6">
-              <div className="flex items-center gap-2 text-brand-500 mb-1">
-                <Tag size={14} />
-                <span className="text-[10px] uppercase tracking-[2px] font-bold">
-                  Product Information
-                </span>
-              </div>
-              <h1 className="text-3xl font-extrabold text-neutral-800 dark:text-white leading-tight">
-                {menu.name}
-              </h1>
-            </div>
-
-            <div className="p-5 rounded-2xl bg-neutral-50 dark:bg-white/[0.03] border border-neutral-100 dark:border-white/[0.05] mb-8">
-              <p className="text-xs text-neutral-400 uppercase font-semibold mb-2">
-                Selling Price
-              </p>
-              <div className="flex items-baseline gap-3">
-                <span className="text-4xl font-black text-neutral-900 dark:text-white">
-                  {formatCurrency(finalPrice)}
-                </span>
-                {menu.discount && (
-                  <span className="text-lg line-through text-neutral-400 font-medium">
-                    {formatCurrency(menu.price)}
+            <ComponentCard title="Status & Category">
+              <div className="space-y-4">
+                <div className="flex justify-between items-center p-3 rounded-xl bg-neutral-50 dark:bg-white/[0.02]">
+                  <span className="text-neutral-500 text-xs font-medium uppercase tracking-wider">
+                    Availability
                   </span>
-                )}
+                  <Badge color={menu.is_active ? "success" : "error"}>
+                    {menu.is_active ? "Live on Store" : "Hidden"}
+                  </Badge>
+                </div>
+                <div className="flex justify-between items-center p-3 rounded-xl bg-neutral-50 dark:bg-white/[0.02]">
+                  <span className="text-neutral-500 text-xs font-medium uppercase tracking-wider">
+                    Category
+                  </span>
+                  <span className="text-sm font-bold flex items-center gap-1 text-neutral-700 dark:text-neutral-300">
+                    {menu.category?.name}{" "}
+                    <ChevronRight size={14} className="text-neutral-400" />
+                  </span>
+                </div>
               </div>
-            </div>
+            </ComponentCard>
+          </div>
 
-            {menu.attributes && menu.attributes.length > 0 && (
-              <div className="mb-8">
-                <h3 className="flex items-center gap-2 font-bold text-neutral-800 dark:text-white mb-4">
-                  <Layers size={18} className="text-brand-500" />
-                  Attribute Options
-                </h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {menu.attributes.map((attr: any, idx: number) => {
-                    const selectedLevel = attr.levels?.find(
-                      (l: any) => l.id === attr.pivot?.attribute_level_id,
-                    );
-                    return (
-                      <div
-                        key={idx}
-                        className="flex flex-col p-3 rounded-xl border border-neutral-100 dark:border-neutral-800 bg-white dark:bg-transparent"
-                      >
-                        <span className="text-[10px] uppercase text-neutral-400 font-bold mb-1">
-                          {attr.name}
-                        </span>
-                        <span className="text-sm font-bold text-neutral-700 dark:text-neutral-200">
-                          {selectedLevel?.name || "Standard"}
-                        </span>
+          <div className="lg:col-span-7 space-y-6">
+            <div className="bg-white dark:bg-neutral-900 rounded-3xl p-8 border border-neutral-200 dark:border-neutral-800  relative overflow-hidden">
+              <div className="absolute top-0 right-0 p-8 opacity-5">
+                <ShoppingBag
+                  size={120}
+                  strokeWidth={0.5}
+                  className="animate-pulse"
+                />
+              </div>
+
+              <div className="relative z-10">
+                <h1 className="text-4xl font-black text-neutral-900 dark:text-white mb-4 tracking-tight">
+                  {menu.name}
+                </h1>
+
+                <div className="flex items-center gap-4 mb-8">
+                  <div className="flex flex-col">
+                    <span className="text-[10px] text-neutral-400 uppercase font-bold mb-1">
+                      Final Price
+                    </span>
+                    <span className="text-4xl font-black text-neutral-900 dark:text-white tracking-tighter">
+                      {formatCurrency(finalPrice)}
+                    </span>
+                  </div>
+                  {menu.discount && (
+                    <div className="flex flex-col border-l border-neutral-200 dark:border-neutral-800 pl-4">
+                      <span className="text-[10px] text-neutral-400 uppercase font-bold mb-1">
+                        Normal
+                      </span>
+                      <span className="text-lg line-through text-neutral-400 font-medium">
+                        {formatCurrency(menu.price)}
+                      </span>
+                    </div>
+                  )}
+                </div>
+
+                <div className="space-y-6">
+                  <div>
+                    <h3 className="text-sm font-bold text-neutral-800 dark:text-white mb-2 flex items-center gap-2">
+                      <Info size={16} className="text-brand-500" />
+                      About this menu
+                    </h3>
+                    <p className="text-neutral-500 dark:text-neutral-400 leading-relaxed text-sm">
+                      {menu.description ||
+                        "No specific details provided for this selection."}
+                    </p>
+                  </div>
+
+                  {menu.stocks && menu.stocks.length > 0 && (
+                    <div className="pt-6 border-t border-neutral-100 dark:border-neutral-800">
+                      <h3 className="text-sm font-bold text-neutral-800 dark:text-white mb-4 flex items-center gap-2">
+                        <Package size={16} className="text-brand-500" />
+                        Ingredient Usage
+                      </h3>
+                      <div className="flex flex-wrap gap-2">
+                        {menu.stocks.map((stock: any) => (
+                          <div
+                            key={stock.id}
+                            className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-neutral-50 dark:bg-neutral-800 border border-neutral-100 dark:border-neutral-700"
+                          >
+                            <span className="text-xs font-medium text-neutral-600 dark:text-neutral-300">
+                              {stock.name}
+                            </span>
+                            <span className="text-[10px] bg-neutral-200 dark:bg-neutral-700 px-1.5 py-0.5 rounded text-neutral-500">
+                              {stock.pivot.amount} {stock.unit}
+                            </span>
+                          </div>
+                        ))}
                       </div>
-                    );
-                  })}
+                    </div>
+                  )}
+
+                  {menu.attributes && menu.attributes.length > 0 && (
+                    <div className="pt-6 border-t border-neutral-100 dark:border-neutral-800">
+                      <h3 className="text-sm font-bold text-neutral-800 dark:text-white mb-4 flex items-center gap-2">
+                        <Layers size={16} className="text-brand-500" />
+                        Available Variations
+                      </h3>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                        {Array.from(
+                          new Set(menu.attributes.map((a: any) => a.name)),
+                        ).map((attrName: any) => {
+                          const levels = menu.attributes
+                            .filter((a: any) => a.name === attrName)
+                            .map((a: any) => {
+                              const level = a.levels.find(
+                                (l: any) => l.id === a.pivot.attribute_level_id,
+                              );
+                              return level?.name;
+                            })
+                            .filter(Boolean);
+
+                          return (
+                            <div
+                              key={attrName}
+                              className="p-3 rounded-2xl bg-brand-50/50 dark:bg-brand-500/5 border border-brand-100/50 dark:border-brand-500/10"
+                            >
+                              <p className="text-[10px] uppercase text-brand-600 dark:text-brand-400 font-bold mb-1">
+                                {attrName}
+                              </p>
+                              <div className="flex flex-wrap gap-1">
+                                {levels.map((lvl: string, i: number) => (
+                                  <span
+                                    key={i}
+                                    className="text-xs font-semibold text-neutral-800 dark:text-neutral-200"
+                                  >
+                                    {lvl}
+                                    {i < levels.length - 1 ? "," : ""}
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <div className="mt-10 pt-8 border-t border-neutral-100 dark:border-neutral-800 grid grid-cols-2 gap-4">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2.5 rounded bg-neutral-50 dark:bg-neutral-800 text-neutral-400 border border-neutral-100 dark:border-neutral-700">
+                      <Calendar size={18} />
+                    </div>
+                    <div>
+                      <p className="text-[10px] text-neutral-400 uppercase font-bold tracking-tight">
+                        Launched on
+                      </p>
+                      <p className="text-xs font-bold text-neutral-700 dark:text-neutral-300">
+                        {new Date(menu.created_at).toLocaleDateString("id-ID", {
+                          day: "numeric",
+                          month: "short",
+                          year: "numeric",
+                        })}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="p-2.5 rounded bg-neutral-50 dark:bg-neutral-800 text-neutral-400 border border-neutral-100 dark:border-neutral-700">
+                      <Clock size={18} />
+                    </div>
+                    <div>
+                      <p className="text-[10px] text-neutral-400 uppercase font-bold tracking-tight">
+                        Last Activity
+                      </p>
+                      <p className="text-xs font-bold text-neutral-700 dark:text-neutral-300">
+                        {new Date(menu.updated_at).toLocaleDateString("id-ID", {
+                          day: "numeric",
+                          month: "short",
+                          year: "numeric",
+                        })}
+                      </p>
+                    </div>
+                  </div>
                 </div>
               </div>
-            )}
-
-            <div className="mb-8">
-              <h3 className="font-bold text-neutral-800 dark:text-white mb-2">
-                Product Description
-              </h3>
-              <p className="text-neutral-600 dark:text-neutral-400 leading-relaxed text-sm">
-                {menu.description || "No description available for this menu."}
-              </p>
             </div>
 
-            <div className="grid grid-cols-2 gap-4 pt-6 border-t border-neutral-100 dark:border-neutral-800">
-              <div className="flex items-center gap-3">
-                <div className="hidden sm:block p-2 rounded-full bg-neutral-100 dark:bg-neutral-800 text-neutral-500">
-                  <Calendar size={14} />
-                </div>
-                <div>
-                  <p className="text-[10px] text-neutral-400 uppercase font-bold">
-                    Created At
-                  </p>
-                  <p className="text-xs font-semibold">
-                    {new Date(menu.created_at).toLocaleDateString("id-ID")}
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3">
-                <div className="hidden sm:block p-2 rounded-full bg-neutral-100 dark:bg-neutral-800 text-neutral-500">
-                  <Clock size={14} />
-                </div>
-                <div>
-                  <p className="text-[10px] text-neutral-400 uppercase font-bold">
-                    Last Updated
-                  </p>
-                  <p className="text-xs font-semibold">
-                    {new Date(menu.updated_at).toLocaleDateString("id-ID")}
-                  </p>
-                </div>
-              </div>
+            <div className="flex justify-end pt-4 items-center gap-2">
+              <Button
+                variant="outline"
+                onClick={() => navigate(-1)}
+                className="flex h-10 items-center gap-2 text-sm hover:bg-neutral-100 transition-colors"
+              >
+                <ArrowLeft size={16} /> Back
+              </Button>
+              <Button
+                className="text-base h-10 transition-transform bg-yellow-400 hover:bg-yellow-300"
+                onClick={() => navigate(`/menu/edit-menu/${menu.id}`)}
+              >
+                Edit Menu
+              </Button>
             </div>
-          </ComponentCard>
-
-          <div className="flex justify-end gap-3 mt-4">
-            <Button
-              className="shadow-lg shadow-brand-500/20 px-8"
-              onClick={() => navigate(`/menu/edit-menu/${menu.id}`)}
-            >
-              Edit This Menu
-            </Button>
           </div>
         </div>
       </div>

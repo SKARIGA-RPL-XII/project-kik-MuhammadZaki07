@@ -12,6 +12,7 @@ import { AttributeService } from "../../services/attribute.service";
 import Select from "../../components/form/Select";
 import { CategoryService } from "../../services/category.service";
 import { DiscountService } from "../../services/discount.service";
+import { stockService } from "../../services/stock.service";
 import { useToast } from "@/context/ToastContext";
 import { useNavigate } from "react-router";
 import LoadingSpinner from "@/components/skeleton/LoadingSpinner";
@@ -27,6 +28,16 @@ interface Attribute {
   levels: AttributeLevel[];
 }
 
+interface Stock {
+  id: number;
+  name: string;
+  unit: string;
+}
+
+interface SelectedStock extends Stock {
+  amount: number;
+}
+
 function CreateMenu() {
   const [form, setForm] = useState({
     menu_image: null as File | null,
@@ -35,7 +46,6 @@ function CreateMenu() {
     discount_id: "",
     description: "",
     price: 0,
-    stock: 0,
     is_active: 1,
   });
 
@@ -51,6 +61,12 @@ function CreateMenu() {
   const [discounts, setDiscounts] = useState<
     { label: string; value: string }[]
   >([]);
+
+  const [availableStocks, setAvailableStocks] = useState<Stock[]>([]);
+  const [selectedIngredients, setSelectedIngredients] = useState<
+    SelectedStock[]
+  >([]);
+
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
@@ -59,24 +75,21 @@ function CreateMenu() {
     AttributeService.getAttributes().then(({ data }) =>
       setAttributes(data || []),
     );
-
     CategoryService.getCategories().then(({ data }) =>
       setCategories(
-        data?.map((c: any) => ({
-          label: c.name,
-          value: c.id.toString(),
-        })) || [],
+        data?.map((c: any) => ({ label: c.name, value: c.id.toString() })) ||
+          [],
       ),
     );
-
     DiscountService.getDiscounts().then(({ data }) =>
       setDiscounts(
-        data?.map((d: any) => ({
-          label: d.title,
-          value: d.id.toString(),
-        })) || [],
+        data?.map((d: any) => ({ label: d.title, value: d.id.toString() })) ||
+          [],
       ),
     );
+    stockService
+      .getAll(0, 100)
+      .then((res) => setAvailableStocks(res.data || []));
   }, []);
 
   const handleNumberInput = (field: string, value: string) => {
@@ -86,10 +99,7 @@ function CreateMenu() {
     }
     const numValue = Math.max(0, parseInt(value, 10));
     setForm((prev) => ({ ...prev, [field]: numValue }));
-
-    if (numValue >= 0) {
-      setErrors((prev) => ({ ...prev, [field]: "" }));
-    }
+    if (numValue >= 0) setErrors((prev) => ({ ...prev, [field]: "" }));
   };
 
   const toggleAttribute = (attributeId: number) => {
@@ -120,6 +130,25 @@ function CreateMenu() {
     }
   };
 
+  const addIngredient = (stockId: string) => {
+    const stock = availableStocks.find((s) => s.id.toString() === stockId);
+    if (stock) {
+      setSelectedIngredients((prev) => [...prev, { ...stock, amount: 1 }]);
+    }
+  };
+
+  const removeIngredient = (id: number) => {
+    setSelectedIngredients((prev) => prev.filter((item) => item.id !== id));
+  };
+
+  const updateIngredientAmount = (id: number, amount: number) => {
+    setSelectedIngredients((prev) =>
+      prev.map((item) =>
+        item.id === id ? { ...item, amount: Math.max(1, amount) } : item,
+      ),
+    );
+  };
+
   const onDrop = (files: File[]) => {
     if (files.length) {
       setForm((prev) => ({ ...prev, menu_image: files[0] }));
@@ -129,33 +158,37 @@ function CreateMenu() {
 
   const { getRootProps, getInputProps } = useDropzone({
     onDrop,
-    accept: {
-      "image/*": [".jpeg", ".jpg", ".png", ".webp"],
-    },
+    accept: { "image/*": [".jpeg", ".jpg", ".png", ".webp"] },
     multiple: false,
   });
 
-  const handleSubmit = async () => {
+const handleSubmit = async () => {
     setErrors({});
     setLoading(true);
 
     try {
       const fd = new FormData();
-
+      
       Object.entries(form).forEach(([k, v]) => {
-        if (v !== null && v !== "" && v !== undefined) {
-          if (k === "is_active") {
-            fd.append(k, v ? "1" : "0");
-          } else {
-            fd.append(k, v as any);
-          }
+        if (k === "discount_id") {
+          if (v && v !== "" && v !== "null") fd.append(k, v as string);
+        } else if (k === "is_active") {
+          fd.append(k, v ? "1" : "0");
+        } else if (v !== null && v !== undefined && v !== "") {
+          fd.append(k, v as any);
         }
       });
 
       Object.entries(selectedLevels).forEach(([attrId, levels]) => {
-        levels.forEach((level, index) => {
-          fd.append(`attributes[${attrId}][${index}]`, level.toString());
+        const uniqueLevels = Array.from(new Set(levels));
+        uniqueLevels.forEach((levelId, index) => {
+          fd.append(`attributes[${attrId}][${index}]`, levelId.toString());
         });
+      });
+
+      selectedIngredients.forEach((ing, index) => {
+        fd.append(`stocks[${index}][stock_id]`, ing.id.toString());
+        fd.append(`stocks[${index}][amount]`, ing.amount.toString());
       });
 
       const response = await MenuService.createMenu(fd);
@@ -164,11 +197,9 @@ function CreateMenu() {
         if (typeof response.error === "object") {
           const validationErrors: Record<string, string> = {};
           Object.entries(response.error).forEach(([key, messages]) => {
-            validationErrors[key] = Array.isArray(messages)
-              ? messages[0]
-              : (messages as string);
-          });
-          setErrors(validationErrors);
+            validationErrors[key] = Array.isArray(messages) ? messages[0] : (messages as string);
+          });          
+          setErrors(validationErrors.errors);
           toast("error", "Validation Error", "Please check the form again.");
         } else {
           toast("error", "Failed", response.error);
@@ -178,9 +209,7 @@ function CreateMenu() {
         navigate("/menu");
       }
     } catch (err: any) {
-      const errorMessage =
-        err?.response?.data?.message || "An unexpected error occurred";
-      toast("error", "Error", errorMessage);
+      toast("error", "Error", err?.response?.data?.message || "An unexpected error occurred");
     } finally {
       setLoading(false);
     }
@@ -193,6 +222,10 @@ function CreateMenu() {
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
   };
+
+  const filteredStockOptions = availableStocks
+    .filter((s) => !selectedIngredients.find((si) => si.id === s.id))
+    .map((s) => ({ label: `${s.name} (${s.unit})`, value: s.id.toString() }));
 
   return (
     <>
@@ -375,7 +408,7 @@ function CreateMenu() {
               )}
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4">
               <div>
                 <Label>Price (IDR)</Label>
                 <Input
@@ -387,21 +420,6 @@ function CreateMenu() {
                 {errors.price && (
                   <p className="text-xs text-red-500 mt-1 font-medium">
                     {errors.price}
-                  </p>
-                )}
-              </div>
-              <div>
-                <Label>Inventory Stock</Label>
-                <Input
-                  type="number"
-                  placeholder="Available qty"
-                  error={!!errors.stock}
-                  value={form.stock === 0 ? "" : form.stock}
-                  onChange={(e) => handleNumberInput("stock", e.target.value)}
-                />
-                {errors.stock && (
-                  <p className="text-xs text-red-500 mt-1 font-medium">
-                    {errors.stock}
                   </p>
                 )}
               </div>
@@ -422,13 +440,80 @@ function CreateMenu() {
 
             <div className="space-y-4">
               <Label className="block border-b pb-2 dark:border-gray-700">
+                Recipe Ingredients
+              </Label>
+              <Select
+                options={[
+                  { label: "Select ingredient to add...", value: "" },
+                  ...filteredStockOptions,
+                ]}
+                error={errors.stocks}
+                value=""
+                onChange={(val) => val && addIngredient(val as string)}
+              />
+                  {errors.stocks && (
+                  <p className="text-xs text-red-500 mt-1 font-medium">
+                    {errors.stocks}
+                  </p>
+                )}
+
+              <div className="space-y-2 mt-3">
+                {selectedIngredients.map((ing) => (
+                  <div
+                    key={ing.id}
+                    className="flex items-center justify-between bg-white dark:bg-gray-900 p-3 rounded-xl border border-gray-200 dark:border-gray-700"
+                  >
+                    <div className="flex-1">
+                      <p className="text-sm font-bold text-gray-700 dark:text-gray-200 uppercase">
+                        {ing.name}
+                      </p>
+                      <p className="text-xs text-gray-400">Unit: {ing.unit}</p>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <input
+                        type="number"
+                        className="w-20 px-2 py-1 text-sm border rounded-lg dark:bg-gray-800 dark:border-gray-700"
+                        value={ing.amount}
+                        onChange={(e) =>
+                          updateIngredientAmount(
+                            ing.id,
+                            parseInt(e.target.value),
+                          )
+                        }
+                      />
+                      <button
+                        onClick={() => removeIngredient(ing.id)}
+                        className="text-red-500 hover:bg-red-50 p-2 rounded-lg transition-colors"
+                      >
+                        <svg
+                          className="w-5 h-5"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="2"
+                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                          />
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <Label className="block border-b pb-2 dark:border-gray-700">
                 Available Attributes
               </Label>
               <div className="flex gap-3 flex-wrap">
                 {attributes.map((attr) => (
                   <label
                     key={attr.id}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-xl border cursor-pointer transition-all ${
+                    className={`flex items-center gap-2 px-4 py-2 rounded-sm border cursor-pointer transition-all ${
                       activeAttributes.includes(attr.id)
                         ? "border-brand-500 bg-brand-50 dark:bg-brand-500/10 text-brand-600 shadow-sm"
                         : "border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500"
@@ -460,7 +545,7 @@ function CreateMenu() {
                   .map((attr) => (
                     <div
                       key={attr.id}
-                      className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-2xl p-5 shadow-sm animate-in fade-in slide-in-from-top-2"
+                      className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg p-5 animate-in fade-in slide-in-from-top-2"
                     >
                       <div className="flex items-center gap-2 mb-4">
                         <div className="w-1.5 h-4 bg-brand-500 rounded-full" />
@@ -474,9 +559,9 @@ function CreateMenu() {
                             key={level.id}
                             type="button"
                             onClick={() => toggleLevel(attr.id, level.id)}
-                            className={`px-4 py-2 rounded-lg text-xs font-bold transition-all duration-300 ${
+                            className={`px-4 py-2 rounded-sm text-xs transition-all duration-300 ${
                               selectedLevels[attr.id]?.includes(level.id)
-                                ? "bg-brand-500 text-white shadow-md shadow-brand-200 scale-105 ring-2 ring-brand-500 ring-offset-2 dark:ring-offset-gray-900"
+                                ? "bg-brand-500 text-white scale-105 ring-1 ring-brand-500 ring-offset-2 dark:ring-offset-gray-900"
                                 : "bg-gray-100 dark:bg-gray-800 text-gray-500 hover:bg-gray-200 dark:hover:bg-gray-700"
                             }`}
                           >

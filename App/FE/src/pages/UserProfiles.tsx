@@ -9,7 +9,6 @@ import {
   User as UserIcon,
   Shield,
   Pencil,
-  Loader2,
 } from "lucide-react";
 import {
   AlertDialog,
@@ -26,6 +25,7 @@ import Button from "../components/ui/button/Button";
 import { useToast } from "@/context/ToastContext";
 import TextArea from "@/components/form/input/TextArea";
 import LoadingSpinner from "@/components/skeleton/LoadingSpinner";
+import UserProfileSkeleton from "@/components/skeleton/UserProfileSkeleton";
 
 export default function UserProfiles() {
   const [user, setUser] = useState<any | null>(null);
@@ -33,6 +33,7 @@ export default function UserProfiles() {
   const [submitting, setSubmitting] = useState(false);
   const [errors, setErrors] = useState<any>({});
   const { toast } = useToast();
+  const [loading ,setLoading] = useState(false);
 
   const [form, setForm] = useState({
     username: "",
@@ -47,6 +48,7 @@ export default function UserProfiles() {
   const [preview, setPreview] = useState<string | null>(null);
 
   const fetchUser = async () => {
+    setLoading(true)
     try {
       const data = await UserService.getProfile();
       setUser(data);
@@ -61,6 +63,8 @@ export default function UserProfiles() {
       setPreview(data.profile_image);
     } catch (err) {
       console.error(err);
+    }finally{
+      setLoading(false)
     }
   };
 
@@ -100,6 +104,7 @@ export default function UserProfiles() {
   };
 
   if (!user) return null;
+  if (loading) return <UserProfileSkeleton/>
 
   return (
     <>
@@ -112,8 +117,8 @@ export default function UserProfiles() {
       <div className="max-w-7xl mx-auto space-y-8 pb-20">
         <div className="grid grid-cols-12 gap-8">
           <div className="col-span-12 lg:col-span-4 space-y-6">
-            <div className="bg-white dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-lg shadow-sm p-8 flex flex-col items-center text-center transition-colors">
-              <div className="w-28 h-28 rounded-lg bg-slate-100 dark:bg-neutral-800 border border-slate-200 dark:border-neutral-700 flex items-center justify-center overflow-hidden mb-4">
+            <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-lg  p-8 flex flex-col items-center text-center transition-colors">
+              <div className="w-28 h-28 rounded-lg bg-neutral-100 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 flex items-center justify-center overflow-hidden mb-4">
                 {user.profile_image ? (
                   <img
                     src={user.profile_image}
@@ -122,16 +127,16 @@ export default function UserProfiles() {
                   />
                 ) : (
                   <UserIcon
-                    className="text-slate-400 dark:text-neutral-600"
+                    className="text-neutral-400 dark:text-neutral-600"
                     size={40}
                     strokeWidth={1.5}
                   />
                 )}
               </div>
-              <h2 className="text-lg font-bold text-slate-900 dark:text-neutral-100 tracking-tight">
+              <h2 className="text-lg font-bold text-neutral-900 dark:text-neutral-100 tracking-tight">
                 {user.username}
               </h2>
-              <p className="text-sm text-slate-500 dark:text-neutral-400 mb-6 font-medium">
+              <p className="text-sm text-neutral-500 dark:text-neutral-400 mb-6 font-medium">
                 {user.email}
               </p>
 
@@ -146,14 +151,14 @@ export default function UserProfiles() {
               </Button>
             </div>
 
-            <div className="bg-slate-50 dark:bg-neutral-900/50 border border-slate-200 dark:border-neutral-800 rounded-lg p-5">
-              <div className="flex items-center gap-2 mb-3 text-slate-800 dark:text-neutral-200">
+            <div className="bg-neutral-50 dark:bg-neutral-900/50 border border-neutral-200 dark:border-neutral-800 rounded-lg p-5">
+              <div className="flex items-center gap-2 mb-3 text-neutral-800 dark:text-neutral-200">
                 <Shield size={16} className="text-brand-500" />
                 <span className="text-[10px] font-bold uppercase tracking-widest">
                   Account Status
                 </span>
               </div>
-              <p className="text-xs text-slate-500 dark:text-neutral-400 leading-relaxed">
+              <p className="text-xs text-neutral-500 dark:text-neutral-400 leading-relaxed">
                 Your profile information is private and used only for internal
                 management purposes.
               </p>
@@ -161,9 +166,9 @@ export default function UserProfiles() {
           </div>
 
           <div className="col-span-12 lg:col-span-8">
-            <div className="bg-white dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-lg shadow-sm overflow-hidden transition-colors">
-              <div className="px-6 py-4 border-b border-slate-100 dark:border-neutral-800 bg-slate-50/30 dark:bg-neutral-800/20 flex justify-between items-center">
-                <h3 className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-400 dark:text-neutral-500">
+            <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-lg  overflow-hidden transition-colors">
+              <div className="px-6 py-4 border-b border-neutral-100 dark:border-neutral-800 bg-neutral-50/30 dark:bg-neutral-800/20 flex justify-between items-center">
+                <h3 className="text-xl uppercase font-bold text-muted-foreground">
                   Identity Details
                 </h3>
               </div>
@@ -190,16 +195,16 @@ export default function UserProfiles() {
                   value={user.gender === "LK" ? "Male" : "Female"}
                 />
 
-                <div className="col-span-full pt-8 border-t border-slate-50 dark:border-neutral-800">
+                <div className="col-span-full pt-8 border-t border-neutral-50 dark:border-neutral-800">
                   <div className="flex gap-4">
-                    <div className="mt-1 text-slate-300 dark:text-neutral-700">
+                    <div className="mt-1 text-muted-foreground">
                       <MapPin size={18} />
                     </div>
                     <div>
-                      <span className="block text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-neutral-500 mb-1">
+                      <span className="block text-xl font-semibold  text-muted-foreground mb-1">
                         Office / Residential Address
                       </span>
-                      <p className="text-sm text-slate-700 dark:text-neutral-300 leading-relaxed font-medium">
+                      <p className="text-sm text-muted-foreground leading-relaxed font-medium">
                         {user.addres || "Not provided."}
                       </p>
                     </div>
@@ -213,32 +218,26 @@ export default function UserProfiles() {
 
       <AlertDialog open={openEdit} onOpenChange={setOpenEdit}>
         <AlertDialogContent
-        size=""
-          className="max-w-3xl rounded-lg p-0 border-slate-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 overflow-hidden shadow-2xl transition-colors"
+          className="max-w-3xl rounded-lg p-0 border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 overflow-hidden  transition-colors"
         >
-          <AlertDialogHeader className="px-8 py-6 bg-slate-50 dark:bg-neutral-800/40 border-b border-slate-100 dark:border-neutral-800">
-            <AlertDialogTitle className="text-md font-bold text-slate-900 dark:text-neutral-100 uppercase tracking-tight">
-              Edit Account Data
-            </AlertDialogTitle>
-          </AlertDialogHeader>
 
-          <form onSubmit={handleUpdate} className="p-8 space-y-6">
-            <div className="flex items-center gap-6 pb-6 border-b border-slate-50 dark:border-neutral-800">
-              <div className="relative w-20 h-20 rounded-lg bg-slate-50 dark:bg-neutral-800 border border-slate-200 dark:border-neutral-700 overflow-hidden shrink-0">
+          <form onSubmit={handleUpdate} className="p-5 space-y-6">
+            <div className="flex items-center gap-6 pb-6 border-b border-neutral-50 dark:border-neutral-800">
+              <div className="relative w-20 h-20 rounded-lg bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 overflow-hidden shrink-0">
                 {preview ? (
                   <img src={preview} className="w-full h-full object-cover" />
                 ) : (
-                  <UserIcon className="m-auto mt-5 text-slate-300 dark:text-neutral-700" size={32} />
+                  <UserIcon className="m-auto mt-5 text-neutral-300 dark:text-neutral-700" size={32} />
                 )}
               </div>
               <div className="space-y-2">
-                <Label className="text-[11px] uppercase tracking-wider text-slate-500 dark:text-neutral-400">
+                <Label className="text-[11px] uppercase tracking-wider text-neutral-500 dark:text-neutral-400">
                   Avatar Image
                 </Label>
                 <input
                   type="file"
                   onChange={handleImageChange}
-                  className="block w-full text-xs text-slate-500 file:mr-4 file:py-1.5 file:px-3 file:rounded file:border-0 file:text-[11px] file:font-bold file:bg-slate-100 dark:file:bg-neutral-800 file:text-slate-700 dark:file:text-neutral-300 hover:file:bg-slate-200 dark:hover:file:bg-neutral-700 transition-all cursor-pointer"
+                  className="block w-full text-xs text-neutral-500 file:mr-4 file:py-1.5 file:px-3 file:rounded file:border-0 file:text-[11px] file:font-bold file:bg-neutral-100 dark:file:bg-neutral-800 file:text-neutral-700 dark:file:text-neutral-300 hover:file:bg-neutral-200 dark:hover:file:bg-neutral-700 transition-all cursor-pointer"
                 />
                 {errors?.profile_image?.[0] && (
                   <p className="text-[10px] text-red-500 font-medium">
@@ -346,10 +345,10 @@ export default function UserProfiles() {
               </div>
             </div>
 
-            <AlertDialogFooter className="pt-6 border-t border-slate-100 dark:border-neutral-800 gap-3">
+            <AlertDialogFooter>
               <AlertDialogCancel
                 onClick={() => setErrors({})}
-                className="rounded-md border-slate-200 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-400 font-semibold h-10 text-xs uppercase tracking-widest"
+                className="rounded-md border-neutral-200 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-400 font-semibold h-10 text-xs uppercase tracking-widest"
               >
                 Cancel
               </AlertDialogCancel>
@@ -359,7 +358,7 @@ export default function UserProfiles() {
                 className="bg-brand-600 dark:bg-brand-500 text-white font-bold h-10 px-8 rounded-md"
               >
                 {submitting ? (
-                  <LoadingSpinner className="w-5 h-5" />
+                  <LoadingSpinner />
                 ) : (
                   "Save Changes"
                 )}
@@ -383,13 +382,13 @@ function InfoGroup({
 }) {
   return (
     <div className="space-y-1.5">
-      <div className="flex items-center gap-2 text-slate-400 dark:text-neutral-500">
+      <div className="flex items-center gap-2 text-neutral-400 dark:text-neutral-500">
         <span className="opacity-70 text-brand-500 dark:text-brand-400">{icon}</span>
-        <span className="text-[9px] font-black uppercase tracking-[0.2em]">
+        <span className="text-xs uppercase font-bold text-muted-foreground">
           {label}
         </span>
       </div>
-      <p className="text-[13px] font-bold text-slate-700 dark:text-neutral-200 ml-6 tracking-tight">
+      <p className="text-[13px] font-bold text-neutral-700 dark:text-neutral-200 ml-6 tracking-tight">
         {value}
       </p>
     </div>

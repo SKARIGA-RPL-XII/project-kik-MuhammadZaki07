@@ -33,10 +33,10 @@ import NotificationShow from "./pages/Notifications/NotificationShow";
 import RolesPermissionsPage from "./pages/Settings/RolesSettingsPage";
 import SystemConfigPage from "./pages/Settings/SystemConfigPage";
 import StockPage from "./pages/Stock/StockPage";
+import AdjustmentPage from "./pages/Stock/AdjustmentPage";
+import SupplierPage from "./pages/Stock/SupplierPage";
 
 export default function App() {
-  const StockAdjustmentPage = () => <div className="p-6">Stock Adjustment Feature Coming Soon</div>;
-const SuppliersPage = () => <div className="p-6">Suppliers Feature Coming Soon</div>;
   return (
     <Router>
       <ScrollToTop />
@@ -136,8 +136,8 @@ const SuppliersPage = () => <div className="p-6">Suppliers Feature Coming Soon</
 
           <Route path="/inventory">
             <Route path="stock" element={<StockPage />} />
-            <Route path="adjustment" element={<StockAdjustmentPage />} />
-            <Route path="suppliers" element={<SuppliersPage />} />
+            <Route path="adjustment" element={<AdjustmentPage />} />
+            <Route path="suppliers" element={<SupplierPage />} />
           </Route>
 
           <Route

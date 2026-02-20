@@ -5,8 +5,6 @@ export interface MenuQuery {
   size?: number;
   search?: string;
   category?: string;
-  stock_min?: number;
-  stock_max?: number;
 }
 
 export interface MenuResponse<T> {
@@ -14,7 +12,7 @@ export interface MenuResponse<T> {
   page?: number;
   size?: number;
   total?: number;
-  error: string | null;
+  error: any | null;
 }
 
 export class MenuService {
@@ -25,28 +23,20 @@ export class MenuService {
   ): Promise<MenuResponse<T>> {
     try {
       const res = await apiClient[method](url, options);
-      const payload = res.data?.data;
+      const responseData = res.data;
+      const payload = responseData.data;
+
       return {
         data: payload?.menus || payload || null,
-        page:
-          payload?.metadata?.page !== undefined
-            ? Number(payload.metadata.page)
-            : undefined,
-        size: payload?.metadata?.size
-          ? Number(payload.metadata.size)
-          : undefined,
-        total: payload?.metadata?.total
-          ? Number(payload.metadata.total)
-          : undefined,
+        page: payload?.metadata?.page ?? undefined,
+        size: payload?.metadata?.size ?? undefined,
+        total: payload?.metadata?.total ?? undefined,
         error: null,
       };
     } catch (err: any) {
       return {
         data: null,
-        error:
-          err?.response?.data?.errors ||
-          err?.response?.data?.message ||
-          "Request failed",
+        error: err?.response?.data || "Request failed",
       };
     }
   }
@@ -68,6 +58,9 @@ export class MenuService {
   }
 
   static async updateMenu(id: number, formData: FormData) {
+    if (!(formData instanceof FormData)) {
+      throw new Error("Update menu must use FormData for image uploads");
+    }
     formData.append("_method", "PUT");
     return this.request<any>("post", `/menus/${id}`, formData);
   }

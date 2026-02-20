@@ -1,8 +1,13 @@
 import { MdFastfood } from "react-icons/md";
 import { GridIcon } from "../icons";
-import { 
-  BarChart3, Bell, ClipboardList, MonitorSmartphone, 
-  Package, Settings, UserSquare 
+import {
+  BarChart3,
+  Bell,
+  ClipboardList,
+  MonitorSmartphone,
+  Package,
+  Settings,
+  UserSquare,
 } from "lucide-react";
 
 export type NavItem = {
@@ -21,7 +26,6 @@ export const navConfig = {
       role: ["admin", "cashier"],
       subItems: [
         { name: "Dashboard", path: "/dashboard" },
-        { name: "Notifications", path: "/notifications" },
         { name: "Calendar", path: "/calendar" },
       ],
     },
@@ -90,8 +94,9 @@ export const navConfig = {
     {
       name: "Notifications",
       icon: <Bell />,
-      role: ["admin"],
+      role: ["admin" ,"cashier" , "employe"],
       subItems: [
+        { name: "Notifications", path: "/notifications" },
         { name: "System Logs", path: "/notifications/logs" },
         { name: "Activity History", path: "/notifications/activity" },
       ],
@@ -107,6 +112,6 @@ export const navConfig = {
         { name: "Roles & Permissions", path: "/settings/roles" },
         { name: "System Config", path: "/settings/system" },
       ],
-    }
-  ]
+    },
+  ],
 };

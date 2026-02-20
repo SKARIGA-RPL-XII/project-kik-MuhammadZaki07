@@ -7,13 +7,20 @@ import { navConfig, NavItem } from "../config/navigation";
 import { SidebarItem } from "@/components/sidebar/SidebarItem";
 import { usePermission } from "@/hooks/usePermission";
 import SidebarSkeleton from "@/components/skeleton/SidebarSkeleton";
+import { useSettings } from "@/context/SettingsContext";
 
 const AppSidebar: React.FC = () => {
   const { isExpanded, isMobileOpen, isHovered, setIsHovered } = useSidebar();
   const { pathname } = useLocation();
   const { user } = useAuth();
   const { can, loading: permissionLoading } = usePermission();
-  
+  const settings = useSettings();
+  const config = settings?.settings || {};
+
+  const getLogoUrl = (path: string, fallback: string) => {
+    return path ? `${import.meta.env.VITE_STORAGE_URL}/${path}` : fallback;
+  };
+
   const [openKey, setOpenKey] = useState<string | null>(null);
   const [heights, setHeights] = useState<Record<string, number>>({});
   const subMenuRefs = useRef<Record<string, HTMLDivElement | null>>({});
@@ -24,7 +31,7 @@ const AppSidebar: React.FC = () => {
   useEffect(() => {
     Object.entries(navConfig).forEach(([type, items]) => {
       items.forEach((nav, idx) => {
-        if (nav.subItems?.some(sub => isActive(sub.path))) {
+        if (nav.subItems?.some((sub) => isActive(sub.path))) {
           setOpenKey(`${type}-${idx}`);
         }
       });
@@ -33,7 +40,10 @@ const AppSidebar: React.FC = () => {
 
   useEffect(() => {
     if (openKey && subMenuRefs.current[openKey]) {
-      setHeights(prev => ({ ...prev, [openKey]: subMenuRefs.current[openKey]?.scrollHeight || 0 }));
+      setHeights((prev) => ({
+        ...prev,
+        [openKey]: subMenuRefs.current[openKey]?.scrollHeight || 0,
+      }));
     }
   }, [openKey]);
 
@@ -49,10 +59,10 @@ const AppSidebar: React.FC = () => {
           });
 
           if (!hasParentAccess || filteredSubItems.length === 0) return null;
-          
-          return { 
-            ...item, 
-            subItems: filteredSubItems 
+
+          return {
+            ...item,
+            subItems: filteredSubItems,
           };
         }
 
@@ -61,13 +71,19 @@ const AppSidebar: React.FC = () => {
       .filter((item): item is NavItem => item !== null);
   };
 
-  const renderSection = (title: string, items: NavItem[], type: "main" | "others") => {
+  const renderSection = (
+    title: string,
+    items: NavItem[],
+    type: "main" | "others",
+  ) => {
     const allowedItems = filterRole(items);
     if (allowedItems.length === 0) return null;
 
     return (
       <div className="mb-6">
-        <h2 className={`mb-4 text-xs uppercase flex text-neutral-400 ${!showFull ? "lg:justify-center" : "justify-start"}`}>
+        <h2
+          className={`mb-4 text-xs uppercase flex text-neutral-400 ${!showFull ? "lg:justify-center" : "justify-start"}`}
+        >
           {showFull ? title : <HorizontaLDots className="size-6" />}
         </h2>
         <ul className="flex flex-col gap-4">
@@ -101,14 +117,34 @@ const AppSidebar: React.FC = () => {
       onMouseEnter={() => !isExpanded && setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      <div className={`py-8 flex ${!showFull ? "lg:justify-center" : "justify-start"}`}>
+      <div
+        className={`py-8 flex ${!showFull ? "lg:justify-center" : "justify-start"}`}
+      >
         <Link to="/" className="flex items-center gap-3">
-          <img src={showFull ? "/black-logo.png" : "/black-logo.png"} alt="Logo" width={showFull ? 50 : 32} height={showFull ? 50 : 32} className="dark:hidden" />
-          <img src="/white-logo.png" alt="Logo" width={showFull ? 50 : 32} height={showFull ? 50 : 32} className="hidden dark:block" />
+          <img
+            src={getLogoUrl(config.logo_light, "/black-logo.png")}
+            alt="Logo"
+            loading="lazy"
+            style={{ width: showFull ? 50 : 32, height: "auto" }}
+            className="dark:hidden object-contain"
+          />
+
+          <img
+            src={getLogoUrl(config.logo_dark, "/white-logo.png")}
+            alt="Logo"
+            loading="lazy"
+            style={{ width: showFull ? 50 : 32, height: "auto" }}
+            className="hidden dark:block object-contain"
+          />
+
           {showFull && (
             <div className="flex flex-col">
-              <span className="dark:text-white font-bold text-sm">Resto Name</span>
-              <span className="text-neutral-500 text-xs">{user?.email || "admin@mail.com"}</span>
+              <span className="dark:text-white font-bold text-sm">
+                {config.store_name || "Restoran"}
+              </span>
+              <span className="text-neutral-500 text-xs">
+                {user?.email || "admin@mail.com"}
+              </span>
             </div>
           )}
         </Link>

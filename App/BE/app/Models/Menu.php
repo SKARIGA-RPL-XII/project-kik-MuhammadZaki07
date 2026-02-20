@@ -34,5 +34,27 @@ class Menu extends Model
             ->withTimestamps();
     }
 
+
+    public function ingredients()
+    {
+        return $this->belongsToMany(Stock::class, 'menu_ingredients')
+            ->withPivot('quantity_needed')
+            ->withTimestamps();
+    }
+
+    public function getCalculatedStockAttribute()
+{
+    $ingredients = $this->stocks;
+    if ($ingredients->isEmpty()) return 0;
+
+    $availablePortions = [];
+    foreach ($ingredients as $ingredient) {
+        $portions = floor($ingredient->quantity / $ingredient->pivot->amount);
+        $availablePortions[] = $portions;
+    }
+
+    return min($availablePortions);
+}
+
     public $hidden = ['category_id', 'discount_id'];
 }
