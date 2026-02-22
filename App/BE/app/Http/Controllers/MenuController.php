@@ -3,17 +3,16 @@
 namespace App\Http\Controllers;
 
 use App\Models\Menu;
-use App\Models\Attribute;
-use App\Models\AttributeLevel;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Intervention\Image\Laravel\Facades\Image;
 
 class MenuController extends Controller
 {
     public function index(Request $request)
     {
-        $page = max(0, (int) $request->query('page', 0));
+        $page = max(0, (int) $request->query('page', 1) - 1);
         $size = max(1, (int) $request->query('size', 10));
 
         $query = Menu::with([
@@ -21,21 +20,22 @@ class MenuController extends Controller
             'discount',
             'attributes.levels',
             'stocks'
-        ]);
+        ])->where("is_active", true);
 
         if ($request->filled('search')) {
             $query->where('name', 'like', '%' . $request->search . '%');
         }
 
         if ($request->filled('category')) {
-            $query->where('category_id', $request->category);
+            $cat = $request->category;
+            $query->where(function ($q) use ($cat) {
+                $q->where('category_id', $cat)
+                    ->orWhereHas('category', fn($query) => $query->where('slug', $cat));
+            });
         }
 
         $total = $query->count();
-
-        $data = $query
-            ->where("is_active", true)
-            ->latest()
+        $data = $query->latest()
             ->skip($page * $size)
             ->take($size)
             ->get();
@@ -46,7 +46,7 @@ class MenuController extends Controller
             [
                 "menus" => $data,
                 "metadata" => [
-                    "page" => $page,
+                    "page" => $page + 1,
                     "size" => $size,
                     "total" => $total
                 ]
@@ -181,7 +181,24 @@ class MenuController extends Controller
         ]);
 
         return DB::transaction(function () use ($request, $validated) {
-            $path = $request->file('menu_image')->store('menus', 'public');
+            $file = $request->file('menu_image');
+            $filename = 'menu-' . uniqid() . '.webp';
+            $directory = 'menus/';
+            $fullPath = storage_path('app/public/' . $directory . $filename);
+
+            if (!file_exists(storage_path('app/public/' . $directory))) {
+                mkdir(storage_path('app/public/' . $directory), 0755, true);
+            }
+
+            Image::read($file)
+                ->resize(800, null, function ($constraint) {
+                    $constraint->aspectRatio();
+                    $constraint->upsize();
+                })
+                ->encodeByExtension('webp', 80)
+                ->save($fullPath);
+
+            $path = $directory . $filename;
 
             $menu = Menu::create([
                 "menu_image" => $path,
@@ -317,7 +334,25 @@ class MenuController extends Controller
                 if ($menu->menu_image) {
                     Storage::disk('public')->delete($menu->menu_image);
                 }
-                $validated['menu_image'] = $request->file('menu_image')->store('menus', 'public');
+
+                $file = $request->file('menu_image');
+                $filename = 'menu-' . uniqid() . '.webp';
+                $directory = 'menus/';
+                $fullPath = storage_path('app/public/' . $directory . $filename);
+
+                if (!file_exists(storage_path('app/public/' . $directory))) {
+                    mkdir(storage_path('app/public/' . $directory), 0755, true);
+                }
+
+                Image::read($file)
+                    ->resize(800, null, function ($constraint) {
+                        $constraint->aspectRatio();
+                        $constraint->upsize();
+                    })
+                    ->encodeByExtension('webp', 80)
+                    ->save($fullPath);
+
+                $validated['menu_image'] = $directory . $filename;
             }
 
             if ($request->has('discount_id')) {
@@ -360,15 +395,19 @@ class MenuController extends Controller
             return Controller::OKE('success', 'success update menu', $menu->load(['stocks', 'attributes.levels']), 200);
         });
     }
+
     public function destroy(Menu $menu)
     {
-        DB::transaction(function () use ($menu) {
-            Storage::disk('public')->delete($menu->menu_image);
+        return DB::transaction(function () use ($menu) {
+            if ($menu->menu_image) {
+                Storage::disk('public')->delete($menu->menu_image);
+            }
+
             DB::table('menu_attributes')->where('menu_id', $menu->id)->delete();
             $menu->stocks()->detach();
             $menu->delete();
-        });
 
-        return Controller::OKE('success', 'success delete menu', [], 200);
+            return Controller::OKE('success', 'success delete menu', [], 200);
+        });
     }
 }

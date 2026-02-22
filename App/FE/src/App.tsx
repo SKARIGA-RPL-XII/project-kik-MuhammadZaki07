@@ -35,6 +35,7 @@ import SystemConfigPage from "./pages/Settings/SystemConfigPage";
 import StockPage from "./pages/Stock/StockPage";
 import AdjustmentPage from "./pages/Stock/AdjustmentPage";
 import SupplierPage from "./pages/Stock/SupplierPage";
+import MenuDetailPage from "./components/resto/MenuDetailPage";
 
 export default function App() {
   return (
@@ -214,6 +215,7 @@ export default function App() {
 
         <Route path="/" element={<CustomerLayout />}>
           <Route index element={<CustomerPage />} />
+          <Route path="menu-detail-customer/:id" element={<MenuDetailPage />} />
         </Route>
 
         <Route path="/404" element={<NotFound />} />

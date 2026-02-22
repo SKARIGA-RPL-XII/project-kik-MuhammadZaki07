@@ -13,6 +13,7 @@ use App\Http\Controllers\DutyScheduleController;
 use App\Http\Controllers\EmployeController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\MenuController;
+use App\Http\Controllers\MidtransWebhookController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\RoomController;
@@ -128,8 +129,7 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
     Route::resource('attributes', AttributeController::class);
 
     Route::prefix('settings')->group(function () {
-        Route::get('/', [SettingController::class, 'index']);
-       Route::match(['post', 'put'], '/bulk', [SettingController::class, 'updateBulk']);
+        Route::match(['post', 'put'], '/bulk', [SettingController::class, 'updateBulk']);
         Route::get('/{key}', [SettingController::class, 'show']);
         Route::delete('/{key}', [SettingController::class, 'destroy']);
     });
@@ -151,9 +151,13 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
 */
 
 
-Route::resource('transactions', TransactionController::class);
+// Route::resource('transactions', TransactionController::class);
 Route::get('tables', [TableController::class, 'index']);
 Route::get('tables/{id}', [TableController::class, 'show']);
 Route::get('rooms', [RoomController::class, 'index']);
 Route::get('rooms/{id}', [RoomController::class, 'show']);
 Broadcast::routes(['middleware' => ['auth:sanctum']]);
+Route::post('/public/checkout', [TransactionController::class, 'store']);
+Route::middleware('auth:sanctum')->post('/cashier/checkout', [TransactionController::class, 'store']);
+Route::post('/midtrans/callback', [MidtransWebhookController::class, 'callback']);
+Route::get('/settings', [SettingController::class, 'index']);

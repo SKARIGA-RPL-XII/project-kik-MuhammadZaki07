@@ -7,7 +7,6 @@ import { fileURLToPath } from "url";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// https://vite.dev/config/
 export default defineConfig({
   plugins: [
     react(),
@@ -23,6 +22,29 @@ export default defineConfig({
     alias: {
       "@": path.resolve(__dirname, "./src"),
     },
+  },
+  build: {
+    minify: "terser",
+    terserOptions: {
+      compress: {
+        drop_console: true,
+        drop_debugger: true,
+      },
+    },
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes("node_modules")) {
+            if (id.includes("lucide-react")) return "icons";
+            if (id.includes("framer-motion")) return "animations";
+            if (id.includes("jspdf") || id.includes("xlsx")) return "export-libs";
+            if (id.includes("apexcharts")) return "charts";
+            return "vendor"; 
+          }
+        },
+      },
+    },
+    chunkSizeWarningLimit: 1000,
   },
   server: {
     proxy: {

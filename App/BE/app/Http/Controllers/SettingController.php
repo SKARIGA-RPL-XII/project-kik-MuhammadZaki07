@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\Setting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Storage;
+use Intervention\Image\Laravel\Facades\Image;
 
 class SettingController extends Controller
 {
@@ -57,10 +59,29 @@ class SettingController extends Controller
 
         foreach ($request->settings as $key => $value) {
             if ($request->hasFile("settings.$key")) {
-                $file = $request->file("settings.$key");
-                $path = $file->store('settings', 'public');
+                $oldPath = Setting::get($key);
+                if ($oldPath && Storage::disk('public')->exists($oldPath)) {
+                    Storage::disk('public')->delete($oldPath);
+                }
 
-                Setting::set($key, $path, $request->group);
+                $file = $request->file("settings.$key");
+                $filename = 'set-' . $key . '-' . uniqid() . '.webp';
+                $directory = 'settings/';
+                $fullPath = storage_path('app/public/' . $directory . $filename);
+
+                if (!file_exists(storage_path('app/public/' . $directory))) {
+                    mkdir(storage_path('app/public/' . $directory), 0755, true);
+                }
+
+                Image::read($file)
+                    ->resize(500, null, function ($constraint) {
+                        $constraint->aspectRatio();
+                        $constraint->upsize();
+                    })
+                    ->encodeByExtension('webp', 85)
+                    ->save($fullPath);
+
+                Setting::set($key, $directory . $filename, $request->group);
             } else {
                 if ($value !== "null" && $value !== null) {
                     Setting::set($key, $value, $request->group);

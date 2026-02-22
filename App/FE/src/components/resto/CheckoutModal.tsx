@@ -1,192 +1,88 @@
-'use client'
-
 import { motion, AnimatePresence } from 'framer-motion'
-import { ShoppingBag, Utensils, X } from 'lucide-react'
+import { Utensils, ShoppingBag, X, CheckCircle2 } from 'lucide-react'
 import { useState } from 'react'
-import { TableMap } from './TableMap'
 
-interface CheckoutModalProps {
-  isOpen: boolean
-  onClose?: () => void
-  onConfirm?: (method: 'dine-in' | 'take-away', tableId?: number) => void
-}
+export function CheckoutModal({ isOpen, onClose, onConfirm }: any) {
+  const [method, setMethod] = useState<'dine-in' | 'take-away' | null>(null)
 
-export function CheckoutModal({ isOpen, onClose, onConfirm }: CheckoutModalProps) {
-  const [step, setStep] = useState<'method' | 'table'>('method')
-  const [selectedMethod, setSelectedMethod] = useState<'dine-in' | 'take-away' | null>(null)
-  const [selectedTable, setSelectedTable] = useState<number | null>(null)
-
-  const handleMethodSelect = (method: 'dine-in' | 'take-away') => {
-    setSelectedMethod(method)
-    if (method === 'take-away') {
+  const handleFinalize = () => {
+    if (method) {
       onConfirm?.(method)
-      handleClose()
-    } else {
-      setStep('table')
-      window.navigator?.vibrate?.(50)
+      onClose?.()
     }
-  }
-
-  const handleTableSelect = (tableNumber: number) => {
-    setSelectedTable(tableNumber)
-  }
-
-  const handleConfirmOrder = () => {
-    if (selectedTable) {
-      onConfirm?.(selectedMethod as 'dine-in', selectedTable)
-      handleClose()
-      window.navigator?.vibrate?.(50)
-    }
-  }
-
-  const handleClose = () => {
-    setStep('method')
-    setSelectedMethod(null)
-    setSelectedTable(null)
-    onClose?.()
   }
 
   return (
     <AnimatePresence>
       {isOpen && (
-        <>
-          {/* Backdrop */}
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            onClick={handleClose}
-            className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm"
+            onClick={onClose}
+            className="absolute inset-0 bg-slate-950/40 backdrop-blur-sm"
           />
-
-          {/* Modal */}
           <motion.div
-            initial={{ opacity: 0, scale: 0.95, y: 20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            transition={{ type: 'spring', damping: 20 }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-4"
+            initial={{ scale: 0.9, opacity: 0, y: 20 }}
+            animate={{ scale: 1, opacity: 1, y: 0 }}
+            exit={{ scale: 0.9, opacity: 0, y: 20 }}
+            className="relative w-full max-w-xl bg-white rounded-[3rem] p-10 shadow-2xl overflow-hidden"
           >
-            <motion.div className="bg-white rounded-3xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
-              {/* Header */}
-              <div className="flex items-center justify-between p-6 border-b border-slate-200 sticky top-0 bg-white">
-                <h2 className="text-2xl font-bold text-slate-900">
-                  {step === 'method' ? 'How would you like to order?' : 'Choose Your Table'}
-                </h2>
-                <motion.button
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={handleClose}
-                  className="p-2 hover:bg-slate-100 rounded-full transition-colors"
+            <div className="text-center mb-10">
+              <h2 className="text-3xl font-black text-slate-900 mb-2">Dining Choice</h2>
+              <p className="text-slate-500 font-medium">How would you like to enjoy your meal?</p>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              {[
+                { id: 'dine-in', label: 'Dine In', icon: Utensils, desc: 'Enjoy the vibe at our place' },
+                { id: 'take-away', label: 'Take Away', icon: ShoppingBag, desc: 'Pack it up for the road' }
+              ].map((opt) => (
+                <button
+                  key={opt.id}
+                  onClick={() => setMethod(opt.id as any)}
+                  className={`relative p-8 rounded-[2.5rem] border-2 transition-all text-left flex flex-col gap-4 group ${
+                    method === opt.id 
+                    ? 'border-indigo-600 bg-indigo-50/50 shadow-lg shadow-indigo-100' 
+                    : 'border-slate-100 hover:border-slate-200'
+                  }`}
                 >
-                  <X className="w-6 h-6 text-slate-600" />
-                </motion.button>
-              </div>
-
-              {/* Content */}
-              <div className="p-6">
-                <AnimatePresence mode="wait">
-                  {step === 'method' ? (
-                    <motion.div
-                      key="method"
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: 20 }}
-                      className="space-y-4"
-                    >
-                      {/* Dine-In Option */}
-                      <motion.button
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
-                        onClick={() => handleMethodSelect('dine-in')}
-                        className="w-full p-6 rounded-2xl border-2 border-slate-200 hover:border-brand-600 hover:bg-brand-50 transition-all group"
-                      >
-                        <div className="flex items-start gap-4">
-                          <div className="text-4xl"><Utensils className='text-brand-500' size={50}/></div>
-                          <div className="text-left flex-1">
-                            <h3 className="text-lg font-bold text-slate-900 group-hover:text-brand-600 transition-colors">
-                              Dine In
-                            </h3>
-                            <p className="text-slate-600 text-sm">
-                              Enjoy your meal at our restaurant. Select your preferred table.
-                            </p>
-                          </div>
-                          <div className="text-2xl group-hover:translate-x-1 transition-transform">→</div>
-                        </div>
-                      </motion.button>
-
-                      {/* Take Away Option */}
-                      <motion.button
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
-                        onClick={() => handleMethodSelect('take-away')}
-                        className="w-full p-6 rounded-2xl border-2 border-slate-200 hover:border-brand-600 hover:bg-brand-50 transition-all group"
-                      >
-                        <div className="flex items-start gap-4">
-                          <div className="text-4xl"><ShoppingBag size={50} className='text-brand-500'/></div>
-                          <div className="text-left flex-1">
-                            <h3 className="text-lg font-bold text-slate-900 group-hover:text-brand-600 transition-colors">
-                              Take Away
-                            </h3>
-                            <p className="text-slate-600 text-sm">
-                              Get your order ready for pickup at the counter.
-                            </p>
-                          </div>
-                          <div className="text-2xl group-hover:translate-x-1 transition-transform">→</div>
-                        </div>
-                      </motion.button>
-
-                      <motion.div
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.3 }}
-                        className="p-4 bg-blue-50 rounded-2xl border border-blue-200"
-                      >
-                        <p className="text-sm text-blue-700">
-                          <span className="font-semibold">💡 Tip:</span> You can update your preferred dining method anytime during checkout.
-                        </p>
-                      </motion.div>
-                    </motion.div>
-                  ) : (
-                    <motion.div
-                      key="table"
-                      initial={{ opacity: 0, x: 20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: -20 }}
-                    >
-                      <TableMap selectedTable={selectedTable} onSelectTable={handleTableSelect} />
-
-                      <motion.div
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.3 }}
-                        className="mt-6 flex gap-3"
-                      >
-                        <motion.button
-                          whileHover={{ scale: 1.02 }}
-                          whileTap={{ scale: 0.98 }}
-                          onClick={() => setStep('method')}
-                          className="flex-1 px-4 py-3 rounded-full border-2 border-slate-200 text-slate-900 font-semibold hover:bg-slate-50 transition-colors"
-                        >
-                          Back
-                        </motion.button>
-                        <motion.button
-                          whileHover={{ scale: 1.02 }}
-                          whileTap={{ scale: 0.98 }}
-                          onClick={handleConfirmOrder}
-                          disabled={!selectedTable}
-                          className="flex-1 px-4 py-3 rounded-full bg-gradient-to-r from-brand-600 to-brand-700 text-white font-semibold disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-lg transition-shadow"
-                        >
-                          Confirm Table
-                        </motion.button>
-                      </motion.div>
-                    </motion.div>
+                  {method === opt.id && (
+                    <div className="absolute top-4 right-4 text-indigo-600">
+                      <CheckCircle2 size={24} fill="currentColor" className="text-white" />
+                    </div>
                   )}
-                </AnimatePresence>
-              </div>
-            </motion.div>
+                  <div className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-colors ${
+                    method === opt.id ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-400 group-hover:bg-slate-200'
+                  }`}>
+                    <opt.icon size={28} />
+                  </div>
+                  <div>
+                    <p className={`font-black text-lg ${method === opt.id ? 'text-indigo-900' : 'text-slate-900'}`}>{opt.label}</p>
+                    <p className="text-sm text-slate-500 font-medium leading-relaxed">{opt.desc}</p>
+                  </div>
+                </button>
+              ))}
+            </div>
+
+            <div className="mt-10 flex gap-4">
+              <button
+                onClick={onClose}
+                className="flex-1 py-5 rounded-[2rem] font-bold text-slate-500 hover:bg-slate-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                disabled={!method}
+                onClick={handleFinalize}
+                className="flex-[2] bg-slate-900 text-white py-5 rounded-[2rem] font-black text-lg shadow-xl shadow-slate-200 disabled:opacity-30 transition-all active:scale-[0.98]"
+              >
+                Place Order
+              </button>
+            </div>
           </motion.div>
-        </>
+        </div>
       )}
     </AnimatePresence>
   )

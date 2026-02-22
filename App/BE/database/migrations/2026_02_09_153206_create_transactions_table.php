@@ -34,7 +34,8 @@ return new class extends Migration
             $table->timestamp('paid_at')->nullable();
 
             $table->timestamp('transaction_date')->useCurrent();
-
+            $table->enum('order_source', ['qr_code', 'cashier_direct'])->default('cashier_direct');
+            $table->string('snap_token')->nullable();
             $table->timestamps();
         });
     }

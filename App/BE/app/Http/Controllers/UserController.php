@@ -6,6 +6,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
+use Intervention\Image\Laravel\Facades\Image;
 
 class UserController extends Controller
 {
@@ -34,9 +35,21 @@ class UserController extends Controller
                 Storage::disk('public')->delete($user->profile_image);
             }
 
-            $validated['profile_image'] = $request
-                ->file('profile_image')
-                ->store('profile_images', 'public');
+            $file = $request->file('profile_image');
+            $filename = 'profile-' . uniqid() . '.webp';
+            $directory = 'profile_images/';
+            $fullPath = storage_path('app/public/' . $directory . $filename);
+
+            if (!file_exists(storage_path('app/public/' . $directory))) {
+                mkdir(storage_path('app/public/' . $directory), 0755, true);
+            }
+
+            Image::read($file)
+                ->cover(400, 400)
+                ->encodeByExtension('webp', 80)
+                ->save($fullPath);
+
+            $validated['profile_image'] = $directory . $filename;
         }
 
         $user->update($validated);

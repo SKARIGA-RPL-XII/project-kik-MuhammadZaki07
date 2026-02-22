@@ -25,9 +25,10 @@ const assistantResponses: Record<string, string> = {
 
 interface AIAssistantProps {
   onDisappear?: () => void
+  isCartOpen?: boolean
 }
 
-export function AIAssistant({ onDisappear }: AIAssistantProps) {
+export function AIAssistant({ onDisappear , isCartOpen }: AIAssistantProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -53,7 +54,6 @@ export function AIAssistant({ onDisappear }: AIAssistantProps) {
     addMessage(userMessage, 'user')
     window.navigator?.vibrate?.(50)
 
-    // Simulate assistant response
     setTimeout(() => {
       const response = assistantResponses[actionId] || 'Maaf, saya tidak memahami pertanyaan Anda.'
       addMessage(response, 'assistant')
@@ -86,7 +86,6 @@ export function AIAssistant({ onDisappear }: AIAssistantProps) {
 
   return (
     <>
-      {/* Floating Button with Pulse Animation */}
       <AnimatePresence>
         {hasAppeared && !isOpen && (
           <motion.div
@@ -94,12 +93,12 @@ export function AIAssistant({ onDisappear }: AIAssistantProps) {
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0, opacity: 0 }}
             transition={{ type: 'spring', damping: 15 }}
-            className="fixed bottom-32 right-6 z-20"
+            className={isCartOpen ? "fixed bottom-10 right-115 z-20" : "fixed bottom-10 right-9 z-20"}
           >
             <motion.div
               animate={{ y: [0, -5, 0] }}
               transition={{ repeat: Infinity, duration: 2 }}
-              className="absolute -top-12 right-0 px-3 py-2 bg-brand-600 text-white text-xs rounded-full flex items-center gap-2 shadow-lg"
+              className="absolute -top-15 right-0 px-3 py-2 bg-brand-600 text-white text-xs rounded-full flex items-center gap-2 shadow-lg"
             >
               <h1 className='font-bold text-white text-xl'>AI</h1>
               <span className="font-semibold">Thinking...</span>
@@ -125,11 +124,9 @@ export function AIAssistant({ onDisappear }: AIAssistantProps) {
         )}
       </AnimatePresence>
 
-      {/* Chat Panel */}
       <AnimatePresence>
         {isOpen && (
           <>
-            {/* Backdrop */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -138,7 +135,6 @@ export function AIAssistant({ onDisappear }: AIAssistantProps) {
               className="fixed inset-0 z-40 bg-black/30 backdrop-blur-sm"
             />
 
-            {/* Chat Window */}
             <motion.div
               initial={{ opacity: 0, scale: 0.8, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -146,7 +142,6 @@ export function AIAssistant({ onDisappear }: AIAssistantProps) {
               transition={{ type: 'spring', damping: 20 }}
               className="fixed bottom-20 right-6 z-50 w-96 max-w-full h-[600px] bg-white rounded-3xl shadow-2xl flex flex-col overflow-hidden"
             >
-              {/* Header */}
               <div className="bg-gradient-to-r from-brand-600 to-brand-700 text-white p-4 flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
@@ -167,7 +162,6 @@ export function AIAssistant({ onDisappear }: AIAssistantProps) {
                 </motion.button>
               </div>
 
-              {/* Messages */}
               <div className="flex-1 overflow-y-auto p-4 space-y-4">
                 {messages.map((message) => (
                   <motion.div
@@ -213,7 +207,6 @@ export function AIAssistant({ onDisappear }: AIAssistantProps) {
                 )}
               </div>
 
-              {/* Quick Actions */}
               {messages.length === 1 && !isLoading && (
                 <motion.div
                   initial={{ opacity: 0, y: 10 }}

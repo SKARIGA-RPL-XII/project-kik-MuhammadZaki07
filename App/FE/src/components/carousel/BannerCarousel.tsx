@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { m, AnimatePresence } from "framer-motion";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { BannerService } from "@/services/banner.service";
 
 export interface Banner {
   id: number;
@@ -13,24 +12,25 @@ export interface Banner {
 interface BannerCarouselProps {
   autoLoop?: boolean;
   loopInterval?: number;
-  banners:Banner;
+  banners: Banner[];
+  isLoading?: boolean;
 }
 
 const BannerCarousel: React.FC<BannerCarouselProps> = ({
-  banners,
+  banners = [],
   autoLoop = true,
   loopInterval = 3000,
+  isLoading = false,
 }) => {
   const [current, setCurrent] = useState(0);
-  
 
   useEffect(() => {
-    if (!autoLoop || banners.length <= 1) return;
+    if (isLoading || !autoLoop || banners.length <= 1) return;
     const interval = setInterval(() => {
       setCurrent((prev) => (prev + 1) % banners.length);
     }, loopInterval);
     return () => clearInterval(interval);
-  }, [banners, autoLoop, loopInterval]);
+  }, [banners, autoLoop, loopInterval, isLoading]);
 
   const handlePrev = () => {
     setCurrent((prev) => (prev - 1 + banners.length) % banners.length);
@@ -39,73 +39,92 @@ const BannerCarousel: React.FC<BannerCarouselProps> = ({
   const handleNext = () => {
     setCurrent((prev) => (prev + 1) % banners.length);
   };
+  
+  if (isLoading) {
+    return (
+      <div className="relative w-full h-64 md:h-80 overflow-hidden rounded-2xl bg-neutral-100">
+        <m.div
+          animate={{ x: ["-100%", "100%"] }}
+          transition={{ repeat: Infinity, duration: 1.5, ease: "linear" }}
+          className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent will-change-transform"
+        />
+        <div className="absolute left-6 md:left-12 bottom-6 md:bottom-12 space-y-3 w-full">
+          <div className="h-8 md:h-12 w-1/3 bg-neutral-200 rounded-lg animate-pulse" />
+          <div className="h-4 w-1/2 bg-neutral-200 rounded-lg animate-pulse" />
+        </div>
+      </div>
+    );
+  }
+
+  if (!banners || banners.length === 0) return null;
 
   return (
-    <div className="relative w-full h-64 md:h-80 overflow-hidden rounded-xl">
-      <AnimatePresence initial={false}>
-        {banners.map(
-          (banner, index) =>
-            index === current && (
-              <motion.div
-                key={banner.id}
-                initial={{ opacity: 0, x: 50 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -50 }}
-                transition={{ duration: 0.8 }}
-                drag="x"
-                dragConstraints={{ left: 0, right: 0 }}
-                dragElastic={0.2}
-                onDragEnd={(e, info) => {
-                  if (info.offset.x < -100) handleNext();
-                  if (info.offset.x > 100) handlePrev();
-                }}
-                className="absolute cursor-grabbing inset-0 w-full h-full flex items-center justify-center bg-neutral-50 dark:bg-neutral-900"
-              >
-                <img
-                  src={banner.banner_image}
-                  alt={banner.title}
-                  draggable="false"
-                  className="w-full h-64 md:h-96 object-cover rounded-xl"
-                />
-                <div className="absolute left-6 md:left-12 bottom-6 md:bottom-12 text-white dark:text-white/90 p-4 rounded-md max-w-md">
-                  <h2 className="text-xl md:text-5xl font-bold">
-                    {banner.title}
-                  </h2>
-                  <p className="text-sm md:text-base mt-1">
-                    {banner.description}
-                  </p>
-                </div>
-              </motion.div>
-            ),
-        )}
+    <div className="relative w-full h-64 md:h-80 overflow-hidden rounded-2xl border border-neutral-100 shadow-sm">
+      <AnimatePresence initial={false} mode="wait">
+        <m.div
+          key={banners[current].id}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.5, ease: "easeInOut" }}
+          className="absolute inset-0 w-full h-full will-change-opacity"
+        >
+          <img
+            src={banners[current].banner_image}
+            alt={banners[current].title}
+            loading="lazy"
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
+          
+          <div className="absolute left-6 md:left-12 bottom-6 md:bottom-12 text-white p-4 max-w-xl">
+            <m.h2 
+              initial={{ y: 15, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              className="text-2xl md:text-4xl font-black uppercase tracking-tight will-change-transform"
+            >
+              {banners[current].title}
+            </m.h2>
+            <m.p 
+              initial={{ y: 15, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.1 }}
+              className="text-xs md:text-sm font-medium mt-2 text-white/80 line-clamp-2 will-change-transform"
+            >
+              {banners[current].description}
+            </m.p>
+          </div>
+        </m.div>
       </AnimatePresence>
 
-      <button
-        onClick={handlePrev}
-        className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/30 dark:bg-white/20 text-white dark:text-black p-2 rounded-full hover:bg-black/50 dark:hover:bg-white/40 transition"
-      >
-        <ChevronLeft size={24} />
-      </button>
-      <button
-        onClick={handleNext}
-        className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/30 dark:bg-white/20 text-white dark:text-black p-2 rounded-full hover:bg-black/50 dark:hover:bg-white/40 transition"
-      >
-        <ChevronRight size={24} />
-      </button>
+      {banners.length > 1 && (
+        <>
+          <button
+            onClick={handlePrev}
+            className="absolute left-4 top-1/2 -translate-y-1/2 z-10 w-10 h-10 flex items-center justify-center bg-white/10 backdrop-blur-md text-white rounded-full hover:bg-white/20 transition-all border border-white/20"
+          >
+            <ChevronLeft size={20} />
+          </button>
+          <button
+            onClick={handleNext}
+            className="absolute right-4 top-1/2 -translate-y-1/2 z-10 w-10 h-10 flex items-center justify-center bg-white/10 backdrop-blur-md text-white rounded-full hover:bg-white/20 transition-all border border-white/20"
+          >
+            <ChevronRight size={20} />
+          </button>
 
-      <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-2">
-        {banners.map((_, i) => (
-          <span
-            key={i}
-            className={`w-3 h-3 rounded-full cursor-pointer transition-all ${
-              i === current
-                ? "bg-white dark:bg-brand-500"
-                : "bg-white/50 dark:bg-white/30"
-            }`}
-            onClick={() => setCurrent(i)}
-          />
-        ))}
-      </div>
+          <div className="absolute bottom-4 right-6 flex gap-1.5 z-10">
+            {banners.map((_, i) => (
+              <button
+                key={i}
+                onClick={() => setCurrent(i)}
+                className={`transition-all duration-300 rounded-full ${
+                  i === current ? "w-6 h-1.5 bg-white" : "w-1.5 h-1.5 bg-white/40"
+                }`}
+              />
+            ))}
+          </div>
+        </>
+      )}
     </div>
   );
 };

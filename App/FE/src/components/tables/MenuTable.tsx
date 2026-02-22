@@ -91,7 +91,7 @@ export default function MenuTable({
                         <img
                           src={`${import.meta.env.VITE_STORAGE_URL}/${menu.menu_image}`}
                           alt={menu.name}
-                          className="w-12 h-12 rounded-lg object-cover border border-neutral-100 dark:border-white/10"
+                          className="w-12 h-12 rounded-lg object-center border border-neutral-100 dark:border-white/10"
                         />
                         <div className="flex-col flex">
                           <span className="font-medium text-neutral-800 dark:text-white/90">

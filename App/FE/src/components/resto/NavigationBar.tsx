@@ -1,80 +1,108 @@
-'use client'
+import { CategoryService } from "@/services/category.service";
+import { m } from "framer-motion"; // Menggunakan m untuk performa
+import {
+  Dessert,
+  LayoutGrid,
+  Pizza,
+  Search,
+  Coffee,
+  Utensils,
+  SlidersHorizontal,
+  Beer,
+  IceCream,
+  Beef,
+} from "lucide-react";
+import { useState, useEffect, useCallback } from "react";
 
-import { motion } from 'framer-motion'
-import { Dessert, Grid, Pizza, Search, Star } from 'lucide-react'
-import { useState } from 'react'
-import { MdLocalDrink } from 'react-icons/md'
-
-const categories = [
-  { id: 'all', label: 'All', icon: <Grid/> },
-  { id: 'food', label: 'Food', icon: <Pizza/> },
-  { id: 'drinks', label: 'Drinks', icon: <MdLocalDrink/> },
-  { id: 'desserts', label: 'Desserts', icon: <Dessert/> },
-  { id: 'specials', label: 'Specials', icon: <Star/> },
-]
-
-interface NavigationBarProps {
-  selectedCategory?: string
-  onCategoryChange?: (category: string) => void
-  onSearch?: (query: string) => void
-}
+const iconMap: Record<string, any> = {
+  all: LayoutGrid,
+  "makanan-utama": Pizza,
+  makanan: Beef,
+  minuman: Coffee,
+  "minuman-dingin": Beer,
+  dessert: IceCream,
+  snack: Utensils,
+  cemilan: Dessert,
+};
 
 export function NavigationBar({
-  selectedCategory = 'all',
+  selectedCategory,
   onCategoryChange,
   onSearch,
-}: NavigationBarProps) {
-  const [searchQuery, setSearchQuery] = useState('')
-  const [isFocused, setIsFocused] = useState(false)
+}: any) {
+  const [isFocused, setIsFocused] = useState(false);
+  const [categories, setCategories] = useState<any[]>([
+    { id: "all", name: "All", slug: "all" },
+  ]);
 
-  const handleSearch = (value: string) => {
-    setSearchQuery(value)
-    onSearch?.(value)
-  }
+  useEffect(() => {
+    const fetchCats = async () => {
+      const res = await CategoryService.getCategories({ size: 100 });
+      if (res.data) {
+        setCategories([{ id: "all", name: "All", slug: "all" }, ...res.data]);
+      }
+    };
+    fetchCats();
+  }, []);
+
+  // Membungkus handle search agar tidak memicu re-render berlebih
+  const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    onSearch?.(e.target.value);
+  }, [onSearch]);
 
   return (
-    <div className="space-y-4 pb-4 mt-10">
-      <motion.div
-        animate={{
-          boxShadow: isFocused
-            ? '0 0 20px rgba(79, 70, 229, 0.2)'
-            : '0 0 0px rgba(79, 70, 229, 0)',
-        }}
-        className="relative"
-      >
-        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 pointer-events-none" />
-        <input
-          type="text"
-          placeholder="Search dishes, ingredients..."
-          value={searchQuery}
-          onChange={(e) => handleSearch(e.target.value)}
-          onFocus={() => setIsFocused(true)}
-          onBlur={() => setIsFocused(false)}
-          className="w-full pl-12 pr-4 py-3 rounded-2xl border-2 border-slate-200 focus:border-brand-600 focus:outline-none transition-colors bg-white placeholder-slate-400 text-slate-900"
-        />
-      </motion.div>
+    <div className="sticky top-0 z-20 backdrop-blur-xl pb-3 space-y-4 bg-white/80 border-b border-neutral-100 will-change-transform">
+      <div className="flex gap-3 items-center">
+        <div className="relative flex-1 group">
+          <Search
+            className={`absolute left-4 top-1/2 -translate-y-1/2 transition-colors duration-200 ${
+              isFocused ? "text-brand-600" : "text-neutral-400"
+            }`}
+            size={16}
+          />
+          <input
+            type="text"
+            placeholder="Search menu..."
+            onChange={handleSearchChange}
+            onFocus={() => setIsFocused(true)}
+            onBlur={() => setIsFocused(false)}
+            className="w-full pl-10 pr-4 py-3.5 rounded-sm bg-neutral-50 border border-neutral-100 focus:bg-white focus:border-brand-500/30 focus:ring-4 focus:ring-brand-50 transition-all outline-none font-bold text-[11px] uppercase tracking-wider text-neutral-900 shadow-sm"
+          />
+        </div>
 
-      <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
-        {categories.map((category) => (
-          <motion.button
-            key={category.id}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={() => {
-              onCategoryChange?.(category.id)
-              window.navigator?.vibrate?.(30)
-            }}
-            animate={{
-              backgroundColor: selectedCategory === category.id ? 'rgb(79, 70, 229)' : 'rgb(248, 250, 252)',
-              color: selectedCategory === category.id ? 'white' : 'rgb(71, 85, 105)',
-            }}
-            className="flex items-center gap-2 px-5 py-1.5 rounded-full font-semibold text-sm border border-slate-200 whitespace-nowrap transition-all"
-          >
-            <span className="text-lg">{category.icon}</span>
-            {category.label}
-          </motion.button>
-        ))}
+        <button className="flex items-center gap-2 w-10 h-10 bg-white border border-neutral-200 rounded-sm hover:bg-neutral-50 transition-colors justify-center shrink-0 active:scale-95">
+          <SlidersHorizontal size={16} className="text-neutral-600" />
+        </button>
+      </div>
+
+      <div className="flex gap-2 overflow-x-auto pb-1 custom-scrollbar">
+        {categories.map((cat) => {
+          const Icon = iconMap[cat.slug] || Utensils;
+          const isActive = selectedCategory === cat.slug;
+
+          return (
+            <button
+              key={cat.id}
+              onClick={() => onCategoryChange?.(cat.slug)}
+              className={`relative flex items-center gap-2 px-5 py-2.5 rounded-sm whitespace-nowrap transition-colors duration-200 ${
+                isActive ? "text-white" : "text-neutral-500 hover:bg-neutral-50"
+              }`}
+            >
+              {isActive && (
+                <m.div
+                  layoutId="activeCategory"
+                  transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                  className="absolute inset-0 bg-brand-500 rounded-sm shadow-md shadow-neutral-200 z-0 will-change-transform"
+                />
+              )}
+              <Icon size={14} className="relative z-10" />
+              <span className="relative z-10 font-medium text-[10px] uppercase tracking-widest">
+                {cat.name}
+              </span>
+            </button>
+          );
+        })}
       </div>
     </div>
-  )
+  );
 }
