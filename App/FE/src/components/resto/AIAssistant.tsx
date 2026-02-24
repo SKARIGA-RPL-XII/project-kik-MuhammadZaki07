@@ -93,7 +93,7 @@ export function AIAssistant({ onDisappear , isCartOpen }: AIAssistantProps) {
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0, opacity: 0 }}
             transition={{ type: 'spring', damping: 15 }}
-            className={isCartOpen ? "fixed bottom-10 right-115 z-20" : "fixed bottom-10 right-9 z-20"}
+            className={isCartOpen ? "fixed bottom-10 lg:block hidden right-110 z-20" : "fixed lg:bottom-10 bottom-30 right-9 z-20"}
           >
             <motion.div
               animate={{ y: [0, -5, 0] }}
@@ -140,7 +140,7 @@ export function AIAssistant({ onDisappear , isCartOpen }: AIAssistantProps) {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.8, y: 20 }}
               transition={{ type: 'spring', damping: 20 }}
-              className="fixed bottom-20 right-6 z-50 w-96 max-w-full h-[600px] bg-white rounded-3xl shadow-2xl flex flex-col overflow-hidden"
+              className={`fixed ${isCartOpen ? "fixed bottom-10 right-110 z-20" : "fixed bottom-10 right-9 z-20"} z-50 w-96 max-w-full h-[600px] bg-white rounded-3xl shadow-2xl flex flex-col overflow-hidden`}
             >
               <div className="bg-gradient-to-r from-brand-600 to-brand-700 text-white p-4 flex items-center justify-between">
                 <div className="flex items-center gap-3">

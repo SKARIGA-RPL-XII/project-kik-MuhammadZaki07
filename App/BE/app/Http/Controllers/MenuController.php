@@ -191,11 +191,8 @@ class MenuController extends Controller
             }
 
             Image::read($file)
-                ->resize(800, null, function ($constraint) {
-                    $constraint->aspectRatio();
-                    $constraint->upsize();
-                })
-                ->encodeByExtension('webp', 80)
+                ->scale( 1000)
+                ->encodeByExtension('webp', 90)
                 ->save($fullPath);
 
             $path = $directory . $filename;
@@ -345,11 +342,8 @@ class MenuController extends Controller
                 }
 
                 Image::read($file)
-                    ->resize(800, null, function ($constraint) {
-                        $constraint->aspectRatio();
-                        $constraint->upsize();
-                    })
-                    ->encodeByExtension('webp', 80)
+                    ->scale( 1000)
+                    ->encodeByExtension('webp', 90)
                     ->save($fullPath);
 
                 $validated['menu_image'] = $directory . $filename;

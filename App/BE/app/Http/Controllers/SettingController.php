@@ -74,11 +74,8 @@ class SettingController extends Controller
                 }
 
                 Image::read($file)
-                    ->resize(500, null, function ($constraint) {
-                        $constraint->aspectRatio();
-                        $constraint->upsize();
-                    })
-                    ->encodeByExtension('webp', 85)
+                    ->scale(1000)
+                    ->encodeByExtension('webp', 90)
                     ->save($fullPath);
 
                 Setting::set($key, $directory . $filename, $request->group);

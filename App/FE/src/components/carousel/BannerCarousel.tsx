@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { m, AnimatePresence } from "framer-motion";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
@@ -19,38 +19,59 @@ interface BannerCarouselProps {
 const BannerCarousel: React.FC<BannerCarouselProps> = ({
   banners = [],
   autoLoop = true,
-  loopInterval = 3000,
+  loopInterval = 5000,
   isLoading = false,
 }) => {
   const [current, setCurrent] = useState(0);
+  const [direction, setDirection] = useState(0);
+
+  const slideVariants = {
+    enter: (direction: number) => ({
+      x: direction > 0 ? 1000 : -1000,
+      opacity: 0,
+      scale: 1.1,
+    }),
+    center: {
+      zIndex: 1,
+      x: 0,
+      opacity: 1,
+      scale: 1,
+    },
+    exit: (direction: number) => ({
+      zIndex: 0,
+      x: direction < 0 ? 1000 : -1000,
+      opacity: 0,
+      scale: 0.9,
+    }),
+  };
+
+  const paginate = useCallback(
+    (newDirection: number) => {
+      setDirection(newDirection);
+      setCurrent((prev) => (prev + newDirection + banners.length) % banners.length);
+    },
+    [banners.length]
+  );
 
   useEffect(() => {
     if (isLoading || !autoLoop || banners.length <= 1) return;
     const interval = setInterval(() => {
-      setCurrent((prev) => (prev + 1) % banners.length);
+      paginate(1);
     }, loopInterval);
     return () => clearInterval(interval);
-  }, [banners, autoLoop, loopInterval, isLoading]);
+  }, [banners.length, autoLoop, loopInterval, isLoading, paginate]);
 
-  const handlePrev = () => {
-    setCurrent((prev) => (prev - 1 + banners.length) % banners.length);
-  };
-
-  const handleNext = () => {
-    setCurrent((prev) => (prev + 1) % banners.length);
-  };
-  
   if (isLoading) {
     return (
-      <div className="relative w-full h-64 md:h-80 overflow-hidden rounded-2xl bg-neutral-100">
+      <div className="relative w-full h-72 md:h-96 overflow-hidden rounded-3xl bg-neutral-100 border border-neutral-200">
         <m.div
           animate={{ x: ["-100%", "100%"] }}
           transition={{ repeat: Infinity, duration: 1.5, ease: "linear" }}
-          className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent will-change-transform"
+          className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent"
         />
-        <div className="absolute left-6 md:left-12 bottom-6 md:bottom-12 space-y-3 w-full">
-          <div className="h-8 md:h-12 w-1/3 bg-neutral-200 rounded-lg animate-pulse" />
-          <div className="h-4 w-1/2 bg-neutral-200 rounded-lg animate-pulse" />
+        <div className="absolute left-8 bottom-10 space-y-4 w-full">
+          <div className="h-10 w-2/5 bg-neutral-200 rounded-xl animate-pulse" />
+          <div className="h-4 w-3/5 bg-neutral-200 rounded-lg animate-pulse" />
         </div>
       </div>
     );
@@ -59,68 +80,91 @@ const BannerCarousel: React.FC<BannerCarouselProps> = ({
   if (!banners || banners.length === 0) return null;
 
   return (
-    <div className="relative w-full h-64 md:h-80 overflow-hidden rounded-2xl border border-neutral-100 shadow-sm">
-      <AnimatePresence initial={false} mode="wait">
+    <div className="relative w-full h-72 md:h-88 overflow-hidden rounded-3xl shadow-2xl shadow-neutral-200 group">
+      <AnimatePresence initial={false} custom={direction} mode="popLayout">
         <m.div
-          key={banners[current].id}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.5, ease: "easeInOut" }}
-          className="absolute inset-0 w-full h-full will-change-opacity"
+          key={current}
+          custom={direction}
+          variants={slideVariants}
+          initial="enter"
+          animate="center"
+          exit="exit"
+          transition={{
+            x: { type: "spring", stiffness: 300, damping: 30 },
+            opacity: { duration: 0.4 },
+            scale: { duration: 0.6 }
+          }}
+          className="absolute inset-0 w-full h-full"
         >
-          <img
-            src={banners[current].banner_image}
+          <m.img
+            src={`${import.meta.env.VITE_STORAGE_URL}/${banners[current].banner_image}`}
             alt={banners[current].title}
-            loading="lazy"
             className="w-full h-full object-cover"
+            initial={{ scale: 1.2 }}
+            animate={{ scale: 1 }}
+            transition={{ duration: 0.8 }}
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
           
-          <div className="absolute left-6 md:left-12 bottom-6 md:bottom-12 text-white p-4 max-w-xl">
-            <m.h2 
-              initial={{ y: 15, opacity: 0 }}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
+
+          <div className="absolute inset-0 flex flex-col justify-end p-8 md:px-16 md:pb-14">
+            <m.div
+              initial={{ y: 30, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
-              className="text-2xl md:text-4xl font-black uppercase tracking-tight will-change-transform"
+              transition={{ delay: 0.2, duration: 0.5 }}
+              className="max-w-2xl space-y-2"
             >
-              {banners[current].title}
-            </m.h2>
-            <m.p 
-              initial={{ y: 15, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.1 }}
-              className="text-xs md:text-sm font-medium mt-2 text-white/80 line-clamp-2 will-change-transform"
-            >
-              {banners[current].description}
-            </m.p>
+              <h2 className="text-3xl md:text-5xl font-black text-white leading-tight uppercase tracking-tighter">
+                {banners[current].title}
+              </h2>
+              <p className="text-sm md:text-base text-neutral-200 font-normal line-clamp-2 max-w-lg">
+                {banners[current].description}
+              </p>
+            </m.div>
           </div>
         </m.div>
       </AnimatePresence>
 
       {banners.length > 1 && (
         <>
-          <button
-            onClick={handlePrev}
-            className="absolute left-4 top-1/2 -translate-y-1/2 z-10 w-10 h-10 flex items-center justify-center bg-white/10 backdrop-blur-md text-white rounded-full hover:bg-white/20 transition-all border border-white/20"
-          >
-            <ChevronLeft size={20} />
-          </button>
-          <button
-            onClick={handleNext}
-            className="absolute right-4 top-1/2 -translate-y-1/2 z-10 w-10 h-10 flex items-center justify-center bg-white/10 backdrop-blur-md text-white rounded-full hover:bg-white/20 transition-all border border-white/20"
-          >
-            <ChevronRight size={20} />
-          </button>
+          <div className="absolute inset-y-0 left-0 right-0 flex items-center justify-between px-4 z-20 pointer-events-none">
+            <button
+              onClick={() => paginate(-1)}
+              className="pointer-events-auto w-12 h-12 flex items-center justify-center bg-white/10 hover:bg-white/20 backdrop-blur-xl text-white rounded-full transition-all border border-white/20 opacity-0 group-hover:opacity-100 -translate-x-4 group-hover:translate-x-0"
+            >
+              <ChevronLeft size={24} />
+            </button>
+            <button
+              onClick={() => paginate(1)}
+              className="pointer-events-auto w-12 h-12 flex items-center justify-center bg-white/10 hover:bg-white/20 backdrop-blur-xl text-white rounded-full transition-all border border-white/20 opacity-0 group-hover:opacity-100 translate-x-4 group-hover:translate-x-0"
+            >
+              <ChevronRight size={24} />
+            </button>
+          </div>
 
-          <div className="absolute bottom-4 right-6 flex gap-1.5 z-10">
+          <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-3 z-30">
             {banners.map((_, i) => (
               <button
                 key={i}
-                onClick={() => setCurrent(i)}
-                className={`transition-all duration-300 rounded-full ${
-                  i === current ? "w-6 h-1.5 bg-white" : "w-1.5 h-1.5 bg-white/40"
-                }`}
-              />
+                onClick={() => {
+                  setDirection(i > current ? 1 : -1);
+                  setCurrent(i);
+                }}
+                className="relative h-1.5 rounded-full bg-white/20 overflow-hidden transition-all duration-500"
+                style={{ width: i === current ? "40px" : "12px" }}
+              >
+                {i === current && autoLoop && (
+                  <m.div
+                    initial={{ width: 0 }}
+                    animate={{ width: "100%" }}
+                    transition={{ duration: loopInterval / 1000, ease: "linear" }}
+                    className="absolute inset-y-0 left-0 bg-white"
+                  />
+                )}
+                {i === current && !autoLoop && (
+                  <div className="absolute inset-0 bg-white" />
+                )}
+              </button>
             ))}
           </div>
         </>

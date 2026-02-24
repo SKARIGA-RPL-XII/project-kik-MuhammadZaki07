@@ -1,73 +1,44 @@
-import BannerCarousel, { Banner } from "@/components/carousel/BannerCarousel";
+import { useEffect, useState, useCallback } from "react";
+import BannerCarousel from "@/components/carousel/BannerCarousel";
+import PageMeta from "@/components/common/PageMeta";
 import { MenuCard, NavigationBar } from "@/components/resto";
 import { EmptyState } from "@/components/resto/EmptyState";
 import { MenuDetailView } from "@/components/resto/MenuDetailView";
 import { MenuListSkeleton } from "@/components/skeleton/MenuCardSkeleton";
 import { useCart } from "@/hooks/useCart";
-import { BannerService } from "@/services/banner.service";
-import { MenuService } from "@/services/menu.service";
-import { useEffect, useState, useCallback } from "react";
+import { useMenus } from "@/hooks/react-query/useMenu";
+import { useBanners } from "@/hooks/react-query/useBanner";
 
 export default function CustomerPage() {
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [page, setPage] = useState(1);
-  const [menuData, setMenuData] = useState<any[]>([]);
-  const [banners, setBanners] = useState<Banner[]>([]);
-  const [total, setTotal] = useState(0);
   const [selectedMenu, setSelectedMenu] = useState<any>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);  
-  const [loadingMenu, setLoadingMenu] = useState(false);
-  const [loadingBanner, setLoadingBanner] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const { cartItems, addToCart } = useCart();
 
   useEffect(() => {
-    const handler = setTimeout(() => setDebouncedSearch(searchQuery), 400);
+    const handler = setTimeout(() => {
+      setDebouncedSearch(searchQuery);
+      setPage(1);
+    }, 400);
     return () => clearTimeout(handler);
   }, [searchQuery]);
 
-  useEffect(() => {
-    const fetchBanners = async () => {
-      setLoadingBanner(true);
-      try {
-        const { data } = await BannerService.getBanners();
-        if (data?.data) {
-          const mapped = data.data.map((b: any) => ({
-            ...b,
-            banner_image: `${import.meta.env.VITE_STORAGE_URL}/${b.banner_image}`,
-          }));
-          setBanners(mapped);
-        }
-      } finally {
-        setLoadingBanner(false);
-      }
-    };
-    fetchBanners();
-  }, []);
+  const { data: menuResponse, isLoading: loadingMenu } = useMenus({
+    page,
+    size: 10,
+    search: debouncedSearch,
+    category: selectedCategory === "all" ? undefined : selectedCategory,
+  });
 
-  const fetchMenus = useCallback(async () => {
-    setLoadingMenu(true);
-    try {
-      const res = await MenuService.getMenus({
-        page,
-        search: debouncedSearch,
-        category: selectedCategory === "all" ? undefined : selectedCategory,
-      });
+  const { data: bannerResponse, isLoading: loadingBanner } = useBanners();
 
-      if (res.data) {
-        setMenuData(res.data);
-        setTotal(res.total || 0);
-      }
-    } finally {
-      setLoadingMenu(false);
-    }
-  }, [page, debouncedSearch, selectedCategory]);
-
-  useEffect(() => {
-    fetchMenus();
-  }, [fetchMenus]);
+  const menuData = menuResponse?.data || [];
+  const total = menuResponse?.metadata?.total || 0;
+  const banners = bannerResponse?.data?.data || [];  
 
   const handleOpenDetail = useCallback((item: any) => {
     setSelectedMenu(item);
@@ -81,12 +52,17 @@ export default function CustomerPage() {
 
   return (
     <div className="flex flex-col gap-10">
+      <PageMeta
+        title="Digital Menu"
+        description="View our full selection of premium food and beverages."
+      />
+      
       {(loadingBanner || banners.length > 0) && (
-        <BannerCarousel 
-          isLoading={loadingBanner} 
-          banners={banners} 
-          autoLoop 
-          loopInterval={5000} 
+        <BannerCarousel
+          isLoading={loadingBanner}
+          banners={banners}
+          autoLoop
+          loopInterval={5000}
         />
       )}
 
@@ -99,7 +75,8 @@ export default function CustomerPage() {
         onSearch={setSearchQuery}
       />
 
-      {loadingMenu ? (
+<div className="min-h-[45vh]">
+  {loadingMenu ? (
         <MenuListSkeleton />
       ) : (
         <>
@@ -122,7 +99,7 @@ export default function CustomerPage() {
                 disabled={page === 1}
                 onClick={() => {
                   setPage((prev) => prev - 1);
-                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                  window.scrollTo({ top: 0, behavior: "smooth" });
                 }}
                 className="px-8 py-3 bg-white border border-neutral-200 rounded-2xl disabled:opacity-30 font-black text-[10px] uppercase tracking-widest transition-all hover:bg-neutral-50 active:scale-95"
               >
@@ -132,7 +109,7 @@ export default function CustomerPage() {
                 disabled={menuData.length < 10}
                 onClick={() => {
                   setPage((prev) => prev + 1);
-                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                  window.scrollTo({ top: 0, behavior: "smooth" });
                 }}
                 className="px-8 py-3 bg-white border border-neutral-200 rounded-2xl disabled:opacity-30 font-black text-[10px] uppercase tracking-widest transition-all hover:bg-neutral-50 active:scale-95"
               >
@@ -142,6 +119,7 @@ export default function CustomerPage() {
           )}
         </>
       )}
+</div>
 
       <MenuDetailView
         menu={selectedMenu}

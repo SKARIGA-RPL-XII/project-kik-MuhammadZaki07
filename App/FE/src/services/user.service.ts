@@ -18,21 +18,15 @@ export const UserService = {
 
 updateProfile: async (userId: number, payload: any) => {
   const formData = new FormData();
-
-  // TARUH DI SINI: Memberitahu Laravel untuk memperlakukan POST ini sebagai PUT
   formData.append("_method", "PUT");
 
-  // Masukkan semua field dari UI ke dalam FormData
   Object.entries(payload).forEach(([key, value]) => {
     if (value !== null && value !== undefined) {
-      // Jika value adalah File (gambar), masukkan langsung
-      // Jika bukan, konversi ke string
       formData.append(key, value instanceof File ? value : String(value));
     }
   });
 
   try {
-    // Tetap kirim menggunakan method .post agar file terkirim dengan aman
     const { data } = await apiClient.post(`/users/${userId}`, formData, {
       headers: {
         "Content-Type": "multipart/form-data",

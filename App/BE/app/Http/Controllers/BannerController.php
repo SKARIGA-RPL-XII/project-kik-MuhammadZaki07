@@ -14,11 +14,12 @@ class BannerController extends Controller
      */
     public function index()
     {
-        $data = Banner::where("is_active" , true)->get();
+        $data = Banner::where("is_active", true)->get();
         return Controller::OKE('success', 'success get data', $data, 200);
     }
 
-    public function getBannerAdmin(){
+    public function getBannerAdmin()
+    {
         $data = Banner::all();
         return Controller::OKE('success', 'success get data banners', $data, 200);
     }
@@ -34,83 +35,77 @@ class BannerController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-public function store(Request $request)
-{
-    $request->merge([
-        'is_active' => filter_var($request->is_active, FILTER_VALIDATE_BOOLEAN)
-    ]);
+    public function store(Request $request)
+    {
+        $request->merge([
+            'is_active' => filter_var($request->is_active, FILTER_VALIDATE_BOOLEAN)
+        ]);
 
-    $validate = $request->validate([
-        "banner_image" => "required|mimes:png,jpg,jpeg,webp|max:2040",
-        "title" => "required|string",
-        "description" => "required|max:200|string",
-        "is_active" => "boolean"
-    ]);
-
-    $file = $request->file('banner_image');
-    $filename = 'banner-' . uniqid() . '.webp';
-    $directory = 'banners/';
-    $fullPath = storage_path('app/public/' . $directory . $filename);
-
-    if (!file_exists(storage_path('app/public/' . $directory))) {
-        mkdir(storage_path('app/public/' . $directory), 0755, true);
-    }
-
-    Image::read($file)
-        ->resize(1200, null, function ($constraint) {
-            $constraint->aspectRatio();
-            $constraint->upsize();
-        })
-        ->encodeByExtension('webp', 80)
-        ->save($fullPath);
-
-    $validate['banner_image'] = $directory . $filename;
-
-    Banner::create($validate);
-
-    return Controller::OKE('success', 'success create data', [], 201);
-}
-
-public function update(Request $request, Banner $banner)
-{
-    $request->merge([
-        'is_active' => filter_var($request->is_active, FILTER_VALIDATE_BOOLEAN)
-    ]);
-
-    $request->validate([
-        "banner_image" => "sometimes|file|mimes:png,jpg,jpeg,webp|max:2040",
-        "title" => "sometimes|string",
-        "description" => "sometimes|string|max:200",
-        "is_active" => "boolean"
-    ]);
-
-    $data = $request->only(['title', 'description', 'is_active']);
-
-    if ($request->hasFile('banner_image')) {
-        if ($banner->banner_image) {
-            Storage::disk('public')->delete($banner->banner_image);
-        }
+        $validate = $request->validate([
+            "banner_image" => "required|mimes:png,jpg,jpeg,webp|max:2040",
+            "title" => "required|string",
+            "description" => "required|max:200|string",
+            "is_active" => "boolean"
+        ]);
 
         $file = $request->file('banner_image');
         $filename = 'banner-' . uniqid() . '.webp';
         $directory = 'banners/';
         $fullPath = storage_path('app/public/' . $directory . $filename);
 
+        if (!file_exists(storage_path('app/public/' . $directory))) {
+            mkdir(storage_path('app/public/' . $directory), 0755, true);
+        }
+
         Image::read($file)
-            ->resize(1200, null, function ($constraint) {
-                $constraint->aspectRatio();
-                $constraint->upsize();
-            })
-            ->encodeByExtension('webp', 80)
+            ->scale(1000)
+            ->encodeByExtension('webp', 90)
             ->save($fullPath);
 
-        $data['banner_image'] = $directory . $filename;
+        $validate['banner_image'] = $directory . $filename;
+
+        Banner::create($validate);
+
+        return Controller::OKE('success', 'success create data', [], 201);
     }
 
-    $banner->update($data);
+    public function update(Request $request, Banner $banner)
+    {
+        $request->merge([
+            'is_active' => filter_var($request->is_active, FILTER_VALIDATE_BOOLEAN)
+        ]);
 
-    return Controller::OKE('success', 'success update data', $banner, 200);
-}
+        $request->validate([
+            "banner_image" => "sometimes|file|mimes:png,jpg,jpeg,webp|max:2040",
+            "title" => "sometimes|string",
+            "description" => "sometimes|string|max:200",
+            "is_active" => "boolean"
+        ]);
+
+        $data = $request->only(['title', 'description', 'is_active']);
+
+        if ($request->hasFile('banner_image')) {
+            if ($banner->banner_image) {
+                Storage::disk('public')->delete($banner->banner_image);
+            }
+
+            $file = $request->file('banner_image');
+            $filename = 'banner-' . uniqid() . '.webp';
+            $directory = 'banners/';
+            $fullPath = storage_path('app/public/' . $directory . $filename);
+
+            Image::read($file)
+                ->scale(1000)
+                ->encodeByExtension('webp', 90)
+                ->save($fullPath);
+
+            $data['banner_image'] = $directory . $filename;
+        }
+
+        $banner->update($data);
+
+        return Controller::OKE('success', 'success update data', $banner, 200);
+    }
 
 
     /**

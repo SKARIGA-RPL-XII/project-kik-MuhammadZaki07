@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { Plus, Search } from "lucide-react";
-import Button  from "@/components/ui/button/Button";
+import { Plus, Search, ArrowUpCircle, ArrowDownCircle } from "lucide-react";
+import Button from "@/components/ui/button/Button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { adjustmentService, Adjustment } from "@/services/adjustment.service";
@@ -103,14 +103,10 @@ const AdjustmentPage: React.FC = () => {
       fetchAdjustments();
     } catch (error: any) {
       const res = error.response?.data;
-
-      const err_message = res?.message; 
-      const err_field = res?.errors
-
-        setErrors({
-          message: err_message,
-          ErrorField: err_field,
-        });
+      setErrors({
+        message: res?.message || "Something went wrong",
+        ErrorField: res?.errors || {},
+      });
     } finally {
       setSubmitLoading(false);
     }
@@ -122,8 +118,12 @@ const AdjustmentPage: React.FC = () => {
 
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Stock Adjustment</h1>
-          <p className="text-sm text-muted-foreground">Manage and track manual stock adjustments.</p>
+          <h1 className="lg:text-4xl text-2xl font-bold tracking-tight text-neutral-900 dark:text-white">
+            Stock Adjustment
+          </h1>
+          <p className="text-sm text-neutral-500 dark:text-neutral-400">
+            Manage and track manual stock adjustments and movements.
+          </p>
         </div>
         <ActionGuard module="stock adjustment" action="write">
           <Button className="h-10" onClick={handleOpenModal}>
@@ -133,7 +133,7 @@ const AdjustmentPage: React.FC = () => {
       </div>
 
       <div className="flex items-center relative max-w-sm">
-        <Search className="absolute left-3 w-4 h-4 text-muted-foreground" />
+        <Search className="absolute left-3 w-4 h-4 text-neutral-400" />
         <Input
           placeholder="Search by stock name..."
           value={search}
@@ -149,23 +149,21 @@ const AdjustmentPage: React.FC = () => {
       />
 
       <AlertDialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <AlertDialogContent>
+        <AlertDialogContent className="max-w-lg">
           <AlertDialogHeader>
             <AlertDialogTitle>New Stock Adjustment</AlertDialogTitle>
           </AlertDialogHeader>
 
-          <div className="grid gap-4 py-4">
+          <div className="grid gap-5 py-4">
             <div className="grid gap-2">
-              <Label className={errors.ErrorField?.stock_id ? "text-destructive" : ""}>
+              <Label className={errors.ErrorField?.stock_id ? "text-red-500" : ""}>
                 Select Item
               </Label>
               <Select
                 value={formData.stock_id}
                 onValueChange={(val) => setFormData({ ...formData, stock_id: val })}
               >
-                <SelectTrigger
-                  className={errors.ErrorField?.stock_id ? "border-destructive focus:ring-destructive" : ""}
-                >
+                <SelectTrigger className={errors.ErrorField?.stock_id ? "border-red-500" : ""}>
                   <SelectValue placeholder="Select stock item" />
                 </SelectTrigger>
                 <SelectContent>
@@ -177,14 +175,13 @@ const AdjustmentPage: React.FC = () => {
                 </SelectContent>
               </Select>
               {errors.ErrorField?.stock_id && (
-                <span className="text-[10px] font-medium text-destructive">
+                <span className="text-[11px] font-medium text-red-500">
                   {errors.ErrorField.stock_id[0]}
                 </span>
               )}
             </div>
 
             <div className="grid grid-cols-2 gap-4">
-              {/* Type */}
               <div className="grid gap-2">
                 <Label>Adjustment Type</Label>
                 <Select
@@ -195,45 +192,53 @@ const AdjustmentPage: React.FC = () => {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="in">Stock In (+)</SelectItem>
-                    <SelectItem value="out">Stock Out (-)</SelectItem>
+                    <SelectItem value="in">
+                      <div className="flex items-center gap-2">
+                        <ArrowUpCircle className="w-4 h-4 text-green-500" />
+                        <span>Stock In (+)</span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="out">
+                      <div className="flex items-center gap-2">
+                        <ArrowDownCircle className="w-4 h-4 text-red-500" />
+                        <span>Stock Out (-)</span>
+                      </div>
+                    </SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
-              {/* Amount */}
               <div className="grid gap-2">
-                <Label className={errors.ErrorField?.amount ? "text-destructive" : ""}>
+                <Label className={errors.ErrorField?.amount ? "text-red-500" : ""}>
                   Amount
                 </Label>
                 <Input
                   type="number"
                   placeholder="0"
-                  className={errors.ErrorField?.amount ? "border-destructive focus-visible:ring-destructive" : ""}
+                  className={errors.ErrorField?.amount ? "border-red-500" : ""}
                   value={formData.amount || ""}
                   onChange={(e) => setFormData({ ...formData, amount: Number(e.target.value) })}
                 />
                 {errors.ErrorField?.amount && (
-                  <span className="text-[10px] font-medium text-destructive">
+                  <span className="text-[11px] font-medium text-red-500">
                     {errors.ErrorField.amount[0]}
                   </span>
                 )}
               </div>
             </div>
 
-            {/* Reason */}
             <div className="grid gap-2">
-              <Label className={errors.ErrorField?.reason ? "text-destructive" : ""}>
+              <Label className={errors.ErrorField?.reason ? "text-red-500" : ""}>
                 Reason / Note
               </Label>
               <Input
                 placeholder="e.g. Supplier delivery, expired item"
-                className={errors.ErrorField?.reason ? "border-destructive focus-visible:ring-destructive" : ""}
+                className={errors.ErrorField?.reason ? "border-red-500" : ""}
                 value={formData.reason}
                 onChange={(e) => setFormData({ ...formData, reason: e.target.value })}
               />
               {errors.ErrorField?.reason && (
-                <span className="text-[10px] font-medium text-destructive">
+                <span className="text-[11px] font-medium text-red-500">
                   {errors.ErrorField.reason[0]}
                 </span>
               )}
@@ -242,8 +247,8 @@ const AdjustmentPage: React.FC = () => {
 
           <AlertDialogFooter className="flex items-center gap-2">
             <AlertDialogCancel disabled={submitLoading}>Cancel</AlertDialogCancel>
-            <Button onClick={handleSubmit} disabled={submitLoading} className="h-10">
-              {submitLoading ? <LoadingSpinner /> : "Submit Adjustment"}
+            <Button onClick={handleSubmit} disabled={submitLoading} className="h-10 px-8">
+              {submitLoading ? <LoadingSpinner className="mr-2" /> : "Submit Adjustment"}
             </Button>
           </AlertDialogFooter>
         </AlertDialogContent>

@@ -1,10 +1,8 @@
-import { useEffect, useState, useCallback } from "react";
+import { useState } from "react";
 import PageMeta from "@/components/common/PageMeta";
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
-import { RoomService } from "@/services/room.service";
-import { TableService } from "@/services/table.service";
 import { useToast } from "@/context/ToastContext";
-import { RoomInterface, TableInterface } from "@/types/layout-table";
+import { RoomInterface } from "@/types/layout-table";
 import SidebarRoomNav from "@/components/restaurant-layout/SidebarRoomNav";
 import LayoutCanvas from "@/components/restaurant-layout/LayoutCanvas";
 import LayoutRoomSkeleton from "@/components/restaurant-layout/LayoutRoomSkeleton";
@@ -21,14 +19,12 @@ import {
 } from "@/components/ui/alert-dialog";
 import Input from "@/components/form/input/InputField";
 import Button from "@/components/ui/button/Button";
-import DeleteAlertDialog from "@/components/dialog/DeleteAlertDialog";
 import { Trash2Icon } from "lucide-react";
+import { useRooms, useRoomMutations } from "@/hooks/react-query/useRoom";
+import { useTables } from "@/hooks/react-query/useTable";
 
 export default function RestaurantLayoutPage() {
-  const [rooms, setRooms] = useState<RoomInterface[]>([]);
-  const [tables, setTables] = useState<TableInterface[]>([]);
   const [activeRoomId, setActiveRoomId] = useState<number | "all">("all");
-  const [loading, setLoading] = useState(false);
   const [selectedTableIds, setSelectedTableIds] = useState<number[]>([]);
   const [isSelectionMode, setIsSelectionMode] = useState(false);
 
@@ -39,68 +35,62 @@ export default function RestaurantLayoutPage() {
 
   const { toast } = useToast();
 
-  const fetchData = useCallback(async () => {
-    setLoading(true);
-    try {
-      const [rRes, tRes] = await Promise.all([
-        RoomService.getRooms(),
-        TableService.getTables({ size: 100 }),
-      ]);
-      setRooms(rRes.data || []);
-      setTables(tRes.data?.tables || []);
-    } catch {
-      toast("error", "Error", "Failed to fetch data");
-    } finally {
-      setLoading(false);
-    }
-  }, [toast]);
+  const { data: roomRes = [], isLoading: roomsLoading } = useRooms();
+  const {
+    data: tableRes,
+    isLoading: tablesLoading,
+    refetch: refetchTables,
+  } = useTables({ size: 100 });
+  const { updateRoom, deleteRoom } = useRoomMutations();
 
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+  const tables = tableRes?.data.tables || [];
+  const rooms = roomRes || [];
 
-  const onHandleDelete = async () => {
+  const onHandleDelete = () => {
     if (!selectedRoom) return;
-    const res = await RoomService.deleteRoom(selectedRoom.id);
-    if (res.error) {
-      toast("error", "Failed", res.error);
-    } else {
-      toast("success", "Deleted", "Room deleted successfully");
-      if (activeRoomId === selectedRoom.id) setActiveRoomId("all");
-      fetchData();
-      setOpenDelete(false);
-    }
+    deleteRoom.mutate(selectedRoom.id, {
+      onSuccess: () => {
+        toast("success", "Deleted", "Room deleted successfully");
+        if (activeRoomId === selectedRoom.id) setActiveRoomId("all");
+        setOpenDelete(false);
+      },
+      onError: (err: any) => toast("error", "Failed", err),
+    });
   };
 
-  const onConfirmEdit = async () => {
+  const onConfirmEdit = () => {
     if (!selectedRoom) return;
-    setLoading(true);
-    try {
-      const res = await RoomService.updateRoom(selectedRoom.id, {
-        name: editName,
-        width: selectedRoom.width,
-        height: selectedRoom.height,
-        color: selectedRoom.color,
-        capacity: selectedRoom.capacity
-      });
-
-      if (res.error) throw new Error(res.error);
-
-      toast("success", "Success", "Room updated successfully");
-      fetchData();
-      setOpenEdit(false);
-    } catch (err: any) {
-      toast("error", "Error", err.message || "Failed to update room");
-    } finally {
-      setLoading(false);
-    }
+    updateRoom.mutate(
+      {
+        id: selectedRoom.id,
+        data: {
+          name: editName,
+          width: selectedRoom.width,
+          height: selectedRoom.height,
+          color: selectedRoom.color,
+          capacity: selectedRoom.capacity,
+        },
+      },
+      {
+        onSuccess: () => {
+          toast("success", "Success", "Room updated successfully");
+          setOpenEdit(false);
+        },
+        onError: (err: any) => toast("error", "Error", err),
+      },
+    );
   };
 
-  if (loading && tables.length === 0) return <LayoutRoomSkeleton />;
+  if ((roomsLoading || tablesLoading) && tables.length === 0) {
+    return <LayoutRoomSkeleton />;
+  }
 
   return (
     <div className="flex flex-col h-[calc(100vh-120px)] overflow-hidden">
-      <PageMeta title="Spatial Layout" description="Manage physical infrastructure." />
+      <PageMeta
+        title="Spatial Layout"
+        description="Manage physical infrastructure."
+      />
       <PageBreadcrumb pageTitle="Physical Space Manager" />
 
       <div className="flex flex-1 gap-6 overflow-hidden p-2">
@@ -127,13 +117,22 @@ export default function RestaurantLayoutPage() {
             activeRoomId={activeRoomId}
             rooms={rooms}
             tables={tables}
-            onRefresh={fetchData}
+            onRefresh={refetchTables}
             selectedTableIds={selectedTableIds}
             isSelectionMode={isSelectionMode}
             onToggleSelectionMode={() => setIsSelectionMode(!isSelectionMode)}
-            onSelectTable={(id) => setSelectedTableIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id])}
+            onSelectTable={(id) =>
+              setSelectedTableIds((prev) =>
+                prev.includes(id)
+                  ? prev.filter((i) => i !== id)
+                  : [...prev, id],
+              )
+            }
             onSelectAll={() => {}}
-            onClearSelection={() => { setSelectedTableIds([]); setIsSelectionMode(false); }}
+            onClearSelection={() => {
+              setSelectedTableIds([]);
+              setIsSelectionMode(false);
+            }}
           />
         </div>
       </div>
@@ -144,16 +143,21 @@ export default function RestaurantLayoutPage() {
             <AlertDialogTitle>Edit Room</AlertDialogTitle>
           </AlertDialogHeader>
           <div className="space-y-3">
-            <Input label="Room Name" value={editName} onChange={(e) => setEditName(e.target.value)} />
+            <Input
+              label="Room Name"
+              value={editName}
+              onChange={(e) => setEditName(e.target.value)}
+            />
           </div>
           <div className="flex justify-end gap-2 pt-4">
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <Button loading={loading} onClick={onConfirmEdit}>Save Changes</Button>
+            <Button loading={updateRoom.isPending} onClick={onConfirmEdit}>
+              Save Changes
+            </Button>
           </div>
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Gunakan state openDelete untuk mengontrol DeleteAlertDialog */}
       <AlertDialog open={openDelete} onOpenChange={setOpenDelete}>
         <AlertDialogContent size="sm">
           <AlertDialogHeader>
@@ -162,21 +166,22 @@ export default function RestaurantLayoutPage() {
             </AlertDialogMedia>
             <AlertDialogTitle>Delete Room?</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete <strong>{selectedRoom?.name}</strong>? 
-              This will permanently delete the room and release all tables inside.
+              Are you sure you want to delete{" "}
+              <strong>{selectedRoom?.name}</strong>? This will permanently
+              delete the room and release all tables inside.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel variant="outline">Cancel</AlertDialogCancel>
-            <AlertDialogAction 
-              variant="destructive" 
+            <AlertDialogAction
+              variant="destructive"
               onClick={(e) => {
                 e.preventDefault();
                 onHandleDelete();
               }}
-              disabled={loading}
+              disabled={deleteRoom.isPending}
             >
-              {loading ? "Deleting..." : "Delete"}
+              {deleteRoom.isPending ? "Deleting..." : "Delete"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

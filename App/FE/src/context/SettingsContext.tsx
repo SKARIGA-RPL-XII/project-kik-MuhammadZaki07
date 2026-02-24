@@ -5,6 +5,7 @@ interface SettingsContextType {
   settings: any;
   loading: boolean;
   getSetting: (key: string, defaultValue?: any) => any;
+  refreshSettings: () => Promise<void>;
 }
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
@@ -17,7 +18,7 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     setLoading(true);
     try {
       const res = await SettingsService.getAll();
-      const rawData = res.data?.data || res.data || res;
+      const rawData = res.data || res;
       
       const processed = Object.keys(rawData).reduce((acc: any, key) => {
         acc[key] = rawData[key].value !== undefined ? rawData[key].value : rawData[key]; 
@@ -26,7 +27,7 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
       setSettings(processed);
     } catch (error) {
-      console.error(error);
+      console.error("Failed to load settings:", error);
     } finally {
       setLoading(false);
     }
@@ -40,8 +41,12 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     return settings[key] !== undefined ? settings[key] : defaultValue;
   };
 
+  const refreshSettings = async () => {
+    await fetchSettings();
+  };
+
   return (
-    <SettingsContext.Provider value={{ settings, loading, getSetting }}>
+    <SettingsContext.Provider value={{ settings, loading, getSetting, refreshSettings }}>
       {children}
     </SettingsContext.Provider>
   );

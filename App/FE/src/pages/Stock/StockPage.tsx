@@ -83,8 +83,8 @@ const StockPage: React.FC = () => {
 
   const validate = () => {
     const newErrors: Record<string, string> = {};
-    if (!formData.name) newErrors.name = "Stock name is required";
-    if (!formData.unit) newErrors.unit = "Unit is required";
+    if (!formData.name.trim()) newErrors.name = "Stock name is required";
+    if (!formData.unit.trim()) newErrors.unit = "Unit is required";
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -113,10 +113,10 @@ const StockPage: React.FC = () => {
 
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="lg:text-4xl text-2xl font-bold tracking-tight">
+          <h1 className="lg:text-4xl text-2xl font-bold tracking-tight text-neutral-900 dark:text-white">
             Stock List
           </h1>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-neutral-500 dark:text-neutral-400">
             Manage your raw materials, monitor stock levels, and set low
             inventory alerts.
           </p>
@@ -129,7 +129,7 @@ const StockPage: React.FC = () => {
       </div>
 
       <div className="flex items-center relative max-w-sm">
-        <Search className="absolute left-3 w-4 h-4 text-muted-foreground" />
+        <Search className="absolute left-3 w-4 h-4 text-neutral-400" />
         <Input
           placeholder="Search stock by name..."
           value={search}
@@ -146,7 +146,7 @@ const StockPage: React.FC = () => {
       />
 
       <AlertDialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <AlertDialogContent>
+        <AlertDialogContent className="max-w-md">
           <AlertDialogHeader>
             <AlertDialogTitle>
               {selectedStock ? "Edit Stock Item" : "Create New Stock"}
@@ -158,13 +158,11 @@ const StockPage: React.FC = () => {
               <Input
                 placeholder="e.g. Chicken Meat"
                 value={formData.name}
-                onChange={(e) =>
-                  setFormData({ ...formData, name: e.target.value })
-                }
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 error={!!errors.name}
               />
               {errors.name && (
-                <span className="text-xs text-destructive">{errors.name}</span>
+                <span className="text-xs text-red-500">{errors.name}</span>
               )}
             </div>
             <div className="grid gap-2">
@@ -172,13 +170,11 @@ const StockPage: React.FC = () => {
               <Input
                 placeholder="e.g. kg, pcs, ml"
                 value={formData.unit}
-                onChange={(e) =>
-                  setFormData({ ...formData, unit: e.target.value })
-                }
+                onChange={(e) => setFormData({ ...formData, unit: e.target.value })}
                 error={!!errors.unit}
               />
               {errors.unit && (
-                <span className="text-xs text-destructive">{errors.unit}</span>
+                <span className="text-xs text-red-500">{errors.unit}</span>
               )}
             </div>
             <div className="grid grid-cols-2 gap-4">
@@ -187,13 +183,9 @@ const StockPage: React.FC = () => {
                 <Input
                   type="number"
                   placeholder="0"
-                  value={formData.quantity === 0 ? "" : formData.quantity}
+                  value={formData.quantity}
                   onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      quantity:
-                        e.target.value === "" ? 0 : Number(e.target.value),
-                    })
+                    setFormData({ ...formData, quantity: e.target.valueAsNumber || 0 })
                   }
                 />
               </div>
@@ -202,16 +194,11 @@ const StockPage: React.FC = () => {
                 <Input
                   type="number"
                   placeholder="10"
-                  value={
-                    formData.low_stock_threshold === 0
-                      ? ""
-                      : formData.low_stock_threshold
-                  }
+                  value={formData.low_stock_threshold}
                   onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      low_stock_threshold:
-                        e.target.value === "" ? 0 : Number(e.target.value),
+                    setFormData({ 
+                      ...formData, 
+                      low_stock_threshold: e.target.valueAsNumber || 0 
                     })
                   }
                 />
@@ -225,10 +212,10 @@ const StockPage: React.FC = () => {
             <Button
               onClick={handleSubmit}
               disabled={submitLoading}
-              className="h-9"
+              className="h-9 px-6"
             >
-              {submitLoading && <LoadingSpinner />}
-              {selectedStock ? "Update" : "Save"}
+              {submitLoading ? <LoadingSpinner /> : null}
+              {selectedStock ? "Update Stock" : "Save Stock"}
             </Button>
           </AlertDialogFooter>
         </AlertDialogContent>

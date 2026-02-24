@@ -1,59 +1,34 @@
-import { motion } from 'framer-motion'
-import { SearchX, UtensilsCrossed, Sparkles } from 'lucide-react'
+import { motion } from "framer-motion";
+import { SearchX, ArrowLeft } from "lucide-react";
 
 export function EmptyState() {
-  return (
-    <motion.div 
-      initial={{ opacity: 0, scale: 0.95 }}
-      animate={{ opacity: 1, scale: 1 }}
-      className="flex flex-col items-center justify-center py-24 px-6 text-center"
-    >
-      <div className="relative mb-8">
-        {/* Decorative Background Elements */}
-        <motion.div 
-          animate={{ rotate: 360 }}
-          transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-          className="absolute inset-0 scale-150 opacity-20"
-        >
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-1 h-1 bg-indigo-500 rounded-full" />
-          <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-1 h-1 bg-indigo-500 rounded-full" />
-          <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-1 bg-indigo-500 rounded-full" />
-          <div className="absolute right-0 top-1/2 -translate-y-1/2 w-1 h-1 bg-indigo-500 rounded-full" />
-        </motion.div>
+  const handleReset = () => {
+    window.location.href = window.location.pathname;
+  };
 
-        <div className="relative z-10 w-24 h-24 bg-slate-50 rounded-[2rem] flex items-center justify-center border border-slate-100 shadow-inner">
-          <SearchX size={40} className="text-slate-300" strokeWidth={1.5} />
-          
-          <motion.div
-            animate={{ 
-              y: [0, -10, 0],
-              opacity: [0.5, 1, 0.5]
-            }}
-            transition={{ duration: 3, repeat: Infinity }}
-            className="absolute -top-2 -right-2 bg-white p-2 rounded-xl shadow-lg border border-slate-50 text-amber-400"
-          >
-            <Sparkles size={16} fill="currentColor" />
-          </motion.div>
-        </div>
+  return (
+    <div className="flex flex-col items-center justify-center py-20 px-4">
+      <div className="w-20 h-20 mb-6 flex items-center justify-center rounded-2xl bg-neutral-50 dark:bg-neutral-900 border border-neutral-100 dark:border-neutral-800">
+        <SearchX size={32} className="text-neutral-400" />
       </div>
 
-      <h3 className="text-2xl font-black text-slate-900 mb-3 tracking-tight">
-        Duh, Menunya Gak Ketemu!
-      </h3>
-      
-      <p className="max-w-[280px] text-slate-500 font-medium leading-relaxed mb-8">
-        Kayaknya koki kita belum masak menu itu. Coba cari kata kunci lain atau ganti kategori, yuk?
-      </p>
+      <div className="text-center space-y-2 mb-8">
+        <h3 className="text-xl font-bold text-neutral-900 dark:text-white tracking-tight">
+          Menu not found
+        </h3>
+        <p className="text-sm text-neutral-500 dark:text-neutral-400 max-w-xs mx-auto">
+          Try checking the spelling of your keywords or use other categories to
+          search for available menus.
+        </p>
+      </div>
 
       <motion.button
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
-        onClick={() => window.location.reload()}
-        className="group flex items-center gap-2 px-8 py-4 bg-slate-900 text-white rounded-[1.5rem] font-bold text-sm shadow-xl shadow-slate-200 transition-all hover:bg-indigo-600"
+        whileTap={{ scale: 0.98 }}
+        onClick={handleReset}
+        className="flex items-center gap-2 px-6 py-3 bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900 rounded-xl text-sm font-semibold transition-colors hover:bg-neutral-800 dark:hover:bg-neutral-200"
       >
-        <UtensilsCrossed size={18} className="group-hover:rotate-12 transition-transform" />
-        Lihat Semua Menu
+        Refresh
       </motion.button>
-    </motion.div>
-  )
+    </div>
+  );
 }

@@ -1,5 +1,5 @@
-import { CategoryService } from "@/services/category.service";
-import { m } from "framer-motion"; // Menggunakan m untuk performa
+import { useCategories } from "@/hooks/react-query/useCategory";
+import { m } from "framer-motion";
 import {
   Dessert,
   LayoutGrid,
@@ -12,7 +12,7 @@ import {
   IceCream,
   Beef,
 } from "lucide-react";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 
 const iconMap: Record<string, any> = {
   all: LayoutGrid,
@@ -25,27 +25,29 @@ const iconMap: Record<string, any> = {
   cemilan: Dessert,
 };
 
+interface NavigationBarProps {
+  selectedCategory: string;
+  onCategoryChange: (slug: string) => void;
+  onSearch: (value: string) => void;
+}
+
 export function NavigationBar({
   selectedCategory,
   onCategoryChange,
   onSearch,
-}: any) {
+}: NavigationBarProps) {
   const [isFocused, setIsFocused] = useState(false);
-  const [categories, setCategories] = useState<any[]>([
-    { id: "all", name: "All", slug: "all" },
-  ]);
 
-  useEffect(() => {
-    const fetchCats = async () => {
-      const res = await CategoryService.getCategories({ size: 100 });
-      if (res.data) {
-        setCategories([{ id: "all", name: "All", slug: "all" }, ...res.data]);
-      }
-    };
-    fetchCats();
-  }, []);
+  const { data: categoryResponse } = useCategories({ size: 100 });
 
-  // Membungkus handle search agar tidak memicu re-render berlebih
+  const categories = useMemo(() => {
+    const base = [{ id: "all", name: "All", slug: "all" }];
+    if (categoryResponse?.data) {
+      return [...base, ...categoryResponse.data];
+    }
+    return base;
+  }, [categoryResponse]);
+
   const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     onSearch?.(e.target.value);
   }, [onSearch]);
@@ -70,8 +72,8 @@ export function NavigationBar({
           />
         </div>
 
-        <button className="flex items-center gap-2 w-10 h-10 bg-white border border-neutral-200 rounded-sm hover:bg-neutral-50 transition-colors justify-center shrink-0 active:scale-95">
-          <SlidersHorizontal size={16} className="text-neutral-600" />
+        <button className="flex items-center gap-2 w-12 h-12 bg-white border border-neutral-200 rounded-sm hover:bg-neutral-50 transition-colors justify-center shrink-0 active:scale-95">
+          <SlidersHorizontal size={25} strokeWidth={1.5} className="text-neutral-600" />
         </button>
       </div>
 

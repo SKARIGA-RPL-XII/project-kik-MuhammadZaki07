@@ -48,6 +48,7 @@ Route::prefix('auth')->controller(AuthController::class)->group(function () {
 Route::get('categories', [CategoryController::class, 'index']);
 Route::get('banners', [BannerController::class, 'index']);
 Route::get('menus', [MenuController::class, 'index']);
+Route::get('menus/{id}', [MenuController::class, 'show']);
 Route::get('discounts', [DiscountController::class, 'index']);
 
 
@@ -101,7 +102,7 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
 
     // Menu Management
     Route::resource('menus', MenuController::class)
-        ->only('store', 'update', 'destroy', 'show');
+        ->only('store', 'update', 'destroy');
 
 
 

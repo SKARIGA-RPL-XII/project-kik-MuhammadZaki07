@@ -1,4 +1,4 @@
-import { useEffect, useState, ChangeEvent, useRef } from "react";
+import { useState, ChangeEvent, useRef } from "react";
 import ComponentCard from "../../components/common/ComponentCard";
 import PageBreadcrumb from "../../components/common/PageBreadCrumb";
 import PageMeta from "../../components/common/PageMeta";
@@ -16,13 +16,12 @@ import {
   AlertDialogCancel,
 } from "../../components/ui/alert-dialog";
 import BadgeTable from "../../components/tables/BadgeTable";
-import { BadgeService } from "../../services/badge.service";
 import useDebounce from "../../hooks/useDebounce";
 import { ActionGuard } from "@/components/guard/ActionGuard";
+import { useBadges, useBadgeMutations } from "@/hooks/react-query/useBadge";
+import { useToast } from "@/context/ToastContext";
 
 export default function BadgePage() {
-  const [badges, setBadges] = useState<any[]>([]);
-  const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebounce(search, 500);
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
@@ -36,22 +35,16 @@ export default function BadgePage() {
   const [image, setImage] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [isActive, setIsActive] = useState(true);
-
   const [errors, setErrors] = useState<any>({});
 
-  const fetchBadges = async () => {
-    setLoading(true);
-    const { data } = await BadgeService.getBadges({
-      search: debouncedSearch,
-      status: statusFilter ?? undefined,
-    });
-    if (data) setBadges(data.data);
-    setLoading(false);
-  };
+  const { toast } = useToast();
+  const { data: badgeRes, isLoading: loading } = useBadges({
+    search: debouncedSearch,
+    status: statusFilter ?? undefined,
+  });
+  const { createBadge, updateBadge, deleteBadge } = useBadgeMutations();
 
-  useEffect(() => {
-    fetchBadges();
-  }, [debouncedSearch, statusFilter]);
+  const badges = badgeRes?.data?.data || [];
 
   const resetForm = () => {
     setEditingId(null);
@@ -79,21 +72,35 @@ export default function BadgePage() {
     fd.append("is_active", isActive ? "1" : "0");
     if (image) fd.append("badge_image", image);
 
-    let res;
-    if (editingId) {
-      res = await BadgeService.updateBadge(editingId, fd);
-    } else {
-      res = await BadgeService.createBadge(fd);
-    }
+    const mutation = editingId ? updateBadge : createBadge;
 
-    if (res.error) {
-      setErrors(res.error);
-    } else {
-      resetForm();
-      setOpen(false);
-      fetchBadges();
-    }
+    mutation.mutate(
+      editingId ? { id: editingId, formData: fd } : fd,
+      {
+        onSuccess: () => {
+          toast("success", "Success", editingId ? "Badge updated" : "Badge created");
+          resetForm();
+          setOpen(false);
+        },
+        onError: (err: any) => {
+          if (typeof err === "object") {
+            setErrors(err);
+          } else {
+            toast("error", "Error", err || "Action failed");
+          }
+        }
+      }
+    );
   };
+
+  const handleDelete = (id: number) => {
+    if (!confirm("Delete this badge?")) return;
+    deleteBadge.mutate(id, {
+      onSuccess: () => toast("success", "Success", "Badge deleted"),
+    });
+  };
+
+  const isSubmitting = createBadge.isPending || updateBadge.isPending;
 
   return (
     <>
@@ -106,9 +113,7 @@ export default function BadgePage() {
             <Input
               placeholder="Search..."
               value={search}
-              onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                setSearch(e.target.value)
-              }
+              onChange={(e: ChangeEvent<HTMLInputElement>) => setSearch(e.target.value)}
             />
 
             <div className="w-40">
@@ -148,9 +153,7 @@ export default function BadgePage() {
                       value={name}
                       onChange={(e) => setName(e.target.value)}
                     />
-                    {errors.name && (
-                      <p className="text-sm text-red-500">{errors.name}</p>
-                    )}
+                    {errors.name && <p className="text-sm text-red-500">{errors.name}</p>}
                   </div>
 
                   <div>
@@ -175,39 +178,26 @@ export default function BadgePage() {
 
                   <div>
                     <label className="text-sm font-medium">Image</label>
-
                     <input
                       type="file"
                       accept="image/*"
                       hidden
                       ref={fileInputRef}
                       onChange={(e) => {
-                        if (e.target.files?.[0]) {
-                          handleImage(e.target.files[0]);
-                        }
+                        if (e.target.files?.[0]) handleImage(e.target.files[0]);
                       }}
                     />
-
                     <div
                       onClick={() => fileInputRef.current?.click()}
-                      onDragOver={(e) => e.preventDefault()}
-                      onDrop={(e) => {
-                        e.preventDefault();
-                        if (e.dataTransfer.files[0]) {
-                          handleImage(e.dataTransfer.files[0]);
-                        }
-                      }}
                       className="border-2 border-dashed rounded-lg p-6 text-center cursor-pointer hover:border-brand-500 transition"
                     >
                       {preview ? (
                         <img
-                          src={`${import.meta.env.VITE_STORAGE_URL}/${preview}`}
+                          src={preview.startsWith('blob:') ? preview : `${import.meta.env.VITE_STORAGE_URL}/${preview}`}
                           className="w-24 h-24 object-cover mx-auto rounded-lg"
                         />
                       ) : (
-                        <p className="text-neutral-500">
-                          Drag & drop image here or click to browse
-                        </p>
+                        <p className="text-neutral-500">Click to browse image</p>
                       )}
                     </div>
                   </div>
@@ -219,11 +209,11 @@ export default function BadgePage() {
                   />
 
                   <AlertDialogFooter className="flex items-center">
-                    <AlertDialogCancel onClick={resetForm}>
+                    <AlertDialogCancel onClick={resetForm} disabled={isSubmitting}>
                       Cancel
                     </AlertDialogCancel>
-                    <Button className="h-10" onClick={handleSubmit}>
-                      {editingId ? "Update" : "Create"}
+                    <Button className="h-10" onClick={handleSubmit} disabled={isSubmitting}>
+                      {isSubmitting ? "Saving..." : editingId ? "Update" : "Create"}
                     </Button>
                   </AlertDialogFooter>
                 </div>
@@ -241,14 +231,10 @@ export default function BadgePage() {
             setIcon(badge.icon);
             setColor(badge.color);
             setPreview(badge.badge_image);
-            setIsActive(badge.is_active);
+            setIsActive(badge.is_active === 1 || badge.is_active === true);
             setOpen(true);
           }}
-          onDelete={async (id) => {
-            if (!confirm("Delete this badge?")) return;
-            await BadgeService.deleteBadge(id);
-            fetchBadges();
-          }}
+          onDelete={handleDelete}
         />
       </ComponentCard>
     </>

@@ -3,13 +3,13 @@ import ComponentCard from "../../components/common/ComponentCard";
 import PageBreadcrumb from "../../components/common/PageBreadCrumb";
 import PageMeta from "../../components/common/PageMeta";
 import MenuTable from "../../components/tables/MenuTable";
-import { MenuService } from "../../services/menu.service";
 import { CategoryService } from "../../services/category.service";
 import Button from "../../components/ui/button/Button";
 import { Plus } from "lucide-react";
 import Select from "../../components/form/Select";
 import Input from "../../components/form/input/InputField";
 import { Link } from "react-router";
+import { useQuery } from "@tanstack/react-query";
 import {
   Pagination,
   PaginationContent,
@@ -20,6 +20,7 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination";
 import { ActionGuard } from "@/components/guard/ActionGuard";
+import { useMenus } from "@/hooks/react-query/useMenu";
 
 export interface Menu {
   id: number;
@@ -35,77 +36,46 @@ export interface Menu {
 }
 
 function Menu() {
-  const [menus, setMenus] = useState<Menu[]>([]);
-  const [categories, setCategories] = useState<
-    { label: string; value: string }[]
-  >([]);
-
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const [totalItems, setTotalItems] = useState(0);
-  const [pageSize, setPageSize] = useState(10);
 
   const [debounced, setDebounced] = useState({
     search: "",
-    category: ""
+    category: "",
   });
-
-  const [loading, setLoading] = useState(false);
-  const totalPage = Math.ceil(totalItems / pageSize) || 1;
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      setDebounced({
-        search,
-        category,
-      });
+      setDebounced({ search, category });
       setCurrentPage(1);
     }, 500);
-
     return () => clearTimeout(timer);
   }, [search, category]);
 
-  const fetchCategories = async () => {
-    const res = await CategoryService.getCategories();
-    const cats =
-      res.data?.map((c: any) => ({
-        label: c.name,
-        value: c.id,
-      })) || [];
-    setCategories(cats);
-  };
+  const { data: catData } = useQuery({
+    queryKey: ["categories-select"],
+    queryFn: async () => {
+      const res = await CategoryService.getCategories();
+      return res.data?.map((c: any) => ({ label: c.name, value: c.id })) || [];
+    },
+  });
 
-  const fetchMenus = async () => {
-    setLoading(true);
+  const { 
+    data: menuRes, 
+    isLoading: loading, 
+    refetch 
+  } = useMenus({
+    page: currentPage - 1,
+    size: 10,
+    search: debounced.search,
+    category: debounced.category,
+  });
 
-    const query: any = {
-      page: currentPage - 1,
-      size: 10,
-    };
-
-    if (debounced.search) query.search = debounced.search;
-    if (debounced.category) query.category = debounced.category;
-    if (debounced.stockMin !== undefined) query.stock_min = debounced.stockMin;
-    if (debounced.stockMax !== undefined) query.stock_max = debounced.stockMax;
-
-    const res = await MenuService.getMenusAdmin(query);
-
-    if (res.data) {
-      setMenus(res.data);
-      setTotalItems(res.total || 0);
-      setPageSize(res.size || 10);
-    }
-    setLoading(false);
-  };
-
-  useEffect(() => {
-    fetchCategories();
-  }, []);
-
-  useEffect(() => {
-    fetchMenus();
-  }, [debounced, currentPage]);
+  const menus = menuRes?.data || [];
+  const totalItems = menuRes?.total || 0;
+  const pageSize = menuRes?.size || 10;
+  const totalPage = Math.ceil(totalItems / pageSize) || 1;
 
   const handlePageChange = (page: number) => {
     if (page >= 1 && page <= totalPage) {
@@ -135,7 +105,7 @@ function Menu() {
             />
 
             <Select
-              options={categories}
+              options={catData || []}
               placeholder="Filter by Category"
               value={category}
               onChange={(val) => setCategory(val as string)}
@@ -151,7 +121,7 @@ function Menu() {
           </ActionGuard>
         </div>
 
-        <MenuTable menus={menus} loading={loading} onRefresh={fetchMenus} />
+        <MenuTable menus={menus} loading={loading} onRefresh={refetch} />
 
         <div className="mt-6">
           <Pagination>

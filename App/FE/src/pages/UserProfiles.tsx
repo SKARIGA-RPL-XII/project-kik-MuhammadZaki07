@@ -15,8 +15,6 @@ import {
   AlertDialogCancel,
   AlertDialogContent,
   AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import Input from "../components/form/input/InputField";
 import Label from "../components/form/Label";
@@ -48,8 +46,8 @@ export default function UserProfiles() {
   const [preview, setPreview] = useState<string | null>(null);
 
   const fetchUser = async () => {
-    setLoading(true)
     try {
+      setLoading(true)
       const data = await UserService.getProfile();
       setUser(data);
       setForm({
@@ -105,6 +103,8 @@ export default function UserProfiles() {
 
   if (!user) return null;
   if (loading) return <UserProfileSkeleton/>
+  console.log(loading);
+  
 
   return (
     <>

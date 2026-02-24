@@ -7,7 +7,6 @@ import Input from "../../components/form/input/InputField";
 import {
   Plus,
   Download,
-  Upload,
   FileSpreadsheet,
   Loader2,
   CheckCircle2,
@@ -27,15 +26,12 @@ import AdminTable from "@/components/tables/AdminTable";
 import Select from "@/components/form/Select";
 import { useToast } from "@/context/ToastContext";
 import { ActionGuard } from "@/components/guard/ActionGuard";
+import { useAdmins, useAdminMutations } from "@/hooks/react-query/useAdmin";
 
 function Admin() {
-  const [admins, setAdmins] = useState<any[]>([]);
-  const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [page, setPage] = useState(1);
-  const [total, setTotal] = useState(0);
-  const [totalPage, setTotalPage] = useState(0);
 
   const [openDialog, setOpenDialog] = useState(false);
   const [openImportDialog, setOpenImportDialog] = useState(false);
@@ -43,7 +39,6 @@ function Admin() {
 
   const [form, setForm] = useState({ email: "", username: "", password: "" });
   const [errors, setErrors] = useState<any>({});
-  const [submitting, setSubmitting] = useState(false);
   const [exporting, setExporting] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -51,28 +46,6 @@ function Admin() {
   const [csvData, setCsvData] = useState<any[]>([]);
   const [mapping, setMapping] = useState({ email: "", username: "" });
   const { toast } = useToast();
-
-  const fetchAdmins = async () => {
-    setLoading(true);
-
-    try {
-      const res = await AdminService.getAll({
-        page,
-        search: debouncedSearch,
-      });
-
-      setAdmins(res.admins);
-      setTotal(res.total);
-      setTotalPage(res.totalPage);
-      setPage(res.currentPage);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchAdmins();
-  }, [page, debouncedSearch]);
 
   useEffect(() => {
     const timeout = setTimeout(() => {
@@ -82,23 +55,31 @@ function Admin() {
     return () => clearTimeout(timeout);
   }, [search]);
 
+  const { data, isLoading } = useAdmins({
+    page,
+    search: debouncedSearch,
+  });
+
+  const { createAdmin, updateAdmin, importAdmin } = useAdminMutations();
+
+  const admins = data?.admins || [];
+  const total = data?.total || 0;
+  const totalPage = data?.totalPage || 0;
+
   const handleExport = async () => {
     if (exporting) return;
-
     setExporting(true);
     try {
       await AdminService.export();
-      setTimeout(() => {
-        toast(
-          "success",
-          "Export Started",
-          "Proses export sedang berjalan di latar belakang. Anda akan menerima notifikasi jika sudah selesai.",
-        );
-      }, 5000);
+      toast(
+        "success",
+        "Export Started",
+        "Proses export sedang berjalan di latar belakang."
+      );
     } catch (error) {
       toast("error", "Export Failed", "Terjadi kesalahan saat memulai export.");
     } finally {
-      setTimeout(() => setExporting(false), 2000);
+      setExporting(false);
     }
   };
 
@@ -113,7 +94,6 @@ function Admin() {
       if (rows.length === 0) return;
 
       const headers = rows[0].split(",").map((h) => h.trim());
-
       const data = rows.slice(1).map((row) => {
         const values = row.split(",").map((v) => v.trim());
         return headers.reduce((obj: any, header, index) => {
@@ -130,72 +110,67 @@ function Admin() {
     e.target.value = "";
   };
 
-  const handleImportSubmit = async () => {
-    if (!mapping.email || !mapping.username || submitting) return;
-    setSubmitting(true);
+  const handleImportSubmit = () => {
+    const payload = {
+      data: csvData.map((row) => ({
+        email: row[mapping.email],
+        username: row[mapping.username],
+      })),
+    };
 
-    try {
-      const payload = {
-        data: csvData.map((row) => ({
-          email: row[mapping.email],
-          username: row[mapping.username],
-        })),
-      };
-
-      const res = await AdminService.importMapping(payload);
-
-      if (!res.error) {
+    importAdmin.mutate(payload, {
+      onSuccess: () => {
         setOpenImportDialog(false);
-        fetchAdmins();
         setMapping({ email: "", username: "" });
         setCsvHeaders([]);
         setCsvData([]);
-        toast(
-          "success",
-          "Import Success",
-          "Data admin berhasil diimport ke sistem.",
-        );
-      }
-    } finally {
-      setSubmitting(false);
-    }
+        toast("success", "Import Success", "Data admin berhasil diimport.");
+      },
+    });
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (submitting) return;
-
-    setSubmitting(true);
     setErrors({});
 
-    try {
-      const res = editingData
-        ? await AdminService.update(editingData.id, {
-            ...form,
-            password: form.password || undefined,
-          })
-        : await AdminService.create(form);
-
-      if (res.error) {
-        setErrors(res.error);
-      } else {
-        setOpenDialog(false);
-        fetchAdmins();
-        setForm({ email: "", username: "", password: "" });
-        setEditingData(null);
-        toast(
-          "success",
-          "Success",
-          editingData ? "Admin updated" : "Admin created",
-        );
-      }
-    } finally {
-      setSubmitting(false);
+    if (editingData) {
+      updateAdmin.mutate(
+        {
+          id: editingData.id,
+          payload: { ...form, password: form.password || undefined },
+        },
+        {
+          onSuccess: (res) => {
+            if (res?.error) {
+              setErrors(res.error);
+            } else {
+              setOpenDialog(false);
+              setEditingData(null);
+              setForm({ email: "", username: "", password: "" });
+              toast("success", "Success", "Admin updated");
+            }
+          },
+        }
+      );
+    } else {
+      createAdmin.mutate(form as any, {
+        onSuccess: (res) => {
+          if (res?.error) {
+            setErrors(res.error);
+          } else {
+            setOpenDialog(false);
+            setForm({ email: "", username: "", password: "" });
+            toast("success", "Success", "Admin created");
+          }
+        },
+      });
     }
   };
 
+  const isSubmitting = createAdmin.isPending || updateAdmin.isPending || importAdmin.isPending;
+
   return (
-   <>
+    <>
       <PageMeta title="Admin Management" description="Manage Admins" />
       <PageBreadcrumb pageTitle="Admin" />
 
@@ -328,8 +303,8 @@ function Admin() {
                       <AlertDialogCancel onClick={() => setOpenDialog(false)}>
                         Cancel
                       </AlertDialogCancel>
-                      <Button type="submit" disabled={submitting}>
-                        {submitting ? (
+                      <Button type="submit" disabled={isSubmitting}>
+                        {isSubmitting ? (
                           <div className="flex items-center gap-2">
                             <Loader2 className="animate-spin" size={16} />{" "}
                             Saving...
@@ -348,8 +323,8 @@ function Admin() {
 
         <AdminTable
           admins={admins}
-          loading={loading}
-          onRefresh={fetchAdmins}
+          loading={isLoading}
+          onRefresh={() => {}}
           onEdit={(data) => {
             setEditingData(data);
             setForm({
@@ -432,10 +407,10 @@ function Admin() {
             <AlertDialogCancel className="h-11">Discard</AlertDialogCancel>
             <Button
               onClick={handleImportSubmit}
-              disabled={!mapping.email || !mapping.username || submitting}
+              disabled={!mapping.email || !mapping.username || isSubmitting}
               className="h-11 gap-2 min-w-[140px]"
             >
-              {submitting ? (
+              {isSubmitting ? (
                 <>
                   <Loader2 className="animate-spin" size={18} /> Importing...
                 </>
