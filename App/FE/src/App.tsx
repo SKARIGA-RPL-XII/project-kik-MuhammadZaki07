@@ -24,7 +24,7 @@ import Admin from "./pages/Admin/Admin";
 import GeneralSettingsPage from "./pages/Settings/GeneralSettingsPage";
 import TaxSettingsPage from "./pages/Settings/TaxSettingsPage";
 import PaymentSettingsPage from "./pages/Settings/PaymentSettingsPage";
-import { Cashier } from "./pages/Cashier/Cashier";
+import { CashierPage } from "./pages/Cashier/Cashier";
 import CustomerPage from "./pages/Customer/CustomerPage";
 import NotFound from "./pages/OtherPage/NotFound";
 import RestaurantLayoutPage from "./pages/Restaurant-layout/Index";
@@ -57,7 +57,7 @@ export default function App() {
             path="/cashier"
             element={
               <PermissionMiddleware module="cashier">
-                <Cashier />
+                <CashierPage />
               </PermissionMiddleware>
             }
           />

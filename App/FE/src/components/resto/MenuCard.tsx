@@ -35,7 +35,6 @@ export function MenuCard({ item, onOpenDetail }: MenuCardProps) {
           </div>
         )}
 
-        {/* Rating - Floating Glassmorphism */}
         {item.rating && (
           <div className="absolute bottom-2 left-2 flex items-center gap-1 bg-white/80 backdrop-blur-md px-2 py-1 rounded-lg border border-white/50 shadow-sm">
             <Star size={10} className="fill-amber-400 text-amber-400" />
@@ -45,9 +44,8 @@ export function MenuCard({ item, onOpenDetail }: MenuCardProps) {
       </div>
 
       <div className="flex flex-col p-3.5 relative z-10">
-        {/* Category & Best Seller Row */}
         <div className="flex justify-between items-center mb-1">
-          <span className="text-[8px] font-black text-brand-600 uppercase tracking-[0.15em]">
+          <span className="text-[10px] font-black text-brand-600 uppercase">
             {item.category?.name}
           </span>
           {item.is_best_seller && (
@@ -58,12 +56,12 @@ export function MenuCard({ item, onOpenDetail }: MenuCardProps) {
           )}
         </div>
 
-        <h3 className="font-bold text-neutral-900 text-[13px] leading-tight line-clamp-1 mb-1 group-hover:text-brand-600 transition-colors">
+        <h3 className="font-bold text-neutral-900 text-lg line-clamp-1 mb-1 group-hover:text-brand-600 transition-colors">
           {item.name}
         </h3>
 
-        <p className="text-neutral-400 text-[10px] leading-relaxed line-clamp-2 mb-4 font-medium italic">
-          "{item.description}"
+        <p className="text-neutral-400 text-xs line-clamp-2 mb-4 font-normal">
+          {item.description}
         </p>
 
         <div className="flex items-center justify-between mt-auto">
@@ -78,14 +76,13 @@ export function MenuCard({ item, onOpenDetail }: MenuCardProps) {
             </span>
           </div>
 
-          {/* Action Button - Lebih Minimalis */}
           <motion.button
             whileTap={{ scale: 0.9 }}
             onClick={(e) => {
               e.stopPropagation();
               onOpenDetail(item);
             }}
-            className="flex items-center justify-center bg-neutral-900 text-white w-8 h-8 rounded-xl shadow-lg shadow-neutral-200 group-hover:bg-brand-600 transition-colors"
+            className="flex items-center justify-center bg-brand-500 text-white w-8 h-8 rounded-full shadow-lg shadow-neutral-200 group-hover:bg-brand-600 transition-colors"
           >
             <Plus size={16} strokeWidth={3} />
           </motion.button>

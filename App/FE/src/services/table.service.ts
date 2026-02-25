@@ -36,16 +36,28 @@ export class TableService {
     } catch (err: any) {
       return {
         data: null,
-        error:
-          err?.response?.data?.message ||
-          "Failed to fetch tables",
+        error: err?.response?.data?.message || "Failed to fetch tables",
       };
     }
   }
 
-  static async createTable(payload: {
-    table_number: string;
-  }) {
+  static async showTable(id: number | string) {
+    try {
+      const res = await apiClient.get(`/tables/${id}`);
+
+      return {
+        data: res.data,
+        error: null,
+      };
+    } catch (err: any) {
+      return {
+        data: null,
+        error: err?.response?.data?.message || "Failed to Get table",
+      };
+    }
+  }
+
+  static async createTable(payload: { table_number: string }) {
     try {
       const res = await apiClient.post("/tables", payload);
 
@@ -72,13 +84,10 @@ export class TableService {
       position_x?: number;
       position_y?: number;
       room_id?: number | null;
-    }
+    },
   ) {
     try {
-      const res = await apiClient.put(
-        `/tables/${id}`,
-        payload
-      );
+      const res = await apiClient.put(`/tables/${id}`, payload);
 
       return {
         data: res.data.data,
@@ -106,9 +115,7 @@ export class TableService {
     } catch (err: any) {
       return {
         data: null,
-        error:
-          err?.response?.data?.message ||
-          "Failed to delete table",
+        error: err?.response?.data?.message || "Failed to delete table",
       };
     }
   }

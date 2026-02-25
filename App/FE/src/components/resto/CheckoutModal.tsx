@@ -1,89 +1,128 @@
-import { motion, AnimatePresence } from 'framer-motion'
-import { Utensils, ShoppingBag, X, CheckCircle2 } from 'lucide-react'
-import { useState } from 'react'
+import { motion, AnimatePresence } from 'framer-motion';
+import { Utensils, ShoppingBag, X, Check, ArrowRight } from 'lucide-react';
+import { useState } from 'react';
 
-export function CheckoutModal({ isOpen, onClose, onConfirm }: any) {
-  const [method, setMethod] = useState<'dine-in' | 'take-away' | null>(null)
+interface CheckoutModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onConfirm: (method: 'dine-in' | 'take-away') => void;
+}
 
-  const handleFinalize = () => {
+export function CheckoutModal({ isOpen, onClose, onConfirm }: CheckoutModalProps) {
+  const [method, setMethod] = useState<'dine-in' | 'take-away' | null>(null);
+
+  const handleConfirm = () => {
     if (method) {
-      onConfirm?.(method)
-      onClose?.()
+      onConfirm(method);
+      onClose();
     }
-  }
+  };
+
+  const options = [
+    {
+      id: 'dine-in',
+      title: 'Dine-In',
+      description: 'Reservation & table service',
+      icon: Utensils,
+    },
+    {
+      id: 'take-away',
+      title: 'Take-Away',
+      description: 'Fast pickup & secure packaging',
+      icon: ShoppingBag,
+    },
+  ];
 
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="absolute inset-0 bg-slate-950/40 backdrop-blur-sm"
+            className="absolute inset-0 bg-neutral-950/40 backdrop-blur-[2px]"
           />
+
           <motion.div
-            initial={{ scale: 0.9, opacity: 0, y: 20 }}
-            animate={{ scale: 1, opacity: 1, y: 0 }}
-            exit={{ scale: 0.9, opacity: 0, y: 20 }}
-            className="relative w-full max-w-xl bg-white rounded-[3rem] p-10 shadow-2xl overflow-hidden"
+            initial={{ opacity: 0, scale: 0.95, y: 10 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: 10 }}
+            className="relative w-full max-w-lg bg-white rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.1)] border border-neutral-100 overflow-hidden"
           >
-            <div className="text-center mb-10">
-              <h2 className="text-3xl font-black text-slate-900 mb-2">Dining Choice</h2>
-              <p className="text-slate-500 font-medium">How would you like to enjoy your meal?</p>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              {[
-                { id: 'dine-in', label: 'Dine In', icon: Utensils, desc: 'Enjoy the vibe at our place' },
-                { id: 'take-away', label: 'Take Away', icon: ShoppingBag, desc: 'Pack it up for the road' }
-              ].map((opt) => (
-                <button
-                  key={opt.id}
-                  onClick={() => setMethod(opt.id as any)}
-                  className={`relative p-8 rounded-[2.5rem] border-2 transition-all text-left flex flex-col gap-4 group ${
-                    method === opt.id 
-                    ? 'border-indigo-600 bg-indigo-50/50 shadow-lg shadow-indigo-100' 
-                    : 'border-slate-100 hover:border-slate-200'
-                  }`}
+            <div className="px-8 pt-8 pb-6">
+              <div className="flex items-start justify-between">
+                <div>
+                  <h2 className="text-xl font-semibold text-neutral-900">How will you be dining?</h2>
+                  <p className="mt-1 text-sm text-neutral-500">Select your preference to proceed to payment.</p>
+                </div>
+                <button 
+                  onClick={onClose}
+                  className="p-2 -mt-2 -mr-2 text-neutral-400 hover:text-neutral-600 transition-colors"
                 >
-                  {method === opt.id && (
-                    <div className="absolute top-4 right-4 text-indigo-600">
-                      <CheckCircle2 size={24} fill="currentColor" className="text-white" />
-                    </div>
-                  )}
-                  <div className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-colors ${
-                    method === opt.id ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-400 group-hover:bg-slate-200'
-                  }`}>
-                    <opt.icon size={28} />
-                  </div>
-                  <div>
-                    <p className={`font-black text-lg ${method === opt.id ? 'text-indigo-900' : 'text-slate-900'}`}>{opt.label}</p>
-                    <p className="text-sm text-slate-500 font-medium leading-relaxed">{opt.desc}</p>
-                  </div>
+                  <X size={20} />
                 </button>
-              ))}
+              </div>
+
+              <div className="mt-8 space-y-3">
+                {options.map((opt) => {
+                  const isActive = method === opt.id;
+                  return (
+                    <button
+                      key={opt.id}
+                      onClick={() => setMethod(opt.id as any)}
+                      className={`relative w-full flex items-center p-4 rounded-xl border-2 transition-all duration-200 text-left ${
+                        isActive 
+                          ? 'border-brand-600 bg-brand-50/30' 
+                          : 'border-neutral-100 bg-white hover:border-neutral-200'
+                      }`}
+                    >
+                      <div className={`flex h-12 w-12 items-center justify-center rounded-lg border ${
+                        isActive 
+                          ? 'bg-brand-600 border-brand-600 text-white' 
+                          : 'bg-neutral-50 border-neutral-100 text-neutral-500'
+                      }`}>
+                        <opt.icon size={24} />
+                      </div>
+                      
+                      <div className="ml-4 flex-1">
+                        <p className={`text-sm font-bold ${isActive ? 'text-brand-900' : 'text-neutral-900'}`}>
+                          {opt.title}
+                        </p>
+                        <p className="text-xs text-neutral-500">{opt.description}</p>
+                      </div>
+
+                      <div className={`flex h-5 w-5 items-center justify-center rounded-full border transition-colors ${
+                        isActive ? 'bg-brand-600 border-brand-600 text-white' : 'border-neutral-300 bg-white'
+                      }`}>
+                        {isActive && <Check size={12} strokeWidth={4} />}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
 
-            <div className="mt-10 flex gap-4">
+            <div className="bg-neutral-50 px-8 py-6 flex items-center justify-between border-t border-neutral-100">
               <button
                 onClick={onClose}
-                className="flex-1 py-5 rounded-[2rem] font-bold text-slate-500 hover:bg-slate-50 transition-colors"
+                className="text-sm font-semibold text-neutral-600 hover:text-neutral-900 transition-colors"
               >
                 Cancel
               </button>
               <button
                 disabled={!method}
-                onClick={handleFinalize}
-                className="flex-[2] bg-slate-900 text-white py-5 rounded-[2rem] font-black text-lg shadow-xl shadow-slate-200 disabled:opacity-30 transition-all active:scale-[0.98]"
+                onClick={handleConfirm}
+                className="inline-flex items-center gap-2 bg-neutral-900 px-6 py-2.5 rounded-lg text-sm font-semibold text-white hover:bg-neutral-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-[0.98]"
               >
-                Place Order
+                Continue
+                <ArrowRight size={16} />
               </button>
             </div>
           </motion.div>
         </div>
       )}
     </AnimatePresence>
-  )
+  );
 }

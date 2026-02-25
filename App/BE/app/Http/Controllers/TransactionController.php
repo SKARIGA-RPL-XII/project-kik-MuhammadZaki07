@@ -36,7 +36,7 @@ class TransactionController extends Controller
         }
 
         try {
-            $cashierId = Auth::check() && (Auth::user()->role_name || Auth::user()->role) === 'cashier' ? Auth::user()->id : null;
+            $cashierId = Auth::check() && (Auth::user()->role->role_name || Auth::user()->role->role_name) === 'cashier' ? Auth::user()->id : null;
 
             $transaction = $this->posService->execute($request->all(), $cashierId);
 

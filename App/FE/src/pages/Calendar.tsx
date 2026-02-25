@@ -10,7 +10,6 @@ import PageMeta from "../components/common/PageMeta";
 import { EventService } from "../services/event.service";
 import DatePicker from "../components/form/date-picker";
 import { ActionGuard } from "@/components/guard/ActionGuard";
-import { useAuth } from "@/context/AuthContext";
 import { usePermission } from "@/hooks/usePermission";
 import { useToast } from "@/context/ToastContext";
 

@@ -81,7 +81,10 @@ class SettingController extends Controller
                 Setting::set($key, $directory . $filename, $request->group);
             } else {
                 if ($value !== "null" && $value !== null) {
-                    Setting::set($key, $value, $request->group);
+                    $decoded = json_decode($value, true);
+                    $finalValue = (json_last_error() === JSON_ERROR_NONE) ? $decoded : $value;
+    
+                    Setting::set($key, $finalValue, $request->group);
                 }
             }
         }

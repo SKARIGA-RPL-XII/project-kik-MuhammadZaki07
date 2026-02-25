@@ -282,7 +282,7 @@ CartSummary.SidebarContent = function SidebarContent({
               <span className="text-3xl font-black text-brand-600 tracking-tighter">
                 {currency} {total.toLocaleString("id-ID")}
               </span>
-              <span className="text-xs text-neutral-400 font-bold uppercase tracking-tighter italic leading-none mt-1">
+              <span className="text-xs text-neutral-400 font-bold uppercase leading-none mt-1">
                 Include All Taxes
               </span>
             </div>

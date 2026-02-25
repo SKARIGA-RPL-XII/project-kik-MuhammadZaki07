@@ -152,9 +152,9 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
 */
 
 
-// Route::resource('transactions', TransactionController::class);
+Route::resource('transactions', TransactionController::class);
 Route::get('tables', [TableController::class, 'index']);
-Route::get('tables/{id}', [TableController::class, 'show']);
+Route::get('tables/{table}', [TableController::class, 'show']);
 Route::get('rooms', [RoomController::class, 'index']);
 Route::get('rooms/{id}', [RoomController::class, 'show']);
 Broadcast::routes(['middleware' => ['auth:sanctum']]);
