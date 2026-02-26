@@ -24,7 +24,6 @@ import Admin from "./pages/Admin/Admin";
 import GeneralSettingsPage from "./pages/Settings/GeneralSettingsPage";
 import TaxSettingsPage from "./pages/Settings/TaxSettingsPage";
 import PaymentSettingsPage from "./pages/Settings/PaymentSettingsPage";
-import { CashierPage } from "./pages/Cashier/Cashier";
 import CustomerPage from "./pages/Customer/CustomerPage";
 import NotFound from "./pages/OtherPage/NotFound";
 import RestaurantLayoutPage from "./pages/Restaurant-layout/Index";
@@ -36,6 +35,8 @@ import StockPage from "./pages/Stock/StockPage";
 import AdjustmentPage from "./pages/Stock/AdjustmentPage";
 import SupplierPage from "./pages/Stock/SupplierPage";
 import MenuDetailPage from "./components/resto/MenuDetailPage";
+import OrderQueuePage from "./pages/Operations/OrderQueue";
+import CashierPage from "./pages/Cashier/Cashier";
 
 export default function App() {
   return (
@@ -139,6 +140,10 @@ export default function App() {
             <Route path="stock" element={<StockPage />} />
             <Route path="adjustment" element={<AdjustmentPage />} />
             <Route path="suppliers" element={<SupplierPage />} />
+          </Route>
+
+          <Route path="/operations">
+            <Route path="order-queuee" element={<OrderQueuePage />} />
           </Route>
 
           <Route

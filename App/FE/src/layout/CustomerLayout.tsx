@@ -31,8 +31,6 @@ function CustomerLayout() {
     };
     fetchTableInfo();
   }, [tableIdFromUrl]);
-
-  console.log(tableData);
   
   useEffect(() => {
     if (window.innerWidth >= 1024) {

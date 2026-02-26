@@ -38,7 +38,7 @@ export default function CustomerPage() {
 
   const menuData = menuResponse?.data || [];
   const total = menuResponse?.metadata?.total || 0;
-  const banners = bannerResponse?.data?.data || [];  
+  const banners = bannerResponse?.data?.data || [];
 
   const handleOpenDetail = useCallback((item: any) => {
     setSelectedMenu(item);
@@ -56,7 +56,7 @@ export default function CustomerPage() {
         title="Digital Menu"
         description="View our full selection of premium food and beverages."
       />
-      
+
       {(loadingBanner || banners.length > 0) && (
         <BannerCarousel
           isLoading={loadingBanner}
@@ -75,51 +75,51 @@ export default function CustomerPage() {
         onSearch={setSearchQuery}
       />
 
-<div className="min-h-[45vh]">
-  {loadingMenu ? (
-        <MenuListSkeleton />
-      ) : (
-        <>
-          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {menuData.map((item) => (
-              <MenuCard
-                key={item?.id}
-                item={item}
-                onOpenDetail={handleOpenDetail}
-                isAdded={cartItems?.some((ci) => ci?.item?.id === item?.id)}
-              />
-            ))}
-          </div>
-
-          {menuData.length === 0 && <EmptyState />}
-
-          {total > 10 && (
-            <div className="flex justify-center gap-3 mt-12 mb-10">
-              <button
-                disabled={page === 1}
-                onClick={() => {
-                  setPage((prev) => prev - 1);
-                  window.scrollTo({ top: 0, behavior: "smooth" });
-                }}
-                className="px-8 py-3 bg-white border border-neutral-200 rounded-2xl disabled:opacity-30 font-black text-[10px] uppercase tracking-widest transition-all hover:bg-neutral-50 active:scale-95"
-              >
-                Prev
-              </button>
-              <button
-                disabled={menuData.length < 10}
-                onClick={() => {
-                  setPage((prev) => prev + 1);
-                  window.scrollTo({ top: 0, behavior: "smooth" });
-                }}
-                className="px-8 py-3 bg-white border border-neutral-200 rounded-2xl disabled:opacity-30 font-black text-[10px] uppercase tracking-widest transition-all hover:bg-neutral-50 active:scale-95"
-              >
-                Next
-              </button>
+      <div className="min-h-[45vh]">
+        {loadingMenu ? (
+          <MenuListSkeleton />
+        ) : (
+          <>
+            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {menuData.map((item) => (
+                <MenuCard
+                  key={item?.id}
+                  item={item}
+                  onOpenDetail={handleOpenDetail}
+                  isAdded={cartItems?.some((ci) => ci?.item?.id === item?.id)}
+                />
+              ))}
             </div>
-          )}
-        </>
-      )}
-</div>
+
+            {menuData.length === 0 && <EmptyState />}
+
+            {total > 10 && (
+              <div className="flex justify-center gap-3 mt-12 mb-10">
+                <button
+                  disabled={page === 1}
+                  onClick={() => {
+                    setPage((prev) => prev - 1);
+                    window.scrollTo({ top: 0, behavior: "smooth" });
+                  }}
+                  className="px-8 py-3 bg-white border border-neutral-200 rounded-2xl disabled:opacity-30 font-black text-[10px] uppercase tracking-widest transition-all hover:bg-neutral-50 active:scale-95"
+                >
+                  Prev
+                </button>
+                <button
+                  disabled={menuData.length < 10}
+                  onClick={() => {
+                    setPage((prev) => prev + 1);
+                    window.scrollTo({ top: 0, behavior: "smooth" });
+                  }}
+                  className="px-8 py-3 bg-white border border-neutral-200 rounded-2xl disabled:opacity-30 font-black text-[10px] uppercase tracking-widest transition-all hover:bg-neutral-50 active:scale-95"
+                >
+                  Next
+                </button>
+              </div>
+            )}
+          </>
+        )}
+      </div>
 
       <MenuDetailView
         menu={selectedMenu}
