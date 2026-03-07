@@ -43,6 +43,7 @@ export function CartSidebar({
   const { settings } = useSettings();
   const navigate = useNavigate();
 
+
   const toggleSelectAll = () => {
     if (selectedItems.length === items.length) {
       setSelectedItems([]);
@@ -133,25 +134,24 @@ export function CartSidebar({
                     >
                       <X className="h-5 w-5" />
                     </Button>
-                    <h2 className="font-bold text-lg text-zinc-900 dark:text-zinc-100 uppercase tracking-tighter">
+                    <h2 className="font-semibold text-lg text-zinc-900 dark:text-zinc-100 ">
                       Order Summary
                     </h2>
                   </div>
                   {selectedItems.length > 0 ? (
                     <Button
-                      variant="destructive"
                       size="sm"
                       onClick={handleBulkDelete}
-                      className="h-8 text-[10px] font-bold px-4"
+                      className="h-8 bg-red-500 text-[10px] font-bold px-4"
                     >
-                      REMOVE ({selectedItems.length})
+                      Remove ({selectedItems.length})
                     </Button>
                   ) : (
                     <Button
                       variant="ghost"
                       size="icon"
                       onClick={onClear}
-                      className="text-zinc-400 hover:text-red-500 h-9 w-9"
+                      className="text-zinc-400 dark:text-white bg-red-500 h-9 w-9"
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
@@ -187,6 +187,10 @@ export function CartSidebar({
                   <AnimatePresence>
                     {items.map((item) => {
                       const activePrice = item.discount_price || item.price;
+                      const hasDiscount =
+                        !!item.discount_price &&
+                        item.discount_price < item.price;
+
                       return (
                         <motion.div
                           layout
@@ -219,8 +223,8 @@ export function CartSidebar({
                                     <p className="font-black text-red-600 dark:text-red-400 text-[10px]">
                                       Rp {activePrice.toLocaleString()}
                                     </p>
-                                    {item.discount_price && (
-                                      <span className="text-sm text-zinc-400">
+                                    {hasDiscount && (
+                                      <span className="text-[9px] text-zinc-400 line-through decoration-zinc-500">
                                         Rp {item.price.toLocaleString()}
                                       </span>
                                     )}
@@ -332,7 +336,7 @@ export function CartSidebar({
                 </div>
 
                 <Button
-                  className="w-full h-14 bg-red-600 hover:bg-red-700 text-white font-black rounded-xl shadow-lg transition-all active:scale-[0.98] flex items-center justify-center gap-3 group"
+                  className="w-full h-12 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg flex items-center justify-center gap-3 group"
                   disabled={items.length === 0 || isPending}
                   onClick={onConfirmAction}
                 >

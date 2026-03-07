@@ -8,12 +8,12 @@ interface CategoryBarProps {
 
 export function CategoryBar({ categories, activeCategory, onCategoryChange }: CategoryBarProps) {
   return (
-    <div className="bg-white border-b border-zinc-200 px-6 py-2 overflow-x-auto no-scrollbar flex gap-2 sticky top-20 z-10">
+    <div className="border-b px-6 py-2 overflow-x-auto no-scrollbar flex gap-2 sticky top-20 z-10">
       <div className="flex gap-2 relative">
         <button
           onClick={() => onCategoryChange("All Items")}
           className={`relative h-10 px-6 rounded-full text-md font-normal transition-colors duration-300 z-10 ${
-            activeCategory === "All Items" ? "text-white" : "text-zinc-500 hover:text-zinc-800"
+            activeCategory === "All Items" ? "text-white" : "text-zinc-500 hover:text-zinc-800 dark:hover:text-neutral-200"
           }`}
         >
           {activeCategory === "All Items" && (
@@ -31,7 +31,7 @@ export function CategoryBar({ categories, activeCategory, onCategoryChange }: Ca
             key={cat.id}
             onClick={() => onCategoryChange(cat.name)}
             className={`relative h-10 px-6 rounded-sm text-sm font-normal transition-colors duration-300 z-10 ${
-              activeCategory === cat.name ? "text-white" : "text-zinc-500 hover:text-zinc-800"
+              activeCategory === cat.name ? "text-white" : "text-zinc-500 hover:text-zinc-800 dark:hover:text-neutral-200"
             }`}
           >
             {activeCategory === cat.name && (

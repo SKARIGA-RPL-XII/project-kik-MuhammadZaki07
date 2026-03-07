@@ -7,7 +7,7 @@ interface HeaderProps {
   tableId?: string;
 }
 
-export function Header({ tableId = "Table 12" }: HeaderProps) {
+export function Header({ tableId = "-" }: HeaderProps) {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const { settings, loading } = useSettings();
 
@@ -29,12 +29,12 @@ export function Header({ tableId = "Table 12" }: HeaderProps) {
               />
             </div>
             <div className="flex flex-col">
-              <h1 className="font-black text-red-600 text-base uppercase tracking-tight leading-none mb-1">
+              <h1 className="font-semibold text-red-600 text-base leading-none mb-1">
                 {settings?.store_name}
               </h1>
               <div className="flex items-center gap-1 text-neutral-400">
                 <MapPin size={10} className="text-red-500" />
-                <span className="text-[10px] font-medium tracking-tight truncate max-w-[150px]">
+                <span className="text-xs font-normal truncate max-w-[200px]">
                   {settings?.address}
                 </span>
               </div>
@@ -48,7 +48,7 @@ export function Header({ tableId = "Table 12" }: HeaderProps) {
                   <span className="animate-ping absolute h-full w-full rounded-full bg-red-400 opacity-75"></span>
                   <span className="relative h-full w-full rounded-full bg-red-600"></span>
                 </div>
-                <span className="text-[11px] font-black uppercase tracking-widest text-red-600">
+                <span className="text-sm font-medium text-red-600">
                   {tableId}
                 </span>
               </div>

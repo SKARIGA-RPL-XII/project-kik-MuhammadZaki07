@@ -10,6 +10,9 @@ export default function InvoicePage() {
   const { transactionData } = location.state || {};
   const { settings } = useSettings();
 
+  // Deteksi apakah ini dari sisi customer
+  const isCustomer = transactionData?.order_source === "qr_code" || location.pathname.includes("customer");
+
   if (!transactionData || !settings) {
     return (
       <div className="h-screen flex items-center justify-center font-bold uppercase text-xs">
@@ -30,7 +33,13 @@ export default function InvoicePage() {
     ? subtotal * (settings.service_percent / 100)
     : 0;
 
-  console.log(transactionData);
+  const handleDone = () => {
+    if (isCustomer) {
+      navigate("/"); // Customer balik ke landing/home
+    } else {
+      navigate("/cashier"); // Kasir balik ke terminal
+    }
+  };
 
   return (
     <>
@@ -39,13 +48,16 @@ export default function InvoicePage() {
         description="Official invoice containing order details, payment summary, and transaction information."
       />
       <div className="h-[120vh] bg-slate-100 flex flex-col items-center py-5 font-sans print:bg-white print:py-0">
-        <Button
-          variant="ghost"
-          onClick={() => navigate("/cashier")}
-          className="mb-6 rounded-full gap-2 font-semibold text-lg text-muted-foreground hover:text-slate-900 print:hidden"
-        >
-          <ChevronLeft className="h-4 w-4" /> Back to Terminal
-        </Button>
+        
+        {!isCustomer && (
+          <Button
+            variant="ghost"
+            onClick={() => navigate("/cashier")}
+            className="mb-6 rounded-full gap-2 font-semibold text-lg text-muted-foreground hover:text-slate-900 print:hidden"
+          >
+            <ChevronLeft className="h-4 w-4" /> Back to Terminal
+          </Button>
+        )}
 
         <div className="w-full max-w-xl relative">
           <div className="h-14 bg-neutral-200 rounded-xl p-2 overflow-hidden">
@@ -101,7 +113,7 @@ export default function InvoicePage() {
                     T-{transactionData.table_id || "0"}
                   </span>
                 </div>
-                <div className="flex justify-between texsmx] items-center">
+                <div className="flex justify-between items-center">
                   <span className="font-bold text-muted-foreground">
                     Payment Method
                   </span>
@@ -187,17 +199,19 @@ export default function InvoicePage() {
             Share to email
           </Button>
 
-          <Button
-            variant="outline"
-            onClick={() => window.print()}
-            className="flex-1 h-10 font-semibold text-sm border-slate-200 bg-white hover:bg-slate-50 active:scale-95"
-          >
-            <Printer className="h-4 w-4 mr-2" />
-            Print
-          </Button>
+          {!isCustomer && (
+            <Button
+              variant="outline"
+              onClick={() => window.print()}
+              className="flex-1 h-10 font-semibold text-sm border-slate-200 bg-white hover:bg-slate-50 active:scale-95"
+            >
+              <Printer className="h-4 w-4 mr-2" />
+              Print
+            </Button>
+          )}
 
           <Button
-            onClick={() => navigate("/cashier")}
+            onClick={handleDone}
             className="flex-1 h-10 bg-red-600 hover:bg-red-700 text-white font-semibold text-sm transition-all active:scale-95 shadow-lg shadow-red-100"
           >
             Done

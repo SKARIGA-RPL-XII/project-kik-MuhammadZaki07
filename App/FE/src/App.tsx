@@ -223,8 +223,8 @@ export default function App() {
           <Route path="menu/:id" element={<MenuDetailPage />} />
         </Route>
 
-        <Route path="/tables" element={<TablePage />} />
-        <Route path="/payment" element={<PaymentPage />} />
+        <Route path="/tables-customer" element={<TablePage />} />
+        <Route path="/payment-customer" element={<PaymentPage />} />
         <Route path="/invoice/:id" element={<InvoicePage />} />
 
         <Route path="/404" element={<NotFound />} />

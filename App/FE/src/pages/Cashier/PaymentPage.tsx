@@ -14,6 +14,7 @@ import {
   Wallet,
 } from "lucide-react";
 import { useToast } from "@/context/ToastContext";
+import { useCart } from "@/hooks/useCart";
 
 declare global {
   interface Window {
@@ -24,36 +25,48 @@ declare global {
 export default function PaymentPage() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { cartItems, clearCart } = useCashierCart();
+  const { cartItems: cashierItems, clearCart: clearCashierCart } =
+    useCashierCart();
   const { settings } = useSettings();
   const { useCreateTransaction } = useTransaction();
   const createMutation = useCreateTransaction();
   const { toast } = useToast();
+  const { clearCart } = useCart();
+
+  const isCustomer = location.pathname.includes("customer");
+
+  const items = useMemo(() => {
+    return isCustomer ? location.state?.items || [] : cashierItems || [];
+  }, [isCustomer, location.state?.items, cashierItems]);
 
   const currency = settings?.currency_symbol || "Rp";
 
   const formatCurrency = (value: number) =>
     `${currency} ${Math.round(value).toLocaleString()}`;
 
-  const [paymentMethod, setPaymentMethod] = useState("cash");
+  const [paymentMethod, setPaymentMethod] = useState(
+    isCustomer ? "midtrans" : "cash",
+  );
   const [amountPaid, setAmountPaid] = useState("");
 
   const orderData = {
     tableId: location.state?.tableId || null,
-    tableName: location.state?.tableName || "Take Away",
+    tableName:
+      location.state?.tableName ||
+      (location.state?.orderType === "take_away" ? "Take Away" : "No Table"),
     orderType: location.state?.orderType || "take_away",
   };
 
   const subtotal = useMemo(
     () =>
       Math.round(
-        cartItems.reduce(
-          (acc, item) =>
+        items.reduce(
+          (acc: number, item: any) =>
             acc + (item.discount_price || item.price) * item.quantity,
           0,
         ),
       ),
-    [cartItems],
+    [items],
   );
 
   const tax = settings?.is_tax_active
@@ -83,14 +96,14 @@ export default function PaymentPage() {
     const payload = {
       table_id: orderData.tableId,
       order_type: orderData.orderType,
-      order_source: "cashier_direct",
+      order_source: isCustomer ? "qr_code" : "cashier_direct",
       payment_method: paymentMethod,
       amount_paid: Math.round(
         paymentMethod === "cash" ? paidAmountNumeric : total,
       ),
       total_amount: Math.round(total),
       settings: settings,
-      items: cartItems.map((item) => ({
+      items: items.map((item: any) => ({
         menu_id: item.id,
         quantity: item.quantity,
         price_at_transaction: Math.round(item.discount_price || item.price),
@@ -103,53 +116,44 @@ export default function PaymentPage() {
 
     try {
       const response = await createMutation.mutateAsync(payload);
-
       const transactionResult = response?.data;
       const snapToken = response?.snap_token;
 
       if (paymentMethod === "cash") {
         if (transactionResult?.id) {
-          clearCart();
+          if (!isCustomer) clearCashierCart();
           toast("success", "Success", "Transaction completed");
+          clearCart()
           navigate(`/invoice/${transactionResult.id}`, {
             state: { transactionData: transactionResult, changeAmount: change },
           });
         }
-      } else {
-        if (snapToken) {
-          window.snap.pay(snapToken, {
-            onSuccess: () => {
-              clearCart();
-              toast("success", "Success", "Payment Successful");
-              navigate(`/invoice/${transactionResult.id}`, {
-                state: {
-                  transactionData: transactionResult,
-                  changeAmount: change,
-                },
-              });
-            },
-            onPending: () => {
-              clearCart();
-              toast("warning", "Pending", "Waiting for payment");
-              navigate(`/cashier`);
-            },
-            onError: () => {
-              toast("error", "Failed", "Payment failed");
-            },
-            onClose: () => {
-              toast("info", "Cancelled", "Payment popup closed");
-            },
-          });
-        } else {
-          toast("error", "Error", "Snap Token not found in response");
-        }
+      } else if (snapToken) {
+        window.snap.pay(snapToken, {
+          onSuccess: () => {
+            if (!isCustomer) clearCashierCart();
+            toast("success", "Success", "Payment Successful");
+            clearCart()
+            navigate(
+              isCustomer
+                ? `/order-status/${transactionResult?.id}`
+                : `/invoice/${transactionResult?.id}`,
+              {
+                state: { transactionData: transactionResult },
+              },
+            );
+          },
+          onPending: () => {
+            if (!isCustomer) clearCashierCart();
+            toast("warning", "Pending", "Waiting for payment");
+            navigate(isCustomer ? "/customer/orders" : "/cashier");
+          },
+          onError: () => toast("error", "Failed", "Payment failed"),
+          onClose: () => toast("info", "Cancelled", "Payment popup closed"),
+        });
       }
     } catch (error: any) {
-      toast(
-        "error",
-        "Failed",
-        `Check connection or server error: ${error.message}`,
-      );
+      toast("error", "Failed", `Error: ${error.message}`);
     }
   };
 
@@ -186,7 +190,7 @@ export default function PaymentPage() {
               </div>
 
               <div className="p-6 space-y-3 text-sm">
-                {cartItems.map((item, i) => (
+                {items.map((item: any, i: number) => (
                   <div key={i} className="flex justify-between">
                     <span>
                       <span className="font-medium mr-1">{item.quantity}x</span>
@@ -206,17 +210,13 @@ export default function PaymentPage() {
                   <span>Subtotal</span>
                   <span>{formatCurrency(subtotal)}</span>
                 </div>
-
                 <div className="flex justify-between text-slate-500">
                   <span>Tax & Service</span>
                   <span>{formatCurrency(tax + service)}</span>
                 </div>
-
                 <div className="flex justify-between font-semibold text-base pt-3 border-t">
                   <span>Total</span>
-                  <span className="text-red-600">
-                    {formatCurrency(total)}
-                  </span>
+                  <span className="text-red-600">{formatCurrency(total)}</span>
                 </div>
               </div>
             </div>
@@ -227,7 +227,6 @@ export default function PaymentPage() {
               <h3 className="text-sm font-medium text-slate-600 mb-3">
                 Payment Method
               </h3>
-
               <div className="grid grid-cols-2 gap-4">
                 {[
                   { id: "cash", label: "Cash", icon: Banknote },
@@ -259,14 +258,12 @@ export default function PaymentPage() {
                     <label className="text-sm text-slate-600 block mb-2">
                       Amount Received
                     </label>
-
                     <div className="relative overflow-hidden rounded-lg">
                       <div className="absolute inset-y-0 left-0 bg-neutral-200 p-5 flex items-center pointer-events-none">
                         <span className="text-2xl font-semibold text-muted-foreground">
                           {currency}
                         </span>
                       </div>
-
                       <Input
                         type="number"
                         placeholder="0"
@@ -276,7 +273,6 @@ export default function PaymentPage() {
                       />
                     </div>
                   </div>
-
                   <div className="flex flex-wrap gap-2">
                     {quickCash.map((val) => (
                       <Button
@@ -289,7 +285,6 @@ export default function PaymentPage() {
                       </Button>
                     ))}
                   </div>
-
                   <div className="p-6 rounded-lg bg-slate-100 flex justify-between items-center">
                     <div>
                       <span className="text-xs text-slate-500">Change</span>
@@ -317,6 +312,7 @@ export default function PaymentPage() {
               <Button
                 disabled={
                   createMutation.isPending ||
+                  items.length === 0 ||
                   (paymentMethod === "cash" &&
                     (!amountPaid || parseInt(amountPaid) < total))
                 }

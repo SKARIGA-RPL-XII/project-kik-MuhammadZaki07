@@ -13,6 +13,7 @@ import {
   Beef,
 } from "lucide-react";
 import { useState, useCallback, useMemo } from "react";
+import { Skeleton } from "../ui/skeleton";
 
 const iconMap: Record<string, any> = {
   all: LayoutGrid,
@@ -38,7 +39,7 @@ export function NavigationBar({
 }: NavigationBarProps) {
   const [isFocused, setIsFocused] = useState(false);
 
-  const { data: categoryResponse } = useCategories({ size: 100 });
+  const { data: categoryResponse, isLoading } = useCategories({ size: 100 });
 
   const categories = useMemo(() => {
     const base = [{ id: "all", name: "All", slug: "all" }];
@@ -48,9 +49,12 @@ export function NavigationBar({
     return base;
   }, [categoryResponse]);
 
-  const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    onSearch?.(e.target.value);
-  }, [onSearch]);
+  const handleSearchChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      onSearch?.(e.target.value);
+    },
+    [onSearch],
+  );
 
   return (
     <div className="sticky top-0 z-20 backdrop-blur-xl pb-3 space-y-4 bg-white/80 border-b border-neutral-100 will-change-transform">
@@ -73,37 +77,57 @@ export function NavigationBar({
         </div>
 
         <button className="flex items-center gap-2 w-12 h-12 bg-white border border-neutral-200 rounded-sm hover:bg-neutral-50 transition-colors justify-center shrink-0 active:scale-95">
-          <SlidersHorizontal size={25} strokeWidth={1.5} className="text-neutral-600" />
+          <SlidersHorizontal
+            size={25}
+            strokeWidth={1.5}
+            className="text-neutral-600"
+          />
         </button>
       </div>
 
       <div className="flex gap-2 overflow-x-auto pb-1 custom-scrollbar">
-        {categories.map((cat) => {
-          const Icon = iconMap[cat.slug] || Utensils;
-          const isActive = selectedCategory === cat.slug;
+        {isLoading ? (
+          <>
+            {[...Array(5)].map((_, i) => (
+              <div
+                key={i}
+                className="h-10 w-28 shrink-0 rounded-sm bg-zinc-100 dark:bg-zinc-800 animate-pulse flex items-center gap-2 px-5"
+              >
+                <div className="h-4 w-4 rounded-full bg-zinc-200 dark:bg-zinc-700" />
+                <div className="h-3 w-12 rounded bg-zinc-200 dark:bg-zinc-700" />
+              </div>
+            ))}
+          </>
+        ) : (
+          categories.map((cat) => {
+            const Icon = iconMap[cat.slug] || Utensils;
+            const isActive = selectedCategory === cat.slug;
 
-          return (
-            <button
-              key={cat.id}
-              onClick={() => onCategoryChange?.(cat.slug)}
-              className={`relative flex items-center gap-2 px-5 py-2.5 rounded-sm whitespace-nowrap transition-colors duration-200 ${
-                isActive ? "text-white" : "text-neutral-500 hover:bg-neutral-50"
-              }`}
-            >
-              {isActive && (
-                <m.div
-                  layoutId="activeCategory"
-                  transition={{ type: "spring", stiffness: 380, damping: 30 }}
-                  className="absolute inset-0 bg-red-500 rounded-sm shadow-md shadow-neutral-200 z-0 will-change-transform"
-                />
-              )}
-              <Icon size={14} className="relative z-10" />
-              <span className="relative z-10 font-normal text-sm">
-                {cat.name}
-              </span>
-            </button>
-          );
-        })}
+            return (
+              <button
+                key={cat.id}
+                onClick={() => onCategoryChange?.(cat.slug)}
+                className={`relative flex items-center gap-2 px-5 py-2.5 rounded-sm whitespace-nowrap transition-colors duration-200 ${
+                  isActive
+                    ? "text-white"
+                    : "text-neutral-500 hover:bg-neutral-50"
+                }`}
+              >
+                {isActive && (
+                  <m.div
+                    layoutId="activeCategory"
+                    transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                    className="absolute inset-0 bg-red-500 rounded-sm shadow-md shadow-neutral-200 z-0 will-change-transform"
+                  />
+                )}
+                <Icon size={14} className="relative z-10" />
+                <span className="relative z-10 font-normal text-sm">
+                  {cat.name}
+                </span>
+              </button>
+            );
+          })
+        )}
       </div>
     </div>
   );

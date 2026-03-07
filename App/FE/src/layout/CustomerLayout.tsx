@@ -116,8 +116,7 @@ function CustomerLayout() {
         <CheckoutProcess
           isOpen={isCheckoutOpen}
           onClose={() => setIsCheckoutOpen(false)}
-          onConfirm={(finalData) => {
-            console.log("Order Finalized:", finalData);
+          onConfirm={() => {
             clearCart();
           }}
         />

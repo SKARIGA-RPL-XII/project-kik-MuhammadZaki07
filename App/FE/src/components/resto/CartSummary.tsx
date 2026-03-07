@@ -1,113 +1,94 @@
-import { motion, AnimatePresence } from "framer-motion";
 import {
-  ShoppingBag,
   Trash2,
-  X,
   Minus,
   Plus,
+  X,
+  CheckCircle2,
+  Loader2,
+  Utensils,
+  ShoppingBag,
   ChevronRight,
-  CreditCard,
 } from "lucide-react";
-import { CartItem } from "@/hooks/useCart";
+import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Checkbox } from "@/components/ui/checkbox";
+import { motion, AnimatePresence } from "framer-motion";
+import { useState } from "react";
 import { useSettings } from "@/context/SettingsContext";
-import Button from "../ui/button/Button";
+import { useNavigate, useSearchParams } from "react-router";
 
 interface CartSummaryProps {
-  items: CartItem[];
-  onCheckout?: () => void;
-  onRemoveItem?: (key: string) => void;
-  onUpdateQuantity?: (key: string, quantity: number) => void;
-  isOpen?: boolean;
-  onToggle?: () => void;
+  isOpen: boolean;
+  onToggle: () => void;
+  items: any[];
+  onRemoveItem: (key: string) => void;
+  onUpdateQuantity: (key: string, qty: number) => void;
+  onClear?: () => void;
+  onCheckout?: (orderType: string) => void;
+  isPending?: boolean;
 }
 
-export function CartSummary({
-  items = [],
-  onCheckout,
-  isOpen = false,
-  onToggle,
-}: CartSummaryProps) {
-  const { settings } = useSettings();
-
-  const subtotal = items.reduce(
-    (sum, ci) => sum + (ci.price || 0) * ci.quantity,
-    0,
-  );
-
-  const taxRate = settings?.is_tax_active ? settings.tax_percent / 100 : 0;
-  const serviceRate = settings?.is_service_active
-    ? settings.service_percent / 100
-    : 0;
-
-  const taxAmount = subtotal * taxRate;
-  const serviceAmount = subtotal * serviceRate;
-  const total = subtotal + taxAmount + serviceAmount;
-
-  const itemCount = items.reduce((sum, ci) => sum + ci.quantity, 0);
-  const currency = settings?.currency_symbol || "Rp";
-
-  const getImageUrl = (path: string) => {
-    if (!path) return "/placeholder.png";
-    return path.startsWith("http")
-      ? path
-      : `${import.meta.env.VITE_STORAGE_URL}/${path}`;
-  };
+export function CartSummary({ isOpen, onToggle, items = [] }: CartSummaryProps) {
+  const itemCount = items.reduce((acc, item) => acc + (item.quantity || 0), 0);
+  const total = items.reduce((acc, item) => {
+    const price = item.discount_price || item.price || 0;
+    return acc + Math.round(price * (item.quantity || 0));
+  }, 0);
 
   return (
     <AnimatePresence mode="wait">
       {!isOpen && (
         <motion.div
+          key="premium-cart-bar"
           initial={{ y: 100, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: 100, opacity: 0 }}
           transition={{ type: "spring", stiffness: 400, damping: 30 }}
-          className="fixed bottom-8 left-0 right-0 z-[60] flex justify-center px-4"
+         className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[60] flex justify-center px-4 w-full max-w-lg"
         >
           <div
             onClick={onToggle}
-            className="w-full max-w-lg bg-red-500 drop-shadow-2xl rounded-full px-4 py-2.5 flex items-center justify-between cursor-pointer hover:scale-[1.02] active:scale-[0.98] transition-all duration-300"
+            className="w-full max-w-lg dark:bg-neutral-900 bg-white border border-white/10 drop-shadow-2xl rounded-full px-4 py-2.5 flex items-center justify-between cursor-pointer hover:scale-[1.02] active:scale-[0.98] transition-all duration-300"
           >
             <div className="flex items-center gap-4 ml-2">
               <div className="flex items-center -space-x-3">
-                {itemCount > 0 ? (
-                  items
-                    .slice(0, 3)
-                    .map((item, idx) => (
-                      <img
-                        key={item.key}
-                        src={getImageUrl(item.image)}
-                        className="w-10 h-10 rounded-full border-2 border-neutral-900 object-center bg-white shadow-sm"
-                        style={{ zIndex: 10 - idx }}
-                      />
-                    ))
+                {items.length > 0 ? (
+                  items.slice(0, 3).map((item, idx) => (
+                    <img
+                      key={item.key || idx}
+                      src={`${import.meta.env.VITE_STORAGE_URL}/${item.image}`}
+                      className="w-10 h-10 rounded-full border-2 border-zinc-900 object-cover bg-white shadow-sm"
+                      style={{ zIndex: 10 - idx }}
+                      alt="item"
+                    />
+                  ))
                 ) : (
-                  <div className="w-10 h-10 rounded-full bg-neutral-800 flex items-center justify-center">
-                    <ShoppingBag size={18} className="text-neutral-400" />
+                  <div className="w-10 h-10 rounded-full bg-red-500 flex items-center justify-center">
+                    <ShoppingBag size={18} className="text-neutral-200" />
                   </div>
                 )}
               </div>
+
               <div className="flex flex-col">
-                <span className="text-white font-bold text-lg leading-none mb-1">
-                  {itemCount > 0 ? `${itemCount} Selected` : "Your Cart"}
+                <span className="dark:text-white font-bold text-sm leading-none mb-1">
+                  {items.length > 0 ? `${itemCount} Items Selected` : "Empty Cart"}
                 </span>
-                <span className="text-white text-[10px] font-bold">
-                  {itemCount > 0
-                    ? `${currency} ${total.toLocaleString("id-ID")}`
-                    : "Empty"}
+                <span className="text-zinc-400 text-[10px] font-normal">
+                  {items.length > 0 ? `Rp ${total.toLocaleString("id-ID")}` : "Start Ordering"}
                 </span>
               </div>
             </div>
 
             <Button
-              onClick={(e: any) => {
+              variant="ghost"
+              className="text-white hover:bg-transparent hover:text-white font-bold text-xs gap-2"
+              onClick={(e) => {
                 e.stopPropagation();
-                if (itemCount > 0) onCheckout?.();
-                else onToggle?.();
+                onToggle();
               }}
-              className="hover:bg-transparent"
             >
-              {itemCount > 0 ? "Review Order" : "Start Ordering"}{" "}
-              <ChevronRight size={14} className="ml-1" />
+              {items.length > 0 ? "Review Order" : "Open Cart"}
+              <ChevronRight size={16} className="text-red-500" />
             </Button>
           </div>
         </motion.div>
@@ -117,183 +98,294 @@ export function CartSummary({
 }
 
 CartSummary.SidebarContent = function SidebarContent({
-  items,
   onToggle,
-  onRemoveItem,
+  items,
   onUpdateQuantity,
-  onCheckout,
-}: any) {
+  onRemoveItem,
+  onClear,
+  isPending,
+}: CartSummaryProps) {
+  const [selectedItems, setSelectedItems] = useState<string[]>([]);
+  const [orderType, setOrderType] = useState<string>("dine_in");
   const { settings } = useSettings();
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const tableIdFromUrl = searchParams.get("table");
 
-  const subtotal = items.reduce(
-    (sum: number, ci: any) => sum + (ci.price || 0) * ci.quantity,
-    0,
-  );
+  const toggleSelectAll = () => {
+    if (selectedItems.length === items.length) {
+      setSelectedItems([]);
+    } else {
+      setSelectedItems(items.map((item) => item.key));
+    }
+  };
+
+  const toggleItem = (key: string) => {
+    setSelectedItems((prev) =>
+      prev.includes(key) ? prev.filter((i) => i !== key) : [...prev, key],
+    );
+  };
+
+  const handleBulkDelete = () => {
+    selectedItems.forEach((key) => onRemoveItem(key));
+    setSelectedItems([]);
+  };
+
+  const currentSubtotal = items.reduce((acc, item) => {
+    const price = item.discount_price || item.price;
+    return acc + Math.round(price * item.quantity);
+  }, 0);
+
   const taxRate = settings?.is_tax_active ? settings.tax_percent / 100 : 0;
   const serviceRate = settings?.is_service_active
     ? settings.service_percent / 100
     : 0;
+  const serviceAmount = Math.round(currentSubtotal * serviceRate);
+  const taxAmount = Math.round(currentSubtotal * taxRate);
+  const totalAmount = currentSubtotal + taxAmount + serviceAmount;
 
-  const taxAmount = subtotal * taxRate;
-  const serviceAmount = subtotal * serviceRate;
-  const total = subtotal + taxAmount + serviceAmount;
-  const currency = settings?.currency_symbol || "Rp";
-
-  const getImageUrl = (path: string) => {
-    if (!path) return "/placeholder.png";
-    return path.startsWith("http")
-      ? path
-      : `${import.meta.env.VITE_STORAGE_URL}/${path}`;
+  const onConfirmAction = () => {
+    if (orderType === "dine_in" && !tableIdFromUrl) {
+      navigate("/tables-customer", { state: { fromCart: true, items: items } });
+    } else {
+      navigate("/payment-customer", {
+        state: {
+          orderType,
+          totalAmount,
+          tableId: tableIdFromUrl,
+          items: items,
+        },
+      });
+    }
   };
 
   return (
-    <div className="flex flex-col h-full bg-white">
-      <div className="p-8 h-20 flex items-center justify-between border-b border-neutral-100">
-        <h2 className="text-xl font-bold">Summary</h2>
+    <div className="h-full bg-white dark:bg-zinc-950 flex flex-col">
+      <div className="p-4 bg-white dark:bg-zinc-900 border-b border-zinc-100 dark:border-zinc-800 space-y-3">
+        <div className="flex justify-between items-center">
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onToggle}
+              className="h-9 w-9"
+            >
+              <X className="h-5 w-5" />
+            </Button>
+            <h2 className="font-bold text-lg uppercase tracking-tighter">
+              Order Summary
+            </h2>
+          </div>
+          {selectedItems.length > 0 ? (
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={handleBulkDelete}
+              className="h-8 text-[10px] font-bold px-4"
+            >
+              REMOVE ({selectedItems.length})
+            </Button>
+          ) : (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onClear}
+              className="text-zinc-400 hover:text-red-500 h-9 w-9"
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          )}
+        </div>
 
-        <button
-          onClick={onToggle}
-          className="p-2 bg-red-50 rounded-sm"
-        >
-          <X
-            size={20}
-            className="text-red-400"
-          />
-        </button>
+        <div className="flex items-center justify-between bg-zinc-50 dark:bg-zinc-800/50 px-3 py-2 rounded-lg border border-zinc-100 dark:border-zinc-800">
+          <div className="flex items-center gap-2">
+            <Checkbox
+              id="select-all"
+              checked={
+                selectedItems.length === items.length && items.length > 0
+              }
+              onCheckedChange={toggleSelectAll}
+              className="border-zinc-300 dark:border-zinc-600 data-[state=checked]:bg-red-500"
+            />
+            <label
+              htmlFor="select-all"
+              className="text-sm font-medium text-zinc-500 cursor-pointer"
+            >
+              Select All
+            </label>
+          </div>
+          <span className="text-sm font-medium text-zinc-400">
+            {items.length} Items
+          </span>
+        </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-8 space-y-8 custom-scrollbar">
-        {items.length === 0 ? (
-          <div className="h-full flex flex-col items-center justify-center text-center">
-            <div className="w-20 h-20 rounded-full bg-neutral-50 flex items-center justify-center mb-6">
-              <ShoppingBag size={32} className="text-neutral-200" />
-            </div>
-            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-neutral-400 mb-1">
-              Your cart is empty
-            </p>
-            <p className="text-[9px] text-neutral-300 uppercase tracking-widest font-bold">
-              Add some delicious items
-            </p>
-          </div>
-        ) : (
-          items.map((ci: any) => (
-            <div key={ci.key} className="flex gap-5 group">
-              <div className="relative w-16 h-16 overflow-hidden rounded-xl border border-neutral-100 flex-shrink-0">
-                <img
-                  src={getImageUrl(ci.image)}
-                  className="object-center w-full h-full bg-neutral-50 transition-transform duration-500 group-hover:scale-110"
-                />
-              </div>
-              <div className="flex-1 min-w-0 flex flex-col py-0.5">
-                <div className="flex justify-between items-start mb-1">
-                  <div className="flex flex-col min-w-0">
-                    <h3 className="font-black text-neutral-900 text-[11px] uppercase truncate leading-tight">
-                      {ci.name}
-                    </h3>
-                    {ci.selectedAttributes &&
-                      ci.selectedAttributes.length > 0 && (
-                        <div className="flex flex-wrap gap-1 mt-1">
-                          {ci.selectedAttributes.map(
-                            (attr: any, idx: number) => (
-                              <span
-                                key={idx}
-                                className="text-[9px] font-bold text-red-500 bg-red-50 px-1.5 py-0.5 rounded-md uppercase tracking-tighter"
-                              >
-                                {attr.name || attr}
-                              </span>
-                            ),
+      <ScrollArea className="flex-1 bg-zinc-50/50 dark:bg-zinc-950">
+        <div className="p-3 space-y-2">
+          {items.map((item) => {
+            const hasDiscount =
+              item.discount_price && item.discount_price < item.price;
+            const activePrice = hasDiscount ? item.discount_price : item.price;
+
+            return (
+              <div
+                key={item.key}
+                className={`group relative p-3 rounded-sm border transition-all flex gap-3 bg-white dark:bg-zinc-900 ${
+                  selectedItems.includes(item.key)
+                    ? "border-red-500 shadow-sm"
+                    : "border-zinc-200 dark:border-zinc-800"
+                }`}
+              >
+                <div className="pt-0.5">
+                  <Checkbox
+                    checked={selectedItems.includes(item.key)}
+                    onCheckedChange={() => toggleItem(item.key)}
+                    className="border-zinc-300 dark:border-zinc-600 data-[state=checked]:bg-red-500"
+                  />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex justify-between items-start">
+                    <div className="flex gap-3 min-w-0">
+                      <div className="h-12 w-12 rounded-lg bg-zinc-100 overflow-hidden shrink-0 border border-zinc-200">
+                        <img
+                          src={`${import.meta.env.VITE_STORAGE_URL}/${item.image}`}
+                          className="h-full w-full object-cover"
+                          alt={item.name}
+                        />
+                      </div>
+                      <div className="truncate">
+                        <h4 className="font-bold text-zinc-900 dark:text-zinc-100 text-xs truncate uppercase tracking-tight">
+                          {item.name}
+                        </h4>
+                        <div className="flex items-center gap-2">
+                          <p className="font-black text-red-600 text-[10px]">
+                            Rp {activePrice.toLocaleString("id-ID")}
+                          </p>
+                          {hasDiscount && (
+                            <p className="text-[9px] text-zinc-400 line-through decoration-zinc-400">
+                              Rp {item.price.toLocaleString("id-ID")}
+                            </p>
                           )}
                         </div>
-                      )}
+                      </div>
+                    </div>
+                    <p className="font-black text-zinc-900 dark:text-zinc-100 text-xs whitespace-nowrap ml-2">
+                      Rp {(activePrice * item.quantity).toLocaleString("id-ID")}
+                    </p>
                   </div>
-                  <button
-                    onClick={() => onRemoveItem?.(ci.key)}
-                    className="text-neutral-300 hover:text-rose-500 transition-colors ml-2 flex-shrink-0"
-                  >
-                    <Trash2 size={14} />
-                  </button>
-                </div>
-
-                <div className="flex items-center justify-between mt-auto">
-                  <div className="flex items-center bg-neutral-50 rounded-xl p-0.5 border border-neutral-100">
-                    <button
-                      onClick={() =>
-                        onUpdateQuantity?.(ci.key, ci.quantity - 1)
-                      }
-                      className="w-7 h-7 flex items-center justify-center rounded-lg bg-white text-neutral-600 hover:text-red-600 transition-all active:scale-90"
+                  <div className="flex items-center justify-between mt-3">
+                    <div className="flex items-center gap-1 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 rounded-lg p-0.5">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6"
+                        onClick={() =>
+                          onUpdateQuantity(item.key, item.quantity - 1)
+                        }
+                      >
+                        <Minus className="h-3 w-3" />
+                      </Button>
+                      <span className="w-6 text-center font-black text-[10px]">
+                        {item.quantity}
+                      </span>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6"
+                        onClick={() =>
+                          onUpdateQuantity(item.key, item.quantity + 1)
+                        }
+                      >
+                        <Plus className="h-3 w-3" />
+                      </Button>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 text-zinc-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                      onClick={() => onRemoveItem(item.key)}
                     >
-                      <Minus size={10} strokeWidth={3} />
-                    </button>
-                    <span className="text-[10px] font-black text-neutral-900 min-w-[32px] text-center">
-                      {ci.quantity}
-                    </span>
-                    <button
-                      onClick={() =>
-                        onUpdateQuantity?.(ci.key, ci.quantity + 1)
-                      }
-                      className="w-7 h-7 flex items-center justify-center rounded-lg bg-white text-neutral-600 hover:text-red-600 transition-all active:scale-90"
-                    >
-                      <Plus size={10} strokeWidth={3} />
-                    </button>
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
                   </div>
-                  <span className="font-black text-neutral-900 text-[11px] tracking-tight">
-                    {currency}{" "}
-                    {(ci.price * ci.quantity).toLocaleString("id-ID")}
-                  </span>
                 </div>
               </div>
-            </div>
-          ))
-        )}
-      </div>
-
-      <div className="p-8 bg-neutral-50 border-t border-neutral-100">
-        <div className="space-y-3 mb-8">
-          <div className="flex justify-between text-[12px] font-bold uppercase tracking-widest text-neutral-400">
-            <span>Subtotal</span>
-            <span className="text-neutral-900 font-black tracking-normal">
-              {currency} {subtotal.toLocaleString("id-ID")}
-            </span>
-          </div>
-
-          {settings?.is_service_active && (
-            <div className="flex justify-between text-[12px] font-bold uppercase tracking-widest text-neutral-400">
-              <span>Service ({settings.service_percent}%)</span>
-              <span className="text-neutral-900 font-black tracking-normal">
-                {currency}. {serviceAmount.toLocaleString("id-ID")}
-              </span>
-            </div>
-          )}
-
-          {settings?.is_tax_active && (
-            <div className="flex justify-between text-[12px] font-bold uppercase tracking-widest text-neutral-400">
-              <span>Tax ({settings.tax_percent}%)</span>
-              <span className="text-neutral-900 font-black tracking-normal">
-                {currency} {taxAmount.toLocaleString("id-ID")}
-              </span>
-            </div>
-          )}
-
-          <div className="pt-6 mt-6 border-t border-neutral-200 flex justify-between items-center">
-            <span className="font-black text-neutral-900 text-xs tracking-widest uppercase">
-              Total Bill
-            </span>
-            <div className="flex flex-col items-end">
-              <span className="text-3xl font-black text-red-600 tracking-tighter">
-                {currency} {total.toLocaleString("id-ID")}
-              </span>
-              <span className="text-xs text-neutral-400 font-bold uppercase leading-none mt-1">
-                Include All Taxes
-              </span>
-            </div>
-          </div>
+            );
+          })}
         </div>
+      </ScrollArea>
+
+      <div className="bg-white dark:bg-zinc-900 border-t p-6 space-y-4 shadow-[0_-10px_30px_rgba(0,0,0,0.05)]">
+        <div className="grid grid-cols-2 gap-2 mb-2">
+          <Button
+            variant="outline"
+            className={`h-12 flex flex-col gap-1 border-2 transition-all ${orderType === "dine_in" ? "border-red-600 bg-red-50 text-red-600" : "border-zinc-100"}`}
+            onClick={() => setOrderType("dine_in")}
+          >
+            <Utensils className="h-4 w-4" />
+            <span className="text-[10px] font-bold uppercase tracking-tight">
+              Dine In
+            </span>
+          </Button>
+          <Button
+            variant="outline"
+            className={`h-12 flex flex-col gap-1 border-2 transition-all ${orderType === "take_away" ? "border-red-600 bg-red-50 text-red-600" : "border-zinc-100"}`}
+            onClick={() => setOrderType("take_away")}
+          >
+            <ShoppingBag className="h-4 w-4" />
+            <span className="text-[10px] font-bold uppercase tracking-tight">
+              Take Away
+            </span>
+          </Button>
+        </div>
+
+        <div className="space-y-1.5 border-b border-zinc-100 pb-3">
+          <div className="flex justify-between text-[10px] font-bold text-zinc-400 uppercase">
+            <span>Subtotal</span>
+            <span className="text-zinc-900 font-black">
+              Rp {currentSubtotal.toLocaleString("id-ID")}
+            </span>
+          </div>
+          {settings?.is_service_active && (
+            <div className="flex justify-between text-[10px] font-bold text-zinc-400 uppercase">
+              <span>Service ({settings.service_percent}%)</span>
+              <span className="text-zinc-900">
+                Rp {serviceAmount.toLocaleString("id-ID")}
+              </span>
+            </div>
+          )}
+          {settings?.is_tax_active && (
+            <div className="flex justify-between text-[10px] font-bold text-zinc-400 uppercase">
+              <span>Tax ({settings.tax_percent}%)</span>
+              <span className="text-zinc-900">
+                Rp {taxAmount.toLocaleString("id-ID")}
+              </span>
+            </div>
+          )}
+        </div>
+
+        <div className="flex justify-between items-end">
+          <span className="text-xs font-bold text-red-600">Total Payment</span>
+          <span className="text-3xl font-black text-zinc-900 tracking-tighter">
+            Rp {totalAmount.toLocaleString("id-ID")}
+          </span>
+        </div>
+
         <Button
-          onClick={onCheckout}
-          disabled={items.length === 0}
-          className="w-full"
+          className="w-full h-10 bg-red-600 hover:bg-red-700 text-white font-normal rounded-lg flex items-center justify-center gap-3 active:scale-[0.98] transition-transform"
+          disabled={items.length === 0 || isPending}
+          onClick={onConfirmAction}
         >
-          Proceed to Payment <CreditCard size={16} className="ml-2" />
+          <span className="text-md">
+            {orderType === "dine_in" && !tableIdFromUrl
+              ? "Select Table"
+              : "Checkout Now"}
+          </span>
+          {isPending ? (
+            <Loader2 className="h-5 w-5 animate-spin" />
+          ) : (
+            <CheckCircle2 className="h-5 w-5" />
+          )}
         </Button>
       </div>
     </div>

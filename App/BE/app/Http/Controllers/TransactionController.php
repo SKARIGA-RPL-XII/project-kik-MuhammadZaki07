@@ -46,7 +46,7 @@ class TransactionController extends Controller
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'order_source' => 'required|in:qr_code,cashier_direct',
+           'order_source' => 'required|in:customer_app,qr_code,cashier_direct',
             'order_type' => 'required|in:dine_in,take_away',
             'table_id' => 'nullable|required_if:order_type,dine_in|exists:tables,id',
             'payment_method' => 'required',

@@ -122,9 +122,9 @@ export default function CashierPage() {
     <div className="flex w-full overflow-hidden">
       <div className="flex flex-1 flex-col gap-2 min-w-0">
         <PageMeta title="Cashier POS" description="" />
-        <header className="pb-6 px-6 bg-white border-b border-zinc-200 flex flex-col sticky top-0 z-20">
+        <header className="pb-6 px-6 border-b flex flex-col sticky top-0 z-20">
           <div className="space-y-1">
-            <h1 className="text-3xl font-black text-zinc-900 tracking-tight uppercase">
+            <h1 className="text-3xl font-black text-zinc-900 dark:text-neutral-200 tracking-tight uppercase">
               Transaction <span className="text-red-600">Terminal</span>
             </h1>
             <p className="text-sm text-zinc-500 max-w-2xl leading-relaxed">
@@ -139,7 +139,7 @@ export default function CashierPage() {
                 placeholder="Search product by name..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 h-10 border-zinc-200 focus-visible:ring-red-500 rounded bg-white transition-all duration-200 shadow-sm"
+                className="pl-10 h-10 focus-visible:ring-red-500 rounded transition-all duration-200 shadow-sm"
               />
             </div>
 
