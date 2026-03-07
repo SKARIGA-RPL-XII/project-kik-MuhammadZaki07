@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 
-const CART_KEY = "restaurant_cart";
-const CART_EVENT = "cart_updated";
+const CASHIER_CART_KEY = "cashier_cart";
+const CASHIER_CART_EVENT = "cashier_cart_updated";
 
 export interface CartItem {
   id: number;
@@ -23,20 +23,20 @@ export interface MenuItem {
   price: number;
   menu_image: string;
   attributes?: any[];
-  selectedAttributes?: Record<string, number>;
   discount?: {
     id: number;
     value_discount: number;
     is_active: number;
   } | null;
+  selectedAttributes?: Record<string, number>;
 }
 
-export function useCart() {
+export function useCashierCart() {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
 
   const loadCart = useCallback((): CartItem[] => {
     try {
-      const stored = localStorage.getItem(CART_KEY);
+      const stored = localStorage.getItem(CASHIER_CART_KEY);
       return stored ? JSON.parse(stored) : [];
     } catch {
       return [];
@@ -49,14 +49,14 @@ export function useCart() {
 
   useEffect(() => {
     const handleUpdate = () => setCartItems(loadCart());
-    window.addEventListener(CART_EVENT, handleUpdate);
-    return () => window.removeEventListener(CART_EVENT, handleUpdate);
+    window.addEventListener(CASHIER_CART_EVENT, handleUpdate);
+    return () => window.removeEventListener(CASHIER_CART_EVENT, handleUpdate);
   }, [loadCart]);
 
   const updateCart = useCallback((items: CartItem[]) => {
     setCartItems(items);
-    localStorage.setItem(CART_KEY, JSON.stringify(items));
-    window.dispatchEvent(new Event(CART_EVENT));
+    localStorage.setItem(CASHIER_CART_KEY, JSON.stringify(items));
+    window.dispatchEvent(new Event(CASHIER_CART_EVENT));
   }, []);
 
   const generateKey = (item: MenuItem) => {
@@ -82,13 +82,12 @@ export function useCart() {
     });
   };
 
-const addToCart = useCallback((item: MenuItem, quantity: number) => {
+  const addToCart = useCallback((item: MenuItem, quantity: number) => {
     const current = loadCart();
     const key = generateKey(item);
     
     const existingIndex = current.findIndex(ci => ci.key === key);
 
-    // Tambahkan Logic Diskon di sini
     let finalDiscountPrice: number | null = null;
     if (item.discount && item.discount.is_active === 1) {
       finalDiscountPrice = item.price - (item.price * item.discount.value_discount / 100);

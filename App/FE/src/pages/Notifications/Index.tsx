@@ -176,7 +176,7 @@ const NotificationPage: React.FC = () => {
                 <div className="h-6 w-px bg-stroke dark:bg-strokedark" />
                 <button
                   onClick={handleBulkMarkRead}
-                  className="flex items-center gap-1 text-sm font-semibold text-brand-500 hover:opacity-80 transition"
+                  className="flex items-center gap-1 text-sm font-semibold text-red-500 hover:opacity-80 transition"
                 >
                   <CheckCheck size={16} /> Mark as Read
                 </button>
@@ -214,7 +214,7 @@ const NotificationPage: React.FC = () => {
           </div>
 
           <div className="text-sm font-medium text-body">
-            Unread: <span className="text-brand-500 font-bold">{unreadCount}</span>
+            Unread: <span className="text-red-500 font-bold">{unreadCount}</span>
           </div>
         </div>
 
@@ -225,7 +225,7 @@ const NotificationPage: React.FC = () => {
                 <th className="w-[50px] px-4 py-4 xl:pl-11">
                   <input
                     type="checkbox"
-                    className="h-4 w-4 rounded border-stroke accent-brand-500 cursor-pointer"
+                    className="h-4 w-4 rounded border-stroke accent-red-500 cursor-pointer"
                     checked={
                       notifications.length > 0 &&
                       selectedIds.length === notifications.length
@@ -252,7 +252,7 @@ const NotificationPage: React.FC = () => {
                 <tr>
                   <td colSpan={5} className="py-20 text-center">
                     <div className="flex flex-col items-center gap-2">
-                      <Loader2 className="h-6 w-6 animate-spin text-brand-500" />
+                      <Loader2 className="h-6 w-6 animate-spin text-red-500" />
                       <span className="text-sm font-medium">Loading...</span>
                     </div>
                   </td>
@@ -263,7 +263,7 @@ const NotificationPage: React.FC = () => {
                     key={notif.id}
                     onClick={() => openDetail(notif)}
                     className={`group cursor-pointer border-b border-[#eee] dark:border-strokedark hover:bg-gray-1 dark:hover:bg-white/5 transition-colors ${
-                      !notif.read_at ? "bg-brand-500/[0.03]" : ""
+                      !notif.read_at ? "bg-red-500/[0.03]" : ""
                     }`}
                   >
                     <td
@@ -272,7 +272,7 @@ const NotificationPage: React.FC = () => {
                     >
                       <input
                         type="checkbox"
-                        className="h-4 w-4 rounded border-stroke accent-brand-500 cursor-pointer"
+                        className="h-4 w-4 rounded border-stroke accent-red-500 cursor-pointer"
                         checked={selectedIds.includes(notif.id)}
                         onChange={(e) => toggleSelect(e as any, notif.id)}
                       />
@@ -288,7 +288,7 @@ const NotificationPage: React.FC = () => {
                       </div>
                     </td>
                     <td className="px-4 py-4">
-                      <span className={`inline-flex rounded-full px-3 py-1 text-xs font-medium uppercase ${notif.is_global ? "bg-brand-500/10 text-brand-500" : "bg-success/10 text-success"}`}>
+                      <span className={`inline-flex rounded-full px-3 py-1 text-xs font-medium uppercase ${notif.is_global ? "bg-red-500/10 text-red-500" : "bg-success/10 text-success"}`}>
                         {notif.is_global ? "Global" : "System"}
                       </span>
                     </td>
@@ -300,7 +300,7 @@ const NotificationPage: React.FC = () => {
                     </td>
                     <td className="px-4 py-4 xl:pr-11">
                       <div className="flex items-center justify-end">
-                        <button className="text-body hover:text-brand-500 transition p-1">
+                        <button className="text-body hover:text-red-500 transition p-1">
                           <ChevronRight size={18} />
                         </button>
                       </div>
@@ -325,7 +325,7 @@ const NotificationPage: React.FC = () => {
               >
                 <ChevronLeft size={16} />
               </button>
-              <div className="flex items-center gap-1 mx-2 text-sm font-semibold text-brand-500">
+              <div className="flex items-center gap-1 mx-2 text-sm font-semibold text-red-500">
                 Page {currentPage}
               </div>
               <button

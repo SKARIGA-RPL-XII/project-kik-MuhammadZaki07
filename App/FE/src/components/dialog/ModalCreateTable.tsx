@@ -76,7 +76,7 @@ export function ModalCreateTable({ isOpen, onClose, onRefresh }: { isOpen: boole
           <Button
             onClick={handleCreate} 
             disabled={isLoading}
-            className="w-36 bg-brand-600 hover:bg-brand-700 text-white flex items-center justify-center gap-2 border-none disabled:opacity-70 disabled:cursor-not-allowed transition-all"
+            className="w-36 bg-red-600 hover:bg-red-700 text-white flex items-center justify-center gap-2 border-none disabled:opacity-70 disabled:cursor-not-allowed transition-all"
           >
             {isLoading ? (
               <LoadingSpinner />

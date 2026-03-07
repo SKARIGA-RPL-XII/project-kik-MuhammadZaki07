@@ -57,7 +57,7 @@ export default function DatePicker({
         <input
           id={id}
           placeholder={placeholder}
-          className="h-11 w-full rounded-lg border appearance-none px-4 py-2.5 text-sm shadow-theme-xs placeholder:text-neutral-400 focus:outline-hidden focus:ring-3 dark:bg-neutral-900 dark:text-white/90 dark:placeholder:text-white/30 bg-transparent text-neutral-800 border-neutral-300 focus:border-brand-300 focus:ring-brand-500/20 dark:border-neutral-700 dark:focus:border-brand-800"
+          className="h-11 w-full rounded-lg border appearance-none px-4 py-2.5 text-sm shadow-theme-xs placeholder:text-neutral-400 focus:outline-hidden focus:ring-3 dark:bg-neutral-900 dark:text-white/90 dark:placeholder:text-white/30 bg-transparent text-neutral-800 border-neutral-300 focus:border-red-300 focus:ring-red-500/20 dark:border-neutral-700 dark:focus:border-red-800"
         />
         <span className="absolute text-neutral-500 -translate-y-1/2 pointer-events-none right-3 top-1/2 dark:text-neutral-400">
           <CalenderIcon className="size-6" />

@@ -103,9 +103,7 @@ export default function UserProfiles() {
 
   if (!user) return null;
   if (loading) return <UserProfileSkeleton/>
-  console.log(loading);
   
-
   return (
     <>
       <PageMeta
@@ -145,7 +143,7 @@ export default function UserProfiles() {
                   setErrors({});
                   setOpenEdit(true);
                 }}
-                className="w-full h-10 bg-brand-600 hover:bg-brand-700 text-white dark:bg-brand-500 dark:hover:bg-brand-600"
+                className="w-full h-10 bg-red-600 hover:bg-red-700 text-white dark:bg-red-500 dark:hover:bg-red-600"
               >
                 <Pencil size={14} className="mr-2" /> Edit Profile
               </Button>
@@ -153,7 +151,7 @@ export default function UserProfiles() {
 
             <div className="bg-neutral-50 dark:bg-neutral-900/50 border border-neutral-200 dark:border-neutral-800 rounded-lg p-5">
               <div className="flex items-center gap-2 mb-3 text-neutral-800 dark:text-neutral-200">
-                <Shield size={16} className="text-brand-500" />
+                <Shield size={16} className="text-red-500" />
                 <span className="text-[10px] font-bold uppercase tracking-widest">
                   Account Status
                 </span>
@@ -355,7 +353,7 @@ export default function UserProfiles() {
               <Button
                 type="submit"
                 disabled={submitting}
-                className="bg-brand-600 dark:bg-brand-500 text-white font-bold h-10 px-8 rounded-md"
+                className="bg-red-600 dark:bg-red-500 text-white font-bold h-10 px-8 rounded-md"
               >
                 {submitting ? (
                   <LoadingSpinner />
@@ -383,7 +381,7 @@ function InfoGroup({
   return (
     <div className="space-y-1.5">
       <div className="flex items-center gap-2 text-neutral-400 dark:text-neutral-500">
-        <span className="opacity-70 text-brand-500 dark:text-brand-400">{icon}</span>
+        <span className="opacity-70 text-red-500 dark:text-red-400">{icon}</span>
         <span className="text-xs uppercase font-bold text-muted-foreground">
           {label}
         </span>

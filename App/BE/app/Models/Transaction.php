@@ -6,7 +6,19 @@ use Illuminate\Database\Eloquent\Model;
 
 class Transaction extends Model
 {
-    protected $guarded = ['id'];
+  protected $fillable = [
+    'table_id',
+    'user_id',
+    'cashier_id',
+    'status',
+    'total_amount',
+    'payment_method',
+    'amount_paid',
+    'change_amount',
+    'order_source',
+    'transaction_date',
+    'paid_at',
+];
 
     public function details()
     {

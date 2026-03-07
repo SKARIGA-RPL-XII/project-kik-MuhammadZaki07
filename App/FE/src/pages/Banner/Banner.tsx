@@ -153,7 +153,7 @@ function Banner() {
               <AlertDialogTrigger asChild>
                 <Button
                   onClick={resetForm}
-                  className="flex items-center gap-2 bg-brand-500 hover:bg-brand-600 transition-all shadow-md shadow-brand-500/20"
+                  className="flex items-center gap-2 bg-red-500 hover:bg-red-600 transition-all shadow-md shadow-red-500/20"
                 >
                   <Plus size={18} />
                   <span>Create New Banner</span>
@@ -173,8 +173,8 @@ function Banner() {
                     {...getRootProps()}
                     className={`relative group border-2 border-dashed rounded-2xl transition-all flex flex-col items-center justify-center cursor-pointer min-h-[240px] overflow-hidden ${
                       isDragActive
-                        ? "border-brand-500 bg-brand-50/50 dark:bg-brand-500/5"
-                        : "border-gray-200 dark:border-gray-700 hover:border-brand-400 bg-gray-50/50 dark:bg-neutral-900/50"
+                        ? "border-red-500 bg-red-50/50 dark:bg-red-500/5"
+                        : "border-gray-200 dark:border-gray-700 hover:border-red-400 bg-gray-50/50 dark:bg-neutral-900/50"
                     }`}
                   >
                     <input {...getInputProps()} />
@@ -189,8 +189,8 @@ function Banner() {
                       </div>
                     ) : (
                       <div className="p-10 flex flex-col items-center text-center">
-                        <div className="w-16 h-16 bg-brand-50 dark:bg-brand-500/10 rounded-full flex items-center justify-center mb-4">
-                          <ImageIcon className="text-brand-500" size={28} />
+                        <div className="w-16 h-16 bg-red-50 dark:bg-red-500/10 rounded-full flex items-center justify-center mb-4">
+                          <ImageIcon className="text-red-500" size={28} />
                         </div>
                         <p className="text-gray-700 dark:text-gray-300 font-medium">Click to upload or drag and drop</p>
                         <p className="text-xs text-gray-500 mt-1">SVG, PNG, JPG or WEBP (Max. 2MB)</p>

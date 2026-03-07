@@ -293,7 +293,7 @@ export default function LayoutCanvas({
         <div className="absolute top-6 right-6 z-[60] flex flex-col border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 shadow-sm rounded-sm overflow-hidden">
           <button
             onClick={() => onRefresh()}
-            className="p-3 hover:bg-neutral-100 dark:hover:bg-neutral-800 text-brand-600 border-b border-neutral-200 dark:border-neutral-800 transition-colors"
+            className="p-3 hover:bg-neutral-100 dark:hover:bg-neutral-800 text-red-600 border-b border-neutral-200 dark:border-neutral-800 transition-colors"
           >
             <RefreshCw size={16} />
           </button>
@@ -369,7 +369,7 @@ export default function LayoutCanvas({
         <ActionGuard module="table & room" action="write">
           <button
             onClick={() => setIsEditMode(true)}
-            className="flex items-center gap-2 px-4 py-2 text-[13px] font-bold bg-brand-500 dark:bg-neutral-100 text-white dark:text-neutral-900 rounded-sm transition-all"
+            className="flex items-center gap-2 px-4 py-2 text-[13px] font-bold bg-red-500 dark:bg-neutral-100 text-white dark:text-neutral-900 rounded-sm transition-all"
           >
             <Edit3 size={14} /> Edit Plan
           </button>
@@ -437,7 +437,7 @@ export default function LayoutCanvas({
             "w-12 h-12 flex items-center justify-center transition-all rounded-sm shadow-sm",
             isSpeedDialOpen
               ? "bg-red-500 text-white rotate-45"
-              : "bg-brand-600 text-white hover:bg-brand-700",
+              : "bg-red-600 text-white hover:bg-red-700",
           )}
         >
           <Plus size={24} />

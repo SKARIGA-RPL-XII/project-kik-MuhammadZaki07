@@ -16,11 +16,26 @@ export interface CashPaymentPayload {
 }
 
 export class TransactionService {
+  static async getAll(params?: { order_source?: string }) {
+    try {
+      const res = await apiClient.get("/transactions", { params });
+      return {
+        data: res.data.data,
+        error: null,
+      };
+    } catch (err: any) {
+      return {
+        data: null,
+        error: err?.response?.data?.message || "Failed to fetch transactions",
+      };
+    }
+  }
+
   static async create(payload: CreateTransactionPayload) {
     try {
       const res = await apiClient.post("/transactions", payload);
       return {
-        data: res.data.data,
+        data: res.data,
         error: null,
       };
     } catch (err: any) {
@@ -47,6 +62,21 @@ export class TransactionService {
         error:
           err?.response?.data?.message ||
           "Failed to fetch transaction",
+      };
+    }
+  }
+
+  static async updateStatus(transactionId: number, status: string) {
+    try {
+      const res = await apiClient.patch(`/transactions/${transactionId}/status`, { status });
+      return {
+        data: res.data.data,
+        error: null,
+      };
+    } catch (err: any) {
+      return {
+        data: null,
+        error: err?.response?.data?.message || "Failed to update status",
       };
     }
   }

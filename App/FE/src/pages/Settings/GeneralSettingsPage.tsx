@@ -133,7 +133,7 @@ export default function GeneralSettingsPage() {
       <div className="w-full space-y-6">
         <PageMeta
           title="General Settings | Dashboard"
-          description="Manage your restaurant's identity and visual branding."
+          description="Manage your restaurant's identity and visual reding."
         />
 
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 border-b border-neutral-200 dark:border-neutral-800 pb-8">
@@ -142,7 +142,7 @@ export default function GeneralSettingsPage() {
               General Settings
             </h1>
             <p className="text-neutral-500 dark:text-neutral-400 text-sm mt-1">
-              Manage your restaurant's public information and visual branding.
+              Manage your restaurant's public information and visual reding.
             </p>
           </div>
 
@@ -158,7 +158,7 @@ export default function GeneralSettingsPage() {
               <Button
                 onClick={handleSubmit}
                 disabled={loading}
-                className="bg-brand-500 hover:bg-brand-700 text-white h-11 px-8 rounded-lg flex items-center gap-3"
+                className="bg-red-500 hover:bg-red-700 text-white h-11 px-8 rounded-lg flex items-center gap-3"
               >
                 {loading ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
@@ -179,7 +179,7 @@ export default function GeneralSettingsPage() {
           <Card className="border-neutral-200 dark:border-neutral-800 overflow-hidden shadow-none">
             <div className="p-6 border-b border-neutral-100 dark:border-neutral-800 bg-neutral-50/50 dark:bg-neutral-900/50">
               <div className="flex items-center gap-2">
-                <Palette className="h-4 w-4 text-brand-500" />
+                <Palette className="h-4 w-4 text-red-500" />
                 <h2 className="font-semibold text-neutral-800 dark:text-neutral-200">
                   Visual Identity
                 </h2>
@@ -195,7 +195,7 @@ export default function GeneralSettingsPage() {
                     </Label>
                   </div>
                   <div className="relative group w-full max-w-[240px]">
-                    <div className="aspect-[1/1] rounded-xl border-2 border-dashed border-neutral-300 dark:border-neutral-700 overflow-hidden bg-white flex items-center justify-center transition-all group-hover:border-brand-500">
+                    <div className="aspect-[1/1] rounded-xl border-2 border-dashed border-neutral-300 dark:border-neutral-700 overflow-hidden bg-white flex items-center justify-center transition-all group-hover:border-red-500">
                       {previewLight ? (
                         <img
                           src={previewLight}
@@ -226,7 +226,7 @@ export default function GeneralSettingsPage() {
                     </Label>
                   </div>
                   <div className="relative group w-full max-w-[240px]">
-                    <div className="aspect-[1/1] rounded-xl border-2 border-dashed border-neutral-700 overflow-hidden bg-neutral-900 flex items-center justify-center transition-all group-hover:border-brand-500">
+                    <div className="aspect-[1/1] rounded-xl border-2 border-dashed border-neutral-700 overflow-hidden bg-neutral-900 flex items-center justify-center transition-all group-hover:border-red-500">
                       {previewDark ? (
                         <img
                           src={previewDark}
@@ -259,7 +259,7 @@ export default function GeneralSettingsPage() {
           <Card className="border-neutral-200 dark:border-neutral-800 overflow-hidden shadow-none">
             <div className="p-6 border-b border-neutral-100 dark:border-neutral-800 bg-neutral-50/50 dark:bg-neutral-900/50">
               <div className="flex items-center gap-2">
-                <Store className="h-4 w-4 text-brand-500" />
+                <Store className="h-4 w-4 text-red-500" />
                 <h2 className="font-semibold text-neutral-800 dark:text-neutral-200">
                   Restaurant Information
                 </h2>
@@ -306,7 +306,7 @@ export default function GeneralSettingsPage() {
           <Card className="border-neutral-200 dark:border-neutral-800 shadow-sm overflow-hidden">
             <div className="p-6 border-b border-neutral-100 dark:border-neutral-800 bg-neutral-50/50 dark:bg-neutral-900/50">
               <div className="flex items-center gap-2">
-                <BellRing className="h-4 w-4 text-brand-500" />
+                <BellRing className="h-4 w-4 text-red-500" />
                 <h2 className="font-semibold text-neutral-800 dark:text-neutral-200">
                   System Notifications
                 </h2>

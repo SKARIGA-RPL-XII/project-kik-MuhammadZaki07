@@ -7,7 +7,9 @@ import {
   MonitorSmartphone,
   Package,
   Settings,
+  Square,
   UserSquare,
+  Utensils,
 } from "lucide-react";
 
 export type NavItem = {
@@ -47,6 +49,12 @@ export const navConfig = {
       icon: <MonitorSmartphone />,
       role: ["cashier"],
       path: "/cashier",
+    },
+    {
+      name: "Table",
+      icon: <Utensils />,
+      role: ["cashier"],
+      path: "/tables",
     },
     {
       name: "Account",

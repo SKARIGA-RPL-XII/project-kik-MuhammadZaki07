@@ -58,7 +58,7 @@ export function NavigationBar({
         <div className="relative flex-1 group">
           <Search
             className={`absolute left-4 top-1/2 -translate-y-1/2 transition-colors duration-200 ${
-              isFocused ? "text-brand-600" : "text-neutral-400"
+              isFocused ? "text-red-600" : "text-neutral-400"
             }`}
             size={16}
           />
@@ -68,7 +68,7 @@ export function NavigationBar({
             onChange={handleSearchChange}
             onFocus={() => setIsFocused(true)}
             onBlur={() => setIsFocused(false)}
-            className="w-full pl-10 pr-4 py-3.5 rounded-sm bg-neutral-50 border border-neutral-100 focus:bg-white focus:border-brand-500/30 focus:ring-4 focus:ring-brand-50 transition-all outline-none font-bold text-[11px] uppercase tracking-wider text-neutral-900 shadow-sm"
+            className="w-full pl-10 pr-4 py-3.5 rounded-sm bg-neutral-50 border border-neutral-100 focus:bg-white focus:border-red-500/30 focus:ring-4 focus:ring-red-50 transition-all outline-none  text-sm text-neutral-900 shadow-sm"
           />
         </div>
 
@@ -94,11 +94,11 @@ export function NavigationBar({
                 <m.div
                   layoutId="activeCategory"
                   transition={{ type: "spring", stiffness: 380, damping: 30 }}
-                  className="absolute inset-0 bg-brand-500 rounded-sm shadow-md shadow-neutral-200 z-0 will-change-transform"
+                  className="absolute inset-0 bg-red-500 rounded-sm shadow-md shadow-neutral-200 z-0 will-change-transform"
                 />
               )}
               <Icon size={14} className="relative z-10" />
-              <span className="relative z-10 font-medium text-[10px] uppercase tracking-widest">
+              <span className="relative z-10 font-normal text-sm">
                 {cat.name}
               </span>
             </button>

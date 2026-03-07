@@ -45,7 +45,7 @@ export default function CheckoutProcess({ isOpen, onClose }: { isOpen: boolean; 
                         <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-neutral-400">Checkout Progress</span>
                         <div className="flex gap-1 mt-1">
                             {['ORDER_TYPE', 'TABLE_SELECTION', 'PAYMENT', 'RECEIPT'].map((s) => (
-                                <div key={s} className={`h-1 w-6 rounded-full ${state.step === s ? 'bg-brand-600' : 'bg-neutral-100'}`} />
+                                <div key={s} className={`h-1 w-6 rounded-full ${state.step === s ? 'bg-red-600' : 'bg-neutral-100'}`} />
                             ))}
                         </div>
                     </div>
@@ -97,8 +97,8 @@ function StepOrderType({ onSelect }: { onSelect: (t: OrderType) => void }) {
                     { id: 'dine-in', label: 'Dine-In', icon: Utensils, desc: 'Eat at restaurant' },
                     { id: 'take-away', label: 'Take-Away', icon: ShoppingBag, desc: 'Pick up & go' }
                 ].map(opt => (
-                    <button key={opt.id} onClick={() => onSelect(opt.id as any)} className="flex flex-col gap-4 p-6 rounded-2xl border-2 border-neutral-100 hover:border-brand-600 hover:bg-brand-50/30 transition-all text-left group">
-                        <opt.icon className="text-neutral-400 group-hover:text-brand-600" size={32} />
+                    <button key={opt.id} onClick={() => onSelect(opt.id as any)} className="flex flex-col gap-4 p-6 rounded-2xl border-2 border-neutral-100 hover:border-red-600 hover:bg-red-50/30 transition-all text-left group">
+                        <opt.icon className="text-neutral-400 group-hover:text-red-600" size={32} />
                         <div>
                             <p className="font-bold text-neutral-900">{opt.label}</p>
                             <p className="text-xs text-neutral-500">{opt.desc}</p>
@@ -126,7 +126,7 @@ function StepTableSelection({ onSelect }: { onSelect: (id: string) => void }) {
                         disabled={t.status === 'occupied'}
                         onClick={() => onSelect(t.id)}
                         className={`h-14 flex items-center justify-center rounded-xl font-bold text-sm transition-all border-2
-              ${t.status === 'occupied' ? 'bg-neutral-50 border-neutral-100 text-neutral-300 cursor-not-allowed' : 'border-neutral-100 hover:border-brand-600 text-neutral-700'}
+              ${t.status === 'occupied' ? 'bg-neutral-50 border-neutral-100 text-neutral-300 cursor-not-allowed' : 'border-neutral-100 hover:border-red-600 text-neutral-700'}
             `}
                     >
                         {t.id}
@@ -145,9 +145,9 @@ function StepPayment({ onSelect }: { onSelect: (m: string) => void }) {
                 <p className="text-sm text-neutral-500">Choose how you would like to pay.</p>
             </div>
             {['E-Wallet (OVO/Gopay)', 'Credit Card', 'Pay at Cashier'].map(m => (
-                <button key={m} onClick={() => onSelect(m)} className="w-full flex items-center justify-between p-4 border border-neutral-100 rounded-xl hover:border-brand-600 transition-all group">
+                <button key={m} onClick={() => onSelect(m)} className="w-full flex items-center justify-between p-4 border border-neutral-100 rounded-xl hover:border-red-600 transition-all group">
                     <div className="flex items-center gap-4">
-                        <div className="p-2 bg-neutral-50 rounded-lg group-hover:bg-brand-50 text-neutral-400 group-hover:text-brand-600">
+                        <div className="p-2 bg-neutral-50 rounded-lg group-hover:bg-red-50 text-neutral-400 group-hover:text-red-600">
                             <CreditCard size={20} />
                         </div>
                         <span className="font-semibold text-neutral-700">{m}</span>

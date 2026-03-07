@@ -37,30 +37,102 @@ import SupplierPage from "./pages/Stock/SupplierPage";
 import MenuDetailPage from "./components/resto/MenuDetailPage";
 import OrderQueuePage from "./pages/Operations/OrderQueue";
 import CashierPage from "./pages/Cashier/Cashier";
+import TablePage from "./pages/Cashier/TablePage";
+import PaymentPage from "./pages/Cashier/PaymentPage";
+import InvoicePage from "./pages/Cashier/InvoicePage";
 
 export default function App() {
   return (
     <Router>
       <ScrollToTop />
       <Routes>
-        <Route element={<AuthMiddleware><AppLayout /></AuthMiddleware>}>
+        <Route
+          element={
+            <AuthMiddleware>
+              <AppLayout />
+            </AuthMiddleware>
+          }
+        >
           <Route path="/dashboard" element={<Home />} />
           <Route path="/profile" element={<UserProfiles />} />
           <Route path="/calendar" element={<Calendar />} />
-          <Route path="/cashier" element={<PermissionMiddleware module="cashier"><CashierPage /></PermissionMiddleware>} />
-          
+          <Route
+            path="/cashier"
+            element={
+              <PermissionMiddleware module="cashier">
+                <CashierPage />
+              </PermissionMiddleware>
+            }
+          />
+
           <Route path="/menu">
-            <Route index element={<PermissionMiddleware module="menu"><Menu /></PermissionMiddleware>} />
-            <Route path="create-menu" element={<PermissionMiddleware module="menu" action="write"><CreateMenu /></PermissionMiddleware>} />
-            <Route path="edit-menu/:id" element={<PermissionMiddleware module="menu" action="write"><EditMenu /></PermissionMiddleware>} />
+            <Route
+              index
+              element={
+                <PermissionMiddleware module="menu">
+                  <Menu />
+                </PermissionMiddleware>
+              }
+            />
+            <Route
+              path="create-menu"
+              element={
+                <PermissionMiddleware module="menu" action="write">
+                  <CreateMenu />
+                </PermissionMiddleware>
+              }
+            />
+            <Route
+              path="edit-menu/:id"
+              element={
+                <PermissionMiddleware module="menu" action="write">
+                  <EditMenu />
+                </PermissionMiddleware>
+              }
+            />
             <Route path="show/:id" element={<Show />} />
           </Route>
 
-          <Route path="/category" element={<PermissionMiddleware module="category"><Category /></PermissionMiddleware>} />
-          <Route path="/banner" element={<PermissionMiddleware module="banner"><Banner /></PermissionMiddleware>} />
-          <Route path="/discount" element={<PermissionMiddleware module="discount"><Discount /></PermissionMiddleware>} />
-          <Route path="/badge" element={<PermissionMiddleware module="badge"><Badge /></PermissionMiddleware>} />
-          <Route path="/table" element={<PermissionMiddleware module="table & room"><RestaurantLayoutPage /></PermissionMiddleware>} />
+          <Route
+            path="/category"
+            element={
+              <PermissionMiddleware module="category">
+                <Category />
+              </PermissionMiddleware>
+            }
+          />
+          <Route
+            path="/banner"
+            element={
+              <PermissionMiddleware module="banner">
+                <Banner />
+              </PermissionMiddleware>
+            }
+          />
+          <Route
+            path="/discount"
+            element={
+              <PermissionMiddleware module="discount">
+                <Discount />
+              </PermissionMiddleware>
+            }
+          />
+          <Route
+            path="/badge"
+            element={
+              <PermissionMiddleware module="badge">
+                <Badge />
+              </PermissionMiddleware>
+            }
+          />
+          <Route
+            path="/table"
+            element={
+              <PermissionMiddleware module="table & room">
+                <RestaurantLayoutPage />
+              </PermissionMiddleware>
+            }
+          />
 
           <Route path="/inventory">
             <Route path="stock" element={<StockPage />} />
@@ -72,8 +144,25 @@ export default function App() {
             <Route path="orders" element={<OrderQueuePage />} />
           </Route>
 
-          <Route path="/staf" element={<PermissionMiddleware module="staff"><Employe /></PermissionMiddleware>} />
-          <Route path="/admin" element={<PermissionMiddleware module="admin"><Admin /></PermissionMiddleware>} />
+          <Route path="/tables" element={<TablePage />} />
+          <Route path="/payment" element={<PaymentPage />} />
+
+          <Route
+            path="/staf"
+            element={
+              <PermissionMiddleware module="staff">
+                <Employe />
+              </PermissionMiddleware>
+            }
+          />
+          <Route
+            path="/admin"
+            element={
+              <PermissionMiddleware module="admin">
+                <Admin />
+              </PermissionMiddleware>
+            }
+          />
 
           <Route path="/notifications">
             <Route index element={<NotificationPage />} />
@@ -81,11 +170,46 @@ export default function App() {
           </Route>
 
           <Route path="/settings">
-            <Route path="general" element={<PermissionMiddleware module="general"><GeneralSettingsPage /></PermissionMiddleware>} />
-            <Route path="tax" element={<PermissionMiddleware module="tax & service"><TaxSettingsPage /></PermissionMiddleware>} />
-            <Route path="payment" element={<PermissionMiddleware module="payment methods"><PaymentSettingsPage /></PermissionMiddleware>} />
-            <Route path="roles" element={<PermissionMiddleware module="roles & permissions"><RolesPermissionsPage /></PermissionMiddleware>} />
-            <Route path="system" element={<PermissionMiddleware module="system config"><SystemConfigPage /></PermissionMiddleware>} />
+            <Route
+              path="general"
+              element={
+                <PermissionMiddleware module="general">
+                  <GeneralSettingsPage />
+                </PermissionMiddleware>
+              }
+            />
+            <Route
+              path="tax"
+              element={
+                <PermissionMiddleware module="tax & service">
+                  <TaxSettingsPage />
+                </PermissionMiddleware>
+              }
+            />
+            <Route
+              path="payment"
+              element={
+                <PermissionMiddleware module="payment methods">
+                  <PaymentSettingsPage />
+                </PermissionMiddleware>
+              }
+            />
+            <Route
+              path="roles"
+              element={
+                <PermissionMiddleware module="roles & permissions">
+                  <RolesPermissionsPage />
+                </PermissionMiddleware>
+              }
+            />
+            <Route
+              path="system"
+              element={
+                <PermissionMiddleware module="system config">
+                  <SystemConfigPage />
+                </PermissionMiddleware>
+              }
+            />
           </Route>
         </Route>
 
@@ -96,8 +220,12 @@ export default function App() {
 
         <Route path="/" element={<CustomerLayout />}>
           <Route index element={<CustomerPage />} />
-          <Route path="menu-detail-customer/:id" element={<MenuDetailPage />} />
+          <Route path="menu/:id" element={<MenuDetailPage />} />
         </Route>
+
+        <Route path="/tables" element={<TablePage />} />
+        <Route path="/payment" element={<PaymentPage />} />
+        <Route path="/invoice/:id" element={<InvoicePage />} />
 
         <Route path="/404" element={<NotFound />} />
         <Route path="*" element={<Navigate to="/404" replace />} />

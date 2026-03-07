@@ -19,13 +19,13 @@ const DropzoneComponent: React.FC = () => {
   });
   return (
     <ComponentCard title="Dropzone">
-      <div className="transition border border-neutral-300 border-dashed cursor-pointer dark:hover:border-brand-500 dark:border-neutral-700 rounded-xl hover:border-brand-500">
+      <div className="transition border border-neutral-300 border-dashed cursor-pointer dark:hover:border-red-500 dark:border-neutral-700 rounded-xl hover:border-red-500">
         <form
           {...getRootProps()}
           className={`dropzone rounded-xl   border-dashed border-neutral-300 p-7 lg:p-10
         ${
           isDragActive
-            ? "border-brand-500 bg-neutral-100 dark:bg-neutral-800"
+            ? "border-red-500 bg-neutral-100 dark:bg-neutral-800"
             : "border-neutral-300 bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-900"
         }
       `}
@@ -63,7 +63,7 @@ const DropzoneComponent: React.FC = () => {
               Drag and drop your PNG, JPG, WebP, SVG images here or browse
             </span>
 
-            <span className="font-medium underline text-theme-sm text-brand-500">
+            <span className="font-medium underline text-theme-sm text-red-500">
               Browse File
             </span>
           </div>

@@ -263,7 +263,7 @@ export default function SignUpForm() {
                 </div>
                 {/* <!-- Button --> */}
                 <div>
-                  <button className="flex items-center justify-center w-full px-4 py-3 text-sm font-medium text-white transition rounded-lg bg-brand-500 shadow-theme-xs hover:bg-brand-600">
+                  <button className="flex items-center justify-center w-full px-4 py-3 text-sm font-medium text-white transition rounded-lg bg-red-500 shadow-theme-xs hover:bg-red-600">
                     {loading ? "Sign Up..." : "Sign Up"}
                   </button>
                 </div>
@@ -275,7 +275,7 @@ export default function SignUpForm() {
                 Already have an account? {""}
                 <Link
                   to="/auth/sign-in"
-                  className="text-brand-500 hover:text-brand-600 dark:text-brand-400"
+                  className="text-red-500 hover:text-red-600 dark:text-red-400"
                 >
                   Sign In
                 </Link>

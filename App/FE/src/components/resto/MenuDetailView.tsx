@@ -122,7 +122,7 @@ export function MenuDetailView({ menu, isOpen, onClose, onAddToCart }: any) {
                               }
                               className={`px-5 py-2.5 rounded-sm border-2 text-xs font-semibold transition-all duration-300 ${
                                 isSelected
-                                  ? "border-brand-600 bg-brand-600 text-white shadow-md shadow-brand-100"
+                                  ? "border-red-600 bg-red-600 text-white shadow-md shadow-red-100"
                                   : "border-neutral-100 bg-white text-neutral-400 hover:border-neutral-200"
                               }`}
                             >
@@ -141,7 +141,7 @@ export function MenuDetailView({ menu, isOpen, onClose, onAddToCart }: any) {
                   <span className="text-xs font-bold text-neutral-400 uppercase tracking-widest">
                     Total Price
                   </span>
-                  <p className="text-2xl font-bold text-brand-600">
+                  <p className="text-2xl font-bold text-red-600">
                     Rp {(menu.price * quantity).toLocaleString("id-ID")}
                   </p>
                 </div>
@@ -150,7 +150,7 @@ export function MenuDetailView({ menu, isOpen, onClose, onAddToCart }: any) {
                   <div className="flex items-center bg-white rounded-sm border border-neutral-200">
                     <button
                       onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                      className="w-10 h-10 flex items-center justify-center text-neutral-400 hover:text-brand-600 transition-colors"
+                      className="w-10 h-10 flex items-center justify-center text-neutral-400 hover:text-red-600 transition-colors"
                     >
                       <Minus size={18} />
                     </button>
@@ -159,7 +159,7 @@ export function MenuDetailView({ menu, isOpen, onClose, onAddToCart }: any) {
                     </span>
                     <button
                       onClick={() => setQuantity(quantity + 1)}
-                      className="w-10 h-10 flex items-center justify-center text-neutral-400 hover:text-brand-600 transition-colors"
+                      className="w-10 h-10 flex items-center justify-center text-neutral-400 hover:text-red-600 transition-colors"
                     >
                       <Plus size={18} />
                     </button>

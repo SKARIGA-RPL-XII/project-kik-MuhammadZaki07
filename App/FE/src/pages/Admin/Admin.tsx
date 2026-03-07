@@ -367,7 +367,7 @@ function Admin() {
         <AlertDialogContent className="max-w-lg">
           <AlertDialogHeader>
             <div className="flex items-center gap-3 mb-2">
-              <div className="p-2 bg-brand-500/10 rounded-full text-brand-500">
+              <div className="p-2 bg-red-500/10 rounded-full text-red-500">
                 <FileSpreadsheet size={24} />
               </div>
               <AlertDialogTitle>Map CSV Columns</AlertDialogTitle>

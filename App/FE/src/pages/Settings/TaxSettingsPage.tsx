@@ -118,7 +118,7 @@ export default function TaxSettingsPage() {
       <div className="flex items-center gap-3">
         <ActionGuard module="tax & service" action="write">
           <Button
-            className="bg-brand-500 text-white hover:bg-brand-500 h-11 px-8 text-sm transition-all gap-3 rounded-lg"
+            className="bg-red-500 text-white hover:bg-red-500 h-11 px-8 text-sm transition-all gap-3 rounded-lg"
             onClick={handleSubmit}
             disabled={loading}
           >
@@ -143,7 +143,7 @@ export default function TaxSettingsPage() {
           <Card className="border-neutral-200 shadow-none dark:border-neutral-800 bg-white dark:bg-neutral-900 overflow-hidden">
             <div className="p-5 border-b border-neutral-100 dark:border-neutral-800 flex justify-between items-center bg-neutral-50/50 dark:bg-neutral-900/50">
               <div className="flex items-center gap-3">
-                <Receipt className="h-5 w-5 text-brand-500" />
+                <Receipt className="h-5 w-5 text-red-500" />
                 <span className="text-sm font-semibold text-muted-foreground dark:text-neutral-300">
                   Restaurant Tax
                 </span>
@@ -160,7 +160,7 @@ export default function TaxSettingsPage() {
                   }
                   className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
                     form.is_tax_active
-                      ? "bg-brand-500"
+                      ? "bg-red-500"
                       : "bg-neutral-200 dark:bg-neutral-800"
                   }`}
                 >
@@ -182,7 +182,7 @@ export default function TaxSettingsPage() {
                 <div
                   className={`flex items-center overflow-hidden rounded-lg border-2 transition-all ${
                     form.is_tax_active
-                      ? "border-neutral-200 dark:border-neutral-700 focus-within:border-brand-500"
+                      ? "border-neutral-200 dark:border-neutral-700 focus-within:border-red-500"
                       : "bg-neutral-50 dark:bg-neutral-800/50 opacity-50"
                   }`}
                 >
@@ -211,7 +211,7 @@ export default function TaxSettingsPage() {
           <Card className="shadow-none border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 overflow-hidden">
             <div className="p-5 border-b border-neutral-100 dark:border-neutral-800 flex justify-between items-center bg-neutral-50/50 dark:bg-neutral-900/50">
               <div className="flex items-center gap-3">
-                <HandCoins className="h-5 w-5 text-brand-500" />
+                <HandCoins className="h-5 w-5 text-red-500" />
                 <span className="text-sm font-semibold text-muted-foreground">
                   Service Charge
                 </span>
@@ -228,7 +228,7 @@ export default function TaxSettingsPage() {
                   }
                   className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
                     form.is_service_active
-                      ? "bg-brand-500"
+                      ? "bg-red-500"
                       : "bg-neutral-200 dark:bg-neutral-800"
                   }`}
                 >
@@ -249,7 +249,7 @@ export default function TaxSettingsPage() {
               <div
                 className={`flex items-center overflow-hidden rounded-lg border-2 transition-all ${
                   form.is_service_active
-                    ? "border-neutral-200 dark:border-neutral-700 focus-within:border-brand-500"
+                    ? "border-neutral-200 dark:border-neutral-700 focus-within:border-red-500"
                     : "bg-neutral-50 dark:bg-neutral-800/50 opacity-50"
                 }`}
               >
@@ -277,7 +277,7 @@ export default function TaxSettingsPage() {
 
         <div className="space-y-4">
           <div className="flex items-center gap-3 px-1">
-            <Calculator className="h-5 w-5 text-brand-500" />
+            <Calculator className="h-5 w-5 text-red-500" />
             <span className="text-sm font-semibold text-muted-foreground">
               Calculation Method
             </span>
@@ -306,8 +306,8 @@ export default function TaxSettingsPage() {
                   }
                   className={`p-5 rounded-sm border-2 transition-all cursor-pointer flex items-center justify-between ${
                     form.tax_type === item.id
-                      ? "border-brand-500 bg-brand-50 dark:bg-brand-500/10"
-                      : "border-neutral-200 dark:border-neutral-800 hover:border-brand-400 opacity-70 hover:opacity-100"
+                      ? "border-red-500 bg-red-50 dark:bg-red-500/10"
+                      : "border-neutral-200 dark:border-neutral-800 hover:border-red-400 opacity-70 hover:opacity-100"
                   }`}
                 >
                   <div className="space-y-1">
@@ -320,7 +320,7 @@ export default function TaxSettingsPage() {
                   </div>
 
                   {form.tax_type === item.id && (
-                    <Check className="h-5 w-5 text-brand-500 stroke-[3px]" />
+                    <Check className="h-5 w-5 text-red-500 stroke-[3px]" />
                   )}
                 </div>
               </ActionGuard>

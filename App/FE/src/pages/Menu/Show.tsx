@@ -164,7 +164,7 @@ function Show() {
                 <div className="space-y-6">
                   <div>
                     <h3 className="text-sm font-bold text-neutral-800 dark:text-white mb-2 flex items-center gap-2">
-                      <Info size={16} className="text-brand-500" />
+                      <Info size={16} className="text-red-500" />
                       About this menu
                     </h3>
                     <p className="text-neutral-500 dark:text-neutral-400 leading-relaxed text-sm">
@@ -176,7 +176,7 @@ function Show() {
                   {menu.stocks && menu.stocks.length > 0 && (
                     <div className="pt-6 border-t border-neutral-100 dark:border-neutral-800">
                       <h3 className="text-sm font-bold text-neutral-800 dark:text-white mb-4 flex items-center gap-2">
-                        <Package size={16} className="text-brand-500" />
+                        <Package size={16} className="text-red-500" />
                         Ingredient Usage
                       </h3>
                       <div className="flex flex-wrap gap-2">
@@ -200,7 +200,7 @@ function Show() {
                   {menu.attributes && menu.attributes.length > 0 && (
                     <div className="pt-6 border-t border-neutral-100 dark:border-neutral-800">
                       <h3 className="text-sm font-bold text-neutral-800 dark:text-white mb-4 flex items-center gap-2">
-                        <Layers size={16} className="text-brand-500" />
+                        <Layers size={16} className="text-red-500" />
                         Available Variations
                       </h3>
                       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
@@ -220,9 +220,9 @@ function Show() {
                           return (
                             <div
                               key={attrName}
-                              className="p-3 rounded-2xl bg-brand-50/50 dark:bg-brand-500/5 border border-brand-100/50 dark:border-brand-500/10"
+                              className="p-3 rounded-2xl bg-red-50/50 dark:bg-red-500/5 border border-red-100/50 dark:border-red-500/10"
                             >
-                              <p className="text-[10px] uppercase text-brand-600 dark:text-brand-400 font-bold mb-1">
+                              <p className="text-[10px] uppercase text-red-600 dark:text-red-400 font-bold mb-1">
                                 {attrName}
                               </p>
                               <div className="flex flex-wrap gap-1">

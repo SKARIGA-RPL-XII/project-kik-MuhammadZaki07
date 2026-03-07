@@ -157,7 +157,7 @@ export function ModalCreateRoom({
           <button
             onClick={handleCreate}
             disabled={isLoading}
-            className="w-40 h-10 bg-brand-600 hover:bg-brand-700 text-white rounded-lg flex items-center justify-center gap-2 border-none disabled:opacity-70 disabled:cursor-not-allowed"
+            className="w-40 h-10 bg-red-600 hover:bg-red-700 text-white rounded-lg flex items-center justify-center gap-2 border-none disabled:opacity-70 disabled:cursor-not-allowed"
           >
             {isLoading ? <LoadingSpinner /> : <>Build Room</>}
           </button>

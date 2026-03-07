@@ -66,8 +66,8 @@ export function OrderMonitor({ orders, selectedOrder, onSelectOrder }: OrderMoni
               onClick={() => setActiveFilter(chip.value)}
               className={`px-3 py-1 rounded-full text-xs font-semibold transition-all flex items-center gap-1 ${
                 activeFilter === chip.value
-                  ? 'bg-brand-50 text-brand-500'
-                  : 'bg-secondary/50 text-brand-500/80 border border-border/40 hover:border-brand-500/40'
+                  ? 'bg-red-50 text-red-500'
+                  : 'bg-secondary/50 text-red-500/80 border border-border/40 hover:border-red-500/40'
               }`}
             >
               <Filter className="w-3 h-3" />

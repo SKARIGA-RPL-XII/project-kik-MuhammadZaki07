@@ -29,11 +29,11 @@ export function Header({ tableId = "Table 12" }: HeaderProps) {
               />
             </div>
             <div className="flex flex-col">
-              <h1 className="font-black text-brand-600 text-base uppercase tracking-tight leading-none mb-1">
+              <h1 className="font-black text-red-600 text-base uppercase tracking-tight leading-none mb-1">
                 {settings?.store_name}
               </h1>
               <div className="flex items-center gap-1 text-neutral-400">
-                <MapPin size={10} className="text-brand-500" />
+                <MapPin size={10} className="text-red-500" />
                 <span className="text-[10px] font-medium tracking-tight truncate max-w-[150px]">
                   {settings?.address}
                 </span>
@@ -45,10 +45,10 @@ export function Header({ tableId = "Table 12" }: HeaderProps) {
             <div className="hidden lg:block bg-neutral-50 px-4 py-2 rounded-xl border border-neutral-100">
               <div className="flex items-center gap-3">
                 <div className="flex h-1.5 w-1.5 relative">
-                  <span className="animate-ping absolute h-full w-full rounded-full bg-brand-400 opacity-75"></span>
-                  <span className="relative h-full w-full rounded-full bg-brand-600"></span>
+                  <span className="animate-ping absolute h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                  <span className="relative h-full w-full rounded-full bg-red-600"></span>
                 </div>
-                <span className="text-[11px] font-black uppercase tracking-widest text-brand-600">
+                <span className="text-[11px] font-black uppercase tracking-widest text-red-600">
                   {tableId}
                 </span>
               </div>
@@ -58,7 +58,7 @@ export function Header({ tableId = "Table 12" }: HeaderProps) {
           <div className="flex items-center gap-1">
             <button className="p-2.5 rounded-xl hover:bg-neutral-50 text-neutral-400 transition-colors relative">
               <Bell size={18} />
-              <span className="absolute top-3 right-3 w-1.5 h-1.5 bg-brand-600 rounded-full" />
+              <span className="absolute top-3 right-3 w-1.5 h-1.5 bg-red-600 rounded-full" />
             </button>
             <div className="w-[1px] h-4 bg-neutral-100 mx-2" />
             <button

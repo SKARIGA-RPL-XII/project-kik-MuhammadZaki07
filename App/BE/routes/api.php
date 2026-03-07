@@ -152,13 +152,17 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
 */
 
 
-Route::resource('transactions', TransactionController::class);
+Route::middleware('auth:sanctum')->group(function () {
+    Route::resource('transactions', TransactionController::class);
+    Route::patch('/transactions/{id}/status', [TransactionController::class, 'updateStatus']);
+    Route::post('/cashier/checkout', [TransactionController::class, 'store']);
+});
+
 Route::get('tables', [TableController::class, 'index']);
 Route::get('tables/{table}', [TableController::class, 'show']);
 Route::get('rooms', [RoomController::class, 'index']);
 Route::get('rooms/{id}', [RoomController::class, 'show']);
-Broadcast::routes(['middleware' => ['auth:sanctum']]);
-Route::post('/public/checkout', [TransactionController::class, 'store']);
-Route::middleware('auth:sanctum')->post('/cashier/checkout', [TransactionController::class, 'store']);
-Route::post('/midtrans/callback', [MidtransWebhookController::class, 'callback']);
 Route::get('/settings', [SettingController::class, 'index']);
+
+Broadcast::routes(['middleware' => ['auth:sanctum']]);
+Route::post('/midtrans/callback', [MidtransWebhookController::class, 'callback']);

@@ -98,7 +98,7 @@ export function AIAssistant({ onDisappear , isCartOpen }: AIAssistantProps) {
             <motion.div
               animate={{ y: [0, -5, 0] }}
               transition={{ repeat: Infinity, duration: 2 }}
-              className="absolute -top-15 right-0 px-3 py-2 bg-brand-600 text-white text-xs rounded-full flex items-center gap-2 shadow-lg"
+              className="absolute -top-15 right-0 px-3 py-2 bg-red-600 text-white text-xs rounded-full flex items-center gap-2 shadow-lg"
             >
               <h1 className='font-bold text-white text-xl'>AI</h1>
               <span className="font-semibold">Thinking...</span>
@@ -111,12 +111,12 @@ export function AIAssistant({ onDisappear , isCartOpen }: AIAssistantProps) {
                 setIsOpen(true)
                 window.navigator?.vibrate?.(50)
               }}
-              className="relative w-16 h-16 rounded-full bg-gradient-to-br from-brand-600 to-brand-700 text-white shadow-xl flex items-center justify-center"
+              className="relative w-16 h-16 rounded-full bg-gradient-to-br from-red-600 to-red-700 text-white shadow-xl flex items-center justify-center"
             >
               <motion.div
                 animate={{ scale: [1, 1.2, 1] }}
                 transition={{ repeat: Infinity, duration: 2 }}
-                className="absolute inset-0 rounded-full border-2 border-brand-400 opacity-50"
+                className="absolute inset-0 rounded-full border-2 border-red-400 opacity-50"
               />
               <MessageCircle className="w-7 h-7" />
             </motion.button>
@@ -142,7 +142,7 @@ export function AIAssistant({ onDisappear , isCartOpen }: AIAssistantProps) {
               transition={{ type: 'spring', damping: 20 }}
               className={`fixed ${isCartOpen ? "fixed bottom-10 right-110 z-20" : "fixed bottom-10 right-9 z-20"} z-50 w-96 max-w-full h-[600px] bg-white rounded-3xl shadow-2xl flex flex-col overflow-hidden`}
             >
-              <div className="bg-gradient-to-r from-brand-600 to-brand-700 text-white p-4 flex items-center justify-between">
+              <div className="bg-gradient-to-r from-red-600 to-red-700 text-white p-4 flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
                     <Bot className="w-6 h-6" />
@@ -173,7 +173,7 @@ export function AIAssistant({ onDisappear , isCartOpen }: AIAssistantProps) {
                     <div
                       className={`max-w-xs px-4 py-3 rounded-2xl ${
                         message.role === 'user'
-                          ? 'bg-gradient-to-br from-brand-600 to-brand-700 text-white'
+                          ? 'bg-gradient-to-br from-red-600 to-red-700 text-white'
                           : 'bg-slate-100 text-slate-900'
                       }`}
                     >
@@ -221,7 +221,7 @@ export function AIAssistant({ onDisappear , isCartOpen }: AIAssistantProps) {
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
                         onClick={() => handleQuickAction(action.id)}
-                        className="p-2 rounded-lg bg-white border border-slate-200 hover:bg-brand-50 hover:border-brand-300 transition-all text-left"
+                        className="p-2 rounded-lg bg-white border border-slate-200 hover:bg-red-50 hover:border-red-300 transition-all text-left"
                       >
                         <span className="text-lg block mb-1">{action.emoji}</span>
                         <span className="text-xs font-semibold text-slate-900 line-clamp-2">
@@ -246,14 +246,14 @@ export function AIAssistant({ onDisappear , isCartOpen }: AIAssistantProps) {
                         handleSendMessage()
                       }
                     }}
-                    className="flex-1 px-4 py-2 rounded-full border border-slate-200 focus:border-brand-600 focus:outline-none text-sm"
+                    className="flex-1 px-4 py-2 rounded-full border border-slate-200 focus:border-red-600 focus:outline-none text-sm"
                   />
                   <motion.button
                     whileHover={{ scale: 1.1 }}
                     whileTap={{ scale: 0.95 }}
                     onClick={handleSendMessage}
                     disabled={!inputValue.trim()}
-                    className="p-2 rounded-full bg-brand-600 text-white hover:bg-brand-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="p-2 rounded-full bg-red-600 text-white hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <Send className="w-5 h-5" />
                   </motion.button>

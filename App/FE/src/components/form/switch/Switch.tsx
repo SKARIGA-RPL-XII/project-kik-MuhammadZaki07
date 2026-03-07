@@ -24,7 +24,7 @@ const Switch: React.FC<SwitchProps> = ({
     color === "blue"
       ? {
           background: checked
-            ? "bg-brand-500"
+            ? "bg-red-500"
             : "bg-neutral-200 dark:bg-white/10",
           knob: checked
             ? "translate-x-full bg-white"

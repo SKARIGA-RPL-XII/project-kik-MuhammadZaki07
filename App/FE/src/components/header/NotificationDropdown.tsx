@@ -175,7 +175,7 @@ export default function NotificationDropdown() {
                     href={getDownloadUrl(selectedNotif)} 
                     target="_blank"
                     rel="noreferrer"
-                    className="inline-flex items-center gap-2 px-4 py-2 bg-brand-500 text-white rounded-lg text-sm hover:bg-brand-600 transition"
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-red-500 text-white rounded-lg text-sm hover:bg-red-600 transition"
                   >
                     <Download size={16} /> Download
                   </a>
@@ -195,7 +195,7 @@ export default function NotificationDropdown() {
                   <div 
                     onClick={() => handleShowDetail(n)}
                     className={`flex gap-3 rounded p-3 cursor-pointer transition-all border-b border-neutral-5 dark:border-neutral-800 
-                      ${!n.read_at ? 'bg-brand-500/[0.04]' : 'hover:bg-neutral-50 dark:hover:bg-white/5'}`}
+                      ${!n.read_at ? 'bg-red-500/[0.04]' : 'hover:bg-neutral-50 dark:hover:bg-white/5'}`}
                   >
                     <img src={n.user_avatar || "/notification.png"} className="w-10 h-10 rounded-full object-cover" alt="" />
                     <div className="flex-grow pr-10">

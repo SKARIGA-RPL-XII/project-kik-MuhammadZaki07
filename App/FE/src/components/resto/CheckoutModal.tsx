@@ -74,27 +74,27 @@ export function CheckoutModal({ isOpen, onClose, onConfirm }: CheckoutModalProps
                       onClick={() => setMethod(opt.id as any)}
                       className={`relative w-full flex items-center p-4 rounded-xl border-2 transition-all duration-200 text-left ${
                         isActive 
-                          ? 'border-brand-600 bg-brand-50/30' 
+                          ? 'border-red-600 bg-red-50/30' 
                           : 'border-neutral-100 bg-white hover:border-neutral-200'
                       }`}
                     >
                       <div className={`flex h-12 w-12 items-center justify-center rounded-lg border ${
                         isActive 
-                          ? 'bg-brand-600 border-brand-600 text-white' 
+                          ? 'bg-red-600 border-red-600 text-white' 
                           : 'bg-neutral-50 border-neutral-100 text-neutral-500'
                       }`}>
                         <opt.icon size={24} />
                       </div>
                       
                       <div className="ml-4 flex-1">
-                        <p className={`text-sm font-bold ${isActive ? 'text-brand-900' : 'text-neutral-900'}`}>
+                        <p className={`text-sm font-bold ${isActive ? 'text-red-900' : 'text-neutral-900'}`}>
                           {opt.title}
                         </p>
                         <p className="text-xs text-neutral-500">{opt.description}</p>
                       </div>
 
                       <div className={`flex h-5 w-5 items-center justify-center rounded-full border transition-colors ${
-                        isActive ? 'bg-brand-600 border-brand-600 text-white' : 'border-neutral-300 bg-white'
+                        isActive ? 'bg-red-600 border-red-600 text-white' : 'border-neutral-300 bg-white'
                       }`}>
                         {isActive && <Check size={12} strokeWidth={4} />}
                       </div>

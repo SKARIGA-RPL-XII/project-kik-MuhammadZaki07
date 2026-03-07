@@ -76,7 +76,7 @@ export default function TableFormDialog({ open, data, onClose, onSuccess }) {
 
           <div className="flex gap-3 pt-4">
             <AlertDialogCancel className="flex-1 rounded-xl">Cancel</AlertDialogCancel>
-            <Button onClick={handleSubmit} disabled={loading} className="flex-[2] rounded-xl bg-brand-500">
+            <Button onClick={handleSubmit} disabled={loading} className="flex-[2] rounded-xl bg-red-500">
               {loading ? "Saving..." : "Apply Changes"}
             </Button>
           </div>

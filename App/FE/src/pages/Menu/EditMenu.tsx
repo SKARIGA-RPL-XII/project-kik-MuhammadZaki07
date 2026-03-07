@@ -479,7 +479,7 @@ const handleSubmit = async () => {
                     key={attr.id}
                     className={`flex items-center gap-2 px-4 py-2 rounded-sm border cursor-pointer transition-all ${
                       activeAttributes.includes(attr.id)
-                        ? "border-brand-500 bg-brand-50 dark:bg-brand-500/10 text-brand-600 shadow-sm"
+                        ? "border-red-500 bg-red-50 dark:bg-red-500/10 text-red-600 shadow-sm"
                         : "border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500"
                     }`}
                   >
@@ -490,7 +490,7 @@ const handleSubmit = async () => {
                       onChange={() => toggleAttribute(attr.id)}
                     />
                     <span
-                      className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${activeAttributes.includes(attr.id) ? "border-brand-500 bg-brand-500" : "border-gray-300"}`}
+                      className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${activeAttributes.includes(attr.id) ? "border-red-500 bg-red-500" : "border-gray-300"}`}
                     >
                       {activeAttributes.includes(attr.id) && (
                         <div className="w-1.5 h-1.5 bg-white rounded-full" />
@@ -512,7 +512,7 @@ const handleSubmit = async () => {
                       className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg p-5 animate-in fade-in slide-in-from-top-2"
                     >
                       <div className="flex items-center gap-2 mb-4">
-                        <div className="w-1.5 h-4 bg-brand-500 rounded-full" />
+                        <div className="w-1.5 h-4 bg-red-500 rounded-full" />
                         <p className="font-bold text-gray-800 dark:text-white uppercase tracking-wider text-xs">
                           {attr.name} Options
                         </p>
@@ -525,7 +525,7 @@ const handleSubmit = async () => {
                             onClick={() => toggleLevel(attr.id, level.id)}
                             className={`px-4 py-2 rounded-sm text-xs transition-all duration-300 ${
                               selectedLevels[attr.id]?.includes(level.id)
-                                ? "bg-brand-500 text-white scale-105 ring-1 ring-brand-500 ring-offset-2 dark:ring-offset-gray-900"
+                                ? "bg-red-500 text-white scale-105 ring-1 ring-red-500 ring-offset-2 dark:ring-offset-gray-900"
                                 : "bg-gray-100 dark:bg-gray-800 text-gray-500 hover:bg-gray-200 dark:hover:bg-gray-700"
                             }`}
                           >

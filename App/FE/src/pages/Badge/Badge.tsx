@@ -189,7 +189,7 @@ export default function BadgePage() {
                     />
                     <div
                       onClick={() => fileInputRef.current?.click()}
-                      className="border-2 border-dashed rounded-lg p-6 text-center cursor-pointer hover:border-brand-500 transition"
+                      className="border-2 border-dashed rounded-lg p-6 text-center cursor-pointer hover:border-red-500 transition"
                     >
                       {preview ? (
                         <img

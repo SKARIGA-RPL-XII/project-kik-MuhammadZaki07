@@ -152,7 +152,7 @@ export default function PaymentSettingsPage() {
           <Button
             onClick={handleSubmit}
             disabled={loading}
-            className="bg-brand-500 hover:bg-brand-700 text-white h-11 px-8 text-sm transition-all gap-3 rounded-lg shadow-sm"
+            className="bg-red-500 hover:bg-red-700 text-white h-11 px-8 text-sm transition-all gap-3 rounded-lg shadow-sm"
           >
             {loading ? (
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -181,7 +181,7 @@ export default function PaymentSettingsPage() {
             onOpenChange={setIsAddDialogOpen}
           >
             <AlertDialogTrigger asChild>
-              <button className="flex items-center gap-2 text-sm font-bold text-brand-500 hover:text-brand-700 transition-colors">
+              <button className="flex items-center gap-2 text-sm font-bold text-red-500 hover:text-red-700 transition-colors">
                 <Plus className="h-4 w-4" />
                 Add New Method
               </button>
@@ -200,7 +200,7 @@ export default function PaymentSettingsPage() {
                   placeholder="e.g. ShopeePay, Bank Transfer"
                   value={newMethodName}
                   onChange={(e) => setNewMethodName(e.target.value)}
-                  className="h-11 bg-neutral-50 dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800 text-sm font-medium rounded-lg focus-visible:ring-1 focus-visible:ring-brand-500"
+                  className="h-11 bg-neutral-50 dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800 text-sm font-medium rounded-lg focus-visible:ring-1 focus-visible:ring-red-500"
                 />
               </div>
               <AlertDialogFooter className="gap-2">
@@ -215,7 +215,7 @@ export default function PaymentSettingsPage() {
                     e.preventDefault();
                     handleAddMethod();
                   }}
-                  className="bg-brand-500 hover:bg-brand-700 text-white text-xs font-bold rounded-lg"
+                  className="bg-red-500 hover:bg-red-700 text-white text-xs font-bold rounded-lg"
                 >
                   Confirm
                 </Button>
@@ -240,7 +240,7 @@ export default function PaymentSettingsPage() {
                 <div
                   className={`w-12 h-12 flex justify-center items-center rounded-full ${
                     method.active 
-                      ? "bg-brand-50 text-brand-500 dark:bg-brand-500/10" 
+                      ? "bg-red-50 text-red-500 dark:bg-red-500/10" 
                       : "bg-neutral-200 dark:bg-neutral-800 text-neutral-400"
                   }`}
                 >
@@ -286,7 +286,7 @@ export default function PaymentSettingsPage() {
                   <button
                     onClick={() => handleToggle(method.id)}
                     className={`w-10 h-5 rounded-full transition-all duration-300 relative ${
-                      method.active ? "bg-brand-500" : "bg-neutral-300 dark:bg-neutral-700"
+                      method.active ? "bg-red-500" : "bg-neutral-300 dark:bg-neutral-700"
                     }`}
                   >
                     <div

@@ -65,7 +65,7 @@ export function CartSummary({
         >
           <div
             onClick={onToggle}
-            className="w-full max-w-lg bg-brand-500 drop-shadow-2xl rounded-full px-4 py-2.5 flex items-center justify-between cursor-pointer hover:scale-[1.02] active:scale-[0.98] transition-all duration-300"
+            className="w-full max-w-lg bg-red-500 drop-shadow-2xl rounded-full px-4 py-2.5 flex items-center justify-between cursor-pointer hover:scale-[1.02] active:scale-[0.98] transition-all duration-300"
           >
             <div className="flex items-center gap-4 ml-2">
               <div className="flex items-center -space-x-3">
@@ -197,7 +197,7 @@ CartSummary.SidebarContent = function SidebarContent({
                             (attr: any, idx: number) => (
                               <span
                                 key={idx}
-                                className="text-[9px] font-bold text-brand-500 bg-brand-50 px-1.5 py-0.5 rounded-md uppercase tracking-tighter"
+                                className="text-[9px] font-bold text-red-500 bg-red-50 px-1.5 py-0.5 rounded-md uppercase tracking-tighter"
                               >
                                 {attr.name || attr}
                               </span>
@@ -220,7 +220,7 @@ CartSummary.SidebarContent = function SidebarContent({
                       onClick={() =>
                         onUpdateQuantity?.(ci.key, ci.quantity - 1)
                       }
-                      className="w-7 h-7 flex items-center justify-center rounded-lg bg-white text-neutral-600 hover:text-brand-600 transition-all active:scale-90"
+                      className="w-7 h-7 flex items-center justify-center rounded-lg bg-white text-neutral-600 hover:text-red-600 transition-all active:scale-90"
                     >
                       <Minus size={10} strokeWidth={3} />
                     </button>
@@ -231,7 +231,7 @@ CartSummary.SidebarContent = function SidebarContent({
                       onClick={() =>
                         onUpdateQuantity?.(ci.key, ci.quantity + 1)
                       }
-                      className="w-7 h-7 flex items-center justify-center rounded-lg bg-white text-neutral-600 hover:text-brand-600 transition-all active:scale-90"
+                      className="w-7 h-7 flex items-center justify-center rounded-lg bg-white text-neutral-600 hover:text-red-600 transition-all active:scale-90"
                     >
                       <Plus size={10} strokeWidth={3} />
                     </button>
@@ -279,7 +279,7 @@ CartSummary.SidebarContent = function SidebarContent({
               Total Bill
             </span>
             <div className="flex flex-col items-end">
-              <span className="text-3xl font-black text-brand-600 tracking-tighter">
+              <span className="text-3xl font-black text-red-600 tracking-tighter">
                 {currency} {total.toLocaleString("id-ID")}
               </span>
               <span className="text-xs text-neutral-400 font-bold uppercase leading-none mt-1">

@@ -2,8 +2,6 @@ import { motion } from "framer-motion";
 import { Star, Zap, Plus } from "lucide-react";
 import { useNavigate } from "react-router";
 
-// ... (Interface MenuItem & MenuCardProps tetap sama)
-
 export function MenuCard({ item, onOpenDetail }: MenuCardProps) {
   const navigate = useNavigate();
   
@@ -17,8 +15,8 @@ export function MenuCard({ item, onOpenDetail }: MenuCardProps) {
       initial={{ opacity: 0, y: 10 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
-      onClick={() => navigate(`/menu-detail-customer/${item.id}`)}
-      className="group relative flex flex-col bg-white rounded-2xl border border-neutral-100 transition-all duration-300 cursor-pointer overflow-hidden hover:border-brand-200"
+      onClick={() => navigate(`/menu/${item.id}`)}
+      className="group relative flex flex-col bg-white rounded-2xl border border-neutral-100 transition-all duration-300 cursor-pointer overflow-hidden hover:border-red-200"
     >
       <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-[radial-gradient(#000_1px,transparent_1px)] [background-size:16px_16px]" />
       <div className="relative aspect-[5/4] overflow-hidden bg-neutral-50 border-b border-neutral-50">
@@ -45,7 +43,7 @@ export function MenuCard({ item, onOpenDetail }: MenuCardProps) {
 
       <div className="flex flex-col p-3.5 relative z-10">
         <div className="flex justify-between items-center mb-1">
-          <span className="text-[10px] font-black text-brand-600 uppercase">
+          <span className="text-[10px] font-black text-red-600 uppercase">
             {item.category?.name}
           </span>
           {item.is_best_seller && (
@@ -56,7 +54,7 @@ export function MenuCard({ item, onOpenDetail }: MenuCardProps) {
           )}
         </div>
 
-        <h3 className="font-bold text-neutral-900 text-lg line-clamp-1 mb-1 group-hover:text-brand-600 transition-colors">
+        <h3 className="font-bold text-neutral-900 text-lg line-clamp-1 mb-1 group-hover:text-red-600 transition-colors">
           {item.name}
         </h3>
 
@@ -82,7 +80,7 @@ export function MenuCard({ item, onOpenDetail }: MenuCardProps) {
               e.stopPropagation();
               onOpenDetail(item);
             }}
-            className="flex items-center justify-center bg-brand-500 text-white w-8 h-8 rounded-full shadow-lg shadow-neutral-200 group-hover:bg-brand-600 transition-colors"
+            className="flex items-center justify-center bg-red-500 text-white w-8 h-8 rounded-full shadow-lg shadow-neutral-200 group-hover:bg-red-600 transition-colors"
           >
             <Plus size={16} strokeWidth={3} />
           </motion.button>

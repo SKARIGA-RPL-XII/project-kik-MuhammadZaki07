@@ -34,11 +34,11 @@ export function CustomerProfileModal({
                 <X size={20} />
               </button>
 
-              <div className="absolute -bottom-12 -right-12 w-48 h-48 bg-brand-500/20 rounded-full blur-3xl" />
+              <div className="absolute -bottom-12 -right-12 w-48 h-48 bg-red-500/20 rounded-full blur-3xl" />
 
               <div className="relative flex flex-col items-center">
                 <div className="relative group cursor-pointer">
-                  <div className="w-24 h-24 rounded-[32px] bg-brand-500 border-4 border-white/10 flex items-center justify-center shadow-2xl overflow-hidden mb-4">
+                  <div className="w-24 h-24 rounded-[32px] bg-red-500 border-4 border-white/10 flex items-center justify-center shadow-2xl overflow-hidden mb-4">
                     <img
                       src="https://ui-avatars.com/api/?name=Alex+Graham&background=0D0D0D&color=fff"
                       alt="Avatar"
@@ -50,7 +50,7 @@ export function CustomerProfileModal({
                 </div>
                 <h2 className="text-2xl font-black text-white">Alex Graham</h2>
                 <div className="flex items-center gap-2 mt-1">
-                  <span className="bg-brand-500 text-[10px] font-black text-white px-2 py-0.5 rounded-full uppercase tracking-widest">
+                  <span className="bg-red-500 text-[10px] font-black text-white px-2 py-0.5 rounded-full uppercase tracking-widest">
                     Gold Member
                   </span>
                 </div>
@@ -66,7 +66,7 @@ export function CustomerProfileModal({
                 </span>
               </div>
               <div className="bg-white rounded-2xl shadow-xl p-4 flex flex-col items-center border border-neutral-100 min-w-[100px]">
-                <span className="text-xl font-black text-brand-600">850</span>
+                <span className="text-xl font-black text-red-600">850</span>
                 <span className="text-[10px] text-neutral-400 font-bold uppercase tracking-tighter">
                   Points
                 </span>
@@ -118,13 +118,13 @@ export function CustomerProfileModal({
                     <div className="flex items-center gap-3">
                       <History
                         size={18}
-                        className="text-neutral-400 group-hover:text-brand-600"
+                        className="text-neutral-400 group-hover:text-red-600"
                       />
                       <span className="text-sm font-bold text-neutral-900">
                         Order History
                       </span>
                     </div>
-                    <Award size={14} className="text-brand-500" />
+                    <Award size={14} className="text-red-500" />
                   </button>
                   <button className="w-full flex items-center justify-between p-4 rounded-2xl text-rose-500 hover:bg-rose-50 transition-colors group">
                     <div className="flex items-center gap-3">

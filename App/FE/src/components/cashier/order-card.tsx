@@ -48,8 +48,8 @@ export function OrderCard({ order, onSelect, isSelected }: OrderCardProps) {
       onClick={() => onSelect(order)}
       className={`w-full p-4 rounded-lg border-2 transition-all text-left ${
         isSelected
-          ? 'bg-brand-50/50 border-primary/60 shadow-lg shadow-primary/20'
-          : 'bg-card border-border/40 hover:border-brand-500/40'
+          ? 'bg-red-50/50 border-primary/60 shadow-lg shadow-primary/20'
+          : 'bg-card border-border/40 hover:border-red-500/40'
       } ${order.isHighPriority ? 'ring-2 ring-destructive/50' : ''}`}
     >
       {/* Header */}

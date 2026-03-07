@@ -28,7 +28,7 @@ const Select: React.FC<SelectProps> = ({
         error
           ? "border-error-500 focus:border-error-300 focus:ring-error-500/20"
           : "border-neutral-300"
-      } bg-transparent px-4 py-2.5 pr-11 text-sm shadow-theme-xs focus:border-brand-300 focus:outline-none focus:ring-3 focus:ring-brand-500/10 dark:border-neutral-700 dark:bg-neutral-900 dark:text-white/90 ${
+      } bg-transparent px-4 py-2.5 pr-11 text-sm shadow-theme-xs focus:border-red-300 focus:outline-none focus:ring-3 focus:ring-red-500/10 dark:border-neutral-700 dark:bg-neutral-900 dark:text-white/90 ${
         value ? "text-neutral-800 dark:text-white/90" : "text-neutral-400"
       } ${className}`}
       value={value}

@@ -183,7 +183,7 @@ export default function RolesPermissionsPage() {
           <Button
             onClick={handleSave}
             disabled={loading}
-            className="bg-brand-500 h-11 px-8 gap-3"
+            className="bg-red-500 h-11 px-8 gap-3"
           >
             {loading ? (
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -206,7 +206,7 @@ export default function RolesPermissionsPage() {
             onClick={() => setActiveRole(role)}
             className={`w-full flex items-center gap-4 px-4 py-3 rounded-xl border transition-all ${
               activeRole === role
-                ? "bg-white dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800 text-brand-500 "
+                ? "bg-white dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800 text-red-500 "
                 : "border-transparent text-neutral-500"
             }`}
           >

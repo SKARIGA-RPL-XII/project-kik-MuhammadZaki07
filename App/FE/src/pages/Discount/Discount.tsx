@@ -176,7 +176,7 @@ function Discount() {
               }}
             >
               <AlertDialogTrigger asChild>
-                <Button onClick={resetForm} className="bg-brand-500 hover:bg-brand-600">
+                <Button onClick={resetForm} className="bg-red-500 hover:bg-red-600">
                   Create Discount
                 </Button>
               </AlertDialogTrigger>

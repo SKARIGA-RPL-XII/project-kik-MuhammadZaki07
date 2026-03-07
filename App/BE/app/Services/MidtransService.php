@@ -1,47 +1,49 @@
 <?php
+
 namespace App\Services;
 
 use App\Models\Transaction;
-use App\Events\OrderProcessed;
+use App\Models\Table;
+use App\Services\PosService;
+use Exception;
 
 class MidtransService
 {
-    public function handleNotification(array $notification)
+    protected $posService;
+
+    public function __construct(PosService $posService)
     {
-        $transactionStatus = $notification['transaction_status'];
-        $paymentType = $notification['payment_type'];
-        $orderId = $notification['order_id'];
-        $fraudStatus = $notification['fraud_status'];
+        $this->posService = $posService;
+    }
 
-        $transaction = Transaction::where('order_number', $orderId)->first();
+    public function handleNotification(array $payload)
+    {
+        $orderIdParts = explode('-', $payload['order_id']);
+        $transactionId = $orderIdParts[1];
 
-        if (!$transaction) return;
+        $transaction = Transaction::with('details')->findOrFail($transactionId);
 
-        if ($transactionStatus == 'settlement' || $transactionStatus == 'capture') {
-            if ($fraudStatus == 'challenge') {
-                $transaction->update(['status' => 'pending_payment']);
-            } else {
-                $this->finalizePayment($transaction);
+        $status = $payload['transaction_status'];
+        $type = $payload['payment_type'];
+
+        if ($status == 'settlement' || $status == 'capture') {
+            if ($transaction->status !== 'paid') {
+                $transaction->update([
+                    'status' => 'paid',
+                    'paid_at' => now(),
+                    'payment_method' => $type
+                ]);
+
+                $this->posService->decreaseInventory($transaction);
             }
-        } elseif ($transactionStatus == 'cancel' || $transactionStatus == 'deny' || $transactionStatus == 'expire') {
-            $transaction->update(['status' => 'cancelled']);
+        } elseif ($status == 'expire' || $status == 'cancel' || $status == 'deny') {
+            $transaction->update(['status' => 'failed']);
+
             if ($transaction->table_id) {
-                $transaction->table()->update(['status' => 'available']);
+                Table::where('id', $transaction->table_id)->update(['status' => 'available']);
             }
         }
 
-        event(new OrderProcessed($transaction));
-
         return $transaction;
-    }
-
-    private function finalizePayment($transaction)
-    {
-        $transaction->update([
-            'status' => 'paid',
-            'paid_at' => now(),
-        ]);
-
-        $transaction->details()->update(['status' => 'pending']);
     }
 }

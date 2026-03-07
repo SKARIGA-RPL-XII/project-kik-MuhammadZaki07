@@ -170,7 +170,7 @@ const NotificationShow: React.FC = () => {
                     </AlertDialogTrigger>
                     <AlertDialogContent size="sm">
                       <AlertDialogHeader>
-                        <AlertDialogMedia className="bg-brand-500/10 text-brand-500">
+                        <AlertDialogMedia className="bg-red-500/10 text-red-500">
                           <FileText size={24} />
                         </AlertDialogMedia>
                         <AlertDialogTitle>Unduh Lampiran?</AlertDialogTitle>
@@ -183,7 +183,7 @@ const NotificationShow: React.FC = () => {
                         <AlertDialogCancel variant="outline">Batal</AlertDialogCancel>
                         <AlertDialogAction
                           asChild
-                          className="bg-brand-500"
+                          className="bg-red-500"
                         >
                           <a href={downloadUrl} target="_blank">Unduh Sekarang</a>
                         </AlertDialogAction>

@@ -53,7 +53,7 @@ function CustomerLayout() {
           className="flex-1 flex flex-col min-w-0 h-screen relative will-change-transform"
           transition={springTransition}
         >
-          <Header tableId={tableData ? `Table ${tableData.name || tableData.id} | ${tableData.room.name}` : "No Table"} />
+          <Header tableId={tableData ? `Table ${tableData.name || tableData.id} | ${tableData?.room?.name}` : "No Table"} />
 
           <main className="flex-1 overflow-y-auto custom-scrollbar">
             <div className="max-w-7xl mx-auto px-4 md:px-8 py-6">

@@ -37,7 +37,7 @@ const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
   } else if (error) {
     textareaClasses += ` bg-transparent  border-neutral-300 focus:border-error-300 focus:ring-3 focus:ring-error-500/10 dark:border-neutral-700 dark:bg-neutral-900 dark:text-white/90 dark:focus:border-error-800`;
   } else {
-    textareaClasses += ` bg-transparent text-neutral-900 dark:text-neutral-300 text-neutral-900 border-neutral-300 focus:border-brand-300 focus:ring-3 focus:ring-brand-500/10 dark:border-neutral-700 dark:bg-neutral-900 dark:text-white/90 dark:focus:border-brand-800`;
+    textareaClasses += ` bg-transparent text-neutral-900 dark:text-neutral-300 text-neutral-900 border-neutral-300 focus:border-red-300 focus:ring-3 focus:ring-red-500/10 dark:border-neutral-700 dark:bg-neutral-900 dark:text-white/90 dark:focus:border-red-800`;
   }
 
   return (

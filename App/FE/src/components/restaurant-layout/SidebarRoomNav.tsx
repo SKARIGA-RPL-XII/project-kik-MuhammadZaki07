@@ -42,11 +42,11 @@ export default function SidebarRoomNav({
           )}
         >
           {activeId === "all" && (
-            <div className="absolute left-0 top-0 bottom-0 w-[3px] bg-brand-600" />
+            <div className="absolute left-0 top-0 bottom-0 w-[3px] bg-red-600" />
           )}
           <LayoutGrid
             size={16}
-            className={activeId === "all" ? "text-brand-600" : ""}
+            className={activeId === "all" ? "text-red-600" : ""}
           />
           Whole Plan
         </button>

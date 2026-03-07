@@ -28,7 +28,9 @@ return new class extends Migration
             $table->integer('height')->default(80);
             $table->enum('shape', ['square', 'round', 'rectangle'])
                 ->default('square');
-            $table->integer('rotation')->default(0);
+            $table->timestamp('reserved_until')->nullable()->after('status');
+            $table->timestamp('last_service_at')->nullable()->after('reserved_until');
+            $table->text('notes')->nullable()->after('rotation');
             $table->timestamps();
         });
     }

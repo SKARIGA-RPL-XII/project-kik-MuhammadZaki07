@@ -128,7 +128,7 @@ export default function SystemConfigPage() {
             <Button
               onClick={handleSave}
               disabled={loading}
-              className="bg-brand-500 hover:bg-brand-700 text-white h-11 px-8 rounded-lg text-sm gap-3  transition-all"
+              className="bg-red-500 hover:bg-red-700 text-white h-11 px-8 rounded-lg text-sm gap-3  transition-all"
             >
               {loading ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -156,12 +156,12 @@ export default function SystemConfigPage() {
                   onClick={() => setActiveTab(item.id)}
                   className={`flex-shrink-0 lg:w-full flex items-center gap-4 px-4 py-2.5 rounded-lg transition-all duration-200 ${
                     activeTab === item.id
-                      ? "bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800  text-brand-500"
+                      ? "bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800  text-red-500"
                       : "border border-transparent text-neutral-500 hover:bg-neutral-50 dark:hover:bg-neutral-900/50"
                   }`}
                 >
                   <item.icon
-                    className={`h-4 w-4 ${activeTab === item.id ? "text-brand-500" : "text-neutral-400"}`}
+                    className={`h-4 w-4 ${activeTab === item.id ? "text-red-500" : "text-neutral-400"}`}
                   />
                   <span className="text-sm font-bold tracking-tight">
                     {item.label}
@@ -180,7 +180,7 @@ export default function SystemConfigPage() {
                       General Settings
                     </h2>
                     <p className="text-xs text-neutral-500 font-medium">
-                      Global business identity and branding settings.
+                      Global business identity and reding settings.
                     </p>
                   </div>
                   <div className="grid gap-3">
@@ -193,7 +193,7 @@ export default function SystemConfigPage() {
                         setConfig({ ...config, company_name: e.target.value })
                       }
                       placeholder="Enter store name..."
-                      className="h-12 bg-white dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800 text-sm px-5 focus-visible:ring-1 focus-visible:ring-brand-500"
+                      className="h-12 bg-white dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800 text-sm px-5 focus-visible:ring-1 focus-visible:ring-red-500"
                     />
                   </div>
                 </div>
@@ -222,7 +222,7 @@ export default function SystemConfigPage() {
                             currency_symbol: e.target.value,
                           })
                         }
-                        className="h-12 bg-white dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800 text-sm px-5 focus-visible:ring-1 focus-visible:ring-brand-500"
+                        className="h-12 bg-white dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800 text-sm px-5 focus-visible:ring-1 focus-visible:ring-red-500"
                       />
                     </div>
                     <div className="grid gap-3">
@@ -235,7 +235,7 @@ export default function SystemConfigPage() {
                           onChange={(e) =>
                             setConfig({ ...config, timezone: e.target.value })
                           }
-                          className="w-full h-12 pl-5 pr-12 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-sm text-sm font-medium focus:ring-1 focus:ring-brand-500 outline-none appearance-none transition-all cursor-pointer"
+                          className="w-full h-12 pl-5 pr-12 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-sm text-sm font-medium focus:ring-1 focus:ring-red-500 outline-none appearance-none transition-all cursor-pointer"
                         >
                           <option value="Asia/Jakarta">
                             Jakarta (WIB) - GMT+07:00
@@ -300,7 +300,7 @@ export default function SystemConfigPage() {
                             low_stock_threshold: Number(e.target.value),
                           })
                         }
-                        className="h-12 bg-white dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800 text-sm px-5 focus-visible:ring-1 focus-visible:ring-brand-500"
+                        className="h-12 bg-white dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800 text-sm px-5 focus-visible:ring-1 focus-visible:ring-red-500"
                       />
                       <p className="text-[10px] text-neutral-400 px-1">
                         Alert will be triggered when items reach this quantity.
@@ -334,7 +334,7 @@ export default function SystemConfigPage() {
                             session_timeout: Number(e.target.value),
                           })
                         }
-                        className="h-12 bg-white dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800 text-sm px-5 focus-visible:ring-1 focus-visible:ring-brand-500"
+                        className="h-12 bg-white dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800 text-sm px-5 focus-visible:ring-1 focus-visible:ring-red-500"
                       />
                     </div>
                     <div className="flex items-center justify-between p-6 bg-rose-50/20 dark:bg-rose-500/5 border border-rose-100 dark:border-rose-500/10 rounded-2xl">

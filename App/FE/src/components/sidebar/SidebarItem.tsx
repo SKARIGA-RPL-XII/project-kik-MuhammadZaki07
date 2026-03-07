@@ -28,7 +28,7 @@ export const SidebarItem = ({ item, isActive, isExpanded, isOpen, onToggle, subM
           {isExpanded && (
             <>
               <span className="menu-item-text">{item.name}</span>
-              <ChevronDownIcon className={`ml-auto w-5 h-5 transition-transform duration-200 ${isOpen ? "rotate-180 text-brand-500" : ""}`} />
+              <ChevronDownIcon className={`ml-auto w-5 h-5 transition-transform duration-200 ${isOpen ? "rotate-180 text-red-500" : ""}`} />
             </>
           )}
         </button>
