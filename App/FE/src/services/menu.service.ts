@@ -4,7 +4,8 @@ export interface MenuQuery {
   page?: number;
   size?: number;
   search?: string;
-  category?: string;
+  category?: string | number;
+  sort_by?: 'best_seller' | 'stock_highest' | 'price_lowest' | 'price_highest';
 }
 
 export interface MenuResponse<T> {

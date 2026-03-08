@@ -15,7 +15,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState } from "react";
 import { useSettings } from "@/context/SettingsContext";
-import { useNavigate, useSearchParams } from "react-router";
+import { useLocation, useNavigate, useSearchParams } from "react-router";
 
 interface CartSummaryProps {
   isOpen: boolean;
@@ -28,12 +28,25 @@ interface CartSummaryProps {
   isPending?: boolean;
 }
 
-export function CartSummary({ isOpen, onToggle, items = [] }: CartSummaryProps) {
+export function CartSummary({
+  isOpen,
+  onToggle,
+  items = [],
+}: CartSummaryProps) {
+  const location = useLocation();
   const itemCount = items.reduce((acc, item) => acc + (item.quantity || 0), 0);
   const total = items.reduce((acc, item) => {
     const price = item.discount_price || item.price || 0;
     return acc + Math.round(price * (item.quantity || 0));
   }, 0);
+
+  const hideCartPaths = ["/profile-customer", "/transaction"];
+
+  const shouldHide = hideCartPaths.some((path) =>
+    location.pathname.includes(path),
+  );
+
+  if (shouldHide) return null;
 
   return (
     <AnimatePresence mode="wait">
@@ -44,7 +57,7 @@ export function CartSummary({ isOpen, onToggle, items = [] }: CartSummaryProps) 
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: 100, opacity: 0 }}
           transition={{ type: "spring", stiffness: 400, damping: 30 }}
-         className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[60] flex justify-center px-4 w-full max-w-lg"
+          className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[60] flex justify-center px-4 w-full max-w-lg"
         >
           <div
             onClick={onToggle}
@@ -53,15 +66,17 @@ export function CartSummary({ isOpen, onToggle, items = [] }: CartSummaryProps) 
             <div className="flex items-center gap-4 ml-2">
               <div className="flex items-center -space-x-3">
                 {items.length > 0 ? (
-                  items.slice(0, 3).map((item, idx) => (
-                    <img
-                      key={item.key || idx}
-                      src={`${import.meta.env.VITE_STORAGE_URL}/${item.image}`}
-                      className="w-10 h-10 rounded-full border-2 border-zinc-900 object-cover bg-white shadow-sm"
-                      style={{ zIndex: 10 - idx }}
-                      alt="item"
-                    />
-                  ))
+                  items
+                    .slice(0, 3)
+                    .map((item, idx) => (
+                      <img
+                        key={item.key || idx}
+                        src={`${import.meta.env.VITE_STORAGE_URL}/${item.image}`}
+                        className="w-10 h-10 rounded-full border-2 border-zinc-900 object-cover bg-white shadow-sm"
+                        style={{ zIndex: 10 - idx }}
+                        alt="item"
+                      />
+                    ))
                 ) : (
                   <div className="w-10 h-10 rounded-full bg-red-500 flex items-center justify-center">
                     <ShoppingBag size={18} className="text-neutral-200" />
@@ -71,10 +86,14 @@ export function CartSummary({ isOpen, onToggle, items = [] }: CartSummaryProps) 
 
               <div className="flex flex-col">
                 <span className="dark:text-white font-bold text-sm leading-none mb-1">
-                  {items.length > 0 ? `${itemCount} Items Selected` : "Empty Cart"}
+                  {items.length > 0
+                    ? `${itemCount} Items Selected`
+                    : "Empty Cart"}
                 </span>
                 <span className="text-zinc-400 text-[10px] font-normal">
-                  {items.length > 0 ? `Rp ${total.toLocaleString("id-ID")}` : "Start Ordering"}
+                  {items.length > 0
+                    ? `Rp ${total.toLocaleString("id-ID")}`
+                    : "Start Ordering"}
                 </span>
               </div>
             </div>

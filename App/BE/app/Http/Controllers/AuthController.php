@@ -2,8 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Role;
 use App\Models\User;
+use App\Events\UserRegistered;
+use App\Notifications\GeneralNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 
@@ -59,6 +60,13 @@ class AuthController extends Controller
             "role_id" => 4,
             "gender" => $request->gender,
         ]);
+
+        $event = new UserRegistered($user);
+        $user->notify(new GeneralNotification(
+            $event->message,
+            'welcome',
+            '/profile'
+        ));
 
         $token = $user->createToken('token')->plainTextToken;
         $user['token'] = $token;

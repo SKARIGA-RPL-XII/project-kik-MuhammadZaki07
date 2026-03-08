@@ -1,15 +1,30 @@
 import { useSettings } from "@/context/SettingsContext";
-import { Bell, User, MapPin } from "lucide-react";
-import { useState } from "react";
-import { CustomerProfileModal } from "../dialog/CustomerProfileModal";
+import { Bell, User, MapPin, LogIn } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
+import { useNavigate } from "react-router";
 
 interface HeaderProps {
   tableId?: string;
 }
 
 export function Header({ tableId = "-" }: HeaderProps) {
-  const [isProfileOpen, setIsProfileOpen] = useState(false);
   const { settings, loading } = useSettings();
+  const { user } = useAuth();
+  const navigate = useNavigate();
+
+  const handleProfileClick = () => {
+    if (!user) {
+      navigate("/auth/sign-in");
+      return;
+    }
+
+    if (user.role_name === "admin") {
+      return;
+    }
+
+    navigate("/profile-customer")
+  };
+
 
   if (loading)
     return (
@@ -18,7 +33,7 @@ export function Header({ tableId = "-" }: HeaderProps) {
 
   return (
     <>
-      <header className="sticky top-0 z-[40] bg-white/80 backdrop-blur-md border-b border-neutral-100">
+      <header className="sticky top-0 z-[40] bg-white/80 backdrop-blur-md border-b">
         <div className="px-4 md:px-8 h-20 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <div className="w-10 h-10 flex justify-center items-center overflow-hidden">
@@ -42,7 +57,7 @@ export function Header({ tableId = "-" }: HeaderProps) {
           </div>
 
           {tableId && (
-            <div className="hidden lg:block bg-neutral-50 px-4 py-2 rounded-xl border border-neutral-100">
+            <div className="hidden lg:block bg-neutral-50 px-4 py-2 rounded-lg border">
               <div className="flex items-center gap-3">
                 <div className="flex h-1.5 w-1.5 relative">
                   <span className="animate-ping absolute h-full w-full rounded-full bg-red-400 opacity-75"></span>
@@ -62,21 +77,19 @@ export function Header({ tableId = "-" }: HeaderProps) {
             </button>
             <div className="w-[1px] h-4 bg-neutral-100 mx-2" />
             <button
-              onClick={() => setIsProfileOpen(true)}
-              className="flex items-center gap-2 p-1 rounded-xl hover:bg-neutral-50 transition-colors"
+              onClick={handleProfileClick}
+              className={`flex items-center gap-2 p-1 rounded-xl transition-colors ${user?.role_name === "admin"
+                  ? "opacity-50 cursor-not-allowed"
+                  : "hover:bg-neutral-50"
+                }`}
             >
               <div className="w-9 h-9 rounded-lg bg-neutral-50 border border-neutral-100 flex items-center justify-center text-neutral-600">
-                <User size={16} />
+                {!user ? <LogIn size={16} /> : <User size={16} />}
               </div>
             </button>
           </div>
         </div>
       </header>
-
-      <CustomerProfileModal
-        isOpen={isProfileOpen}
-        onClose={() => setIsProfileOpen(false)}
-      />
     </>
   );
 }

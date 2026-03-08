@@ -8,6 +8,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BadgeController;
 use App\Http\Controllers\BannerController;
 use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DiscountController;
 use App\Http\Controllers\DutyScheduleController;
 use App\Http\Controllers\EmployeController;
@@ -80,6 +81,13 @@ Route::middleware('auth:sanctum')->group(function () {
     });
     Route::post('/admins/export', [AdminController::class, 'export']);
     Route::post('/admins/import-mapping', [AdminController::class, 'importMapping']);
+    Route::delete('/user/delete', [TransactionController::class, 'destroyAccount']);
+
+    Route::resource('transactions', TransactionController::class);
+    Route::patch('/transactions/{id}/status', [TransactionController::class, 'updateStatus']);
+    Route::post('/cashier/checkout', [TransactionController::class, 'store']);
+    Route::get('/transactions/search/{code}', [TransactionController::class, 'searchByCode']);
+    Route::get('/dashboard/summary', [DashboardController::class, 'index']);
 });
 
 
@@ -108,7 +116,6 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
 
     Route::apiResource('stocks', StockController::class);
     Route::apiResource('suppliers', SupplierController::class);
-    Route::get('menus/admin', [MenuController::class, 'getALlAdmin']);
 
     Route::get('/stock-adjustments', [StockAdjustmentController::class, 'index']);
     Route::post('/stock-adjustments', [StockAdjustmentController::class, 'store']);
@@ -151,13 +158,7 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
 |--------------------------------------------------------------------------
 */
 
-
-Route::middleware('auth:sanctum')->group(function () {
-    Route::resource('transactions', TransactionController::class);
-    Route::patch('/transactions/{id}/status', [TransactionController::class, 'updateStatus']);
-    Route::post('/cashier/checkout', [TransactionController::class, 'store']);
-});
-
+Route::post('/transactions/{id}/confirm-payment', [TransactionController::class, 'confirmPayment']);
 Route::get('tables', [TableController::class, 'index']);
 Route::get('tables/{table}', [TableController::class, 'show']);
 Route::get('rooms', [RoomController::class, 'index']);

@@ -54,7 +54,7 @@ export default function SignUpForm() {
     toast("success", "Account Created", "Welcome aboard!");
 
     setTimeout(() => {
-      navigate("/");
+      window.location.href="/"
     }, 800);
   };
 

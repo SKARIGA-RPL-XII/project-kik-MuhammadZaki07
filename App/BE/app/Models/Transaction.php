@@ -17,6 +17,7 @@ class Transaction extends Model
     'change_amount',
     'order_source',
     'transaction_date',
+    'transaction_code',
     'paid_at',
 ];
 

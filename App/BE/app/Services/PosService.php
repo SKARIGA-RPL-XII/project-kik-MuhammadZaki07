@@ -2,7 +2,7 @@
 
 namespace App\Services;
 
-use App\Models\{Transaction, Menu, Stock, Table, AttributeLevel};
+use App\Models\{Transaction, Menu, Stock, Table, AttributeLevel, User};
 use Illuminate\Support\Facades\{DB, Auth};
 use Midtrans\Snap;
 use Midtrans\Config;
@@ -15,6 +15,10 @@ class PosService
         return DB::transaction(function () use ($data, $cashierId) {
             $taxRate = (float) (DB::table('settings')->where('key', 'tax_percent')->first()->value ?? 0);
             $serviceRate = (float) (DB::table('settings')->where('key', 'service_percent')->first()->value ?? 0);
+            $transactionCode = date('ymd') . str_pad(rand(0, 999999), 6, '0', STR_PAD_LEFT);
+            while (Transaction::where('transaction_code', $transactionCode)->exists()) {
+                $transactionCode = date('ymd') . str_pad(rand(0, 999999), 6, '0', STR_PAD_LEFT);
+            }
 
             if ($data['order_type'] === 'dine_in' && !empty($data['table_id'])) {
                 $table = Table::lockForUpdate()->findOrFail($data['table_id']);
@@ -48,7 +52,9 @@ class PosService
                 $grandTotal = $data['total_amount'];
             }
 
-            $status = ($data['payment_method'] === 'cash') ? 'paid' : 'pending_payment';
+            $status = ($data['payment_method'] === 'cash' && $data['order_source'] === 'cashier_direct')
+                ? 'paid'
+                : 'pending_payment';
 
             $transaction = Transaction::create([
                 'table_id' => $data['table_id'] ?? null,
@@ -56,12 +62,17 @@ class PosService
                 'cashier_id' => Auth::id() ?? $cashierId,
                 'order_source' => $data['order_source'],
                 'status' => $status,
+                'transaction_code' => $transactionCode,
                 'total_amount' => $grandTotal,
-                'amount_paid' => $data['amount_paid'] ?? $grandTotal,
+                'amount_paid' => ($status === 'paid') ? ($data['amount_paid'] ?? $grandTotal) : null,
                 'payment_method' => $data['payment_method'],
                 'transaction_date' => now(),
                 'paid_at' => ($status === 'paid') ? now() : null,
             ]);
+
+            if ($status === 'paid') {
+                $this->decreaseInventory($transaction);
+            }
 
             foreach ($tempItems as $t) {
                 $transaction->details()->create([
@@ -74,9 +85,7 @@ class PosService
             }
 
             $snapToken = null;
-            if ($data['payment_method'] === 'cash') {
-                $this->decreaseInventory($transaction);
-            } else {
+            if ($data['payment_method'] !== 'cash') {
                 $snapToken = $this->generateMidtransToken($transaction, $tempItems, $data['settings'] ?? []);
             }
 
@@ -96,7 +105,13 @@ class PosService
                 $this->processAttributeStock($detail->attributes, $detail->menu_qty);
             }
         }
+
+        if ($transaction->user_id) {
+            $this->updateUserBadge($transaction->user_id);
+        }
     }
+
+
 
     private function processStockReduction($menu, $qty)
     {
@@ -190,5 +205,33 @@ class PosService
         }
 
         return Snap::getSnapToken($params);
+    }
+
+    private function updateUserBadge($userId)
+    {
+        $user = User::find($userId);
+        if (!$user) return;
+
+        $totalSpent = Transaction::where('user_id', $userId)
+            ->whereIn('status', ['paid', 'completed'])
+            ->sum('total_amount');
+
+        $eligibleBadge = \App\Models\Badge::where('min_spend', '<=', $totalSpent)
+            ->orderBy('min_spend', 'desc')
+            ->first();
+
+        if ($eligibleBadge && $user->badge_id != $eligibleBadge->id) {
+            $user->update(['badge_id' => $eligibleBadge->id]);
+
+            $message = "Selamat! Kamu naik level ke " . $eligibleBadge->name . "!";
+
+            $user->notify(new \App\Notifications\GeneralNotification(
+                $message,
+                'level_up',
+                '/loyalty-program'
+            ));
+
+            broadcast(new \App\Events\UserLevelUp($user, $eligibleBadge))->toOthers();
+        }
     }
 }

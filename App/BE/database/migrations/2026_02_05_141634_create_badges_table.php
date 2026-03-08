@@ -16,6 +16,7 @@ return new class extends Migration
             $table->string('badge_image')->nullable();
             $table->string('name');
             $table->string('icon')->nullable();
+            $table->integer('min_spend')->default(0)->nullable();
             $table->string('color')->default("#000");
             $table->boolean('is_active')->default(true);
             $table->timestamps();

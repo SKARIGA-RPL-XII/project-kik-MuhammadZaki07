@@ -17,6 +17,7 @@ return new class extends Migration
             $table->foreignId('table_id')->nullable()->constrained()->cascadeOnDelete();
             $table->foreignId('user_id')->nullable()->constrained()->nullOnDelete();
             $table->foreignId('cashier_id')->nullable()->constrained('users')->nullOnDelete();
+            $table->string("transaction_code")->nullable()->unique();
 
             $table->enum('status', [
                 'pending_payment',

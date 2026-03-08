@@ -14,6 +14,7 @@ interface BadgeType {
   id: number;
   badge_image?: string;
   name: string;
+  min_spend: number;
   icon?: string;
   color: string;
   is_active: boolean;
@@ -32,6 +33,15 @@ export default function BadgeTable({
   onEdit,
   onDelete,
 }: Props) {
+  // Helper untuk format mata uang agar terlihat profesional
+  const formatRupiah = (amount: number) => {
+    return new Intl.NumberFormat("id-ID", {
+      style: "currency",
+      currency: "IDR",
+      minimumFractionDigits: 0,
+    }).format(amount);
+  };
+
   return (
     <div className="overflow-hidden rounded-xl border border-neutral-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
       <div className="max-w-full overflow-x-auto">
@@ -43,6 +53,10 @@ export default function BadgeTable({
               </TableHead>
               <TableHead className="px-5 py-3 text-theme-xs text-start">
                 Name
+              </TableHead>
+              {/* Kolom Baru: Min. Spend */}
+              <TableHead className="px-5 py-3 text-theme-xs text-start">
+                Min. Spend
               </TableHead>
               <TableHead className="px-5 py-3 text-theme-xs text-start">
                 Icon
@@ -77,7 +91,7 @@ export default function BadgeTable({
             {!loading && badges.length === 0 && (
               <TableRow>
                 <TableCell colSpan={7} className="text-center py-10">
-                  <span className="text-neutral-400">No menu data found</span>
+                  <span className="text-neutral-400">No badge data found</span>
                 </TableCell>
               </TableRow>
             )}
@@ -89,32 +103,44 @@ export default function BadgeTable({
                     {badge.badge_image ? (
                       <img
                         src={`${import.meta.env.VITE_STORAGE_URL}/${badge.badge_image}`}
-                        className="w-12 h-12 object-cover rounded-lg"
+                        className="w-12 h-12 object-cover rounded-lg shadow-sm"
+                        alt={badge.name}
                       />
                     ) : (
-                      "-"
+                      <div className="w-12 h-12 rounded-lg bg-neutral-100 dark:bg-white/5 flex items-center justify-center text-xs text-neutral-400">
+                        No Img
+                      </div>
                     )}
                   </TableCell>
 
-                  <TableCell className="px-4 py-3 text-theme-sm text-neutral-500 dark:text-neutral-400">
+                  <TableCell className="px-4 py-3 text-theme-sm font-medium text-neutral-800 dark:text-white">
                     {badge.name}
                   </TableCell>
 
+                  {/* Render Min. Spend */}
                   <TableCell className="px-4 py-3 text-theme-sm text-neutral-500 dark:text-neutral-400">
-                    {badge.icon == "null" ? "-" : badge.icon}
+                    <span className="font-mono text-xs bg-neutral-50 dark:bg-white/5 px-2 py-1 rounded">
+                       {formatRupiah(badge.min_spend || 0)}
+                    </span>
+                  </TableCell>
+
+                  <TableCell className="px-4 py-3 text-theme-sm text-neutral-500 dark:text-neutral-400">
+                    {badge.icon === "null" || !badge.icon ? "-" : (
+                        <span className="text-lg">{badge.icon}</span>
+                    )}
                   </TableCell>
 
                   <TableCell className="px-4 py-3 text-theme-sm text-neutral-500 dark:text-neutral-400">
                     <div className="flex items-center gap-2">
                       <div
-                        className="w-4 h-4 rounded-full"
+                        className="w-4 h-4 rounded-full border border-black/5"
                         style={{ background: badge.color }}
                       />
-                      {badge.color}
+                      <span className="uppercase text-xs font-mono">{badge.color}</span>
                     </div>
                   </TableCell>
 
-                  <TableCell className="px-4 py-3 text-theme-sm text-neutral-500 dark:text-neutral-400">
+                  <TableCell className="px-4 py-3 text-theme-sm">
                     <Badge
                       size="sm"
                       color={badge.is_active ? "success" : "error"}
@@ -123,12 +149,12 @@ export default function BadgeTable({
                     </Badge>
                   </TableCell>
 
-                  <TableCell className="px-4 py-3 text-theme-sm text-neutral-500 dark:text-neutral-400">
+                  <TableCell className="px-4 py-3 text-theme-sm">
                     <div className="flex gap-1">
                       <ActionGuard module="badge" action="write">
                         <button
                           title="Edit"
-                          className="p-2 rounded text-yellow-500 hover:bg-yellow-50 dark:text-yellow-400 dark:hover:bg-yellow-500/10"
+                          className="p-2 rounded text-yellow-500 hover:bg-yellow-50 dark:text-yellow-400 dark:hover:bg-yellow-500/10 transition-colors"
                           onClick={() => onEdit?.(badge)}
                         >
                           <Pencil size={18} />
@@ -140,7 +166,7 @@ export default function BadgeTable({
                           title="Delete"
                           onClick={() => onDelete?.(badge.id)}
                           className="p-2 rounded text-red-500 hover:bg-red-50 
-                            dark:text-red-400 dark:hover:bg-red-500/10"
+                            dark:text-red-400 dark:hover:bg-red-500/10 transition-colors"
                         >
                           <Trash2 size={18} />
                         </button>

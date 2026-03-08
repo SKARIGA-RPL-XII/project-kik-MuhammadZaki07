@@ -123,7 +123,7 @@ export default function MenuTable({
                           -{discountValue}%
                         </Badge>
                       ) : (
-                        <span className="text-neutral-400 text-xs italic">Normal</span>
+                        <span className="text-neutral-400 text-xs italic">No Discount</span>
                       )}
                     </TableCell>
 

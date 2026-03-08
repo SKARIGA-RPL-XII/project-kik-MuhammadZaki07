@@ -86,7 +86,25 @@ class UserController extends Controller
                 "profile_image" => $user->profile_image ? asset('storage/' . $user->profile_image) : null,
                 "role_id" => $user->role_id,
                 "role_name" => $user->role->name ?? 'user',
+                "badge_id" => $user->badge_id,
+                "badge" => $user->badge ? [
+                    "id" => $user->badge->id,
+                    "name" => $user->badge->name,
+                    "min_spend" => $user->badge->min_spend,
+                ] : null,
             ],
         ], 200);
+    }
+
+    public function destroyAccount(Request $request)
+    {
+        $user = auth()->user();
+
+        $user->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Akun berhasil dihapus'
+        ]);
     }
 }

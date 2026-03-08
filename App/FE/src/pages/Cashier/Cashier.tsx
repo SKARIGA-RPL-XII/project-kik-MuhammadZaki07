@@ -24,6 +24,7 @@ import { ProductCard } from "./components/ProductCard";
 import { CartSidebar } from "./components/CartSidebar";
 import { EmptyState } from "@/components/resto/EmptyState";
 import { useTransaction } from "@/hooks/react-query/useTransaction";
+import ScanOrderDialog from "@/components/dialog/ScanOrderDialog";
 
 export default function CashierPage() {
   const navigate = useNavigate();
@@ -158,6 +159,7 @@ export default function CashierPage() {
                 </div>
               )}
             </div>
+            <ScanOrderDialog/>
           </div>
         </header>
 

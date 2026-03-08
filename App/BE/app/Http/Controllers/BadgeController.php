@@ -43,35 +43,39 @@ class BadgeController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
-    {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'color' => 'required|string',
-            'badge_image' => 'nullable|mimes:png,jpg,gif,jpeg|max:2048',
-            'is_active' => 'required|boolean',
-        ]);
+  public function store(Request $request)
+{
+    $request->validate([
+        'name' => 'required|string|max:255',
+        'min_spend' => 'required|integer|min:0',
+        'color' => 'required|string',
+        'badge_image' => 'nullable|mimes:png,jpg,gif,jpeg|max:2048',
+        'is_active' => 'required|boolean',
+    ]);
 
-        $imagePath = null;
+    $imagePath = null;
 
-        if ($request->hasFile('badge_image')) {
-            $imagePath = $request->file('badge_image')
-                ->store('badges', 'public');
-        }
-
-        $badge = Badge::create([
-            'name' => $request->name,
-            'icon' => $request->icon,
-            'color' => $request->color,
-            'badge_image' => $imagePath,
-            'is_active' => $request->is_active,
-        ]);
-
-        return response()->json([
-            'message' => 'Badge created',
-            'data' => $badge
-        ], 201);
+    if ($request->hasFile('badge_image')) {
+        $imagePath = $request->file('badge_image')
+            ->store('badges', 'public');
     }
+
+    $badge = Badge::create([
+        'name' => $request->name,
+        'min_spend' => $request->min_spend,
+        'icon' => $request->icon,
+        'color' => $request->color,
+        'badge_image' => $imagePath,
+        'is_active' => $request->is_active,
+    ]);
+
+    return response()->json([
+        'message' => 'Badge created',
+        'data' => $badge
+    ], 201);
+}
+
+
 
     /**
      * Display the specified resource.
@@ -97,39 +101,42 @@ class BadgeController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, $id)
-    {
-        $badge = Badge::findOrFail($id);
+ public function update(Request $request, $id)
+{
+    $badge = Badge::findOrFail($id);
 
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'color' => 'required|string',
-            'badge_image' => 'nullable|mimes:png,jpg,gif,jpeg|max:2048',
-            'is_active' => 'required|boolean',
-        ]);
+    $request->validate([
+        'name' => 'required|string|max:255',
+        'min_spend' => 'required|integer|min:0',
+        'color' => 'required|string',
+        'badge_image' => 'nullable|mimes:png,jpg,gif,jpeg|max:2048',
+        'is_active' => 'required|boolean',
+    ]);
 
-        if ($request->hasFile('badge_image')) {
+    $data = [
+        'name' => $request->name,
+        'min_spend' => $request->min_spend,
+        'icon' => $request->icon,
+        'color' => $request->color,
+        'is_active' => $request->is_active,
+    ];
 
-            if ($badge->badge_image) {
-                Storage::disk('public')->delete($badge->badge_image);
-            }
-
-            $badge->badge_image = $request->file('badge_image')
-                ->store('badges', 'public');
+    if ($request->hasFile('badge_image')) {
+        if ($badge->badge_image) {
+            Storage::disk('public')->delete($badge->badge_image);
         }
 
-        $badge->update([
-            'name' => $request->name,
-            'icon' => $request->icon,
-            'color' => $request->color,
-            'is_active' => $request->is_active,
-        ]);
-
-        return response()->json([
-            'message' => 'Badge updated',
-            'data' => $badge
-        ]);
+        $data['badge_image'] = $request->file('badge_image')
+            ->store('badges', 'public');
     }
+
+    $badge->update($data);
+
+    return response()->json([
+        'message' => 'Badge updated',
+        'data' => $badge
+    ]);
+}
 
     /**
      * Remove the specified resource from storage.

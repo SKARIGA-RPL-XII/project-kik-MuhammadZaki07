@@ -1,25 +1,42 @@
-import { useLocation, useNavigate } from "react-router";
+import { useNavigate, useParams } from "react-router";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, Share2, Printer } from "lucide-react";
 import { useSettings } from "@/context/SettingsContext";
 import PageMeta from "@/components/common/PageMeta";
+import { apiClient } from "@/lib/apiClient";
+import { useEffect, useState } from "react";
+import LoadingSpinner from "@/components/skeleton/LoadingSpinner";
+import InvoiceSkeleton from "@/components/skeleton/InvoiceSkeleton";
 
 export default function InvoicePage() {
+  const { id } = useParams();
   const navigate = useNavigate();
-  const location = useLocation();
-  const { transactionData } = location.state || {};
   const { settings } = useSettings();
 
-  // Deteksi apakah ini dari sisi customer
-  const isCustomer = transactionData?.order_source === "qr_code" || location.pathname.includes("customer");
+  const [transactionData, setTransactionData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const isCustomer =
+    transactionData?.order_source === "qr_code" ||
+    window.location.pathname.includes("customer");
 
-  if (!transactionData || !settings) {
-    return (
-      <div className="h-screen flex items-center justify-center font-bold uppercase text-xs">
-        Data Missing
-      </div>
-    );
-  }
+  useEffect(() => {
+    const fetchInvoice = async () => {
+      if (!id) return;
+      try {
+        setLoading(true);
+        const res = await apiClient.get(`/transactions/${id}`);
+        setTransactionData(res.data.data);
+      } catch (err) {
+        console.error("Gagal mengambil data invoice:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchInvoice();
+  }, []);
+
+if (loading) return <InvoiceSkeleton />;
 
   const subtotal =
     transactionData.details?.reduce(
@@ -35,9 +52,9 @@ export default function InvoicePage() {
 
   const handleDone = () => {
     if (isCustomer) {
-      navigate("/"); // Customer balik ke landing/home
+      navigate("/");
     } else {
-      navigate("/cashier"); // Kasir balik ke terminal
+      navigate("/cashier");
     }
   };
 
@@ -48,7 +65,6 @@ export default function InvoicePage() {
         description="Official invoice containing order details, payment summary, and transaction information."
       />
       <div className="h-[120vh] bg-slate-100 flex flex-col items-center py-5 font-sans print:bg-white print:py-0">
-        
         {!isCustomer && (
           <Button
             variant="ghost"
@@ -60,13 +76,13 @@ export default function InvoicePage() {
         )}
 
         <div className="w-full max-w-xl relative">
-          <div className="h-14 bg-neutral-200 rounded-xl p-2 overflow-hidden">
+          <div className="h-14 bg-neutral-200 rounded-xl p-2 overflow-hidden mx-auto max-w-xl">
             <div className="h-10 bg-neutral-300 p-1.5 rounded-lg border-4 border-white">
               <div className="h-5 bg-neutral-700 rounded-full border-3 border-white"></div>
             </div>
           </div>
 
-          <div className="bg-white max-w-lg w-full absolute top-7 left-8 overflow-hidden print:shadow-none print:static print:mx-auto">
+          <div className="bg-white max-w-lg w-[90%] sm:w-full mx-auto -mt-7 relative overflow-hidden print:shadow-none print:mt-0">
             <div
               className="absolute inset-0 pointer-events-none opacity-[0.04] z-0 print:opacity-[0.05]"
               style={{
@@ -75,7 +91,7 @@ export default function InvoicePage() {
               }}
             ></div>
 
-            <div className="relative z-10 px-8 pt-5 pb-16">
+            <div className="relative z-10 px-6 sm:px-8 pt-10 pb-16">
               <div className="flex flex-col items-start text-center mb-10">
                 <div className="inline-flex w-[80px] mb-5">
                   <img
@@ -183,14 +199,14 @@ export default function InvoicePage() {
               {[...Array(22)].map((_, i) => (
                 <div
                   key={i}
-                  className="min-w-[34px] bg-slate-100 h-6 rotate-45 translate-y-2 shadow-lg border-l border-t border-slate-200"
+                  className="min-w-[34px] bg-slate-100 h-6 rotate-45 translate-y-2 border-l border-t"
                 ></div>
               ))}
             </div>
           </div>
         </div>
 
-        <div className="w-full max-w-xl flex gap-3 px-4 print:hidden z-30 absolute bottom-5">
+        <div className="w-full max-w-xl flex gap-3 px-4 print:hidden z-30 absolute lg:bottom-5 bottom-3">
           <Button
             variant="outline"
             className="flex-1 h-10 font-semibold text-sm border-slate-200 bg-white hover:bg-slate-50"
@@ -212,7 +228,7 @@ export default function InvoicePage() {
 
           <Button
             onClick={handleDone}
-            className="flex-1 h-10 bg-red-600 hover:bg-red-700 text-white font-semibold text-sm transition-all active:scale-95 shadow-lg shadow-red-100"
+            className="flex-1 h-10 bg-red-600 hover:bg-red-700 text-white font-semibold text-sm transition-all active:scale-95"
           >
             Done
           </Button>

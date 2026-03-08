@@ -1,5 +1,5 @@
 import { useCategories } from "@/hooks/react-query/useCategory";
-import { m } from "framer-motion";
+import { m, AnimatePresence } from "framer-motion";
 import {
   Dessert,
   LayoutGrid,
@@ -11,9 +11,10 @@ import {
   Beer,
   IceCream,
   Beef,
+  Check,
+  RotateCcw,
 } from "lucide-react";
-import { useState, useCallback, useMemo } from "react";
-import { Skeleton } from "../ui/skeleton";
+import { useState, useMemo, useEffect } from "react";
 
 const iconMap: Record<string, any> = {
   all: LayoutGrid,
@@ -26,20 +27,47 @@ const iconMap: Record<string, any> = {
   cemilan: Dessert,
 };
 
+const sortOptions = [
+  { id: "best_seller", label: "Terlaris" },
+  { id: "stock_highest", label: "Stok Terbanyak" },
+  { id: "price_lowest", label: "Harga Termurah" },
+  { id: "price_highest", label: "Harga Termahal" },
+];
+
 interface NavigationBarProps {
   selectedCategory: string;
   onCategoryChange: (slug: string) => void;
   onSearch: (value: string) => void;
+  onSortChange: (values: string[]) => void;
+  selectedSorts: string[];
 }
 
 export function NavigationBar({
   selectedCategory,
   onCategoryChange,
   onSearch,
+  onSortChange,
+  selectedSorts = [],
 }: NavigationBarProps) {
   const [isFocused, setIsFocused] = useState(false);
+  const [showSort, setShowSort] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
 
   const { data: categoryResponse, isLoading } = useCategories({ size: 100 });
+
+  useEffect(() => {
+    const delayDebounceFn = setTimeout(() => {
+      onSearch(searchTerm);
+    }, 500);
+    return () => clearTimeout(delayDebounceFn);
+  }, [searchTerm, onSearch]);
+
+  const handleToggleSort = (id: string) => {
+    const newSorts = selectedSorts.includes(id)
+      ? selectedSorts.filter((s) => s !== id)
+      : [...selectedSorts, id];
+    onSortChange(newSorts);
+  };
 
   const categories = useMemo(() => {
     const base = [{ id: "all", name: "All", slug: "all" }];
@@ -49,17 +77,10 @@ export function NavigationBar({
     return base;
   }, [categoryResponse]);
 
-  const handleSearchChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      onSearch?.(e.target.value);
-    },
-    [onSearch],
-  );
-
   return (
-    <div className="sticky top-0 z-20 backdrop-blur-xl pb-3 space-y-4 bg-white/80 border-b border-neutral-100 will-change-transform">
+    <div className="sticky top-0 z-40 bg-[#fcfcfc] pb-3 space-y-4 border-b px-4 pt-4">
       <div className="flex gap-3 items-center">
-        <div className="relative flex-1 group">
+        <div className="relative w-full max-w-md">
           <Search
             className={`absolute left-4 top-1/2 -translate-y-1/2 transition-colors duration-200 ${
               isFocused ? "text-red-600" : "text-neutral-400"
@@ -69,35 +90,114 @@ export function NavigationBar({
           <input
             type="text"
             placeholder="Search menu..."
-            onChange={handleSearchChange}
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
             onFocus={() => setIsFocused(true)}
             onBlur={() => setIsFocused(false)}
-            className="w-full pl-10 pr-4 py-3.5 rounded-sm bg-neutral-50 border border-neutral-100 focus:bg-white focus:border-red-500/30 focus:ring-4 focus:ring-red-50 transition-all outline-none  text-sm text-neutral-900 shadow-sm"
+            className="w-full pl-10 pr-4 py-3 rounded-sm bg-neutral-50 border border-neutral-200 focus:bg-white focus:border-red-500 focus:ring-0 transition-all outline-none text-sm text-neutral-900 shadow-sm"
           />
         </div>
 
-        <button className="flex items-center gap-2 w-12 h-12 bg-white border border-neutral-200 rounded-sm hover:bg-neutral-50 transition-colors justify-center shrink-0 active:scale-95">
-          <SlidersHorizontal
-            size={25}
-            strokeWidth={1.5}
-            className="text-neutral-600"
-          />
-        </button>
+        <div className="relative shrink-0">
+          <button
+            onClick={() => setShowSort(!showSort)}
+            className={`relative flex items-center justify-center w-11 h-11 border rounded-sm transition-all ${
+              selectedSorts.length > 0
+                ? "bg-red-50 border-red-500 text-red-600"
+                : "bg-white border-neutral-200 text-neutral-600 hover:bg-neutral-50"
+            }`}
+          >
+            <SlidersHorizontal size={20} />
+            {selectedSorts.length > 0 && (
+              <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-600 text-[10px] text-white font-bold ring-2 ring-white">
+                {selectedSorts.length}
+              </span>
+            )}
+          </button>
+
+          <AnimatePresence>
+            {showSort && (
+              <>
+                <div
+                  className="fixed inset-0 z-[45] bg-transparent"
+                  onClick={() => setShowSort(false)}
+                />
+
+                <m.div
+                  initial={{ opacity: 0, y: 8, scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: 8, scale: 0.95 }}
+                  className="absolute right-0 mt-2 w-64 bg-white border border-neutral-200 rounded-sm shadow-2xl z-[50] overflow-hidden"
+                >
+                  <div className="p-4 border-b border-neutral-100 bg-neutral-50/50 flex items-center justify-between">
+                    <span className="text-sm font-medium text-neutral-900">
+                      Filters
+                    </span>
+                    {selectedSorts.length > 0 && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onSortChange([]);
+                        }}
+                        className="text-[10px] font-black text-red-600 flex items-center gap-1 uppercase hover:underline"
+                      >
+                        <RotateCcw size={10} /> Reset
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="p-2 space-y-1">
+                    {sortOptions.map((opt) => {
+                      const isSelected = selectedSorts.includes(opt.id);
+                      return (
+                        <button
+                          key={opt.id}
+                          type="button"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            handleToggleSort(opt.id);
+                          }}
+                          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-sm text-sm transition-colors hover:bg-neutral-50 group text-left"
+                        >
+                          <div
+                            className={`flex items-center justify-center w-5 h-5 border rounded transition-all shrink-0 ${
+                              isSelected
+                                ? "bg-red-600 border-red-600"
+                                : "bg-white border-neutral-300 group-hover:border-neutral-400"
+                            }`}
+                          >
+                            {isSelected && (
+                              <Check
+                                size={14}
+                                className="text-white"
+                                strokeWidth={4}
+                              />
+                            )}
+                          </div>
+                          <span
+                            className={`text-xs ${
+                              isSelected
+                                ? "font-bold text-neutral-900"
+                                : "text-neutral-600"
+                            }`}
+                          >
+                            {opt.label}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </m.div>
+              </>
+            )}
+          </AnimatePresence>
+        </div>
       </div>
 
-      <div className="flex gap-2 overflow-x-auto pb-1 custom-scrollbar">
+      <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
         {isLoading ? (
-          <>
-            {[...Array(5)].map((_, i) => (
-              <div
-                key={i}
-                className="h-10 w-28 shrink-0 rounded-sm bg-zinc-100 dark:bg-zinc-800 animate-pulse flex items-center gap-2 px-5"
-              >
-                <div className="h-4 w-4 rounded-full bg-zinc-200 dark:bg-zinc-700" />
-                <div className="h-3 w-12 rounded bg-zinc-200 dark:bg-zinc-700" />
-              </div>
-            ))}
-          </>
+          <div className="h-9 w-24 rounded-sm bg-neutral-100 animate-pulse" />
         ) : (
           categories.map((cat) => {
             const Icon = iconMap[cat.slug] || Utensils;
@@ -107,20 +207,19 @@ export function NavigationBar({
               <button
                 key={cat.id}
                 onClick={() => onCategoryChange?.(cat.slug)}
-                className={`relative flex items-center gap-2 px-5 py-2.5 rounded-sm whitespace-nowrap transition-colors duration-200 ${
+                className={`relative flex items-center gap-2 px-5 py-2.5 rounded-sm whitespace-nowrap transition-all ${
                   isActive
                     ? "text-white"
-                    : "text-neutral-500 hover:bg-neutral-50"
+                    : "text-neutral-500 hover:bg-neutral-100"
                 }`}
               >
                 {isActive && (
                   <m.div
                     layoutId="activeCategory"
-                    transition={{ type: "spring", stiffness: 380, damping: 30 }}
-                    className="absolute inset-0 bg-red-500 rounded-sm shadow-md shadow-neutral-200 z-0 will-change-transform"
+                    className="absolute inset-0 bg-red-600 rounded-sm z-0"
                   />
                 )}
-                <Icon size={14} className="relative z-10" />
+                <Icon size={14} className="relative z-10 text-[inherit]" />
                 <span className="relative z-10 font-normal text-sm">
                   {cat.name}
                 </span>

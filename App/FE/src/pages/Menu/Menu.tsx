@@ -20,7 +20,7 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination";
 import { ActionGuard } from "@/components/guard/ActionGuard";
-import { useMenus } from "@/hooks/react-query/useMenu";
+import { useMenusAdmin } from "@/hooks/react-query/useMenu";
 
 export interface Menu {
   id: number;
@@ -65,7 +65,7 @@ function Menu() {
     data: menuRes, 
     isLoading: loading, 
     refetch 
-  } = useMenus({
+  } = useMenusAdmin({
     page: currentPage - 1,
     size: 10,
     search: debounced.search,

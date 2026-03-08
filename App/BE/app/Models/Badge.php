@@ -13,6 +13,7 @@ class Badge extends Model
         'name',
         'icon',
         'color',
-        'is_active'
+        'is_active',
+        'min_spend'
     ];
 }

@@ -21,6 +21,7 @@ return new class extends Migration
             $table->string('no_tlp')->nullable()->unique();
             $table->timestamp('email_verified_at')->nullable();
             $table->foreignId('role_id')->constrained('roles', 'id')->cascadeOnUpdate()->cascadeOnDelete();
+            $table->foreignId('badge_id')->nullable()->constrained('badges')->nullOnDelete();
             $table->rememberToken();
             $table->timestamps();
         });

@@ -5,8 +5,10 @@ namespace App\Http\Controllers;
 use App\Http\Controllers\Controller;
 use App\Services\PosService;
 use App\Models\Transaction;
+use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 
 class TransactionController extends Controller
@@ -35,7 +37,7 @@ class TransactionController extends Controller
                 'status' => 'success',
                 'data' => $transactions
             ]);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return response()->json([
                 'status' => 'error',
                 'message' => 'Database error: ' . $e->getMessage()
@@ -43,10 +45,43 @@ class TransactionController extends Controller
         }
     }
 
+    public function searchByCode($code)
+    {
+        try {
+            $transaction = Transaction::with(['table', 'details.menu'])
+                ->where('transaction_code', $code)
+                ->first();
+
+            if (!$transaction) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Transaction not found.'
+                ], 404);
+            }
+
+            if ($transaction->status === 'paid') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'This order has already been paid.'
+                ], 400);
+            }
+
+            return response()->json([
+                'success' => true,
+                'data' => $transaction
+            ]);
+        } catch (Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'System error: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
-           'order_source' => 'required|in:customer_app,qr_code,cashier_direct',
+            'order_source' => 'required|in:customer_app,qr_code,cashier_direct',
             'order_type' => 'required|in:dine_in,take_away',
             'table_id' => 'nullable|required_if:order_type,dine_in|exists:tables,id',
             'payment_method' => 'required',
@@ -74,7 +109,7 @@ class TransactionController extends Controller
                 'data' => $transaction,
                 'snap_token' => $result['snap_token'] ?? null
             ], 201);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return response()->json([
                 'status' => 'error',
                 'message' => $e->getMessage()
@@ -101,11 +136,76 @@ class TransactionController extends Controller
                 'message' => 'Status updated to ' . $request->status,
                 'data' => $transaction
             ]);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return response()->json([
                 'status' => 'error',
                 'message' => $e->getMessage()
             ], 400);
         }
+    }
+
+    public function confirmPayment(Request $request, $id)
+    {
+        $validator = Validator::make($request->all(), [
+            'amount_paid' => 'required|numeric|min:0',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        try {
+            return DB::transaction(function () use ($request, $id) {
+                $transaction = Transaction::where('status', 'pending_payment')->lockForUpdate()->findOrFail($id);
+
+                $amountPaid = (float) $request->amount_paid;
+                $totalAmount = (float) $transaction->total_amount;
+
+                if ($amountPaid < $totalAmount) {
+                    throw new Exception("Payment insufficient. Total: " . number_format($totalAmount));
+                }
+
+                $transaction->update([
+                    'status' => 'paid',
+                    'amount_paid' => $amountPaid,
+                    'change_amount' => $amountPaid - $totalAmount,
+                    'paid_at' => now(),
+                    'cashier_id' => Auth::id(),
+                ]);
+
+                $this->posService->decreaseInventory($transaction);
+
+                broadcast(new \App\Events\PaymentConfirmed($transaction))->toOthers();
+
+                return response()->json([
+                    'status' => 'success',
+                    'message' => 'Payment confirmed successfully',
+                    'data' => $transaction->load('details.menu')
+                ]);
+            });
+        } catch (Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => $e->getMessage()
+            ], 400);
+        }
+    }
+
+    public function show($id)
+    {
+        $transaction = Transaction::with(['details.menu', 'table'])->find($id);
+
+        if (!$transaction) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Transaksi tidak ditemukan'
+            ], 404);
+        }
+
+
+        return response()->json([
+            'status' => 'success',
+            'data' => $transaction
+        ]);
     }
 }

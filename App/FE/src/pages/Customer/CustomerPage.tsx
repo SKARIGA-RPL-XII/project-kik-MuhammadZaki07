@@ -13,12 +13,17 @@ export default function CustomerPage() {
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
+  
+  // FIX: Ubah sortBy jadi Array [] supaya bisa multi-select
+  const [selectedSorts, setSelectedSorts] = useState<string[]>([]); 
+  
   const [page, setPage] = useState(1);
   const [selectedMenu, setSelectedMenu] = useState<any>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const { cartItems, addToCart } = useCart();
 
+  // Logic Debounce Search
   useEffect(() => {
     const handler = setTimeout(() => {
       setDebouncedSearch(searchQuery);
@@ -27,17 +32,20 @@ export default function CustomerPage() {
     return () => clearTimeout(handler);
   }, [searchQuery]);
 
+  // Hook useMenus: Ubah array jadi string koma untuk dikirim ke API
   const { data: menuResponse, isLoading: loadingMenu } = useMenus({
     page,
-    size: 10,
+    size: 12,
     search: debouncedSearch,
     category: selectedCategory === "all" ? undefined : selectedCategory,
+    // Kita join array jadi string, misal: "best_seller,price_lowest"
+    sort_by: selectedSorts.length > 0 ? selectedSorts.join(",") : undefined,
   });
 
   const { data: bannerResponse, isLoading: loadingBanner } = useBanners();
 
   const menuData = menuResponse?.data || [];
-  const total = menuResponse?.metadata?.total || 0;
+  const total = menuResponse?.total || 0;
   const banners = bannerResponse?.data?.data || [];
 
   const handleOpenDetail = useCallback((item: any) => {
@@ -50,8 +58,10 @@ export default function CustomerPage() {
     setSelectedMenu(null);
   }, []);
 
+  const totalPages = Math.ceil(total / 12);
+
   return (
-    <div className="flex flex-col gap-10">
+    <div className="flex flex-col gap-6 sm:gap-10 pb-20">
       <PageMeta
         title="Digital Menu"
         description="View our full selection of premium food and beverages."
@@ -68,19 +78,24 @@ export default function CustomerPage() {
 
       <NavigationBar
         selectedCategory={selectedCategory}
+        selectedSorts={selectedSorts} 
         onCategoryChange={(cat: string) => {
           setSelectedCategory(cat);
           setPage(1);
         }}
         onSearch={setSearchQuery}
+        onSortChange={(sorts: string[]) => {
+          setSelectedSorts(sorts);
+          setPage(1);
+        }}
       />
 
-      <div className="min-h-[45vh]">
+      <div className="min-h-[45vh] px-4">
         {loadingMenu ? (
           <MenuListSkeleton />
         ) : (
           <>
-            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 sm:gap-6">
               {menuData.map((item) => (
                 <MenuCard
                   key={item?.id}
@@ -93,25 +108,30 @@ export default function CustomerPage() {
 
             {menuData.length === 0 && <EmptyState />}
 
-            {total > 10 && (
-              <div className="flex justify-center gap-3 mt-12 mb-10">
+            {totalPages > 1 && (
+              <div className="flex justify-center items-center gap-4 mt-12 mb-10">
                 <button
                   disabled={page === 1}
                   onClick={() => {
                     setPage((prev) => prev - 1);
                     window.scrollTo({ top: 0, behavior: "smooth" });
                   }}
-                  className="px-8 py-3 bg-white border border-neutral-200 rounded-2xl disabled:opacity-30 font-black text-[10px] uppercase tracking-widest transition-all hover:bg-neutral-50 active:scale-95"
+                  className="h-12 px-6 bg-white border border-neutral-200 rounded-xl disabled:opacity-30 font-bold text-xs uppercase tracking-widest transition-all hover:bg-neutral-50 active:scale-95"
                 >
                   Prev
                 </button>
+                
+                <span className="text-xs font-black text-neutral-400 uppercase tracking-tighter">
+                  Page {page} of {totalPages}
+                </span>
+
                 <button
-                  disabled={menuData.length < 10}
+                  disabled={page >= totalPages}
                   onClick={() => {
                     setPage((prev) => prev + 1);
                     window.scrollTo({ top: 0, behavior: "smooth" });
                   }}
-                  className="px-8 py-3 bg-white border border-neutral-200 rounded-2xl disabled:opacity-30 font-black text-[10px] uppercase tracking-widest transition-all hover:bg-neutral-50 active:scale-95"
+                  className="h-12 px-6 bg-white border border-neutral-200 rounded-xl disabled:opacity-30 font-bold text-xs uppercase tracking-widest transition-all hover:bg-neutral-50 active:scale-95"
                 >
                   Next
                 </button>

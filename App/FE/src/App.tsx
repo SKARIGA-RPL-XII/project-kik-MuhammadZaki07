@@ -40,6 +40,8 @@ import CashierPage from "./pages/Cashier/Cashier";
 import TablePage from "./pages/Cashier/TablePage";
 import PaymentPage from "./pages/Cashier/PaymentPage";
 import InvoicePage from "./pages/Cashier/InvoicePage";
+import InvoiceCashPage from "./components/resto/InvoicePage";
+import CustomerProfilePage from "./pages/Customer/ProfilePage";
 
 export default function App() {
   return (
@@ -221,11 +223,20 @@ export default function App() {
         <Route path="/" element={<CustomerLayout />}>
           <Route index element={<CustomerPage />} />
           <Route path="menu/:id" element={<MenuDetailPage />} />
+          <Route
+            path="profile-customer"
+            element={
+              <AuthMiddleware>
+                <CustomerProfilePage />
+              </AuthMiddleware>
+            }
+          />
         </Route>
 
         <Route path="/tables-customer" element={<TablePage />} />
         <Route path="/payment-customer" element={<PaymentPage />} />
         <Route path="/invoice/:id" element={<InvoicePage />} />
+        <Route path="/order-success" element={<InvoiceCashPage />} />
 
         <Route path="/404" element={<NotFound />} />
         <Route path="*" element={<Navigate to="/404" replace />} />
