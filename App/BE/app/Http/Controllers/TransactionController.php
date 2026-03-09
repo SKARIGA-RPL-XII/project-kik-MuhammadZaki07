@@ -208,4 +208,26 @@ class TransactionController extends Controller
             'data' => $transaction
         ]);
     }
+
+    public function userTransactions()
+    {
+        try {
+            $userId = Auth::id();
+
+            $transactions = Transaction::with(['details.menu', 'table'])
+                ->where('user_id', $userId)
+                ->orderBy('created_at', 'desc')
+                ->get();
+
+            return response()->json([
+                'status' => 'success',
+                'data' => $transactions
+            ]);
+        } catch (Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Failed to fetch transactions: ' . $e->getMessage()
+            ], 500);
+        }
+    }
 }

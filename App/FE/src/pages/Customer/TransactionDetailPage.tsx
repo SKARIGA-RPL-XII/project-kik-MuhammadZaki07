@@ -19,7 +19,6 @@ export default function TransactionDetailPage() {
   useEffect(() => {
     const fetchDetail = async () => {
       try {
-        // Pastikan UserService punya method ini
         const data = await UserService.getTransactionById(id);
         setOrder(data);
       } catch (err) {

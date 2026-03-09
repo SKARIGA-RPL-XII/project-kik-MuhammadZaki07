@@ -88,6 +88,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/cashier/checkout', [TransactionController::class, 'store']);
     Route::get('/transactions/search/{code}', [TransactionController::class, 'searchByCode']);
     Route::get('/dashboard/summary', [DashboardController::class, 'index']);
+    Route::get('/user/transactions', [TransactionController::class, 'userTransactions']);
 });
 
 

@@ -14,14 +14,15 @@ return new class extends Migration
         Schema::create('notifications', function (Blueprint $table) {
             $table->uuid('id')->primary();
             $table->string('type');
-            $table->string('title');
-            $table->text('message');
+
+            $table->morphs('notifiable');
+
+            $table->string('title')->nullable();
+            $table->text('message')->nullable();
             $table->json('data')->nullable();
-
-            $table->foreignId('user_id')->nullable()->constrained('users')->onDelete('cascade');
             $table->foreignId('role_id')->nullable()->constrained('roles')->onDelete('cascade');
-
             $table->boolean('is_global')->default(false);
+
             $table->timestamp('read_at')->nullable();
             $table->softDeletes();
             $table->timestamps();

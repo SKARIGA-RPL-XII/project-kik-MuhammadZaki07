@@ -18,11 +18,11 @@ import { useSettings } from "@/context/SettingsContext";
 import { useLocation, useNavigate, useSearchParams } from "react-router";
 
 interface CartSummaryProps {
-  isOpen: boolean;
+  isOpen?: boolean;
   onToggle: () => void;
   items: any[];
-  onRemoveItem: (key: string) => void;
-  onUpdateQuantity: (key: string, qty: number) => void;
+  onRemoveItem?: (key: string) => void;
+  onUpdateQuantity?: (key: string, qty: number) => void;
   onClear?: () => void;
   onCheckout?: (orderType: string) => void;
   isPending?: boolean;
@@ -66,17 +66,23 @@ export function CartSummary({
             <div className="flex items-center gap-4 ml-2">
               <div className="flex items-center -space-x-3">
                 {items.length > 0 ? (
-                  items
-                    .slice(0, 3)
-                    .map((item, idx) => (
-                      <img
-                        key={item.key || idx}
-                        src={`${import.meta.env.VITE_STORAGE_URL}/${item.image}`}
-                        className="w-10 h-10 rounded-full border-2 border-zinc-900 object-cover bg-white shadow-sm"
-                        style={{ zIndex: 10 - idx }}
-                        alt="item"
-                      />
-                    ))
+                  items.slice(0, 3).map((item, idx) => (
+                    <motion.img
+                      layoutId={`cart-img-${item.key || idx}`}
+                      key={item.key || idx}
+                      initial={{ scale: 0.5, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      transition={{
+                        type: "spring",
+                        stiffness: 300,
+                        damping: 20,
+                      }}
+                      src={`${import.meta.env.VITE_STORAGE_URL}/${item.image}`}
+                      className="w-10 h-10 rounded-full border-2 border-white dark:border-zinc-900 object-cover bg-white shadow-sm"
+                      style={{ zIndex: 10 - idx }}
+                      alt="item"
+                    />
+                  ))
                 ) : (
                   <div className="w-10 h-10 rounded-full bg-red-500 flex items-center justify-center">
                     <ShoppingBag size={18} className="text-neutral-200" />
@@ -165,7 +171,9 @@ CartSummary.SidebarContent = function SidebarContent({
 
   const onConfirmAction = () => {
     if (orderType === "dine_in" && !tableIdFromUrl) {
-      navigate("/tables-customer", { state: { fromCart: true, items: items } });
+      navigate("/tables-customer", {
+        state: { fromCart: true, items: items },
+      });
     } else {
       navigate("/payment-customer", {
         state: {

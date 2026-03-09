@@ -1,6 +1,6 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect, useMemo } from "react";
-import { X, Minus, Plus, ShoppingBag, Clock, Tag, ChevronRight } from "lucide-react";
+import { X, Minus, Plus, ShoppingBag, ChevronRight } from "lucide-react";
 import Button from "../ui/button/Button";
 
 export function MenuDetailView({ menu, isOpen, onClose, onAddToCart }: any) {
@@ -14,7 +14,7 @@ export function MenuDetailView({ menu, isOpen, onClose, onAddToCart }: any) {
   const activePrice = Math.round((menu?.price || 0) - discountAmount);
   const hasDiscount = discountValue > 0;
 
-  const uniqueAttributes = useMemo(() => {
+   const uniqueAttributes = useMemo(() => {
     if (!menu?.attributes) return [];
     const seen = new Set();
     return menu.attributes.filter((attr: any) => {
@@ -23,6 +23,12 @@ export function MenuDetailView({ menu, isOpen, onClose, onAddToCart }: any) {
       return !duplicate;
     });
   }, [menu]);
+
+  const isAllAttributesSelected = useMemo(() => {
+    return uniqueAttributes.every((attr: any) => selectedAttributes[attr.id]);
+  }, [uniqueAttributes, selectedAttributes]);
+
+ 
 
   useEffect(() => {
     if (isOpen) {
@@ -34,11 +40,16 @@ export function MenuDetailView({ menu, isOpen, onClose, onAddToCart }: any) {
   if (!menu) return null;
 
   const handleAdd = () => {
+    if (!isAllAttributesSelected) {
+      return;
+    }
+
     onAddToCart({
       ...menu,
       selectedAttributes,
       quantity,
       discount_price: activePrice,
+      total_price: activePrice * quantity,
     });
     onClose();
   };
@@ -54,7 +65,7 @@ export function MenuDetailView({ menu, isOpen, onClose, onAddToCart }: any) {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="absolute inset-0 bg-neutral-900/90 backdrop-blur-md"
+            className="absolute inset-0 bg-neutral-900/90"
           />
 
           <motion.div
@@ -69,15 +80,19 @@ export function MenuDetailView({ menu, isOpen, onClose, onAddToCart }: any) {
                 className="w-full h-full object-cover transition-transform duration-1000 scale-105 hover:scale-110"
                 alt={menu.name}
               />
-              
+
               {hasDiscount && (
-                <motion.div 
+                <motion.div
                   initial={{ x: 50, opacity: 0 }}
                   animate={{ x: 0, opacity: 1 }}
                   className="absolute top-8 right-8 bg-red-600 text-white p-4 rounded-3xl shadow-2xl z-10 flex flex-col items-center justify-center min-w-[70px] border-4 border-white/20"
                 >
-                  <span className="text-[10px] font-medium opacity-90">Hemat</span>
-                  <span className="text-2xl font-medium leading-none">{discountValue}%</span>
+                  <span className="text-[10px] font-medium opacity-90">
+                    Hemat
+                  </span>
+                  <span className="text-2xl font-medium leading-none">
+                    {discountValue}%
+                  </span>
                 </motion.div>
               )}
 
@@ -116,17 +131,25 @@ export function MenuDetailView({ menu, isOpen, onClose, onAddToCart }: any) {
                   {uniqueAttributes.map((attr: any) => (
                     <div key={attr.id} className="space-y-5">
                       <div className="flex items-center gap-3">
-                        <span className="text-sm font-medium text-neutral-900">Pilih {attr.name}</span>
+                        <span className="text-sm font-medium text-neutral-900">
+                          Pilih {attr.name}
+                        </span>
                         <div className="flex-1 h-[1px] bg-neutral-200" />
                       </div>
 
                       <div className="flex flex-wrap gap-3">
                         {attr.levels?.map((level: any) => {
-                          const isSelected = selectedAttributes[attr.id] === level.id;
+                          const isSelected =
+                            selectedAttributes[attr.id] === level.id;
                           return (
                             <button
                               key={level.id}
-                              onClick={() => setSelectedAttributes((prev) => ({ ...prev, [attr.id]: level.id }))}
+                              onClick={() =>
+                                setSelectedAttributes((prev) => ({
+                                  ...prev,
+                                  [attr.id]: level.id,
+                                }))
+                              }
                               className={`group relative px-5 py-2 rounded-lg border-2 text-sm font-normal transition-all duration-300 ${
                                 isSelected
                                   ? "border-red-600 bg-red-600 text-white -translate-y-1"
@@ -146,7 +169,9 @@ export function MenuDetailView({ menu, isOpen, onClose, onAddToCart }: any) {
               <div className="p-8 pt-6 border-t border-neutral-100 bg-white">
                 <div className="flex items-end justify-between mb-8">
                   <div className="space-y-1">
-                    <span className="text-sm font-medium text-neutral-400 block">Subtotal</span>
+                    <span className="text-sm font-medium text-neutral-400 block">
+                      Subtotal
+                    </span>
                     <div className="flex items-center gap-3">
                       <p className="text-4xl font-bold text-neutral-900 tracking-tighter">
                         Rp {(activePrice * quantity).toLocaleString("id-ID")}
@@ -157,13 +182,16 @@ export function MenuDetailView({ menu, isOpen, onClose, onAddToCart }: any) {
                             Rp {(menu.price * quantity).toLocaleString("id-ID")}
                           </span>
                           <span className="flex items-center gap-1 text-[10px] font-medium text-red-600 bg-red-50 px-2 py-0.5 rounded-lg border border-red-100">
-                           Hemat Rp {(discountAmount * quantity).toLocaleString("id-ID")}
+                            Hemat Rp{" "}
+                            {(discountAmount * quantity).toLocaleString(
+                              "id-ID",
+                            )}
                           </span>
                         </div>
                       )}
                     </div>
                   </div>
-                  
+
                   <div className="flex items-center bg-neutral-100 rounded-sm p-1.5">
                     <button
                       onClick={() => setQuantity(Math.max(1, quantity - 1))}
@@ -184,12 +212,33 @@ export function MenuDetailView({ menu, isOpen, onClose, onAddToCart }: any) {
                 </div>
 
                 <Button
-                  className="w-full py-4 bg-neutral-900 hover:bg-red-600 text-white font-medium rounded-lg text-md flex items-center justify-center gap-4 group"
+                  className={`w-full py-4 font-medium rounded-lg text-md flex items-center justify-center gap-4 group transition-all duration-500 ${
+                    isAllAttributesSelected
+                      ? "bg-neutral-900 hover:bg-red-600 text-white shadow-xl"
+                      : "bg-neutral-100 text-neutral-400 cursor-not-allowed"
+                  }`}
                   onClick={handleAdd}
+                  disabled={!isAllAttributesSelected} // Prioritaskan logic: jangan biarkan klik jika tidak valid
                 >
-                  <ShoppingBag size={20} className="group-hover:rotate-12 transition-transform" />
-                  Konfirmasi Pesanan
-                  <ChevronRight size={20} className="opacity-0 group-hover:opacity-100 group-hover:translate-x-2 transition-all" />
+                  <ShoppingBag
+                    size={20}
+                    className={
+                      isAllAttributesSelected
+                        ? "group-hover:rotate-12 transition-transform"
+                        : ""
+                    }
+                  />
+                  <span>
+                    {isAllAttributesSelected
+                      ? "Konfirmasi Pesanan"
+                      : `Pilih ${uniqueAttributes.find((a: any) => !selectedAttributes[a.id])?.name || "Atribut"}`}
+                  </span>
+                  {isAllAttributesSelected && (
+                    <ChevronRight
+                      size={20}
+                      className="opacity-0 group-hover:opacity-100 group-hover:translate-x-2 transition-all"
+                    />
+                  )}
                 </Button>
               </div>
             </div>

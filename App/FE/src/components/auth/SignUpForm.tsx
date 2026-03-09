@@ -1,5 +1,5 @@
 import { FormEvent, useState } from "react";
-import { Link, useNavigate } from "react-router";
+import { Link } from "react-router";
 import { ChevronLeftIcon, EyeCloseIcon, EyeIcon } from "../../icons";
 import Label from "../form/Label";
 import Input from "../form/input/InputField";
@@ -15,7 +15,6 @@ export default function SignUpForm() {
   const { register, loading, errors } = useAuth();
   const [gender, setGender] = useState<"LK" | "PR">();
   const { toast } = useToast();
-  const navigate = useNavigate();
 
   const [messageError, setMessageError] = useState({
     title: "",
@@ -140,7 +139,6 @@ export default function SignUpForm() {
                       </p>
                     )}
                   </div>
-                  {/* <!-- Last Name --> */}
                   <div className="sm:col-span-1">
                     <Label>
                       Gender <span className="text-error-500">*</span>
@@ -159,7 +157,6 @@ export default function SignUpForm() {
                     )}
                   </div>
                 </div>
-                {/* <!-- Email --> */}
                 <div>
                   <Label>
                     Email<span className="text-error-500">*</span>
@@ -177,7 +174,6 @@ export default function SignUpForm() {
                     </p>
                   )}
                 </div>
-                {/* <!-- Password --> */}
                 <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
                   <div>
                     <Label>
@@ -236,7 +232,6 @@ export default function SignUpForm() {
                     )}
                   </div>
                 </div>
-                {/* <!-- Checkbox --> */}
                 {messageError.title && (
                   <Alert
                     title={messageError.title}
@@ -261,7 +256,6 @@ export default function SignUpForm() {
                     </span>
                   </p>
                 </div>
-                {/* <!-- Button --> */}
                 <div>
                   <button className="flex items-center justify-center w-full px-4 py-3 text-sm font-medium text-white transition rounded-lg bg-red-500 shadow-theme-xs hover:bg-red-600">
                     {loading ? "Sign Up..." : "Sign Up"}

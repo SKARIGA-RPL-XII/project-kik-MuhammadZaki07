@@ -1,137 +1,75 @@
-import { useEffect, useState, useCallback } from "react";
 import BannerCarousel from "@/components/carousel/BannerCarousel";
 import PageMeta from "@/components/common/PageMeta";
 import { MenuCard, NavigationBar } from "@/components/resto";
 import { EmptyState } from "@/components/resto/EmptyState";
 import { MenuDetailView } from "@/components/resto/MenuDetailView";
 import { MenuListSkeleton } from "@/components/skeleton/MenuCardSkeleton";
-import { useCart } from "@/hooks/useCart";
-import { useMenus } from "@/hooks/react-query/useMenu";
-import { useBanners } from "@/hooks/react-query/useBanner";
+import { useCustomerPageLogic } from "@/hooks/useCustomerPage";
 
 export default function CustomerPage() {
-  const [selectedCategory, setSelectedCategory] = useState("all");
-  const [searchQuery, setSearchQuery] = useState("");
-  const [debouncedSearch, setDebouncedSearch] = useState("");
-  
-  // FIX: Ubah sortBy jadi Array [] supaya bisa multi-select
-  const [selectedSorts, setSelectedSorts] = useState<string[]>([]); 
-  
-  const [page, setPage] = useState(1);
-  const [selectedMenu, setSelectedMenu] = useState<any>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-
-  const { cartItems, addToCart } = useCart();
-
-  // Logic Debounce Search
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      setDebouncedSearch(searchQuery);
-      setPage(1);
-    }, 400);
-    return () => clearTimeout(handler);
-  }, [searchQuery]);
-
-  // Hook useMenus: Ubah array jadi string koma untuk dikirim ke API
-  const { data: menuResponse, isLoading: loadingMenu } = useMenus({
-    page,
-    size: 12,
-    search: debouncedSearch,
-    category: selectedCategory === "all" ? undefined : selectedCategory,
-    // Kita join array jadi string, misal: "best_seller,price_lowest"
-    sort_by: selectedSorts.length > 0 ? selectedSorts.join(",") : undefined,
-  });
-
-  const { data: bannerResponse, isLoading: loadingBanner } = useBanners();
-
-  const menuData = menuResponse?.data || [];
-  const total = menuResponse?.total || 0;
-  const banners = bannerResponse?.data?.data || [];
-
-  const handleOpenDetail = useCallback((item: any) => {
-    setSelectedMenu(item);
-    setIsModalOpen(true);
-  }, []);
-
-  const handleCloseDetail = useCallback(() => {
-    setIsModalOpen(false);
-    setSelectedMenu(null);
-  }, []);
-
-  const totalPages = Math.ceil(total / 12);
+  const { state, actions } = useCustomerPageLogic();
 
   return (
     <div className="flex flex-col gap-6 sm:gap-10 pb-20">
-      <PageMeta
-        title="Digital Menu"
-        description="View our full selection of premium food and beverages."
-      />
+      <PageMeta title="Digital Menu" description="View our full selection." />
 
-      {(loadingBanner || banners.length > 0) && (
+      {(state.loadingBanner || state.banners.length > 0) && (
         <BannerCarousel
-          isLoading={loadingBanner}
-          banners={banners}
+          isLoading={state.loadingBanner}
+          banners={state.banners}
           autoLoop
           loopInterval={5000}
         />
       )}
 
       <NavigationBar
-        selectedCategory={selectedCategory}
-        selectedSorts={selectedSorts} 
-        onCategoryChange={(cat: string) => {
-          setSelectedCategory(cat);
-          setPage(1);
+        selectedCategory={state.selectedCategory}
+        selectedSorts={state.selectedSorts}
+        onCategoryChange={(cat) => {
+          actions.setSelectedCategory(cat);
+          actions.setPage(1);
         }}
-        onSearch={setSearchQuery}
-        onSortChange={(sorts: string[]) => {
-          setSelectedSorts(sorts);
-          setPage(1);
+        onSearch={actions.setSearchQuery}
+        onSortChange={(sorts) => {
+          actions.setSelectedSorts(sorts);
+          actions.setPage(1);
         }}
       />
 
       <div className="min-h-[45vh] px-4">
-        {loadingMenu ? (
+        {state.loadingMenu ? (
           <MenuListSkeleton />
         ) : (
           <>
             <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 sm:gap-6">
-              {menuData.map((item) => (
+              {state.menuData.map((item: any) => (
                 <MenuCard
                   key={item?.id}
                   item={item}
-                  onOpenDetail={handleOpenDetail}
-                  isAdded={cartItems?.some((ci) => ci?.item?.id === item?.id)}
+                  onOpenDetail={actions.handleOpenDetail}
+                  // isAdded={state.cartItems?.some((ci: any) => ci?.item?.id === item?.id)}
                 />
               ))}
             </div>
 
-            {menuData.length === 0 && <EmptyState />}
+            {state.menuData.length === 0 && <EmptyState />}
 
-            {totalPages > 1 && (
+            {state.totalPages > 1 && (
               <div className="flex justify-center items-center gap-4 mt-12 mb-10">
                 <button
-                  disabled={page === 1}
-                  onClick={() => {
-                    setPage((prev) => prev - 1);
-                    window.scrollTo({ top: 0, behavior: "smooth" });
-                  }}
-                  className="h-12 px-6 bg-white border border-neutral-200 rounded-xl disabled:opacity-30 font-bold text-xs uppercase tracking-widest transition-all hover:bg-neutral-50 active:scale-95"
+                  disabled={state.page === 1}
+                  onClick={() => actions.changePage(state.page - 1)}
+                  className="h-12 px-6 bg-white border border-neutral-200 rounded-xl disabled:opacity-30 font-bold text-xs uppercase transition-all"
                 >
                   Prev
                 </button>
-                
-                <span className="text-xs font-black text-neutral-400 uppercase tracking-tighter">
-                  Page {page} of {totalPages}
+                <span className="text-xs font-black text-neutral-400 uppercase">
+                  Page {state.page} of {state.totalPages}
                 </span>
-
                 <button
-                  disabled={page >= totalPages}
-                  onClick={() => {
-                    setPage((prev) => prev + 1);
-                    window.scrollTo({ top: 0, behavior: "smooth" });
-                  }}
-                  className="h-12 px-6 bg-white border border-neutral-200 rounded-xl disabled:opacity-30 font-bold text-xs uppercase tracking-widest transition-all hover:bg-neutral-50 active:scale-95"
+                  disabled={state.page >= state.totalPages}
+                  onClick={() => actions.changePage(state.page + 1)}
+                  className="h-12 px-6 bg-white border border-neutral-200 rounded-xl disabled:opacity-30 font-bold text-xs uppercase transition-all"
                 >
                   Next
                 </button>
@@ -142,12 +80,12 @@ export default function CustomerPage() {
       </div>
 
       <MenuDetailView
-        menu={selectedMenu}
-        isOpen={isModalOpen}
-        onClose={handleCloseDetail}
+        menu={state.selectedMenu}
+        isOpen={state.isModalOpen}
+        onClose={actions.handleCloseDetail}
         onAddToCart={(data: any) => {
           const { quantity, ...menuItem } = data;
-          addToCart(menuItem, quantity);
+          actions.addToCart(menuItem, quantity);
         }}
       />
     </div>

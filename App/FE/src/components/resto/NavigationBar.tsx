@@ -1,20 +1,9 @@
-import { useCategories } from "@/hooks/react-query/useCategory";
+import { useNavigationBarLogic } from "@/hooks/useNavigationBar";
 import { m, AnimatePresence } from "framer-motion";
 import {
-  Dessert,
-  LayoutGrid,
-  Pizza,
-  Search,
-  Coffee,
-  Utensils,
-  SlidersHorizontal,
-  Beer,
-  IceCream,
-  Beef,
-  Check,
-  RotateCcw,
+  Dessert, LayoutGrid, Pizza, Search, Coffee, Utensils,
+  SlidersHorizontal, Beer, IceCream, Beef, Check, RotateCcw,
 } from "lucide-react";
-import { useState, useMemo, useEffect } from "react";
 
 const iconMap: Record<string, any> = {
   all: LayoutGrid,
@@ -49,33 +38,11 @@ export function NavigationBar({
   onSortChange,
   selectedSorts = [],
 }: NavigationBarProps) {
-  const [isFocused, setIsFocused] = useState(false);
-  const [showSort, setShowSort] = useState(false);
-  const [searchTerm, setSearchTerm] = useState("");
-
-  const { data: categoryResponse, isLoading } = useCategories({ size: 100 });
-
-  useEffect(() => {
-    const delayDebounceFn = setTimeout(() => {
-      onSearch(searchTerm);
-    }, 500);
-    return () => clearTimeout(delayDebounceFn);
-  }, [searchTerm, onSearch]);
-
-  const handleToggleSort = (id: string) => {
-    const newSorts = selectedSorts.includes(id)
-      ? selectedSorts.filter((s) => s !== id)
-      : [...selectedSorts, id];
-    onSortChange(newSorts);
-  };
-
-  const categories = useMemo(() => {
-    const base = [{ id: "all", name: "All", slug: "all" }];
-    if (categoryResponse?.data) {
-      return [...base, ...categoryResponse.data];
-    }
-    return base;
-  }, [categoryResponse]);
+  const { state, actions } = useNavigationBarLogic({
+    onSearch,
+    onSortChange,
+    selectedSorts,
+  });
 
   return (
     <div className="sticky top-0 z-40 bg-[#fcfcfc] pb-3 space-y-4 border-b px-4 pt-4">
@@ -83,24 +50,24 @@ export function NavigationBar({
         <div className="relative w-full max-w-md">
           <Search
             className={`absolute left-4 top-1/2 -translate-y-1/2 transition-colors duration-200 ${
-              isFocused ? "text-red-600" : "text-neutral-400"
+              state.isFocused ? "text-red-600" : "text-neutral-400"
             }`}
             size={16}
           />
           <input
             type="text"
             placeholder="Search menu..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            onFocus={() => setIsFocused(true)}
-            onBlur={() => setIsFocused(false)}
-            className="w-full pl-10 pr-4 py-3 rounded-sm bg-neutral-50 border border-neutral-200 focus:bg-white focus:border-red-500 focus:ring-0 transition-all outline-none text-sm text-neutral-900 shadow-sm"
+            value={state.searchTerm}
+            onChange={(e) => actions.setSearchTerm(e.target.value)}
+            onFocus={() => actions.setIsFocused(true)}
+            onBlur={() => actions.setIsFocused(false)}
+            className="w-full pl-10 pr-4 py-3 rounded-sm bg-neutral-50 border border-neutral-200 focus:bg-white focus:border-red-500 transition-all outline-none text-sm text-neutral-900 shadow-sm"
           />
         </div>
 
         <div className="relative shrink-0">
           <button
-            onClick={() => setShowSort(!showSort)}
+            onClick={() => actions.setShowSort(!state.showSort)}
             className={`relative flex items-center justify-center w-11 h-11 border rounded-sm transition-all ${
               selectedSorts.length > 0
                 ? "bg-red-50 border-red-500 text-red-600"
@@ -116,13 +83,12 @@ export function NavigationBar({
           </button>
 
           <AnimatePresence>
-            {showSort && (
+            {state.showSort && (
               <>
                 <div
                   className="fixed inset-0 z-[45] bg-transparent"
-                  onClick={() => setShowSort(false)}
+                  onClick={() => actions.setShowSort(false)}
                 />
-
                 <m.div
                   initial={{ opacity: 0, y: 8, scale: 0.95 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -130,15 +96,10 @@ export function NavigationBar({
                   className="absolute right-0 mt-2 w-64 bg-white border border-neutral-200 rounded-sm shadow-2xl z-[50] overflow-hidden"
                 >
                   <div className="p-4 border-b border-neutral-100 bg-neutral-50/50 flex items-center justify-between">
-                    <span className="text-sm font-medium text-neutral-900">
-                      Filters
-                    </span>
+                    <span className="text-sm font-medium text-neutral-900">Filters</span>
                     {selectedSorts.length > 0 && (
                       <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onSortChange([]);
-                        }}
+                        onClick={() => onSortChange([])}
                         className="text-[10px] font-black text-red-600 flex items-center gap-1 uppercase hover:underline"
                       >
                         <RotateCcw size={10} /> Reset
@@ -147,46 +108,35 @@ export function NavigationBar({
                   </div>
 
                   <div className="p-2 space-y-1">
-                    {sortOptions.map((opt) => {
-                      const isSelected = selectedSorts.includes(opt.id);
-                      return (
-                        <button
-                          key={opt.id}
-                          type="button"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            handleToggleSort(opt.id);
-                          }}
-                          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-sm text-sm transition-colors hover:bg-neutral-50 group text-left"
+                    {sortOptions.map((opt) => (
+                      <button
+                        key={opt.id}
+                        type="button"
+                        onClick={() => actions.handleToggleSort(opt.id)}
+                        className="w-full flex items-center gap-3 px-3 py-2.5 rounded-sm text-sm transition-colors hover:bg-neutral-50 group text-left"
+                      >
+                        <div
+                          className={`flex items-center justify-center w-5 h-5 border rounded transition-all shrink-0 ${
+                            selectedSorts.includes(opt.id)
+                              ? "bg-red-600 border-red-600"
+                              : "bg-white border-neutral-300 group-hover:border-neutral-400"
+                          }`}
                         >
-                          <div
-                            className={`flex items-center justify-center w-5 h-5 border rounded transition-all shrink-0 ${
-                              isSelected
-                                ? "bg-red-600 border-red-600"
-                                : "bg-white border-neutral-300 group-hover:border-neutral-400"
-                            }`}
-                          >
-                            {isSelected && (
-                              <Check
-                                size={14}
-                                className="text-white"
-                                strokeWidth={4}
-                              />
-                            )}
-                          </div>
-                          <span
-                            className={`text-xs ${
-                              isSelected
-                                ? "font-bold text-neutral-900"
-                                : "text-neutral-600"
-                            }`}
-                          >
-                            {opt.label}
-                          </span>
-                        </button>
-                      );
-                    })}
+                          {selectedSorts.includes(opt.id) && (
+                            <Check size={14} className="text-white" strokeWidth={4} />
+                          )}
+                        </div>
+                        <span
+                          className={`text-xs ${
+                            selectedSorts.includes(opt.id)
+                              ? "font-bold text-neutral-900"
+                              : "text-neutral-600"
+                          }`}
+                        >
+                          {opt.label}
+                        </span>
+                      </button>
+                    ))}
                   </div>
                 </m.div>
               </>
@@ -196,10 +146,10 @@ export function NavigationBar({
       </div>
 
       <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
-        {isLoading ? (
+        {state.isLoading ? (
           <div className="h-9 w-24 rounded-sm bg-neutral-100 animate-pulse" />
         ) : (
-          categories.map((cat) => {
+          state.categories.map((cat) => {
             const Icon = iconMap[cat.slug] || Utensils;
             const isActive = selectedCategory === cat.slug;
 
@@ -208,9 +158,7 @@ export function NavigationBar({
                 key={cat.id}
                 onClick={() => onCategoryChange?.(cat.slug)}
                 className={`relative flex items-center gap-2 px-5 py-2.5 rounded-sm whitespace-nowrap transition-all ${
-                  isActive
-                    ? "text-white"
-                    : "text-neutral-500 hover:bg-neutral-100"
+                  isActive ? "text-white" : "text-neutral-500 hover:bg-neutral-100"
                 }`}
               >
                 {isActive && (
