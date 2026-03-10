@@ -1,7 +1,7 @@
 import { useSettings } from "@/context/SettingsContext";
 import { Bell, User, MapPin, LogIn } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
-import { useNavigate } from "react-router";
+import { Link, useNavigate } from "react-router";
 
 interface HeaderProps {
   tableId?: string;
@@ -35,6 +35,7 @@ export function Header({ tableId = "-" }: HeaderProps) {
     <>
       <header className="sticky top-0 z-[40] bg-white/80 backdrop-blur-md border-b">
         <div className="px-4 md:px-8 h-20 flex items-center justify-between">
+          <Link to={"/"}>
           <div className="flex items-center gap-4">
             <div className="w-10 h-10 flex justify-center items-center overflow-hidden">
               <img
@@ -55,6 +56,7 @@ export function Header({ tableId = "-" }: HeaderProps) {
               </div>
             </div>
           </div>
+          </Link>
 
           {tableId && (
             <div className="hidden lg:block bg-neutral-50 px-4 py-2 rounded-lg border">

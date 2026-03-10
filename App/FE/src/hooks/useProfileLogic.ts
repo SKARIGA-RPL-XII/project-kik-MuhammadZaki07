@@ -6,12 +6,13 @@ export function useProfileLogic(user: any) {
   const [loading, setLoading] = useState(false);
   const [preview, setPreview] = useState<string | null>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
+  const [errors, setErrors] = useState<Record<string, string>>({});
   const { toast } = useToast();
-  
+
   const [formData, setFormData] = useState({
     username: user?.username || "",
     no_tlp: user?.no_tlp || "",
-    addres: user?.addres || ""
+    addres: user?.addres || "",
   });
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -26,25 +27,44 @@ export function useProfileLogic(user: any) {
 
   const updateProfile = async () => {
     setLoading(true);
+    setErrors({});
+
     const payload = {
       ...formData,
-      profile_image: imageFile
+      profile_image: imageFile,
     };
 
     const { error } = await UserService.updateProfile(user.id, payload);
-    
+
     if (error) {
-      toast("error", "Failed", "Changes could not be saved");
+      const mapped: Record<string, string> = {};
+
+      if (typeof error === "object") {
+        Object.entries(error).forEach(([key, messages]: any) => {
+          mapped[key] = messages[0];
+        });
+        setErrors(mapped);
+      }
+
+      toast("error", "Validation Failed", "Please check your input.");
     } else {
-      toast("success", "Success", "Your profile has been updated");
+      toast("success", "Success", "Profile updated successfully!");
       setImageFile(null);
+      setPreview(null);
     }
-    
+
     setLoading(false);
   };
 
   const updateField = (field: string, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData((prev) => ({ ...prev, [field]: value }));
+    if (errors[field]) {
+      setErrors((prev) => {
+        const newErrs = { ...prev };
+        delete newErrs[field];
+        return newErrs;
+      });
+    }
   };
 
   return {
@@ -53,6 +73,7 @@ export function useProfileLogic(user: any) {
     preview,
     handleFileChange,
     updateProfile,
-    updateField
+    updateField,
+    errors,
   };
 }

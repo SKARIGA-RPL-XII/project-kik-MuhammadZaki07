@@ -5,8 +5,12 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use App\Events\UserRegistered;
 use App\Notifications\GeneralNotification;
+use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
+use Laravel\Socialite\Facades\Socialite;
+use Laravel\Socialite\Two\GoogleProvider;
 
 class AuthController extends Controller
 {
@@ -43,7 +47,6 @@ class AuthController extends Controller
         );
     }
 
-
     public function register(Request $request)
     {
         $request->validate([
@@ -73,10 +76,68 @@ class AuthController extends Controller
 
         return Controller::OKE('success', 'register success', $user, 201);
     }
-
     public function logout(Request $request)
     {
         $request->user()->currentAccessToken()->delete();
         return Controller::OKE('success', 'logout success', [], 200);
+    }
+
+    public function googleLogin(Request $request)
+    {
+        $request->validate([
+            'token' => 'required|string'
+        ]);
+
+        try {
+            $driver = Socialite::buildProvider(
+                GoogleProvider::class,
+                config('services.google')
+            );
+
+            $googleUser = $driver->stateless()->userFromToken($request->token);
+
+            $email = $googleUser->getEmail();
+            $avatar = $googleUser->getAvatar();
+
+            $user = User::where('email', $email)->first();
+
+            if (!$user) {
+                $user = User::create([
+                    'username' => $googleUser->getName(),
+                    'email' => $email,
+                    'profile_image' => $avatar,
+                    'role_id' => 4,
+                    'password' => Hash::make(Str::random(24)),
+                    'gender' => null,
+                ]);
+
+                event(new UserRegistered($user));
+            } else {
+                if (!$user->profile_image || str_contains($user->profile_image, 'storage')) {
+                    $user->update([
+                        'profile_image' => $avatar
+                    ]);
+                }
+            }
+
+            $token = $user->createToken('token')->plainTextToken;
+
+            $user->load('role');
+
+            return Controller::OKE(
+                'success',
+                'Google login success',
+                [
+                    'user' => [
+                        ...$user->toArray(),
+                        'role_name' => $user->role->name
+                    ],
+                    'token' => $token
+                ],
+                200
+            );
+        } catch (Exception $e) {
+            return Controller::ERROR('google_error', $e->getMessage(), 401);
+        }
     }
 }

@@ -83,7 +83,11 @@ class UserController extends Controller
                 "no_tlp" => $user->no_tlp,
                 "addres" => $user->addres,
                 "gender" => $user->gender,
-                "profile_image" => $user->profile_image ? asset('storage/' . $user->profile_image) : null,
+                "profile_image" => $user->profile_image
+                    ? (str_starts_with($user->profile_image, 'http')
+                        ? $user->profile_image
+                        : asset('storage/' . $user->profile_image))
+                    : null,
                 "role_id" => $user->role_id,
                 "role_name" => $user->role->name ?? 'user',
                 "badge_id" => $user->badge_id,

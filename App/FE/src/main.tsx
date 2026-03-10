@@ -9,7 +9,8 @@ import { AuthProvider } from "./context/AuthContext.tsx";
 import { ToastProvider } from "./context/ToastContext.tsx";
 import { SettingsProvider } from "./context/SettingsContext.tsx";
 import "./lib/bootstrap.ts";
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { GoogleOAuthProvider } from '@react-oauth/google';
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
@@ -28,17 +29,19 @@ const queryClient = new QueryClient({
 });
 
 createRoot(document.getElementById("root")!).render(
-  <AuthProvider>
-    <QueryClientProvider client={queryClient}>
-    <SettingsProvider>
-      <ThemeProvider>
-        <ToastProvider>
-          <AppWrapper>
-            <App />
-          </AppWrapper>
-        </ToastProvider>
-      </ThemeProvider>
-    </SettingsProvider>
-    </QueryClientProvider>
-  </AuthProvider>,
+  <QueryClientProvider client={queryClient}>
+    <AuthProvider>
+      <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}>
+        <SettingsProvider>
+          <ThemeProvider>
+            <ToastProvider>
+              <AppWrapper>
+                <App />
+              </AppWrapper>
+            </ToastProvider>
+          </ThemeProvider>
+        </SettingsProvider>
+      </GoogleOAuthProvider>
+    </AuthProvider>
+  </QueryClientProvider>
 );

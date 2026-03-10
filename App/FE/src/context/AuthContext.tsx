@@ -18,6 +18,7 @@ type AuthContextType = {
   errors: any;
   login: (payload: FormData) => Promise<any>;
   register: (payload: FormData) => Promise<any>;
+  loginWithGoogle: (googleToken: string) => Promise<any>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
 };
@@ -25,17 +26,18 @@ type AuthContextType = {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
- const [user, setUser] = useState<User | null>(() => {
-  const savedUser = localStorage.getItem("user");
-  if (savedUser && savedUser !== "undefined") {
-    try {
-      return JSON.parse(savedUser);
-    } catch (e) {
-      return null;
+  const [user, setUser] = useState<User | null>(() => {
+    const savedUser = localStorage.getItem("user");
+    if (savedUser && savedUser !== "undefined") {
+      try {
+        return JSON.parse(savedUser);
+      } catch (e) {
+        return null;
+      }
     }
-  }
-  return null;
-});
+    return null;
+  });
+
   const [loading, setLoading] = useState(true);
   const [errors, setErrors] = useState<any>(null);
 
@@ -102,6 +104,25 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  const loginWithGoogle = async (googleToken: string) => {
+    try {
+      setLoading(true);
+      const res = await apiClient.post("/auth/google", { token: googleToken });
+      const { user: userData, token } = res.data.data;
+
+      setUser(userData);
+      localStorage.setItem("token", token);
+      localStorage.setItem("user", JSON.stringify(userData));
+      return { status: "success", user: userData };
+    } catch (err: any) {
+      const response = err.response?.data;
+      setErrors({ errorMessage: response?.message, errorField: response?.errors });
+      return response;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const logout = async () => {
     try {
       setLoading(true);
@@ -115,7 +136,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, errors, login, register, logout, refreshUser }}>
+    <AuthContext.Provider value={{ user, loading, errors, login, register, loginWithGoogle, logout, refreshUser }}>
       {children}
     </AuthContext.Provider>
   );

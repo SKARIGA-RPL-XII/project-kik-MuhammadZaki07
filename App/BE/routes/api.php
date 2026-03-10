@@ -36,6 +36,7 @@ use Illuminate\Support\Facades\Route;
 Route::prefix('auth')->controller(AuthController::class)->group(function () {
     Route::post('login', 'login');
     Route::post('register', 'register');
+    Route::post('/google', [AuthController::class, 'googleLogin']);
     Route::post('logout', 'logout')->middleware('auth:sanctum');
 });
 
@@ -81,7 +82,7 @@ Route::middleware('auth:sanctum')->group(function () {
     });
     Route::post('/admins/export', [AdminController::class, 'export']);
     Route::post('/admins/import-mapping', [AdminController::class, 'importMapping']);
-    Route::delete('/user/delete', [TransactionController::class, 'destroyAccount']);
+    Route::delete('/user/delete', [UserController::class, 'destroyAccount']);
 
     Route::resource('transactions', TransactionController::class);
     Route::patch('/transactions/{id}/status', [TransactionController::class, 'updateStatus']);
