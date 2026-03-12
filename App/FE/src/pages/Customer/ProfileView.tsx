@@ -5,11 +5,12 @@ import { useProfileLogic } from "@/hooks/useProfileLogic";
 import { getProfileImage } from "@/utils/imageHelper";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { useAuth } from "@/context/AuthContext";
 
-export function ProfileView({ user }: { user: any }) {
+export function ProfileView() {
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const logic = useProfileLogic(user);
-  console.log(logic.errors);
+  const { user, refreshUser } = useAuth();
+  const logic = useProfileLogic(user, refreshUser);
 
   return (
     <div className="space-y-6">
@@ -18,7 +19,7 @@ export function ProfileView({ user }: { user: any }) {
           <div className="relative w-20 h-20 overflow-hidden rounded-full border-2 bg-neutral-100 flex items-center justify-center">
             {logic.preview || user?.profile_image ? (
               <img
-                src={getProfileImage(logic.preview || user?.profile_image)}
+             src={logic.preview ? logic.preview : getProfileImage(user?.profile_image)}
                 alt="Profile"
                 className="w-full h-full object-cover"
               />

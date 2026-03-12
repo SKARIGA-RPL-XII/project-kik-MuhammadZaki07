@@ -12,25 +12,25 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('transaction_details', function (Blueprint $table) {
-    $table->id();
-    $table->foreignId('transaction_id')->constrained()->cascadeOnDelete();
-    $table->foreignId('menu_id')->constrained()->cascadeOnDelete();
+            $table->id();
+            $table->foreignId('transaction_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('menu_id')->constrained()->cascadeOnDelete();
 
-    $table->integer('menu_qty');
-    $table->integer('price');
-    $table->integer('subtotal');
+            $table->integer('menu_qty');
+            $table->integer('price');
+            $table->integer('subtotal');
 
-    $table->json('attributes')->nullable();
+            $table->json('attributes')->nullable();
 
-    $table->enum('status', [
-        'pending',
-        'cooking',
-        'ready',
-        'served'
-    ])->default('pending');
+            $table->enum('status', [
+                'pending',
+                'cooking',
+                'ready',
+                'served'
+            ])->default('pending');
 
-    $table->timestamps();
-});
+            $table->timestamps();
+        });
     }
 
     /**

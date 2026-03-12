@@ -1,23 +1,25 @@
-import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { UserService } from "@/services/user.service";
 
 export function useOrdersLogic() {
-  const [orders, setOrders] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { 
+    data: orders = [], 
+    isLoading: loading,
+    error,
+    refetch 
+  } = useQuery({
+    queryKey: ["transactions"],
+    queryFn: async () => {
+      const data = await UserService.getTransactions();
+      return data || [];
+    },
+    staleTime: 1000 * 60 * 3,
+  });
 
-  useEffect(() => {
-    const fetchOrders = async () => {
-      try {
-        const data = await UserService.getTransactions();
-        setOrders(data || []);
-      } catch (err) { 
-        console.error("Order Fetch Error:", err); 
-      } finally { 
-        setLoading(false); 
-      }
-    };
-    fetchOrders();
-  }, []);
-
-  return { orders, loading };
+  return { 
+    orders, 
+    loading, 
+    error,
+    refetch 
+  };
 }

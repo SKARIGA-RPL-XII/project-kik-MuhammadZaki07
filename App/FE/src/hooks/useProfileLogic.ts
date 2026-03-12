@@ -2,7 +2,7 @@ import { useState } from "react";
 import { UserService } from "@/services/user.service";
 import { useToast } from "@/context/ToastContext";
 
-export function useProfileLogic(user: any) {
+export function useProfileLogic(user: any , refreshUser: () => void) {
   const [loading, setLoading] = useState(false);
   const [preview, setPreview] = useState<string | null>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -51,6 +51,7 @@ export function useProfileLogic(user: any) {
       toast("success", "Success", "Profile updated successfully!");
       setImageFile(null);
       setPreview(null);
+      await refreshUser();
     }
 
     setLoading(false);

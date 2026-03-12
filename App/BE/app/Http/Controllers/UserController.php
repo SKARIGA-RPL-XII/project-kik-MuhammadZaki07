@@ -78,6 +78,7 @@ class UserController extends Controller
             "status" => "success",
             "data" => [
                 "id" => $user->id,
+                "google_id" => $user->google_id,
                 "username" => $user->username,
                 "email" => $user->email,
                 "no_tlp" => $user->no_tlp,

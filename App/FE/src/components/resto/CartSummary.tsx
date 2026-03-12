@@ -224,7 +224,7 @@ CartSummary.SidebarContent = function SidebarContent({
           )}
         </div>
 
-        <div className="flex items-center justify-between bg-zinc-50 dark:bg-zinc-800/50 px-3 py-2 rounded-lg border border-zinc-100 dark:border-zinc-800">
+        <div className="flex items-center justify-between bg-zinc-50 dark:bg-zinc-800/50 px-3 py-2 rounded-md border border-zinc-100 dark:border-zinc-800">
           <div className="flex items-center gap-2">
             <Checkbox
               id="select-all"
@@ -350,7 +350,7 @@ CartSummary.SidebarContent = function SidebarContent({
             onClick={() => setOrderType("dine_in")}
           >
             <Utensils className="h-4 w-4" />
-            <span className="text-[10px] font-bold uppercase tracking-tight">
+            <span className="text-xs font-semibold">
               Dine In
             </span>
           </Button>
@@ -360,7 +360,7 @@ CartSummary.SidebarContent = function SidebarContent({
             onClick={() => setOrderType("take_away")}
           >
             <ShoppingBag className="h-4 w-4" />
-            <span className="text-[10px] font-bold uppercase tracking-tight">
+            <span className="text-xs font-semibold">
               Take Away
             </span>
           </Button>

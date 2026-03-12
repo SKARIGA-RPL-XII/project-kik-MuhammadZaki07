@@ -40,10 +40,13 @@ export const UserService = {
       };
     }
   },
+
+
   getTransactions: async () => {
     const res = await apiClient.get("/user/transactions");
     return res.data.data;
   },
+  
   getTransactionById: async (id: string | undefined) => {
     if (!id) return null;
     try {

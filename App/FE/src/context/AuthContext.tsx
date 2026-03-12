@@ -10,6 +10,7 @@ type User = {
   gender: "LK" | "PR";
   profile_image?: string;
   no_tlp?: string;
+  google_id?:string
 };
 
 type AuthContextType = {

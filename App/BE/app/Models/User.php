@@ -45,21 +45,6 @@ class User extends Authenticatable
         return $this->transactions()->where('status', 'completed')->sum('total_amount');
     }
 
-    public function updateBadge()
-    {
-        $currentSpend = $this->total_spend;
-
-        $eligibleBadge = Badge::where('is_active', true)
-            ->where('min_spend', '<=', $currentSpend)
-            ->orderBy('min_spend', 'desc')
-            ->first();
-
-        if ($eligibleBadge && $this->badge_id !== $eligibleBadge->id) {
-            $this->badge_id = $eligibleBadge->id;
-            $this->save();
-        }
-    }
-
     /**
      * The attributes that should be hidden for serialization.
      *

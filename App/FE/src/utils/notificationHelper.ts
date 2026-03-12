@@ -12,6 +12,6 @@ export const requestNotificationPermission = async () => {
 };
 
 export const playNotificationSound = () => {
-  const audio = new Audio("/notification-sound.mp3");
+  const audio = new Audio("/sounds/sound_notification.mp3");
   audio.play().catch(() => {});
 };

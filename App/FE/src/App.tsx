@@ -3,7 +3,7 @@ import { ScrollToTop } from "./components/common/ScrollToTop";
 
 import AppLayout from "./layout/AppLayout";
 import CustomerLayout from "./layout/CustomerLayout";
-import { AuthMiddleware, GuestMiddleware } from "./middleware/midleware";
+import { AuthMiddleware, GuestMiddleware, StaffMiddleware } from "./middleware/midleware";
 import { PermissionMiddleware } from "./middleware/PermissionMiddleware";
 
 import SignIn from "./pages/AuthPages/SignIn";
@@ -50,9 +50,9 @@ export default function App() {
       <Routes>
         <Route
           element={
-            <AuthMiddleware>
+            <StaffMiddleware>
               <AppLayout />
-            </AuthMiddleware>
+            </StaffMiddleware>
           }
         >
           <Route path="/dashboard" element={<Home />} />

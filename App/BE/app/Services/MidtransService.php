@@ -4,8 +4,9 @@ namespace App\Services;
 
 use App\Models\Transaction;
 use App\Models\Table;
+use App\Models\User;
+use App\Notifications\GeneralNotification;
 use App\Services\PosService;
-use Exception;
 
 class MidtransService
 {
@@ -35,6 +36,15 @@ class MidtransService
                 ]);
 
                 $this->posService->decreaseInventory($transaction);
+
+                if ($transaction->user_id) {
+                    $user = User::find($transaction->user_id);
+                    $user->notify(new GeneralNotification(
+                        "Pembayaran Berhasil! Pesanan {$transaction->transaction_code} sedang disiapkan. Terima kasih sudah memesan!",
+                        'payment_success',
+                        '/profile-customer'
+                    ));
+                }
             }
         } elseif ($status == 'expire' || $status == 'cancel' || $status == 'deny') {
             $transaction->update(['status' => 'failed']);

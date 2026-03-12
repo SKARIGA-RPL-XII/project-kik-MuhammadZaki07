@@ -80,7 +80,7 @@ const BannerCarousel: React.FC<BannerCarouselProps> = ({
   if (!banners || banners.length === 0) return null;
 
   return (
-    <div className="relative w-full h-72 md:h-88 overflow-hidden rounded-3xl shadow-2xl shadow-neutral-200 group">
+    <div className="relative w-full h-72 md:h-88 overflow-hidden rounded-2xl shadow-2xl shadow-neutral-200 group">
       <AnimatePresence initial={false} custom={direction} mode="popLayout">
         <m.div
           key={current}
@@ -150,7 +150,7 @@ const BannerCarousel: React.FC<BannerCarouselProps> = ({
                   setDirection(i > current ? 1 : -1);
                   setCurrent(i);
                 }}
-                className="relative h-1.5 rounded-full bg-white/20 overflow-hidden transition-all duration-500"
+                className="relative h-1.5 rounded-full bg-neutral-100/20 animate-pulse overflow-hidden transition-all duration-500"
                 style={{ width: i === current ? "40px" : "12px" }}
               >
                 {i === current && autoLoop && (

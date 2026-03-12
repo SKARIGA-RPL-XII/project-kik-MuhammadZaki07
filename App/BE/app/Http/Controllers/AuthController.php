@@ -98,11 +98,15 @@ class AuthController extends Controller
 
             $email = $googleUser->getEmail();
             $avatar = $googleUser->getAvatar();
+            $googleId = $googleUser->getId();
 
-            $user = User::where('email', $email)->first();
+            $user = User::where('google_id', $googleId)
+                ->orWhere('email', $email)
+                ->first();
 
             if (!$user) {
                 $user = User::create([
+                    'google_id' => $googleId,
                     'username' => $googleUser->getName(),
                     'email' => $email,
                     'profile_image' => $avatar,
@@ -113,15 +117,21 @@ class AuthController extends Controller
 
                 event(new UserRegistered($user));
             } else {
+                $updateData = [];
+                if (!$user->google_id) {
+                    $updateData['google_id'] = $googleId;
+                }
+
                 if (!$user->profile_image || str_contains($user->profile_image, 'storage')) {
-                    $user->update([
-                        'profile_image' => $avatar
-                    ]);
+                    $updateData['profile_image'] = $avatar;
+                }
+
+                if (!empty($updateData)) {
+                    $user->update($updateData);
                 }
             }
 
             $token = $user->createToken('token')->plainTextToken;
-
             $user->load('role');
 
             return Controller::OKE(

@@ -1,7 +1,8 @@
 import { useSettings } from "@/context/SettingsContext";
-import { Bell, User, MapPin, LogIn } from "lucide-react";
+import { User, MapPin, LogIn } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { Link, useNavigate } from "react-router";
+import NotificationDropdown from "../header/NotificationDropdown";
 
 interface HeaderProps {
   tableId?: string;
@@ -33,7 +34,7 @@ export function Header({ tableId = "-" }: HeaderProps) {
 
   return (
     <>
-      <header className="sticky top-0 z-[40] bg-white/80 backdrop-blur-md border-b">
+      <header className="sticky top-0 z-[200] bg-white/80 backdrop-blur-md border-b">
         <div className="px-4 md:px-8 h-20 flex items-center justify-between">
           <Link to={"/"}>
           <div className="flex items-center gap-4">
@@ -73,10 +74,7 @@ export function Header({ tableId = "-" }: HeaderProps) {
           )}
 
           <div className="flex items-center gap-1">
-            <button className="p-2.5 rounded-xl hover:bg-neutral-50 text-neutral-400 transition-colors relative">
-              <Bell size={18} />
-              <span className="absolute top-3 right-3 w-1.5 h-1.5 bg-red-600 rounded-full" />
-            </button>
+           <NotificationDropdown />
             <div className="w-[1px] h-4 bg-neutral-100 mx-2" />
             <button
               onClick={handleProfileClick}

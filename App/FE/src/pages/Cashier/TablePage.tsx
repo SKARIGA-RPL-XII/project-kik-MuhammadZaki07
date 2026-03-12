@@ -4,12 +4,10 @@ import { useTables, useTableMutations } from "@/hooks/react-query/useTable";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ChevronRight, Search, Users, Armchair, Calendar } from "lucide-react";
+import { ChevronRight, Search, Users, Calendar } from "lucide-react";
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
-  DialogTitle,
 } from "@/components/ui/dialog";
 import { useToast } from "@/context/ToastContext";
 
@@ -32,7 +30,6 @@ export default function TablePage() {
   const location = useLocation();
   const { data: tables, isLoading } = useTables({ page: 1, size: 10000 });
   const { updateTable } = useTableMutations();
-  const isUpdating = updateTable.isPending;
 
   const [selectedRoomId, setSelectedRoomId] = useState<string | "all">("all");
   const [selectedTable, setSelectedTable] = useState<any>(null);

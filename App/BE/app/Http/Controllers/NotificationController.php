@@ -14,7 +14,7 @@ class NotificationController extends Controller
         $user = Auth::user();
 
         $query = Notification::where(function ($q) use ($user) {
-            $q->where('user_id', $user->id)
+            $q->where('notifiable_id', $user->id)
                 ->orWhere('role_id', $user->role_id)
                 ->orWhere('is_global', true);
         });

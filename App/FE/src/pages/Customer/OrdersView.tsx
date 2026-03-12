@@ -1,10 +1,15 @@
-import { Link } from "react-router";
+import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useOrdersLogic } from "@/hooks/useOrdersLogic";
+import { ChevronLeft, Receipt, Utensils, CreditCard, Calendar } from "lucide-react";
+import dayjs from "dayjs";
+import { useSettings } from "@/context/SettingsContext";
 
 export function OrdersView() {
   const { orders, loading } = useOrdersLogic();
+  const [selectedOrder, setSelectedOrder] = useState<any>(null);
+  const {settings} = useSettings();
 
   if (loading) {
     return (
@@ -16,47 +21,168 @@ export function OrdersView() {
     );
   }
 
+  if (selectedOrder) {
+    const isPaid = ["paid", "completed"].includes(selectedOrder.status);
+    const taxPercent = settings?.tax_percent;
+    const servicePercent = settings?.service_percent;
+    const isTaxActive = settings?.is_tax_active;
+    const isServiceActive = settings?.is_service_active;
+    const subtotal = selectedOrder.total_amount;
+    const taxAmount = isTaxActive ? (subtotal * taxPercent) / 100 : 0;
+    const serviceAmount = isServiceActive ? (subtotal * servicePercent) / 100 : 0;
+    const grandTotal = subtotal + taxAmount + serviceAmount;
+
+    return (
+      <div className="space-y-6 pb-10 animate-in fade-in slide-in-from-right-4 duration-300">
+        <div className="flex items-center gap-4">
+          <button 
+            onClick={() => setSelectedOrder(null)}
+            className=""
+          >
+            <ChevronLeft size={20} className="text-neutral-600" />
+          </button>
+          <div>
+            <h1 className="text-lg font-bold text-neutral-800">Detail Pesanan</h1>
+            <p className="text-xs text-neutral-400 font-medium">#{selectedOrder.transaction_code}</p>
+          </div>
+        </div>
+
+        <Card className={`p-5 border-none rounded-xl shadow-lg shadow-red-500/10 ${isPaid ? 'bg-red-600 text-white' : 'bg-yellow-500 text-white'}`}>
+          <div className="flex justify-between items-center">
+            <div className="space-y-1">
+              <p className="text-sm opacity-80 font-medium">Status Pesanan</p>
+              <h2 className="text-2xl font-black capitalize tracking-tight">{selectedOrder.status}</h2>
+            </div>
+          </div>
+        </Card>
+
+        <div className="grid grid-cols-2 gap-3">
+          <Card className="p-4 border-neutral-100 rounded-xl shadow-none bg-neutral-50/50">
+            <Calendar size={16} className="text-red-600 mb-2" />
+            <p className="text-neutral-400 text-sm">Tanggal</p>
+            <p className="text-md font-bold text-neutral-800">{dayjs(selectedOrder.created_at).format("DD MMM YYYY")}</p>
+          </Card>
+          <Card className="p-4 border-neutral-100 rounded-xl shadow-none bg-neutral-50/50">
+            <CreditCard size={16} className="text-red-600 mb-2" />
+            <p className="text-neutral-400 text-sm">Metode</p>
+            <p className="text-md font-bold text-neutral-800 uppercase">{selectedOrder.payment_method || 'QRIS'}</p>
+          </Card>
+        </div>
+
+        <div className="space-y-3">
+          <div className="flex items-center gap-2 px-1">
+            <Utensils size={16} className="text-red-600" />
+            <h3 className="text-sm font-bold text-neutral-800 font-display">Item yang Dipesan</h3>
+          </div>
+          <Card className="overflow-hidden border-neutral-100 rounded-[2rem] shadow-none border">
+            <div className="divide-y divide-neutral-50 max-h-[300px]">
+              {selectedOrder.details.map((item: any, idx: number) => (
+                <div key={idx} className="p-4 flex justify-between items-center bg-white">
+                  <div className="flex gap-4 items-center">
+                    <div className="w-10 h-10 bg-red-50 rounded-xl flex items-center justify-center font-bold text-red-600 text-sm">
+                      {item.quantity}x
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold text-neutral-800">{item.menu?.name}</p>
+                      <p className="text-[11px] text-neutral-400">Rp {new Intl.NumberFormat("id-ID").format(item.price_at_transaction)}</p>
+                    </div>
+                  </div>
+                  <p className="text-sm font-bold text-neutral-800">
+                    Rp {new Intl.NumberFormat("id-ID").format(item.subtotal)}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </Card>
+        </div>
+
+      <div className="space-y-3">
+          <div className="flex items-center gap-2 px-1">
+            <Receipt size={16} className="text-red-600" />
+            <h3 className="text-sm font-bold text-neutral-800 font-display">Rincian Harga</h3>
+          </div>
+          <Card className="p-6 border-neutral-100 rounded-[2rem] shadow-none bg-white space-y-3">
+            <div className="flex justify-between text-sm">
+              <span className="text-neutral-400">Subtotal</span>
+              <span className="font-bold text-neutral-800">
+                Rp {new Intl.NumberFormat("id-ID").format(subtotal)}
+              </span>
+            </div>
+
+            {isServiceActive && (
+              <div className="flex justify-between text-sm">
+                <span className="text-neutral-400">Service ({servicePercent}%)</span>
+                <span className="font-bold text-neutral-800">
+                  Rp {new Intl.NumberFormat("id-ID").format(serviceAmount)}
+                </span>
+              </div>
+            )}
+
+            {isTaxActive && (
+              <div className="flex justify-between text-sm">
+                <span className="text-neutral-400">Pajak ({taxPercent}%)</span>
+                <span className="font-bold text-neutral-800">
+                  Rp {new Intl.NumberFormat("id-ID").format(taxAmount)}
+                </span>
+              </div>
+            )}
+
+            <div className="pt-3 border-t border-dashed border-neutral-200 flex justify-between items-center">
+              <span className="text-base font-bold text-neutral-800">Total Bayar</span>
+              <span className="text-xl font-black text-red-600">
+                Rp {new Intl.NumberFormat("id-ID").format(grandTotal)}
+              </span>
+            </div>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
   if (orders.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-12 text-neutral-400">
-        <p className="text-xl font-normal">No order history found yet</p>
+        <p className="text-xl font-normal">Belum ada riwayat pesanan</p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-3 animate-in fade-in duration-300">
+      <h2 className="text-sm font-bold text-neutral-400 px-1 mb-2">Riwayat Pesanan</h2>
       {orders.map((order) => (
-        <Link key={order.id} to={`/transaction/${order.id}`} className="block">
-          <Card className="p-4 border-neutral-100 shadow-none rounded-2xl bg-white hover:border-red-200 hover:shadow-md hover:shadow-red-500/5 transition-all cursor-pointer group">
+        <div key={order.id} onClick={() => setSelectedOrder(order)} className="block cursor-pointer">
+          <Card className="p-4 border-neutral-100 shadow-none rounded-2xl bg-white hover:border-red-200 hover:shadow-md hover:shadow-red-500/5 transition-all group">
             <div className="flex justify-between items-start mb-2">
               <div>
-                <p className="text-[10px] text-neutral-400 font-bold mb-1 tracking-tight">
+                <p className="text-xs text-neutral-400 font-medium mb-1">
                   #{order.transaction_code}
                 </p>
                 <h4 className="text-sm font-bold text-neutral-800 leading-tight group-hover:text-red-600 transition-colors">
-                  {order.details[0]?.menu?.name} 
+                  {order.details.length > 0 ? order.details[0]?.menu?.name : `Transaksi #${order.transaction_code}`}
                   {order.details.length > 1 && ` +${order.details.length - 1} items`}
                 </h4>
               </div>
-              <span className={`text-[9px] px-2 py-0.5 rounded-full font-bold ${
-                ['paid', 'completed'].includes(order.status) 
-                ? 'bg-green-50 text-green-600' 
-                : 'bg-yellow-50 text-yellow-600'
-              }`}>
+              <span
+                className={`text-[9px] px-2 py-0.5 rounded-full font-bold ${
+                  ["paid", "completed"].includes(order.status)
+                    ? "bg-green-50 text-green-600"
+                    : "bg-yellow-50 text-yellow-600"
+                }`}
+              >
                 {order.status.toUpperCase()}
               </span>
             </div>
             <div className="flex justify-between items-center pt-3 border-t border-neutral-50 mt-2">
               <span className="text-[11px] text-neutral-400 font-medium">
-                {new Date(order.created_at).toLocaleDateString('en-US', { day: '2-digit', month: 'short' })}
+                {dayjs(order.created_at).format("DD MMM YYYY")}
               </span>
               <span className="text-sm font-bold text-red-600">
                 Rp {new Intl.NumberFormat("id-ID").format(order.total_amount)}
               </span>
             </div>
           </Card>
-        </Link>
+        </div>
       ))}
     </div>
   );

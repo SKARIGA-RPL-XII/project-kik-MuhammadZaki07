@@ -45,7 +45,6 @@ class SystemNotificationEvent implements ShouldBroadcast
 
     public function broadcastWith()
     {
-        // Mengirim data dalam bentuk objek 'notification' agar sesuai dengan (e: { notification: Notification }) di React
         return [
             'notification' => $this->notification
         ];

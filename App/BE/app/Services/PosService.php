@@ -2,7 +2,8 @@
 
 namespace App\Services;
 
-use App\Models\{Transaction, Menu, Stock, Table, AttributeLevel, User};
+use App\Models\{Transaction, Menu, Stock, Table, AttributeLevel, Badge, User};
+use App\Notifications\GeneralNotification;
 use Illuminate\Support\Facades\{DB, Auth};
 use Midtrans\Snap;
 use Midtrans\Config;
@@ -108,10 +109,15 @@ class PosService
 
         if ($transaction->user_id) {
             $this->updateUserBadge($transaction->user_id);
+
+            $user = User::find($transaction->user_id);
+            $user->notify(new GeneralNotification(
+                "Pembayaran berhasil! Pesanan {$transaction->transaction_code} sedang diproses.",
+                'payment_success',
+                "/orders/{$transaction->id}"
+            ));
         }
     }
-
-
 
     private function processStockReduction($menu, $qty)
     {
@@ -207,7 +213,7 @@ class PosService
         return Snap::getSnapToken($params);
     }
 
-    private function updateUserBadge($userId)
+    public function updateUserBadge($userId)
     {
         $user = User::find($userId);
         if (!$user) return;
@@ -216,21 +222,21 @@ class PosService
             ->whereIn('status', ['paid', 'completed'])
             ->sum('total_amount');
 
-        $eligibleBadge = \App\Models\Badge::where('min_spend', '<=', $totalSpent)
+        $eligibleBadge = Badge::where('is_active', true)
+            ->where('min_spend', '<=', $totalSpent)
             ->orderBy('min_spend', 'desc')
             ->first();
 
         if ($eligibleBadge && $user->badge_id != $eligibleBadge->id) {
             $user->update(['badge_id' => $eligibleBadge->id]);
 
-            $message = "Selamat! Kamu naik level ke " . $eligibleBadge->name . "!";
+            $message = "Selamat! Total belanjamu mencapai Rp" . number_format($totalSpent, 0, ',', '.') . ". Kamu naik level ke " . $eligibleBadge->name . "!";
 
-            $user->notify(new \App\Notifications\GeneralNotification(
+            $user->notify(new GeneralNotification(
                 $message,
                 'level_up',
-                '/loyalty-program'
+                '/profile-customer'
             ));
-
             broadcast(new \App\Events\UserLevelUp($user, $eligibleBadge))->toOthers();
         }
     }
