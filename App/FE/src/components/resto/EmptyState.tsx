@@ -1,7 +1,10 @@
 import { motion } from "framer-motion";
-import { SearchX, ArrowLeft } from "lucide-react";
+import { SearchX } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 export function EmptyState() {
+  const { t } = useTranslation();
+
   const handleReset = () => {
     window.location.href = window.location.pathname;
   };
@@ -13,21 +16,20 @@ export function EmptyState() {
       </div>
 
       <div className="text-center space-y-2 mb-8">
-        <h3 className="text-2xl font-bold text-neutral-900 dark:text-white tracking-tight">
-          Menu not found
+        <h3 className="text-2xl font-bold text-neutral-900 dark:text-white">
+          {t("cp_empty_title")}
         </h3>
         <p className="text-md text-neutral-500 dark:text-neutral-400 max-w-xs mx-auto">
-          Try checking the spelling of your keywords or use other categories to
-          search for available menus.
+          {t("cp_empty_desc")}
         </p>
       </div>
 
       <motion.button
         whileTap={{ scale: 0.98 }}
         onClick={handleReset}
-        className="flex items-center gap-2 px-6 py-3 bg-red-500 dark:bg-neutral-100 text-white dark:text-neutral-900 rounded-xl text-sm font-normal transition-colors hover:bg-red-600 dark:hover:bg-neutral-200"
+        className="flex items-center gap-2 px-6 py-3 bg-red-500 text-white rounded-lg text-sm font-normal transition-colors hover:bg-red-600 dark:hover:bg-red-600"
       >
-        Refresh
+        {t("cp_empty_btn")}
       </motion.button>
     </div>
   );

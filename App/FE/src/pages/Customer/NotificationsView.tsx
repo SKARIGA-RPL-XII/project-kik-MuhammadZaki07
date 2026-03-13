@@ -52,7 +52,7 @@ export function NotificationsView() {
     <div className="space-y-4 animate-in fade-in duration-300 relative">      
       {alert.show && (
         <div className={`fixed top-5 left-1/2 -translate-x-1/2 z-[9999] flex items-center gap-3 px-4 py-2.5 rounded-lg border shadow-lg transition-all animate-in slide-in-from-top-2 
-          ${alert.type === 'success' ? 'bg-green-50 border-green-200 text-green-700' : 'bg-red-50 border-red-200 text-red-700'}`}>
+          ${alert.type === 'success' ? 'bg-green-50 text-green-700 dark:bg-neutral-900 dark:text-green-300' : 'dark:bg-neutral-900 bg-red-50 text-red-700'}`}>
           <Info size={16} />
           <span className="text-sm font-medium">{alert.msg}</span>
           <button onClick={() => setAlert({ ...alert, show: false })} className="ml-2 hover:opacity-70">
@@ -61,9 +61,9 @@ export function NotificationsView() {
         </div>
       )}
 
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-4 rounded-xl border border-neutral-100">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white dark:bg-neutral-900 p-4 rounded-xl border">
         <div>
-          <h2 className="text-lg font-bold text-neutral-800">Pusat Notifikasi</h2>
+          <h2 className="text-lg font-bold text-neutral-800 dark:text-neutral-300">Pusat Notifikasi</h2>
           <p className="text-xs text-neutral-500">Kelola pemberitahuan pesanan dan sistem kamu.</p>
         </div>
         
@@ -71,7 +71,7 @@ export function NotificationsView() {
           onClick={handleRequestPermission}
           className={`flex items-center justify-center gap-2 px-4 py-2 text-sm font-bold transition-all
             ${permissionStatus === 'granted' 
-              ? 'bg-green-50 text-green-600 border border-green-100 cursor-default' 
+              ? 'bg-green-50 dark:bg-green-500 dark:text-white text-green-600 border cursor-default' 
               : 'bg-red-600 text-white hover:bg-red-700 shadow-md active:scale-95'}`}
         >
           {permissionStatus === 'granted' ? (
@@ -91,14 +91,14 @@ export function NotificationsView() {
             <ChevronLeft size={16} /> Kembali ke daftar
           </button>
 
-          <div className="bg-white border border-neutral-100 rounded-2xl p-5">
+          <div className="bg-white dark:bg-neutral-900 border rounded-xl p-5">
             <div className="flex items-start justify-between mb-6">
               <div className="flex gap-4">
-                <div className={`p-3 rounded-full ${getType(selectedNotif) === 'payment_success' ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600'}`}>
+                <div className={`p-3 rounded-full ${getType(selectedNotif) === 'payment_success' ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600 dark:bg-neutral-800'}`}>
                   {getType(selectedNotif) === 'payment_success' ? <ShoppingBag size={24} /> : <Bell size={24} />}
                 </div>
                 <div>
-                  <h3 className="font-bold text-lg text-neutral-800 leading-tight">
+                  <h3 className="font-bold text-lg text-neutral-800 dark:text-neutral-300 leading-tight">
                     {selectedNotif.data?.type?.replace('_', ' ').toUpperCase() || "SYSTEM"}
                   </h3>
                   <div className="flex items-center gap-2 text-neutral-400 text-xs mt-1">
@@ -115,7 +115,7 @@ export function NotificationsView() {
               </button>
             </div>
 
-            <p className="text-neutral-600 leading-relaxed text-sm bg-neutral-50 p-4 rounded-xl border border-neutral-100/50">
+            <p className="text-neutral-600 leading-relaxed text-sm bg-neutral-50 dark:bg-neutral-800 p-4 rounded-xl border dark:text-neutral-300">
               {getMessage(selectedNotif)}
             </p>
           </div>
@@ -162,15 +162,15 @@ export function NotificationsView() {
                     key={n.id}
                     onClick={() => handleShowDetail(n)}
                     className={`group relative max-w-[630px] flex items-center gap-4 p-4 rounded-xl border transition-all cursor-pointer ${
-                      isSelected ? "border-red-200 bg-red-50/30" : 
-                      isUnread ? "bg-white border-red-100 shadow-sm ring-1 ring-red-50" : "bg-neutral-50/50 border-neutral-100 hover:bg-white hover:border-neutral-200"
+                      isSelected ? "border-red-200 bg-red-50/30 dark:bg-neutral-800" : 
+                      isUnread ? "bg-white dark:bg-neutral-800 border-red-100 shadow-sm ring-1 ring-red-50" : "bg-neutral-50/50 dark:bg-neutral-900"
                     }`}
                   >
                     <div onClick={(e) => toggleSelect(e, n.id)} className={`shrink-0 transition-colors ${isSelected ? 'text-red-600' : 'text-neutral-300 group-hover:text-neutral-400'}`}>
                       {isSelected ? <CheckSquare size={20} /> : <Square size={20} />}
                     </div>
 
-                    <div className={`p-2 rounded-lg shrink-0 ${isUnread ? 'bg-red-50 text-red-600' : 'bg-neutral-200 text-neutral-500'}`}>
+                    <div className={`p-2 rounded-lg shrink-0 ${isUnread ? 'bg-red-50 dark:bg-neutral-800 text-red-600' : 'bg-neutral-200 dark:bg-neutral-800 text-neutral-500'}`}>
                       {n.data?.type === 'payment_success' ? <ShoppingBag size={18} /> : <Info size={18} />}
                     </div>
 

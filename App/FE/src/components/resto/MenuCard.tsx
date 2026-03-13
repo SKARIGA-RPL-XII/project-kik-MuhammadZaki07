@@ -30,12 +30,12 @@ export function MenuCard({ item, onOpenDetail }: MenuCardProps) {
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
       onClick={handleCardClick}
-      className={`group relative flex flex-col bg-white rounded-xl border transition-all duration-300 overflow-hidden 
+      className={`group relative flex flex-col bg-white dark:bg-neutral-900 rounded-xl border transition-all duration-300 overflow-hidden 
         ${isOutOfStock 
-          ? "opacity-80 grayscale-[0.6] cursor-not-allowed border-neutral-100" 
+          ? "opacity-80 grayscale-[0.6] cursor-not-allowed border-neutral-100 dark:border-neutral-800" 
           : isBestSeller 
-            ? "cursor-pointer border-amber-200 shadow-[0_0_15px_rgba(251,191,36,0.1)]" 
-            : "cursor-pointer border-neutral-100 hover:border-red-200"}`}
+            ? "cursor-pointer border-amber-200 dark:border-amber-900/50 shadow-[0_0_15px_rgba(251,191,36,0.1)]" 
+            : "cursor-pointer border-neutral-100 dark:border-neutral-800 hover:border-red-200 dark:hover:border-red-900/50"}`}
     >
       {isBestSeller && (
         <>
@@ -64,10 +64,10 @@ export function MenuCard({ item, onOpenDetail }: MenuCardProps) {
           </div>
         </>
       )}
+      
+      <div className="absolute inset-0 opacity-[0.03] dark:opacity-[0.05] pointer-events-none bg-[radial-gradient(#000_1px,transparent_1px)] dark:bg-[radial-gradient(#fff_1px,transparent_1px)] [background-size:16px_16px]" />
 
-      <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-[radial-gradient(#000_1px,transparent_1px)] [background-size:16px_16px]" />
-
-      <div className="relative aspect-[5/4] overflow-hidden bg-neutral-50 border-b">
+      <div className="relative aspect-[5/4] overflow-hidden bg-neutral-50 dark:bg-neutral-800 border-b dark:border-neutral-800">
         <img
           src={imagePath}
           alt={item.name}
@@ -76,7 +76,7 @@ export function MenuCard({ item, onOpenDetail }: MenuCardProps) {
         />
 
         {isOutOfStock && (
-          <div className="absolute inset-0 bg-neutral-500/50 backdrop-blur-[1px] flex items-center justify-center z-20">
+          <div className="absolute inset-0 bg-neutral-500/50 dark:bg-neutral-900/60 backdrop-blur-[1px] flex items-center justify-center z-20">
             <div className="bg-red-500 text-white px-3 py-1 rounded-full flex items-center gap-1.5 shadow-lg">
               <PackageX size={12} strokeWidth={1} />
               <span className="text-sm">Sold Out</span>
@@ -105,26 +105,26 @@ export function MenuCard({ item, onOpenDetail }: MenuCardProps) {
       </div>
 
       <div className="flex flex-col p-3.5 relative z-10">
-        <span className={`text-[10px] font-medium mb-1 ${isOutOfStock ? "text-neutral-400" : isBestSeller ? "text-amber-600" : "text-red-600"}`}>
+        <span className={`text-[10px] font-medium mb-1 ${isOutOfStock ? "text-neutral-500" : isBestSeller ? "text-amber-600 dark:text-amber-500" : "text-red-600 dark:text-red-500"}`}>
           {item.category?.name}
         </span>
 
-        <h3 className={`font-bold text-lg line-clamp-1 mb-1 transition-colors ${isOutOfStock ? "text-neutral-400" : "text-neutral-900"}`}>
+        <h3 className={`font-bold text-lg line-clamp-1 mb-1 transition-colors ${isOutOfStock ? "text-neutral-500" : "text-neutral-900 dark:text-neutral-100"}`}>
           {item.name}
         </h3>
 
-        <p className="text-neutral-400 text-xs line-clamp-2 mb-4">
+        <p className="text-neutral-400 dark:text-neutral-500 text-xs line-clamp-2 mb-4">
           {item.description}
         </p>
 
         <div className="flex items-center justify-between mt-auto">
           <div className="flex flex-col">
             {hasDiscount && (
-              <span className="text-[9px] text-neutral-400 line-through font-bold">
+              <span className="text-[9px] text-neutral-400 dark:text-neutral-600 line-through font-bold">
                 Rp {item.price.toLocaleString("id-ID")}
               </span>
             )}
-            <span className={`text-[14px] font-black ${isOutOfStock ? "text-neutral-400" : hasDiscount ? "text-rose-600" : "text-neutral-900"}`}>
+            <span className={`text-[14px] font-black ${isOutOfStock ? "text-neutral-500" : hasDiscount ? "text-rose-600 dark:text-rose-500" : "text-neutral-900 dark:text-neutral-100"}`}>
               Rp {discountedPrice.toLocaleString("id-ID")}
             </span>
           </div>
@@ -138,10 +138,10 @@ export function MenuCard({ item, onOpenDetail }: MenuCardProps) {
             }}
             className={`flex items-center justify-center w-8 h-8 rounded-full transition-all
               ${isOutOfStock 
-                ? "bg-neutral-100 text-neutral-300 cursor-not-allowed" 
+                ? "bg-neutral-100 dark:bg-neutral-800 text-neutral-300 dark:text-neutral-700 cursor-not-allowed" 
                 : isBestSeller 
-                  ? "bg-amber-500 text-white shadow-amber-200" 
-                  : "bg-red-500 text-white"}`}
+                  ? "bg-amber-500 text-white shadow-amber-200 dark:shadow-none" 
+                  : "bg-red-500 text-white shadow-red-200 dark:shadow-none"}`}
           >
             <Plus size={16} strokeWidth={3} />
           </motion.button>

@@ -1,0 +1,14 @@
+{
+  "md_error_title": "Waduh, menu tidak ditemukan atau server lagi capek, Bos.",
+  "md_error_back": "Kembali",
+  "md_category_default": "Umum",
+  "md_options_empty": "Tidak ada pilihan tambahan tersedia",
+  "md_toast_warning": "Pilih semua opsi dulu ya!",
+  "md_btn_add": "Tambah ke keranjang",
+  "mv_save": "Hemat",
+  "mv_subtotal": "Subtotal",
+  "mv_save_amount": "Hemat Rp {{amount}}",
+  "mv_btn_confirm": "Konfirmasi Pesanan",
+  "mv_select_prefix": "Pilih",
+  "mv_attr_placeholder": "Atribut",
+}

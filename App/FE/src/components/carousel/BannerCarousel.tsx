@@ -63,15 +63,15 @@ const BannerCarousel: React.FC<BannerCarouselProps> = ({
 
   if (isLoading) {
     return (
-      <div className="relative w-full h-72 md:h-96 overflow-hidden rounded-3xl bg-neutral-100 border border-neutral-200">
+      <div className="relative w-full h-72 md:h-96 overflow-hidden rounded-3xl bg-neutral-100 dark:bg-neutral-900  border">
         <m.div
           animate={{ x: ["-100%", "100%"] }}
           transition={{ repeat: Infinity, duration: 1.5, ease: "linear" }}
-          className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent"
+          className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 dark:via-neutral-500 to-transparent"
         />
         <div className="absolute left-8 bottom-10 space-y-4 w-full">
-          <div className="h-10 w-2/5 bg-neutral-200 rounded-xl animate-pulse" />
-          <div className="h-4 w-3/5 bg-neutral-200 rounded-lg animate-pulse" />
+          <div className="h-10 w-2/5 bg-neutral-200 dark:bg-neutral-800 rounded-xl animate-pulse" />
+          <div className="h-4 w-3/5 bg-neutral-200 rounded-lg dark:bg-neutral-800 animate-pulse" />
         </div>
       </div>
     );
@@ -80,7 +80,7 @@ const BannerCarousel: React.FC<BannerCarouselProps> = ({
   if (!banners || banners.length === 0) return null;
 
   return (
-    <div className="relative w-full h-72 md:h-88 overflow-hidden rounded-2xl shadow-2xl shadow-neutral-200 group">
+    <div className="relative w-full h-72 md:h-88 overflow-hidden rounded-2xl shadow-xl group">
       <AnimatePresence initial={false} custom={direction} mode="popLayout">
         <m.div
           key={current}

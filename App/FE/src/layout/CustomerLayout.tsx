@@ -15,7 +15,7 @@ function CustomerLayout() {
 
   return (
     <LazyMotion features={domAnimation}>
-      <div className="min-h-screen bg-white flex w-full overflow-hidden font-sans">
+      <div className="min-h-screen bg-white dark:bg-neutral-900/30 flex w-full overflow-hidden font-sans">
         <m.div
           layout
           className="flex-1 flex flex-col min-w-0 h-screen relative will-change-[width,transform]"
@@ -23,7 +23,7 @@ function CustomerLayout() {
         >
           <Header tableId={states.tableDisplay} />
 
-          <main className="flex-1 overflow-y-auto custom-scrollbar bg-neutral-50/30">
+          <main className="flex-1 overflow-y-auto custom-scrollbar bg-neutral-50/30 dark:bg-neutral-900/30">
             <div className="max-w-7xl mx-auto px-4 md:px-8 py-6">
               <Outlet />
             </div>

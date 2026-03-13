@@ -17,6 +17,7 @@ import { useNavigate, useParams } from "react-router";
 import PageMeta from "@/components/common/PageMeta";
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
 import { Button } from "@/components/ui/button";
+import { useTranslation } from "react-i18next";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -31,6 +32,7 @@ import {
 } from "@/components/ui/alert-dialog";
 
 const NotificationShow: React.FC = () => {
+  const { t } = useTranslation();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [notif, setNotif] = useState<Notification | null>(null);
@@ -83,16 +85,16 @@ const NotificationShow: React.FC = () => {
   return (
     <div className="mx-auto max-w-screen-2xl p-4 md:p-6 2xl:p-10">
       <PageMeta
-        title="Notification Detail | TailAdmin"
-        description="Detail notifikasi sistem."
+        title={t("ns_meta_title")}
+        description={t("ns_meta_desc")}
       />
-      <PageBreadcrumb pageTitle="Notification Detail" />
+      <PageBreadcrumb pageTitle={t("ns_breadcrumb")} />
 
       <button
         onClick={() => navigate("/notifications")}
         className="mb-6 flex items-center gap-2 text-sm font-medium text-black hover:text-primary dark:text-white dark:hover:text-primary transition-colors"
       >
-        <ArrowLeft size={18} /> Back to List
+        <ArrowLeft size={18} /> {t("ns_back")}
       </button>
 
       <div className="rounded-sm border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark">
@@ -133,7 +135,7 @@ const NotificationShow: React.FC = () => {
                     : "bg-success/10 text-success"
                 }`}
               >
-                {notif.is_global ? "Global" : "Personal"}
+                {notif.is_global ? t("ns_label_global") : t("ns_label_personal")}
               </span>
             </div>
           </div>
@@ -154,10 +156,10 @@ const NotificationShow: React.FC = () => {
                     </div>
                     <div>
                       <p className="text-sm font-medium text-black dark:text-white">
-                        Lampiran Dokumen
+                        {t("ns_attachment_title")}
                       </p>
                       <p className="text-xs text-body">
-                        File lampiran tersedia untuk diunduh
+                        {t("ns_attachment_desc")}
                       </p>
                     </div>
                   </div>
@@ -165,7 +167,7 @@ const NotificationShow: React.FC = () => {
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
                       <Button className="bg-primary hover:bg-opacity-90">
-                        Download
+                        {t("ns_btn_download")}
                       </Button>
                     </AlertDialogTrigger>
                     <AlertDialogContent size="sm">
@@ -173,19 +175,18 @@ const NotificationShow: React.FC = () => {
                         <AlertDialogMedia className="bg-red-500/10 text-red-500">
                           <FileText size={24} />
                         </AlertDialogMedia>
-                        <AlertDialogTitle>Unduh Lampiran?</AlertDialogTitle>
+                        <AlertDialogTitle>{t("ns_dialog_download_title")}</AlertDialogTitle>
                         <AlertDialogDescription>
-                          Anda akan mengunduh dokumen terkait notifikasi ini.
-                          Pastikan Anda mempercayai sumber file ini.
+                          {t("ns_dialog_download_desc")}
                         </AlertDialogDescription>
                       </AlertDialogHeader>
                       <AlertDialogFooter>
-                        <AlertDialogCancel variant="outline">Batal</AlertDialogCancel>
+                        <AlertDialogCancel variant="outline">{t("ns_dialog_cancel")}</AlertDialogCancel>
                         <AlertDialogAction
                           asChild
                           className="bg-red-500"
                         >
-                          <a href={downloadUrl} target="_blank">Unduh Sekarang</a>
+                          <a href={downloadUrl} target="_blank">{t("ns_dialog_download_confirm")}</a>
                         </AlertDialogAction>
                       </AlertDialogFooter>
                     </AlertDialogContent>
@@ -200,7 +201,7 @@ const NotificationShow: React.FC = () => {
               <AlertDialogTrigger asChild>
                 <Button variant="destructive" className="flex items-center gap-2">
                   <Trash2 size={18} />
-                  Delete Notification
+                  {t("ns_btn_delete")}
                 </Button>
               </AlertDialogTrigger>
               <AlertDialogContent size="sm">
@@ -208,18 +209,18 @@ const NotificationShow: React.FC = () => {
                   <AlertDialogMedia className="bg-destructive/10 text-destructive">
                     <Trash2 size={24} />
                   </AlertDialogMedia>
-                  <AlertDialogTitle>Hapus Notifikasi?</AlertDialogTitle>
+                  <AlertDialogTitle>{t("ns_dialog_delete_title")}</AlertDialogTitle>
                   <AlertDialogDescription>
-                    Tindakan ini tidak dapat dibatalkan. Notifikasi akan dihapus secara permanen dari akun Anda.
+                    {t("ns_dialog_delete_desc")}
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
-                  <AlertDialogCancel variant="outline">Batal</AlertDialogCancel>
+                  <AlertDialogCancel variant="outline">{t("ns_dialog_cancel")}</AlertDialogCancel>
                   <AlertDialogAction
                     variant="destructive"
                     onClick={handleDelete}
                   >
-                    Hapus Selamanya
+                    {t("ns_dialog_delete_confirm")}
                   </AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>

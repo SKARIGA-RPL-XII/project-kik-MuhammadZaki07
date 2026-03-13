@@ -5,10 +5,12 @@ import relativeTime from "dayjs/plugin/relativeTime";
 import { Trash2, ChevronLeft, X, Download } from "lucide-react";
 import { useNotificationLogic } from "@/hooks/useNotificationLogic";
 import { useAuth } from "@/context/AuthContext";
+import { useTranslation } from "react-i18next";
 
 dayjs.extend(relativeTime);
 
 export default function NotificationDropdown() {
+  const { t, i18n } = useTranslation();
   const {
     isOpen,
     unreadCount,
@@ -23,10 +25,12 @@ export default function NotificationDropdown() {
   } = useNotificationLogic();
   const { user } = useAuth();
 
+  dayjs.locale(i18n.language);
+
   const getDownloadUrl = (n: any) => n.download_url || n.data?.download_url;
 
   return (
-    <div className="relative z-[9999]">
+    <div className="relative z-[9999]" title="Notification">
       <button
         className="relative flex items-center justify-center text-neutral-500 transition-colors bg-white border border-neutral-200 rounded-full h-11 w-11 hover:bg-neutral-100 dark:border-neutral-800 dark:bg-neutral-900"
         onClick={toggleDropdown}
@@ -65,7 +69,7 @@ export default function NotificationDropdown() {
               </button>
             )}
             <h5 className="text-lg font-semibold text-neutral-800 dark:text-neutral-200">
-              {selectedNotif ? "Detail" : `Notification (${unreadCount})`}
+              {selectedNotif ? t("notif_title_detail") : t("notif_title_count", { count: unreadCount })}
             </h5>
           </div>
           <button
@@ -87,7 +91,7 @@ export default function NotificationDropdown() {
                 />
                 <div>
                   <p className="font-bold text-neutral-800 dark:text-white">
-                    {selectedNotif.user_name || "System"}
+                    {selectedNotif.user_name || t("notif_system")}
                   </p>
                   <p className="text-xs text-neutral-500">
                     {dayjs(selectedNotif.created_at).fromNow()}
@@ -105,7 +109,7 @@ export default function NotificationDropdown() {
                     rel="noreferrer"
                     className="inline-flex items-center gap-2 px-4 py-2 bg-red-500 text-white rounded-lg text-sm hover:bg-red-600 transition"
                   >
-                    <Download size={16} /> Download
+                    <Download size={16} /> {t("notif_download")}
                   </a>
                 )}
                 <button
@@ -115,7 +119,7 @@ export default function NotificationDropdown() {
                   }}
                   className="inline-flex items-center gap-2 px-4 py-2 bg-red-50 text-red-600 rounded-lg text-sm hover:bg-red-100 transition dark:bg-red-900/20 dark:text-red-400"
                 >
-                  <Trash2 size={16} /> Delete
+                  <Trash2 size={16} /> {t("notif_delete")}
                 </button>
               </div>
             </div>
@@ -139,14 +143,12 @@ export default function NotificationDropdown() {
                           className={`text-sm leading-snug ${!n.read_at ? "text-neutral-900 font-bold dark:text-white" : "text-neutral-600 dark:text-neutral-400"}`}
                         >
                           <span className="font-semibold">
-                            {n.user_name || "System |"}
+                            {n.user_name || `${t("notif_system")} |`}
                           </span>{" "}
                           {n.data?.message || n.message}
                         </p>
                         <p className="text-xs text-neutral-500 mt-1 italic">
-                          {dayjs(n.created_at)
-                            .locale("id")
-                            .format("HH:mm [WIB]")}{" "}
+                          {dayjs(n.created_at).format("HH:mm [WIB]")}{" "}
                           — {dayjs(n.created_at).fromNow()}
                         </p>
                       </div>
@@ -161,7 +163,7 @@ export default function NotificationDropdown() {
                 ))
               ) : (
                 <div className="flex flex-col items-center justify-center h-32 text-neutral-400 italic">
-                  <p className="text-sm">No notifications yet</p>
+                  <p className="text-sm">{t("notif_empty")}</p>
                 </div>
               )}
             </ul>
@@ -169,11 +171,11 @@ export default function NotificationDropdown() {
         </div>
         <div className="mt-3 pt-2 border-t border-neutral-100 dark:border-neutral-800">
           <Link
-           to={`${user?.role_name == "customer" ? "/profile-customer?tab=notifications" : "/notifications"}`}
+            to={`${user?.role_name == "customer" ? "/profile-customer?tab=notifications" : "/notifications"}`}
             onClick={() => setIsOpen(false)}
             className="block w-full py-2.5 text-sm font-medium text-center text-neutral-700 bg-neutral-50 border border-neutral-200 rounded-xl hover:bg-neutral-100 dark:bg-neutral-800 dark:border-neutral-700 dark:text-neutral-400 dark:hover:bg-neutral-700 transition-colors"
           >
-            View All Notifications
+            {t("notif_view_all")}
           </Link>
         </div>
       </Dropdown>

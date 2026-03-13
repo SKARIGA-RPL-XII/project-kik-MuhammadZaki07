@@ -16,6 +16,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useState } from "react";
 import { useSettings } from "@/context/SettingsContext";
 import { useLocation, useNavigate, useSearchParams } from "react-router";
+import { useTranslation } from "react-i18next"; // + Import
 
 interface CartSummaryProps {
   isOpen?: boolean;
@@ -33,6 +34,7 @@ export function CartSummary({
   onToggle,
   items = [],
 }: CartSummaryProps) {
+  const { t } = useTranslation();
   const location = useLocation();
   const itemCount = items.reduce((acc, item) => acc + (item.quantity || 0), 0);
   const total = items.reduce((acc, item) => {
@@ -61,7 +63,7 @@ export function CartSummary({
         >
           <div
             onClick={onToggle}
-            className="w-full max-w-lg dark:bg-neutral-900 bg-white border border-white/10 drop-shadow-2xl rounded-full px-4 py-2.5 flex items-center justify-between cursor-pointer hover:scale-[1.02] active:scale-[0.98] transition-all duration-300"
+            className="w-full max-w-lg dark:bg-neutral-900 bg-white border drop-shadow-2xl rounded-full px-4 py-2.5 flex items-center justify-between cursor-pointer hover:scale-[1.02] active:scale-[0.98] transition-all duration-300"
           >
             <div className="flex items-center gap-4 ml-2">
               <div className="flex items-center -space-x-3">
@@ -78,7 +80,7 @@ export function CartSummary({
                         damping: 20,
                       }}
                       src={`${import.meta.env.VITE_STORAGE_URL}/${item.image}`}
-                      className="w-10 h-10 rounded-full border-2 border-white dark:border-zinc-900 object-cover bg-white shadow-sm"
+                      className="w-10 h-10 rounded-full border-2 object-cover bg-white shadow-sm"
                       style={{ zIndex: 10 - idx }}
                       alt="item"
                     />
@@ -93,13 +95,13 @@ export function CartSummary({
               <div className="flex flex-col">
                 <span className="dark:text-white font-bold text-sm leading-none mb-1">
                   {items.length > 0
-                    ? `${itemCount} Items Selected`
-                    : "Empty Cart"}
+                    ? t("cart_items_count", { count: itemCount })
+                    : t("cart_empty")}
                 </span>
                 <span className="text-zinc-400 text-[10px] font-normal">
                   {items.length > 0
                     ? `Rp ${total.toLocaleString("id-ID")}`
-                    : "Start Ordering"}
+                    : t("cart_start_ordering")}
                 </span>
               </div>
             </div>
@@ -112,7 +114,7 @@ export function CartSummary({
                 onToggle();
               }}
             >
-              {items.length > 0 ? "Review Order" : "Open Cart"}
+              {items.length > 0 ? t("cart_btn_review") : t("cart_btn_open")}
               <ChevronRight size={16} className="text-red-500" />
             </Button>
           </div>
@@ -130,6 +132,7 @@ CartSummary.SidebarContent = function SidebarContent({
   onClear,
   isPending,
 }: CartSummaryProps) {
+  const { t } = useTranslation();
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [orderType, setOrderType] = useState<string>("dine_in");
   const { settings } = useSettings();
@@ -187,8 +190,8 @@ CartSummary.SidebarContent = function SidebarContent({
   };
 
   return (
-    <div className="h-full bg-white dark:bg-zinc-950 flex flex-col">
-      <div className="p-4 bg-white dark:bg-zinc-900 border-b border-zinc-100 dark:border-zinc-800 space-y-3">
+    <div className="h-full bg-white dark:bg-neutral-950 flex flex-col">
+      <div className="p-4 bg-white dark:bg-neutral-900 border-b space-y-3">
         <div className="flex justify-between items-center">
           <div className="flex items-center gap-2">
             <Button
@@ -200,7 +203,7 @@ CartSummary.SidebarContent = function SidebarContent({
               <X className="h-5 w-5" />
             </Button>
             <h2 className="font-bold text-lg uppercase tracking-tighter">
-              Order Summary
+              {t("cart_order_summary")}
             </h2>
           </div>
           {selectedItems.length > 0 ? (
@@ -210,7 +213,7 @@ CartSummary.SidebarContent = function SidebarContent({
               onClick={handleBulkDelete}
               className="h-8 text-[10px] font-bold px-4"
             >
-              REMOVE ({selectedItems.length})
+              {t("cart_btn_remove_selected", { count: selectedItems.length })}
             </Button>
           ) : (
             <Button
@@ -224,7 +227,7 @@ CartSummary.SidebarContent = function SidebarContent({
           )}
         </div>
 
-        <div className="flex items-center justify-between bg-zinc-50 dark:bg-zinc-800/50 px-3 py-2 rounded-md border border-zinc-100 dark:border-zinc-800">
+        <div className="flex items-center justify-between bg-zinc-50 dark:bg-zinc-800/50 px-3 py-2 rounded-md border">
           <div className="flex items-center gap-2">
             <Checkbox
               id="select-all"
@@ -238,11 +241,11 @@ CartSummary.SidebarContent = function SidebarContent({
               htmlFor="select-all"
               className="text-sm font-medium text-zinc-500 cursor-pointer"
             >
-              Select All
+              {t("cart_select_all")}
             </label>
           </div>
           <span className="text-sm font-medium text-zinc-400">
-            {items.length} Items
+            {t("cart_total_items", { count: items.length })}
           </span>
         </div>
       </div>
@@ -301,7 +304,7 @@ CartSummary.SidebarContent = function SidebarContent({
                     </p>
                   </div>
                   <div className="flex items-center justify-between mt-3">
-                    <div className="flex items-center gap-1 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 rounded-lg p-0.5">
+                    <div className="flex items-center gap-1 bg-zinc-50 dark:bg-zinc-800 border rounded-lg p-0.5">
                       <Button
                         variant="ghost"
                         size="icon"
@@ -346,45 +349,45 @@ CartSummary.SidebarContent = function SidebarContent({
         <div className="grid grid-cols-2 gap-2 mb-2">
           <Button
             variant="outline"
-            className={`h-12 flex flex-col gap-1 border-2 transition-all ${orderType === "dine_in" ? "border-red-600 bg-red-50 text-red-600" : "border-zinc-100"}`}
+            className={`h-12 flex flex-col gap-1 border-2 transition-all ${orderType === "dine_in" ? "border-red-600 bg-red-50 text-red-600" : "hover:text-red-500"}`}
             onClick={() => setOrderType("dine_in")}
           >
             <Utensils className="h-4 w-4" />
             <span className="text-xs font-semibold">
-              Dine In
+              {t("cart_order_type_dinein")}
             </span>
           </Button>
           <Button
             variant="outline"
-            className={`h-12 flex flex-col gap-1 border-2 transition-all ${orderType === "take_away" ? "border-red-600 bg-red-50 text-red-600" : "border-zinc-100"}`}
+            className={`h-12 flex flex-col gap-1 border-2 transition-all ${orderType === "take_away" ? "border-red-600 bg-red-50 text-red-600" : "hover:text-red-500"}`}
             onClick={() => setOrderType("take_away")}
           >
             <ShoppingBag className="h-4 w-4" />
             <span className="text-xs font-semibold">
-              Take Away
+              {t("cart_order_type_takeaway")}
             </span>
           </Button>
         </div>
 
-        <div className="space-y-1.5 border-b border-zinc-100 pb-3">
-          <div className="flex justify-between text-[10px] font-bold text-zinc-400 uppercase">
-            <span>Subtotal</span>
-            <span className="text-zinc-900 font-black">
+        <div className="space-y-1.5 border-b  pb-3">
+          <div className="flex justify-between text-[10px] font-bold text-zinc-400 dark:text-neutral-300 uppercase">
+            <span>{t("cart_label_subtotal")}</span>
+            <span className="text-zinc-900 font-black dark:text-neutral-300">
               Rp {currentSubtotal.toLocaleString("id-ID")}
             </span>
           </div>
           {settings?.is_service_active && (
             <div className="flex justify-between text-[10px] font-bold text-zinc-400 uppercase">
-              <span>Service ({settings.service_percent}%)</span>
-              <span className="text-zinc-900">
+              <span>{t("cart_label_service")} ({settings.service_percent}%)</span>
+              <span className="text-zinc-900 dark:text-neutral-300">
                 Rp {serviceAmount.toLocaleString("id-ID")}
               </span>
             </div>
           )}
           {settings?.is_tax_active && (
             <div className="flex justify-between text-[10px] font-bold text-zinc-400 uppercase">
-              <span>Tax ({settings.tax_percent}%)</span>
-              <span className="text-zinc-900">
+              <span>{t("cart_label_tax")} ({settings.tax_percent}%)</span>
+              <span className="text-zinc-900 dark:text-neutral-300">
                 Rp {taxAmount.toLocaleString("id-ID")}
               </span>
             </div>
@@ -392,8 +395,8 @@ CartSummary.SidebarContent = function SidebarContent({
         </div>
 
         <div className="flex justify-between items-end">
-          <span className="text-xs font-bold text-red-600">Total Payment</span>
-          <span className="text-3xl font-black text-zinc-900 tracking-tighter">
+          <span className="text-xs font-bold text-red-600">{t("cart_label_total_payment")}</span>
+          <span className="text-3xl font-black text-zinc-900 dark:text-neutral-300 tracking-tighter">
             Rp {totalAmount.toLocaleString("id-ID")}
           </span>
         </div>
@@ -405,8 +408,8 @@ CartSummary.SidebarContent = function SidebarContent({
         >
           <span className="text-md">
             {orderType === "dine_in" && !tableIdFromUrl
-              ? "Select Table"
-              : "Checkout Now"}
+              ? t("cart_btn_select_table")
+              : t("cart_btn_checkout")}
           </span>
           {isPending ? (
             <Loader2 className="h-5 w-5 animate-spin" />

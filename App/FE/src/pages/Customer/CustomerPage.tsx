@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next"; // 1. Import hook
 import BannerCarousel from "@/components/carousel/BannerCarousel";
 import PageMeta from "@/components/common/PageMeta";
 import { MenuCard, NavigationBar } from "@/components/resto";
@@ -7,11 +8,15 @@ import { MenuListSkeleton } from "@/components/skeleton/MenuCardSkeleton";
 import { useCustomerPageLogic } from "@/hooks/useCustomerPage";
 
 export default function CustomerPage() {
+  const { t } = useTranslation();
   const { state, actions } = useCustomerPageLogic();
 
   return (
     <div className="flex flex-col gap-6 sm:gap-10 pb-20">
-      <PageMeta title="Digital Menu" description="View our full selection." />
+      <PageMeta 
+        title={t("cp_meta_title")} 
+        description={t("cp_meta_desc")} 
+      />
 
       {(state.loadingBanner || state.banners.length > 0) && (
         <BannerCarousel
@@ -47,7 +52,6 @@ export default function CustomerPage() {
                   key={item?.id}
                   item={item}
                   onOpenDetail={actions.handleOpenDetail}
-                  // isAdded={state.cartItems?.some((ci: any) => ci?.item?.id === item?.id)}
                 />
               ))}
             </div>
@@ -61,17 +65,17 @@ export default function CustomerPage() {
                   onClick={() => actions.changePage(state.page - 1)}
                   className="h-12 px-6 bg-white border border-neutral-200 rounded-xl disabled:opacity-30 font-bold text-xs uppercase transition-all"
                 >
-                  Prev
+                  {t("cp_pagination_prev")}
                 </button>
                 <span className="text-xs font-black text-neutral-400 uppercase">
-                  Page {state.page} of {state.totalPages}
+                  {t("cp_pagination_info", { current: state.page, total: state.totalPages })}
                 </span>
                 <button
                   disabled={state.page >= state.totalPages}
                   onClick={() => actions.changePage(state.page + 1)}
                   className="h-12 px-6 bg-white border border-neutral-200 rounded-xl disabled:opacity-30 font-bold text-xs uppercase transition-all"
                 >
-                  Next
+                  {t("cp_pagination_next")}
                 </button>
               </div>
             )}

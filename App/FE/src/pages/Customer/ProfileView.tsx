@@ -6,8 +6,10 @@ import { getProfileImage } from "@/utils/imageHelper";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/context/AuthContext";
+import { useTranslation } from "react-i18next";
 
 export function ProfileView() {
+  const { t } = useTranslation();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { user, refreshUser } = useAuth();
   const logic = useProfileLogic(user, refreshUser);
@@ -19,7 +21,7 @@ export function ProfileView() {
           <div className="relative w-20 h-20 overflow-hidden rounded-full border-2 bg-neutral-100 flex items-center justify-center">
             {logic.preview || user?.profile_image ? (
               <img
-             src={logic.preview ? logic.preview : getProfileImage(user?.profile_image)}
+                src={logic.preview ? logic.preview : getProfileImage(user?.profile_image)}
                 alt="Profile"
                 className="w-full h-full object-cover"
               />
@@ -44,11 +46,11 @@ export function ProfileView() {
           />
         </div>
         <div>
-          <h3 className="text-sm font-bold text-neutral-900 leading-tight">
+          <h3 className="text-sm font-bold text-neutral-900 dark:text-neutral-300 leading-tight">
             {user?.username}
           </h3>
           <p className="text-xs text-neutral-500">
-            Update your photo and personal details
+            {t("pv_sub_header")}
           </p>
         </div>
       </div>
@@ -56,11 +58,11 @@ export function ProfileView() {
       <div className="grid gap-4">
         <div className="space-y-1.5">
           <label className="text-sm font-normal text-neutral-400 ml-1">
-            Username
+            {t("pv_label_username")}
           </label>
           <Input
             value={logic.formData.username}
-            placeholder="Your username"
+            placeholder={t("pv_placeholder_username")}
             onChange={(e) => logic.updateField("username", e.target.value)}
             className={`focus-visible:ring-red-500 focus-visible:border-red-500 ${
               logic.errors.username ? "border-red-500" : ""
@@ -75,7 +77,7 @@ export function ProfileView() {
 
         <div className="space-y-1.5">
           <label className="text-sm font-normal text-neutral-400 ml-1">
-            Phone Number
+            {t("pv_label_phone")}
           </label>
           <Input
             type="text"
@@ -86,7 +88,7 @@ export function ProfileView() {
               const value = e.target.value.replace(/[^0-9]/g, "");
               logic.updateField("no_tlp", value);
             }}
-            placeholder="Your phone"
+            placeholder={t("pv_placeholder_phone")}
             className={`focus-visible:ring-red-500 focus-visible:border-red-500 ${
               logic.errors.no_tlp ? "border-red-500" : ""
             }`}
@@ -101,11 +103,11 @@ export function ProfileView() {
 
         <div className="space-y-1.5">
           <label className="text-sm font-normal text-neutral-400 ml-1">
-            Address
+            {t("pv_label_address")}
           </label>
           <Textarea
             value={logic.formData.addres}
-            placeholder="Your address"
+            placeholder={t("pv_placeholder_address")}
             onChange={(e) => logic.updateField("addres", e.target.value)}
             className={`focus-visible:ring-red-500 focus-visible:border-red-500 ${
               logic.errors.addres ? "border-red-500" : ""
@@ -121,12 +123,12 @@ export function ProfileView() {
         <Button
           onClick={logic.updateProfile}
           disabled={logic.loading}
-          className="w-full bg-red-600 hover:bg-red-700 h-11 rounded-xl mt-2 text-sm font-semibold shadow-lg transition-all shadow-red-100"
+          className="w-full bg-red-600 hover:bg-red-700 h-11 mt-2 text-sm font-semibold dark:text-neutral-300"
         >
           {logic.loading ? (
             <Loader2 className="animate-spin" size={18} />
           ) : (
-            "Save Changes"
+            t("pv_btn_save")
           )}
         </Button>
       </div>

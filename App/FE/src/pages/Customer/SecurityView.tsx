@@ -11,38 +11,40 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useSecurityLogic } from "@/hooks/useSecurityLogic";
 import { useAuth } from "@/context/AuthContext";
+import { useTranslation, Trans } from "react-i18next"; // + Import Trans untuk styling teks dalam I18n
 
 export function SecurityView() {
+  const { t } = useTranslation();
   const { user, refreshUser } = useAuth();
   const logic = useSecurityLogic(user, refreshUser);
 
   return (
     <div className="space-y-6 pb-10">
-      <div className="p-4 border border-neutral-100 rounded-2xl bg-neutral-50/30">
+      <div className="p-4 border rounded-xl bg-neutral-50/30 dark:bg-neutral-900">
         <div className="flex items-center gap-3 mb-4">
-          <div className="p-2 bg-red-50 text-red-600 rounded-full">
+          <div className="p-2 bg-red-50 text-red-600 dark:bg-neutral-800 rounded-full">
             <Mail size={16} />
           </div>
-          <h4 className="text-sm font-medium text-neutral-800">
-            Primary Email
+          <h4 className="text-sm font-medium text-neutral-800 dark:text-neutral-300">
+            {t("sec_email_title")}
           </h4>
         </div>
         <div className="flex gap-2">
-          <Input value={user?.email} disabled className="bg-neutral-100" />
+          <Input value={user?.email} disabled className="bg-neutral-100 dark:bg-neutral-900" />
           <Button
             onClick={() => logic.setShowEmailForm(!logic.showEmailForm)}
             variant="outline"
             disabled={user?.google_id != null || user?.google_id == ""}
             className="border-neutral-200 text-xs disabled:cursor-not-allowed"
           >
-            {logic.showEmailForm ? "Cancel" : "Change"}
+            {logic.showEmailForm ? t("sec_email_btn_cancel") : t("sec_email_btn_change")}
           </Button>
         </div>
 
         {logic.showEmailForm && (
           <div className="mt-3 flex gap-2 animate-in fade-in slide-in-from-top-2 duration-300">
             <Input
-              placeholder="Enter New Email"
+              placeholder={t("sec_email_placeholder")}
               type="email"
               value={logic.securityData.email}
               onChange={(e) => logic.updateField("email", e.target.value)}
@@ -50,37 +52,37 @@ export function SecurityView() {
             <Button
               onClick={() => logic.handleUpdateSecurity("email")}
               disabled={logic.loading}
-              className="bg-red-600 hover:bg-red-700 text-white shadow-lg shadow-red-100"
+              className="bg-red-600 hover:bg-red-700 text-white"
             >
               {logic.loading ? (
                 <Loader2 className="animate-spin" size={16} />
               ) : (
-                "Save"
+                t("sec_email_btn_save")
               )}
             </Button>
           </div>
         )}
       </div>
 
-      <div className="p-4 border border-neutral-100 rounded-2xl bg-neutral-50/30">
+      <div className="p-4 border rounded-xl bg-neutral-50/30 dark:bg-neutral-900">
         <div className="flex items-center gap-3 mb-4">
-          <div className="p-2 bg-red-50 text-red-600 rounded-full">
+          <div className="p-2 bg-red-50 dark:bg-neutral-800 text-red-600 rounded-full">
             <Lock size={16} />
           </div>
-          <h4 className="text-sm font-medium text-neutral-800">
-            Password Management
+          <h4 className="text-sm font-medium text-neutral-800 dark:text-neutral-300">
+            {t("sec_pass_title")}
           </h4>
         </div>
         <div className="space-y-3">
           <Button
             onClick={() => logic.setShowPasswordForm(!logic.showPasswordForm)}
             variant="outline"
-            disabled={user?.google_id != null || user?.google_id == ""}
+            // disabled={user?.google_id != null || user?.google_id == ""}
             className="w-full justify-start h-11 border-neutral-200 font-normal text-neutral-400 text-sm disabled:cursor-not-allowed"
           >
             {logic.showPasswordForm
-              ? "Close password settings..."
-              : "Click to change your password..."}
+              ? t("sec_pass_btn_close")
+              : t("sec_pass_btn_open")}
           </Button>
 
           {logic.showPasswordForm && (
@@ -88,19 +90,19 @@ export function SecurityView() {
               {[
                 {
                   id: "current_password",
-                  label: "Current Password",
+                  label: t("sec_pass_current"),
                   state: logic.showCurrentPassword,
                   toggle: logic.setShowCurrentPassword,
                 },
                 {
                   id: "new_password",
-                  label: "New Password",
+                  label: t("sec_pass_new"),
                   state: logic.showNewPassword,
                   toggle: logic.setShowNewPassword,
                 },
                 {
                   id: "confirm_password",
-                  label: "Confirm Password",
+                  label: t("sec_pass_confirm"),
                   state: logic.showConfirmPassword,
                   toggle: logic.setShowConfirmPassword,
                 },
@@ -128,12 +130,12 @@ export function SecurityView() {
               <Button
                 onClick={() => logic.handleUpdateSecurity("password")}
                 disabled={logic.loading}
-                className="w-full bg-red-600 hover:bg-red-700 text-white shadow-lg shadow-red-100 h-11"
+                className="w-full bg-red-600 hover:bg-red-700 text-white h-11"
               >
                 {logic.loading ? (
                   <Loader2 className="animate-spin" size={18} />
                 ) : (
-                  "Update Password"
+                  t("sec_pass_btn_update")
                 )}
               </Button>
             </div>
@@ -141,37 +143,33 @@ export function SecurityView() {
         </div>
       </div>
 
-      <div className="mt-12 overflow-hidden border border-red-200 rounded-xl bg-red-50/10">
-        <div className="p-5 border-b border-red-100 bg-red-50/30">
+      <div className="mt-12 overflow-hidden border border-red-200 dark:border-neutral-200/20 dark:bg-neutral-800 rounded-xl bg-red-50/10">
+        <div className="p-5 border-b border-red-100 bg-red-50/30 dark:border-none dark:bg-neutral-900">
           <div className="flex items-center gap-4">
             <div className="p-2.5 text-white rounded-lg bg-red-500">
               <Trash2 size={22} />
             </div>
             <div className="space-y-1">
-              <h4 className="text-base font-medium text-red-500">
-                Danger Zone
+              <h4 className="text-base font-medium text-red-500 dark:text-neutral-300">
+                {t("sec_danger_title")}
               </h4>
               <p className="text-sm leading-relaxed text-muted-foreground font-normal">
-                Irreversible Actions
+                {t("sec_danger_subtitle")}
               </p>
             </div>
           </div>
         </div>
 
         <div className="p-6">
-          <p className="text-sm text-neutral-600 mb-6 leading-relaxed">
-            Once you delete your account, there is no going back. All your
-            <span className="font-bold text-neutral-800">
-              {" "}
-              order history, badges,
-            </span>{" "}
-            and
-            <span className="font-bold text-neutral-800">
-              {" "}
-              personal data
-            </span>{" "}
-            will be wiped from
-            <span className="text-red-600 font-semibold"> GAGAL-LAPAR</span>.
+          <p className="text-sm text-neutral-600 dark:text-neutral-300 mb-6 leading-relaxed">
+            <Trans i18nKey="sec_danger_desc">
+              Setelah Anda menghapus akun, tidak ada jalan kembali. Semua 
+              <span className="font-bold text-neutral-800"> riwayat pesanan, lencana, </span> 
+              dan 
+              <span className="font-bold text-neutral-800"> data pribadi </span> 
+              akan dihapus dari 
+              <span className="text-red-600 font-semibold"> GAGAL-LAPAR</span>.
+            </Trans>
           </p>
 
           {!logic.showDeleteConfirm ? (
@@ -180,7 +178,7 @@ export function SecurityView() {
               onClick={() => logic.setShowDeleteConfirm(true)}
               className="w-full border-red-200 text-red-600 hover:bg-red-600 hover:text-white h-11 text-sm font-bold transition-all duration-300"
             >
-              Delete My Account
+              {t("sec_danger_btn_delete")}
             </Button>
           ) : (
             <div className="space-y-4 animate-in fade-in zoom-in-95 duration-300">
@@ -189,11 +187,13 @@ export function SecurityView() {
                   <AlertTriangle className="text-amber-600" size={16} />
                 </div>
                 <p className="text-xs text-neutral-600 font-medium">
-                  To prevent accidental deletion, please type
-                  <span className="mx-1 px-2 py-0.5 bg-red-100 text-red-700 rounded font-bold">
-                    DELETE
-                  </span>
-                  below.
+                  <Trans i18nKey="sec_danger_confirm_msg">
+                    Untuk mencegah penghapusan yang tidak disengaja, silakan ketik 
+                    <span className="mx-1 px-2 py-0.5 bg-red-100 text-red-700 rounded font-bold">
+                      DELETE
+                    </span> 
+                    di bawah ini.
+                  </Trans>
                 </p>
               </div>
 
@@ -212,7 +212,7 @@ export function SecurityView() {
                   onClick={() => logic.setShowDeleteConfirm(false)}
                   className="flex-1 h-11 text-neutral-500"
                 >
-                  I changed my mind
+                  {t("sec_danger_btn_cancel")}
                 </Button>
                 <Button
                   disabled={logic.confirmText !== "DELETE" || logic.isDeleting}
@@ -222,7 +222,7 @@ export function SecurityView() {
                   {logic.isDeleting ? (
                     <Loader2 className="animate-spin" size={20} />
                   ) : (
-                    "Delete Permanently"
+                    t("sec_danger_btn_confirm")
                   )}
                 </Button>
               </div>

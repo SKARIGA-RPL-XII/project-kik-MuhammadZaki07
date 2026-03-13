@@ -1,10 +1,12 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { X, ArrowRight, Star, Clock, Gift } from "lucide-react";
+import { X, ArrowRight, Clock, Gift } from "lucide-react";
 import { useEffect, useState } from "react";
 import Cookies from "js-cookie";
 import { useNavigate } from "react-router";
+import { useTranslation } from "react-i18next";
 
 export function LoginInvitationModal() {
+  const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
   const navigate = useNavigate();
 
@@ -58,10 +60,10 @@ export function LoginInvitationModal() {
             <div className="p-8">
               <div className="mb-8">
                 <h2 className="text-xl font-semibold text-neutral-900 mb-2">
-                  Dapatkan pengalaman lebih baik
+                  {t("invite_title")}
                 </h2>
                 <p className="text-sm text-neutral-500 leading-relaxed">
-                  Login untuk menikmati fitur lengkap dan kumpulkan poin di setiap pesanan Anda.
+                  {t("invite_subtitle")}
                 </p>
               </div>
 
@@ -71,8 +73,12 @@ export function LoginInvitationModal() {
                     <Clock size={18} />
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-neutral-800">Riwayat Pesanan</p>
-                    <p className="text-xs text-neutral-500">Pantau status dan cek riwayat pesanan lama Anda.</p>
+                    <p className="text-sm font-medium text-neutral-800">
+                      {t("invite_feature_order_title")}
+                    </p>
+                    <p className="text-xs text-neutral-500">
+                      {t("invite_feature_order_desc")}
+                    </p>
                   </div>
                 </div>
 
@@ -81,8 +87,12 @@ export function LoginInvitationModal() {
                     <Gift size={18} />
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-neutral-800">Loyalty Points</p>
-                    <p className="text-xs text-neutral-500">Tukarkan poin dengan diskon menarik setiap harinya.</p>
+                    <p className="text-sm font-medium text-neutral-800">
+                      {t("invite_feature_loyalty_title")}
+                    </p>
+                    <p className="text-xs text-neutral-500">
+                      {t("invite_feature_loyalty_desc")}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -92,14 +102,14 @@ export function LoginInvitationModal() {
                   onClick={handleLogin}
                   className="w-full py-3.5 bg-red-600 hover:bg-red-700 text-white rounded-xl text-sm font-medium transition-all flex items-center justify-center gap-2 group"
                 >
-                  Masuk Sekarang
+                  {t("invite_btn_login")}
                   <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
                 </button>
                 <button
                   onClick={handleClose}
                   className="w-full py-3.5 bg-neutral-50 hover:bg-neutral-100 text-neutral-600 rounded-xl text-sm font-medium transition-colors"
                 >
-                  Lanjut sebagai tamu
+                  {t("invite_btn_guest")}
                 </button>
               </div>
             </div>

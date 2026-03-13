@@ -38,7 +38,7 @@ export function useCustomerLayoutLogic() {
     ? `Table ${tableData.name || tableData.id} ${
         tableData.room ? `| ${tableData.room.name}` : ""
       }`
-    : "No Table";
+    : "Nomor";
 
   return {
     states: {

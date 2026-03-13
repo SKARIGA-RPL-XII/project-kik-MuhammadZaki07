@@ -11,6 +11,8 @@ import { SettingsProvider } from "./context/SettingsContext.tsx";
 import "./lib/bootstrap.ts";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { GoogleOAuthProvider } from '@react-oauth/google';
+import "./i18n";
+import "/node_modules/flag-icons/css/flag-icons.min.css";
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
