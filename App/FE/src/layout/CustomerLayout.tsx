@@ -1,24 +1,27 @@
-import { AIAssistant, CartSummary, Header } from "@/components/resto";
+import { memo } from "react";
 import { Outlet } from "react-router";
-import { m, AnimatePresence, LazyMotion, domAnimation, Transition } from "framer-motion";
+import { m, AnimatePresence, LazyMotion, domAnimation } from "framer-motion";
+import { AIAssistant, CartSummary, Header } from "@/components/resto";
 import { LoginInvitationModal } from "@/components/dialog/LoginInvitationModal";
 import { useCustomerLayoutLogic } from "@/hooks/useCustomerLayoutLogic";
 
-const springTransition: Transition = {
+
+const springTransition = {
   type: "spring",
   stiffness: 260,
   damping: 28,
 };
+
 
 function CustomerLayout() {
   const { states, actions } = useCustomerLayoutLogic();
 
   return (
     <LazyMotion features={domAnimation}>
-      <div className="min-h-screen bg-white dark:bg-neutral-900/30 flex w-full overflow-hidden font-sans">
+      <div className="min-h-screen bg-white dark:bg-neutral-900/30 flex w-full overflow-hidden font-sans selection:bg-primary/10">
+        
         <m.div
-          layout
-          className="flex-1 flex flex-col min-w-0 h-screen relative will-change-[width,transform]"
+          className="flex-1 flex flex-col min-w-0 h-screen relative"
           transition={springTransition}
         >
           <Header tableId={states.tableDisplay} />
@@ -37,7 +40,7 @@ function CustomerLayout() {
           />
         </m.div>
 
-        <AnimatePresence mode="popLayout">
+        <AnimatePresence mode="wait">
           {states.isCartOpen && (
             <m.aside
               key="sidebar-desktop"
@@ -67,7 +70,7 @@ function CustomerLayout() {
               initial={{ x: "100%" }}
               animate={{ x: 0 }}
               exit={{ x: "100%" }}
-              transition={{ type: "tween", ease: "easeInOut", duration: 0.3 }}
+              transition={{ type: "tween", ease: "circOut", duration: 0.3 }}
               className="fixed inset-0 z-[100] lg:hidden bg-white flex flex-col"
             >
               <CartSummary.SidebarContent
@@ -88,4 +91,4 @@ function CustomerLayout() {
   );
 }
 
-export default CustomerLayout;
+export default memo(CustomerLayout);

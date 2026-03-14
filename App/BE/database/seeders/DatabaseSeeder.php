@@ -19,7 +19,6 @@ class DatabaseSeeder extends Seeder
 
         $this->call([
             RoleSeeder::class,
-            UserSeeder::class,
             CategorySeeder::class,
             BadgeSeeder::class,
             DiscountSeeder::class,
@@ -28,9 +27,11 @@ class DatabaseSeeder extends Seeder
             SettingSeeder::class,
             AttributeSeeder::class,
             AttributeLevelSeeder::class,
-            EmployeSeeder::class,
             StockSeeder::class,
-            StockAdjustmentSeeder::class
+            MenuSeeder::class,
+            EmployeSeeder::class,
+            StockAdjustmentSeeder::class,
+            CustomerSimulatedSeeder::class,
         ]);
 
         DB::statement('SET FOREIGN_KEY_CHECKS=1;');

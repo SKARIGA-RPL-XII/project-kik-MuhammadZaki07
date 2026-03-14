@@ -11,9 +11,9 @@ i18n
   .use(LanguageDetector)
   .use(initReactI18next)
   .init({
-    lng: "id_ID",
-    fallbackLng: "id_ID",
-    debug: true,
+    lng: "id",
+    fallbackLng: "id",
+    debug: false,
     interpolation: { escapeValue: false },
     backend: {
       loadPath: `https://cdn.simplelocalize.io/${PROJECT_TOKEN}/${ENVIRONMENT}/{{lng}}?v=${new Date().getTime()}`,
@@ -22,7 +22,9 @@ i18n
 
 export const loadTranslations = async (lng: string) => {
   try {
-    const res = await fetch(`https://cdn.simplelocalize.io/${PROJECT_TOKEN}/${ENVIRONMENT}/${lng}`);
+    const res = await fetch(
+      `https://cdn.simplelocalize.io/${PROJECT_TOKEN}/${ENVIRONMENT}/${lng}`,
+    );
     if (!res.ok) throw new Error("Gagal mengambil data dari CDN");
     const data = await res.json();
     i18n.addResourceBundle(lng, "translation", data, true, true);

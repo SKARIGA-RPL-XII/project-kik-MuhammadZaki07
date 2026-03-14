@@ -3,6 +3,7 @@ import { useState, useEffect, useMemo } from "react";
 import { X, Minus, Plus, ShoppingBag, ChevronRight } from "lucide-react";
 import Button from "../ui/button/Button";
 import { useTranslation } from "react-i18next";
+import { Badge } from "../ui/badge";
 
 export function MenuDetailView({ menu, isOpen, onClose, onAddToCart }: any) {
   const { t } = useTranslation();
@@ -59,7 +60,7 @@ export function MenuDetailView({ menu, isOpen, onClose, onAddToCart }: any) {
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -95,19 +96,16 @@ export function MenuDetailView({ menu, isOpen, onClose, onAddToCart }: any) {
                   </span>
                 </motion.div>
               )}
-
-              <div className="absolute bottom-8 left-8">
-                <span className="bg-white/20 dark:bg-neutral-900 backdrop-blur-xl text-white text-[10px] px-4 py-2 rounded-full font-medium border border-white/30 shadow-2xl">
-                  {menu.category?.name}
-                </span>
-              </div>
             </div>
 
             <div className="flex-1 flex flex-col min-w-0 bg-white dark:bg-neutral-900">
-              <div className="p-8 flex justify-between items-start">
-                <div>
+              <div className="px-5 pt-5 flex justify-between items-start">
+                <div className="space-y-2">
                   <div className="flex items-center gap-2 text-red-600">
                     <div className="h-1 w-20 bg-red-600 rounded-full" />
+                    <div className="">
+                      <Badge variant={'outline'}>{menu.category?.name}</Badge>
+                    </div>
                   </div>
                   <h2 className="text-4xl font-bold text-neutral-900 dark:text-neutral-300 leading-none">
                     {menu.name}
@@ -116,20 +114,20 @@ export function MenuDetailView({ menu, isOpen, onClose, onAddToCart }: any) {
 
                 <button
                   onClick={onClose}
-                  className="p-2 bg-neutral-50 hover:bg-red-50 dark:bg-neutral-900 text-neutral-300 hover:text-red-500 rounded-lg"
+                  className="p-2 text-neutral-300 hover:text-red-500"
                 >
                   <X size={24} />
                 </button>
               </div>
 
-              <div className="px-10 overflow-y-auto custom-scrollbar flex-1">
+              <div className="px-5 pt-3 overflow-y-auto custom-scrollbar flex-1">
                 <p className="text-neutral-500 dark:text-neutral-300 text-sm leading-relaxed mb-10 font-normal max-w-md">
                   {menu.description}
                 </p>
 
                 <div className="space-y-10 mb-10">
                   {uniqueAttributes.map((attr: any) => (
-                    <div key={attr.id} className="space-y-5">
+                    <div key={attr.id} className="space-y-2">
                       <div className="flex items-center gap-3">
                         <span className="text-sm font-medium text-neutral-900 dark:text-neutral-300">
                           {t("mv_select_prefix")} {attr.name}
@@ -150,7 +148,7 @@ export function MenuDetailView({ menu, isOpen, onClose, onAddToCart }: any) {
                                   [attr.id]: level.id,
                                 }))
                               }
-                              className={`group relative px-5 py-2 rounded-lg border-2 text-sm font-normal transition-all duration-300 ${
+                              className={`group relative w-25 h-9 rounded-lg border-2 text-sm font-normal transition-all duration-300 ${
                                 isSelected
                                   ? "border-red-600 bg-red-600 text-white dark:text-neutral-300 -translate-y-1"
                                   : "bg-neutral-50/50 dark:bg-neutral-900 text-neutral-400"
@@ -166,7 +164,7 @@ export function MenuDetailView({ menu, isOpen, onClose, onAddToCart }: any) {
                 </div>
               </div>
 
-              <div className="p-8 pt-6 border-t bg-white dark:bg-neutral-900">
+              <div className="px-5 py-5 border-t bg-white dark:bg-neutral-900">
                 <div className="flex items-end justify-between mb-8">
                   <div className="space-y-1">
                     <span className="text-sm font-medium text-neutral-400 dark:text-neutral-300 block">
@@ -183,7 +181,9 @@ export function MenuDetailView({ menu, isOpen, onClose, onAddToCart }: any) {
                           </span>
                           <span className="flex items-center gap-1 text-[10px] font-medium text-red-600 bg-red-50 px-2 py-0.5 rounded-lg border border-red-100">
                             {t("mv_save_amount", {
-                              amount: (discountAmount * quantity).toLocaleString("id-ID"),
+                              amount: (
+                                discountAmount * quantity
+                              ).toLocaleString("id-ID"),
                             })}
                           </span>
                         </div>
@@ -211,9 +211,9 @@ export function MenuDetailView({ menu, isOpen, onClose, onAddToCart }: any) {
                 </div>
 
                 <Button
-                  className={`w-full py-4 font-medium text-md flex items-center justify-center gap-4 group transition-all duration-500 ${
+                  className={`w-full font-medium text-md flex items-center justify-center gap-4 group transition-all duration-500 ${
                     isAllAttributesSelected
-                      ? "bg-neutral-900 hover:bg-red-600 text-white shadow-xl"
+                      ? "bg-neutral-900 hover:bg-red-600 text-white"
                       : "bg-neutral-100 text-neutral-400 cursor-not-allowed"
                   }`}
                   onClick={handleAdd}
@@ -231,7 +231,9 @@ export function MenuDetailView({ menu, isOpen, onClose, onAddToCart }: any) {
                     {isAllAttributesSelected
                       ? t("mv_btn_confirm")
                       : `${t("mv_select_prefix")} ${
-                          uniqueAttributes.find((a: any) => !selectedAttributes[a.id])?.name || t("mv_attr_placeholder")
+                          uniqueAttributes.find(
+                            (a: any) => !selectedAttributes[a.id],
+                          )?.name || t("mv_attr_placeholder")
                         }`}
                   </span>
                   {isAllAttributesSelected && (

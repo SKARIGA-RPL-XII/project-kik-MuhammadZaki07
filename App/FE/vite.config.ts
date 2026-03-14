@@ -37,9 +37,13 @@ export default defineConfig({
           if (id.includes("node_modules")) {
             if (id.includes("lucide-react")) return "icons";
             if (id.includes("framer-motion")) return "animations";
-            if (id.includes("jspdf") || id.includes("xlsx")) return "export-libs";
+            if (id.includes("jspdf") || id.includes("xlsx"))
+              return "export-libs";
             if (id.includes("apexcharts")) return "charts";
-            return "vendor"; 
+            if (id.includes("@radix-ui")) return "ui-core";
+            if (id.includes("axios") || id.includes("@tanstack"))
+              return "network";
+            return "vendor";
           }
         },
       },

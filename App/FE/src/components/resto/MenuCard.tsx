@@ -31,13 +31,16 @@ export function MenuCard({ item, onOpenDetail }: MenuCardProps) {
       viewport={{ once: true }}
       onClick={handleCardClick}
       className={`group relative flex flex-col bg-white dark:bg-neutral-900 rounded-xl border transition-all duration-300 overflow-hidden 
-        ${isOutOfStock 
-          ? "opacity-80 grayscale-[0.6] cursor-not-allowed border-neutral-100 dark:border-neutral-800" 
-          : isBestSeller 
-            ? "cursor-pointer border-amber-200 dark:border-amber-900/50 shadow-[0_0_15px_rgba(251,191,36,0.1)]" 
-            : "cursor-pointer border-neutral-100 dark:border-neutral-800 hover:border-red-200 dark:hover:border-red-900/50"}`}
+        ${
+          isOutOfStock
+            ? "opacity-80 grayscale-[0.6] cursor-not-allowed border-neutral-100 dark:border-neutral-800"
+            : isBestSeller
+              ? "cursor-pointer border-amber-200 dark:border-amber-900/50 shadow-[0_0_15px_rgba(251,191,36,0.1)]"
+              : "cursor-pointer border-neutral-100 dark:border-neutral-800 hover:border-red-200 dark:hover:border-red-900/50"
+        }`}
     >
-      {isBestSeller && (
+      
+      {/* {isBestSeller && (
         <>
           <motion.div
             animate={{ opacity: [0.2, 0.5, 0.2] }}
@@ -63,8 +66,8 @@ export function MenuCard({ item, onOpenDetail }: MenuCardProps) {
             ))}
           </div>
         </>
-      )}
-      
+      )} */}
+
       <div className="absolute inset-0 opacity-[0.03] dark:opacity-[0.05] pointer-events-none bg-[radial-gradient(#000_1px,transparent_1px)] dark:bg-[radial-gradient(#fff_1px,transparent_1px)] [background-size:16px_16px]" />
 
       <div className="relative aspect-[5/4] overflow-hidden bg-neutral-50 dark:bg-neutral-800 border-b dark:border-neutral-800">
@@ -85,31 +88,43 @@ export function MenuCard({ item, onOpenDetail }: MenuCardProps) {
         )}
 
         {isBestSeller && (
-          <div className="absolute top-2 right-2 z-30">
+          <div className="absolute top-2 right-2 z-10">
             <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }}>
               <div className="relative bg-gradient-to-br from-amber-300 via-amber-500 to-amber-600 text-amber-950 px-2.5 py-1 rounded-lg flex items-center gap-1.5 shadow-xl border border-amber-200/50 overflow-hidden">
-                <Crown size={12} strokeWidth={3} className="fill-amber-950/80 relative z-10" />
-                <span className="text-[10px] font-black uppercase tracking-tight relative z-10">Best Seller</span>
+                <Crown
+                  size={12}
+                  strokeWidth={3}
+                  className="fill-amber-950/80 relative z-10"
+                />
+                <span className="text-[10px] font-black uppercase tracking-tight relative z-10">
+                  Best Seller
+                </span>
               </div>
             </motion.div>
           </div>
         )}
 
         {!isOutOfStock && hasDiscount && (
-          <div className="absolute top-0 left-0 z-20">
+          <div className="absolute top-0 left-0 z-10">
             <div className="relative bg-gradient-to-br from-rose-500 via-rose-600 to-red-700 text-white px-3 py-1.5 rounded-br-xl font-black text-[10px] uppercase shadow-md">
-              <span className="relative z-10">{item.discount?.value_discount}% OFF</span>
+              <span className="relative z-10">
+                {item.discount?.value_discount}% OFF
+              </span>
             </div>
           </div>
         )}
       </div>
 
       <div className="flex flex-col p-3.5 relative z-10">
-        <span className={`text-[10px] font-medium mb-1 ${isOutOfStock ? "text-neutral-500" : isBestSeller ? "text-amber-600 dark:text-amber-500" : "text-red-600 dark:text-red-500"}`}>
+        <span
+          className={`text-[10px] font-medium mb-1 ${isOutOfStock ? "text-neutral-500" : isBestSeller ? "text-amber-600 dark:text-amber-500" : "text-red-600 dark:text-red-500"}`}
+        >
           {item.category?.name}
         </span>
 
-        <h3 className={`font-bold text-lg line-clamp-1 mb-1 transition-colors ${isOutOfStock ? "text-neutral-500" : "text-neutral-900 dark:text-neutral-100"}`}>
+        <h3
+          className={`font-bold text-lg line-clamp-1 mb-1 transition-colors ${isOutOfStock ? "text-neutral-500" : "text-neutral-900 dark:text-neutral-100"}`}
+        >
           {item.name}
         </h3>
 
@@ -124,7 +139,9 @@ export function MenuCard({ item, onOpenDetail }: MenuCardProps) {
                 Rp {item.price.toLocaleString("id-ID")}
               </span>
             )}
-            <span className={`text-[14px] font-black ${isOutOfStock ? "text-neutral-500" : hasDiscount ? "text-rose-600 dark:text-rose-500" : "text-neutral-900 dark:text-neutral-100"}`}>
+            <span
+              className={`text-[14px] font-black ${isOutOfStock ? "text-neutral-500" : hasDiscount ? "text-rose-600 dark:text-rose-500" : "text-neutral-900 dark:text-neutral-100"}`}
+            >
               Rp {discountedPrice.toLocaleString("id-ID")}
             </span>
           </div>
@@ -137,11 +154,13 @@ export function MenuCard({ item, onOpenDetail }: MenuCardProps) {
               onOpenDetail(item);
             }}
             className={`flex items-center justify-center w-8 h-8 rounded-full transition-all
-              ${isOutOfStock 
-                ? "bg-neutral-100 dark:bg-neutral-800 text-neutral-300 dark:text-neutral-700 cursor-not-allowed" 
-                : isBestSeller 
-                  ? "bg-amber-500 text-white shadow-amber-200 dark:shadow-none" 
-                  : "bg-red-500 text-white shadow-red-200 dark:shadow-none"}`}
+              ${
+                isOutOfStock
+                  ? "bg-neutral-100 dark:bg-neutral-800 text-neutral-300 dark:text-neutral-700 cursor-not-allowed"
+                  : isBestSeller
+                    ? "bg-amber-500 text-white shadow-amber-200 dark:shadow-none"
+                    : "bg-red-500 text-white shadow-red-200 dark:shadow-none"
+              }`}
           >
             <Plus size={16} strokeWidth={3} />
           </motion.button>

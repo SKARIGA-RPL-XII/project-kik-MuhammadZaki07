@@ -8,6 +8,7 @@ import {
   Utensils,
   ShoppingBag,
   ChevronRight,
+  ShoppingCart,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -17,6 +18,7 @@ import { useState } from "react";
 import { useSettings } from "@/context/SettingsContext";
 import { useLocation, useNavigate, useSearchParams } from "react-router";
 import { useTranslation } from "react-i18next"; // + Import
+import { LiquidGlassCard } from "../ui/liquid-glass";
 
 interface CartSummaryProps {
   isOpen?: boolean;
@@ -42,7 +44,7 @@ export function CartSummary({
     return acc + Math.round(price * (item.quantity || 0));
   }, 0);
 
-  const hideCartPaths = ["/profile-customer", "/transaction"];
+  const hideCartPaths = ["/profile-customer", "/transaction", "/menu/","/tables-customer"];
 
   const shouldHide = hideCartPaths.some((path) =>
     location.pathname.includes(path),
@@ -51,21 +53,23 @@ export function CartSummary({
   if (shouldHide) return null;
 
   return (
-    <AnimatePresence mode="wait">
-      {!isOpen && (
-        <motion.div
-          key="premium-cart-bar"
-          initial={{ y: 100, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          exit={{ y: 100, opacity: 0 }}
-          transition={{ type: "spring", stiffness: 400, damping: 30 }}
-          className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[60] flex justify-center px-4 w-full max-w-lg"
-        >
-          <div
-            onClick={onToggle}
-            className="w-full max-w-lg dark:bg-neutral-900 bg-white border drop-shadow-2xl rounded-full px-4 py-2.5 flex items-center justify-between cursor-pointer hover:scale-[1.02] active:scale-[0.98] transition-all duration-300"
-          >
-            <div className="flex items-center gap-4 ml-2">
+ <AnimatePresence mode="wait">
+  {!isOpen && (
+    <motion.div
+      key="premium-cart-bar"
+      initial={{ y: 100, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+      exit={{ y: 100, opacity: 0 }}
+      transition={{ type: "spring", stiffness: 400, damping: 30 }}
+      className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[60] flex justify-center px-4 w-full max-w-lg cursor-pointer"
+      onClick={onToggle}
+    >
+      <LiquidGlassCard className="w-full pointer-events-none" draggable={false}>
+        <div className="relative w-full max-w-lg rounded-full px-4 py-2.5 flex items-center justify-between hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 overflow-hidden">
+          
+          <div className="relative flex items-center justify-between w-full pointer-events-auto">
+            
+            <div className="flex items-center gap-4">
               <div className="flex items-center -space-x-3">
                 {items.length > 0 ? (
                   items.slice(0, 3).map((item, idx) => (
@@ -74,11 +78,7 @@ export function CartSummary({
                       key={item.key || idx}
                       initial={{ scale: 0.5, opacity: 0 }}
                       animate={{ scale: 1, opacity: 1 }}
-                      transition={{
-                        type: "spring",
-                        stiffness: 300,
-                        damping: 20,
-                      }}
+                      transition={{ type: "spring", stiffness: 300, damping: 20 }}
                       src={`${import.meta.env.VITE_STORAGE_URL}/${item.image}`}
                       className="w-10 h-10 rounded-full border-2 object-cover bg-white shadow-sm"
                       style={{ zIndex: 10 - idx }}
@@ -87,18 +87,19 @@ export function CartSummary({
                   ))
                 ) : (
                   <div className="w-10 h-10 rounded-full bg-red-500 flex items-center justify-center">
-                    <ShoppingBag size={18} className="text-neutral-200" />
+                    <ShoppingCart size={18} className="text-neutral-200" />
                   </div>
                 )}
               </div>
 
               <div className="flex flex-col">
-                <span className="dark:text-white font-bold text-sm leading-none mb-1">
+                <span className="dark:text-white font-medium text-sm leading-none mb-1">
                   {items.length > 0
                     ? t("cart_items_count", { count: itemCount })
                     : t("cart_empty")}
                 </span>
-                <span className="text-zinc-400 text-[10px] font-normal">
+
+                <span className="text-zinc-400 text-xs font-normal">
                   {items.length > 0
                     ? `Rp ${total.toLocaleString("id-ID")}`
                     : t("cart_start_ordering")}
@@ -107,20 +108,23 @@ export function CartSummary({
             </div>
 
             <Button
-              variant="ghost"
-              className="text-white hover:bg-transparent hover:text-white font-bold text-xs gap-2"
+              variant="link"
+              className="text-black dark:text-white hover:bg-transparent hover:no-underline font-medium text-xs gap-2"
               onClick={(e) => {
-                e.stopPropagation();
-                onToggle();
+                e.stopPropagation()
+                onToggle()
               }}
             >
               {items.length > 0 ? t("cart_btn_review") : t("cart_btn_open")}
               <ChevronRight size={16} className="text-red-500" />
             </Button>
+
           </div>
-        </motion.div>
-      )}
-    </AnimatePresence>
+        </div>
+      </LiquidGlassCard>
+    </motion.div>
+  )}
+</AnimatePresence>
   );
 }
 
@@ -202,7 +206,7 @@ CartSummary.SidebarContent = function SidebarContent({
             >
               <X className="h-5 w-5" />
             </Button>
-            <h2 className="font-bold text-lg uppercase tracking-tighter">
+            <h2 className="font-bold text-lg tracking-tighter">
               {t("cart_order_summary")}
             </h2>
           </div>
@@ -377,16 +381,20 @@ CartSummary.SidebarContent = function SidebarContent({
             </span>
           </div>
           {settings?.is_service_active && (
-            <div className="flex justify-between text-[10px] font-bold text-zinc-400 uppercase">
-              <span>{t("cart_label_service")} ({settings.service_percent}%)</span>
+            <div className="flex justify-between text-[10px] font-bold dark:text-neutral-300 text-zinc-400 uppercase">
+              <span>
+                {t("cart_label_service")} ({settings.service_percent}%)
+              </span>
               <span className="text-zinc-900 dark:text-neutral-300">
                 Rp {serviceAmount.toLocaleString("id-ID")}
               </span>
             </div>
           )}
           {settings?.is_tax_active && (
-            <div className="flex justify-between text-[10px] font-bold text-zinc-400 uppercase">
-              <span>{t("cart_label_tax")} ({settings.tax_percent}%)</span>
+            <div className="flex justify-between text-[10px] font-bold dark:text-neutral-300 text-zinc-400 uppercase">
+              <span>
+                {t("cart_label_tax")} ({settings.tax_percent}%)
+              </span>
               <span className="text-zinc-900 dark:text-neutral-300">
                 Rp {taxAmount.toLocaleString("id-ID")}
               </span>
@@ -395,7 +403,9 @@ CartSummary.SidebarContent = function SidebarContent({
         </div>
 
         <div className="flex justify-between items-end">
-          <span className="text-xs font-bold text-red-600">{t("cart_label_total_payment")}</span>
+          <span className="text-md font-bold text-red-600">
+            {t("cart_label_total_payment")}
+          </span>
           <span className="text-3xl font-black text-zinc-900 dark:text-neutral-300 tracking-tighter">
             Rp {totalAmount.toLocaleString("id-ID")}
           </span>

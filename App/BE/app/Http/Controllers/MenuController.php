@@ -4,12 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Menu;
 use App\Models\User;
-use App\Models\Attribute;
-use App\Models\AttributeLevel;
 use App\Events\MenuDiscountCreated;
 use App\Events\MenuDiscountUpdate;
-use App\Events\MenuDiscountUpdated;
-use App\Events\ProductDiscountUpdated;
 use App\Notifications\GeneralNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -19,113 +15,69 @@ use Intervention\Image\Laravel\Facades\Image;
 
 class MenuController extends Controller
 {
+    /**
+     * Get menus for Customer with optimization
+     */
     public function index(Request $request)
     {
-        $page = max(0, (int) $request->query('page', 1) - 1);
+        $size = $request->query('size', 12);
 
-        $bestSellerIds = DB::table('transaction_details')
-            ->select('menu_id', DB::raw('SUM(menu_qty) as total_sold'))
-            ->groupBy('menu_id')
-            ->orderByDesc('total_sold')
-            ->take(5)
-            ->pluck('menu_id')
-            ->toArray();
+        $bestSellerIds = cache()->remember('best_seller_ids', 3600, function () {
+            return DB::table('transaction_details')
+                ->select('menu_id', DB::raw('SUM(menu_qty) as total_sold'))
+                ->groupBy('menu_id')
+                ->orderByDesc('total_sold')
+                ->take(5)
+                ->pluck('menu_id')
+                ->toArray();
+        });
 
         $query = Menu::with([
-            'category',
+            'category:id,name,slug',
             'discount',
             'attributes.levels',
             'stocks'
-        ])->where("menus.is_active", true);
+        ])->where("is_active", true);
 
         if ($request->filled('search')) {
-            $query->where('menus.name', 'like', '%' . $request->search . '%');
+            $query->where('name', 'like', '%' . $request->search . '%');
         }
 
         if ($request->filled('category')) {
             $cat = $request->category;
             $query->where(function ($q) use ($cat) {
                 $q->where('category_id', $cat)
-                    ->orWhereHas('category', fn($query) => $query->where('slug', $cat));
+                    ->orWhereHas('category', fn($q2) => $q2->where('slug', $cat));
             });
         }
 
-        if ($request->filled('sort_by')) {
-            switch ($request->sort_by) {
-                case 'best_seller':
-                    if (!empty($bestSellerIds)) {
-                        $idsOrder = implode(',', $bestSellerIds);
-                        $query->whereIn('menus.id', $bestSellerIds)
-                            ->orderByRaw("FIELD(menus.id, {$idsOrder})");
-                    }
-                    break;
-                case 'stock_highest':
-                    $query->withSum('stocks as total_stock', 'quantity')
-                        ->orderByDesc('total_stock');
-                    break;
-                case 'price_lowest':
-                    $query->orderBy('menus.price', 'asc');
-                    break;
-                case 'price_highest':
-                    $query->orderBy('menus.price', 'desc');
-                    break;
-                default:
-                    $query->latest('menus.created_at');
-                    break;
-            }
-        } else {
-            $query->latest('menus.created_at');
-        }
+        $this->applySorting($query, $request->sort_by, $bestSellerIds);
+        $menus = $query->paginate($size);
 
-        $total = $query->count();
-
-        if ($request->filled('size')) {
-            $size = max(1, (int) $request->size);
-            $data = $query->skip($page * $size)->take($size)->get();
-        } else {
-            $data = $query->get();
-            $size = $total;
-        }
-
-        $data->map(function ($menu) use ($bestSellerIds) {
+        $menus->getCollection()->transform(function ($menu) use ($bestSellerIds) {
             $menu->is_best_seller = in_array($menu->id, $bestSellerIds);
             return $menu;
         });
 
-        return Controller::OKE(
-            'success',
-            'success get menus',
-            [
-                "menus" => $data,
-                "metadata" => [
-                    "page" => $request->filled('size') ? $page + 1 : 1,
-                    "size" => (int) $size,
-                    "total" => $total
-                ]
-            ],
-            200
-        );
+        return Controller::OKE('success', 'success get menus', [
+            "menus" => $menus->items(),
+            "metadata" => [
+                "page" => $menus->currentPage(),
+                "size" => (int) $menus->perPage(),
+                "total" => $menus->total(),
+                "last_page" => $menus->lastPage()
+            ]
+        ], 200);
     }
 
+    /**
+     * Get menus for Admin
+     */
     public function getALlAdmin(Request $request)
     {
-        $page = max(0, (int) $request->query('page', 0));
-        $size = max(1, (int) $request->query('size', 10));
+        $size = $request->query('size', 10);
 
-        $bestSellerIds = DB::table('transaction_details')
-            ->select('menu_id', DB::raw('SUM(menu_qty) as total_sold'))
-            ->groupBy('menu_id')
-            ->orderByDesc('total_sold')
-            ->take(5)
-            ->pluck('menu_id')
-            ->toArray();
-
-        $query = Menu::with([
-            'category',
-            'discount',
-            'attributes.levels',
-            'stocks'
-        ]);
+        $query = Menu::with(['category', 'discount', 'attributes.levels', 'stocks']);
 
         if ($request->filled('search')) {
             $query->where('name', 'like', '%' . $request->search . '%');
@@ -135,32 +87,17 @@ class MenuController extends Controller
             $query->where('category_id', $request->category);
         }
 
-        $total = $query->count();
+        $menus = $query->latest()->paginate($size);
 
-        $data = $query
-            ->latest()
-            ->skip($page * $size)
-            ->take($size)
-            ->get();
-
-        $data->map(function ($menu) use ($bestSellerIds) {
-            $menu->is_best_seller = in_array($menu->id, $bestSellerIds);
-            return $menu;
-        });
-
-        return Controller::OKE(
-            'success',
-            'success get menus',
-            [
-                "menus" => $data,
-                "metadata" => [
-                    "page" => $page,
-                    "size" => $size,
-                    "total" => $total
-                ]
-            ],
-            200
-        );
+        return Controller::OKE('success', 'success get menus admin', [
+            "menus" => $menus->items(),
+            "metadata" => [
+                "page" => $menus->currentPage(),
+                "size" => (int) $menus->perPage(),
+                "total" => $menus->total(),
+                "last_page" => $menus->lastPage()
+            ]
+        ], 200);
     }
 
     public function store(Request $request)
@@ -180,62 +117,22 @@ class MenuController extends Controller
         ]);
 
         return DB::transaction(function () use ($request, $validated) {
-            $file = $request->file('menu_image');
-            $filename = 'menu-' . uniqid() . '.webp';
-            $directory = 'menus/';
-            $fullPath = storage_path('app/public/' . $directory . $filename);
+            $path = $this->handleUpload($request->file('menu_image'));
 
-            if (!file_exists(storage_path('app/public/' . $directory))) {
-                mkdir(storage_path('app/public/' . $directory), 0755, true);
-            }
-
-            Image::read($file)
-                ->scale(1000)
-                ->encodeByExtension('webp', 90)
-                ->save($fullPath);
-
-            $path = $directory . $filename;
-
-            $menu = Menu::create([
-                "menu_image" => $path,
-                "name" => $validated['name'],
-                "category_id" => $validated['category_id'],
-                "discount_id" => $request->filled('discount_id') ? $validated['discount_id'] : null,
-                "description" => $validated['description'] ?? null,
-                "price" => $validated['price'],
-                "is_active" => $validated['is_active']
-            ]);
-
-            if ($menu->discount_id) {
-                $customers = User::where('role', 'customer')->get();
-                $event = new MenuDiscountCreated($menu);
-
-                $link = "/menus/" . $menu->id;
-                Notification::send($customers, new GeneralNotification($event->message, 'promotion', $link));
-            }
-
+            $menu = Menu::create(array_merge($validated, ["menu_image" => $path]));
             foreach ($validated['stocks'] as $stockItem) {
                 $menu->stocks()->attach($stockItem['stock_id'], [
                     'amount' => $stockItem['amount'],
-                    'created_at' => now(),
-                    'updated_at' => now()
+                    'created_at' => now(), 'updated_at' => now()
                 ]);
             }
 
             if (!empty($validated['attributes'])) {
-                $syncData = [];
-                foreach ($validated['attributes'] as $attrId => $levelIds) {
-                    foreach (array_unique($levelIds) as $levelId) {
-                        $syncData[] = [
-                            'menu_id' => $menu->id,
-                            'attribute_id' => $attrId,
-                            'attribute_level_id' => $levelId,
-                            'created_at' => now(),
-                            'updated_at' => now()
-                        ];
-                    }
-                }
-                DB::table('menu_attributes')->insert($syncData);
+                $this->syncAttributes($menu, $validated['attributes']);
+            }
+
+            if ($menu->discount_id) {
+                $this->notifyDiscount($menu, new MenuDiscountCreated($menu));
             }
 
             return Controller::OKE('success', 'success create menu', $menu->load(['stocks', 'attributes.levels']), 201);
@@ -244,13 +141,7 @@ class MenuController extends Controller
 
     public function show($id)
     {
-        $menu = Menu::with([
-            'category',
-            'discount',
-            'attributes.levels',
-            'stocks'
-        ])->findOrFail($id);
-
+        $menu = Menu::with(['category', 'discount', 'attributes.levels', 'stocks'])->findOrFail($id);
         return Controller::OKE('success', 'success get menu', $menu, 200);
     }
 
@@ -274,25 +165,8 @@ class MenuController extends Controller
             $oldDiscountId = $menu->discount_id;
 
             if ($request->hasFile('menu_image')) {
-                if ($menu->menu_image) {
-                    Storage::disk('public')->delete($menu->menu_image);
-                }
-
-                $file = $request->file('menu_image');
-                $filename = 'menu-' . uniqid() . '.webp';
-                $directory = 'menus/';
-                $fullPath = storage_path('app/public/' . $directory . $filename);
-
-                if (!file_exists(storage_path('app/public/' . $directory))) {
-                    mkdir(storage_path('app/public/' . $directory), 0755, true);
-                }
-
-                Image::read($file)
-                    ->scale(1000)
-                    ->encodeByExtension('webp', 90)
-                    ->save($fullPath);
-
-                $validated['menu_image'] = $directory . $filename;
+                if ($menu->menu_image) Storage::disk('public')->delete($menu->menu_image);
+                $validated['menu_image'] = $this->handleUpload($request->file('menu_image'));
             }
 
             if ($request->has('discount_id')) {
@@ -301,42 +175,20 @@ class MenuController extends Controller
 
             $menu->update($validated);
 
-            if ($menu->discount_id && ($oldDiscountId != $menu->discount_id)) {
-                $customers = User::where('role', 'customer')->get();
-                $event = new MenuDiscountUpdate($menu);
-
-                $link = "/menus/" . $menu->id;
-                Notification::send($customers, new GeneralNotification($event->message, 'promotion', $link));
-            }
             if (isset($validated['stocks'])) {
-                $syncStocks = [];
-                foreach ($validated['stocks'] as $item) {
-                    $syncStocks[$item['stock_id']] = [
-                        'amount' => $item['amount'],
-                        'updated_at' => now()
-                    ];
-                }
+                $syncStocks = collect($validated['stocks'])->mapWithKeys(fn($item) => [
+                    $item['stock_id'] => ['amount' => $item['amount'], 'updated_at' => now()]
+                ])->toArray();
                 $menu->stocks()->sync($syncStocks);
             }
 
             if (isset($validated['attributes'])) {
                 DB::table('menu_attributes')->where('menu_id', $menu->id)->delete();
-                $syncData = [];
-                foreach ($validated['attributes'] as $attrId => $levelIds) {
-                    if (!is_array($levelIds)) continue;
-                    foreach (array_unique($levelIds) as $levelId) {
-                        $syncData[] = [
-                            'menu_id' => $menu->id,
-                            'attribute_id' => $attrId,
-                            'attribute_level_id' => $levelId,
-                            'created_at' => now(),
-                            'updated_at' => now()
-                        ];
-                    }
-                }
-                if (!empty($syncData)) {
-                    DB::table('menu_attributes')->insert($syncData);
-                }
+                $this->syncAttributes($menu, $validated['attributes']);
+            }
+
+            if ($menu->discount_id && ($oldDiscountId != $menu->discount_id)) {
+                $this->notifyDiscount($menu, new MenuDiscountUpdate($menu));
             }
 
             return Controller::OKE('success', 'success update menu', $menu->load(['stocks', 'attributes.levels']), 200);
@@ -346,15 +198,74 @@ class MenuController extends Controller
     public function destroy(Menu $menu)
     {
         return DB::transaction(function () use ($menu) {
-            if ($menu->menu_image) {
-                Storage::disk('public')->delete($menu->menu_image);
-            }
-
+            if ($menu->menu_image) Storage::disk('public')->delete($menu->menu_image);
             DB::table('menu_attributes')->where('menu_id', $menu->id)->delete();
             $menu->stocks()->detach();
             $menu->delete();
-
             return Controller::OKE('success', 'success delete menu', [], 200);
         });
+    }
+
+    /**
+     * Helper: Handle Image Upload & Optimization
+     */
+    private function handleUpload($file)
+    {
+        $filename = 'menu-' . uniqid() . '.webp';
+        $path = 'menus/' . $filename;
+
+        $img = Image::read($file)
+            ->cover(600, 400)
+            ->encodeByExtension('webp', 80);
+
+        Storage::disk('public')->put($path, (string) $img);
+        return $path;
+    }
+
+    /**
+     * Helper: Sync Attributes
+     */
+    private function syncAttributes($menu, $attributes)
+    {
+        $syncData = [];
+        foreach ($attributes as $attrId => $levelIds) {
+            if (!is_array($levelIds)) continue;
+            foreach (array_unique($levelIds) as $levelId) {
+                $syncData[] = [
+                    'menu_id' => $menu->id, 'attribute_id' => $attrId,
+                    'attribute_level_id' => $levelId, 'created_at' => now(), 'updated_at' => now()
+                ];
+            }
+        }
+        if (!empty($syncData)) DB::table('menu_attributes')->insert($syncData);
+    }
+
+    /**
+     * Helper: Sorting Logic
+     */
+    private function applySorting($query, $sortBy, $bestSellerIds)
+    {
+        switch ($sortBy) {
+            case 'best_seller':
+                if (!empty($bestSellerIds)) {
+                    $query->whereIn('id', $bestSellerIds)->orderByRaw("FIELD(id, " . implode(',', $bestSellerIds) . ")");
+                }
+                break;
+            case 'stock_highest':
+                $query->withSum('stocks as total_stock', 'quantity')->orderByDesc('total_stock');
+                break;
+            case 'price_lowest': $query->orderBy('price', 'asc'); break;
+            case 'price_highest': $query->orderBy('price', 'desc'); break;
+            default: $query->latest(); break;
+        }
+    }
+
+    /**
+     * Helper: Notify Customers
+     */
+    private function notifyDiscount($menu, $event)
+    {
+        $customers = User::where('role', 'customer')->get();
+        Notification::send($customers, new GeneralNotification($event->message, 'promotion', "/menus/{$menu->id}"));
     }
 }

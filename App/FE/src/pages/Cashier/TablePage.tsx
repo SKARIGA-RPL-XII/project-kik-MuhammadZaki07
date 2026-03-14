@@ -5,11 +5,10 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ChevronRight, Search, Users, Calendar } from "lucide-react";
-import {
-  Dialog,
-  DialogContent,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { useToast } from "@/context/ToastContext";
+import { useTranslation } from "react-i18next";
+import { Badge } from "@/components/ui/badge";
 
 const TableSkeleton = () => (
   <div className="flex flex-col items-center">
@@ -26,6 +25,7 @@ const TableSkeleton = () => (
 );
 
 export default function TablePage() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
   const { data: tables, isLoading } = useTables({ page: 1, size: 10000 });
@@ -44,7 +44,6 @@ export default function TablePage() {
   const handleTableClick = (table: any) => {
     setSelectedTable(table);
 
-    // Kalau bukan dari proses belanja (Kasir/Customer), maka buka dialog Manajemen
     if (!isFromCart && !isCustomerSide) {
       setIsManageDialogOpen(true);
       if (table.reserved_until) {
@@ -71,11 +70,16 @@ export default function TablePage() {
       },
     });
   };
+
   const handleUpdateStatus = (status: string) => {
     const payload: any = { status };
     if (status === "reserved") {
       if (!reservedUntil)
-        return toast("warning", "Warning!", "Pilih waktu reservasi dulu!");
+        return toast(
+          "warning",
+          t("tp_toast_warning"),
+          t("tp_toast_reserve_time"),
+        );
       payload.reserved_until = reservedUntil.replace("T", " ") + ":00";
     } else {
       payload.reserved_until = null;
@@ -117,53 +121,48 @@ export default function TablePage() {
     const base = "border-2 transition-all duration-300";
     switch (status) {
       case "occupied":
-        return `${base} bg-red-50 hover:border-red-500 ${isSelected ? "ring-4 ring-red-300 scale-105" : ""}`;
+        return `${base} bg-red-50 dark:bg-red-950/20 hover:border-red-500 ${isSelected ? "ring-4 ring-red-300 scale-105" : ""}`;
       case "reserved":
-        return `${base} bg-yellow-50 hover:border-yellow-500 ${isSelected ? "ring-4 ring-yellow-300 scale-105" : ""}`;
+        return `${base} bg-yellow-50 dark:bg-yellow-950/20 hover:border-yellow-500 ${isSelected ? "ring-4 ring-yellow-300 scale-105" : ""}`;
       default:
-        return `${base} bg-green-50 hover:border-green-500 ${isSelected ? "ring-4 ring-green-300 scale-105" : ""}`;
+        return `${base} bg-green-50 dark:bg-green-950/20 hover:border-green-500 ${isSelected ? "ring-2 ring-green-300 dark:ring-green-500 scale-105" : ""}`;
     }
   };
 
   const getSeatColor = (status: string) => {
     switch (status) {
       case "occupied":
-        return "hover:bg-red-50 bg-neutral-200";
+        return "hover:bg-red-50 bg-neutral-200 dark:bg-neutral-800";
       case "reserved":
-        return "hover:bg-yellow-50 bg-neutral-200";
+        return "hover:bg-yellow-50 bg-neutral-200 dark:bg-neutral-800";
       default:
-        return "hover:bg-green-50 bg-neutral-200";
+        return "hover:bg-green-50 bg-neutral-200 dark:bg-neutral-800";
     }
   };
 
   return (
-    <div className="flex flex-col h-screen overflow-hidden relative">
-      <header className="sticky top-0 z-30 border-b px-4 sm:px-6 lg:px-8 pb-4">
+    <div className="flex flex-col h-screen overflow-hidden relative max-w-7xl mx-auto">
+      <header
+        className={`sticky ${isCustomerSide ? "pb-4 pt-5" : "pb-4"} top-0 z-30 border-b`}
+      >
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <div>
-            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-zinc-900 dark:text-neutral-600 leading-none">
-              Floor <span className="text-red-600">Plan</span>
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-zinc-900 dark:text-neutral-100 leading-none">
+              {t("tp_header_floor")}{" "}
+              <span className="text-red-600">{t("tp_header_plan")}</span>
             </h1>
             <p className="text-xs sm:text-sm lg:text-sm font-normal text-zinc-400 mt-1 leading-relaxed lg:max-w-lg max-w-sm">
-              {isFromCart || isCustomerSide ? (
-                <>
-                  Order Selection — Choose an available table to start. Occupied
-                  tables cannot be selected.
-                </>
-              ) : (
-                <>
-                  Table Management — Monitor real-time status and update
-                  availability.
-                </>
-              )}
+              {isFromCart || isCustomerSide
+                ? t("tp_desc_customer")
+                : t("tp_desc_management")}
             </p>
           </div>
 
           <div className="relative w-full sm:w-80 lg:w-72">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
             <input
-              className="w-full pl-10 h-10 bg-zinc-50 dark:bg-neutral-800 border rounded-xl focus:outline-none focus:ring-2 focus:ring-red-600/20 text-sm"
-              placeholder="Search table number..."
+              className="w-full pl-10 h-10 bg-zinc-50 dark:bg-neutral-800 border dark:border-neutral-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-600/20 text-sm"
+              placeholder={t("tp_search_placeholder")}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
@@ -171,13 +170,13 @@ export default function TablePage() {
         </div>
       </header>
 
-      <div className="px-8 py-3 border-b flex items-center gap-2 overflow-x-auto no-scrollbar">
+      <div className="py-3 border-b dark:border-neutral-800 flex items-center gap-2 overflow-x-auto no-scrollbar">
         <Button
           variant={selectedRoomId === "all" ? "default" : "outline"}
           onClick={() => setSelectedRoomId("all")}
-          className={`h-9 rounded-full px-6 text-sm hover:bg-red-50 hover:text-red-500 ${selectedRoomId === "all" ? "bg-red-600 text-white" : "border-zinc-100 text-zinc-400"}`}
+          className={`h-9 rounded-full px-6 text-sm hover:bg-red-50 hover:text-red-500 ${selectedRoomId === "all" ? "bg-red-600 text-white" : "border-zinc-100 dark:border-neutral-700 text-zinc-400"}`}
         >
-          All Areas
+          {t("tp_filter_all")}
         </Button>
         {rooms.map((room: any) => (
           <Button
@@ -186,7 +185,7 @@ export default function TablePage() {
               selectedRoomId === room.id.toString() ? "default" : "outline"
             }
             onClick={() => setSelectedRoomId(room.id.toString())}
-            className={`h-9 rounded-full text-sm font-normal shadow-none hover:bg-red-50 hover:text-red-500 ${selectedRoomId === room.id.toString() ? "bg-red-600 text-white" : "border-zinc-100 text-zinc-400"}`}
+            className={`h-9 rounded-full text-sm font-normal shadow-none hover:bg-red-50 hover:text-red-500 ${selectedRoomId === room.id.toString() ? "bg-red-600 text-white" : "border-zinc-100 dark:border-neutral-700 text-zinc-400"}`}
           >
             {room.name}
           </Button>
@@ -194,8 +193,8 @@ export default function TablePage() {
       </div>
 
       <ScrollArea className="flex-1 overflow-hidden">
-        <div className="p-12 max-w-[1400px] mx-auto">
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-x-12 gap-y-16">
+        <div className="pt-10 pb-32 md:pt-10 md:pb-20 lg:pb-24 max-w-[1400px] mx-auto">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-x-12 gap-y-12">
             {isLoading
               ? Array.from({ length: 12 }).map((_, i) => (
                   <TableSkeleton key={i} />
@@ -214,7 +213,7 @@ export default function TablePage() {
                         }).map((_, i) => (
                           <div
                             key={i}
-                            className={`w-10 h-3.5 bg-neutral-100 dark:bg-neutral-700 rounded-t-full transition-all duration-300 ${getSeatColor(table.status)}`}
+                            className={`w-10 h-3.5 bg-neutral-100 dark:bg-neutral-800 rounded-t-full transition-all duration-300 ${getSeatColor(table.status)}`}
                           />
                         ))}
                       </div>
@@ -246,7 +245,7 @@ export default function TablePage() {
                         }).map((_, i) => (
                           <div
                             key={i}
-                            className={`w-10 h-3.5 bg-neutral-100 dark:bg-neutral-700 rounded-b-full transition-all duration-300 ${getSeatColor(table.status)}`}
+                            className={`w-10 h-3.5 bg-neutral-100 dark:bg-neutral-800 rounded-b-full transition-all duration-300 ${getSeatColor(table.status)}`}
                           />
                         ))}
                       </div>
@@ -257,11 +256,13 @@ export default function TablePage() {
         </div>
       </ScrollArea>
 
-      <footer className="fixed bottom-0 right-0 z-50 w-full lg:w-[1230px] bg-white dark:bg-neutral-900 backdrop-blur border-t px-4 sm:px-6 py-3 shadow-lg">
+      <footer
+        className={`fixed ${isCustomerSide ? "w-full" : "w-[1230px]"} bottom-0 right-0 z-50 bg-white dark:bg-neutral-900 backdrop-blur border-t dark:border-neutral-800 px-4 sm:px-6 py-3 shadow-lg`}
+      >
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div className="flex flex-col text-zinc-500">
             <span className="text-sm uppercase font-semibold mb-2">
-              Information
+              {t("tp_footer_info")}
             </span>
             <div className="flex flex-wrap items-center gap-6 text-xs">
               <div className="flex items-center gap-2.5 group">
@@ -270,7 +271,7 @@ export default function TablePage() {
                   <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]"></span>
                 </div>
                 <span className="text-zinc-500 group-hover:text-emerald-600 transition-colors">
-                  Available
+                  {t("tp_status_available")}
                 </span>
               </div>
 
@@ -279,7 +280,7 @@ export default function TablePage() {
                   <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.5)]"></span>
                 </div>
                 <span className="text-zinc-500 group-hover:text-rose-600 transition-colors">
-                  Occupied
+                  {t("tp_status_occupied")}
                 </span>
               </div>
 
@@ -288,7 +289,7 @@ export default function TablePage() {
                   <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.5)]"></span>
                 </div>
                 <span className="text-zinc-500 group-hover:text-amber-600 transition-colors">
-                  Reserved
+                  {t("tp_status_reserved")}
                 </span>
               </div>
             </div>
@@ -301,11 +302,11 @@ export default function TablePage() {
                 className="text-sm font-semibold bg-red-500 hover:bg-red-400"
                 onClick={handleConfirmTable}
               >
-                Confirm Selection <ChevronRight className="h-4 w-4 ml-1" />
+                {t("tp_btn_confirm")} <ChevronRight className="h-4 w-4 ml-1" />
               </Button>
             ) : (
               <p className="text-sm font-normal text-zinc-400 text-right">
-                Management Mode: Click any table to edit status
+                {t("tp_management_mode")}
               </p>
             )}
           </div>
@@ -313,17 +314,17 @@ export default function TablePage() {
       </footer>
 
       <Dialog open={isManageDialogOpen} onOpenChange={setIsManageDialogOpen}>
-        <DialogContent className="max-w-2xl border-none bg-white dark:bg-neutral-700 p-0 overflow-hidden shadow-2xl rounded-[28px]">
+        <DialogContent className="max-w-3xl border-none bg-white dark:bg-neutral-800 p-0 overflow-hidden shadow-2xl rounded-[28px]">
           <div className="flex flex-col md:flex-row h-full">
-            <div className="w-full md:w-[280px] bg-zinc-900 p-8 flex flex-col items-center justify-center text-white relative overflow-hidden">
+            <div className="w-full md:w-[280px] bg-red-600 dark:bg-neutral-800 p-8 flex flex-col items-center justify-center text-white relative overflow-hidden">
               <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -mr-16 -mt-16 blur-2xl" />
 
               <div className="relative z-10 text-center space-y-6">
                 <div className="space-y-1">
-                  <span className="text-sm font-normal text-zinc-500 dark:text-neutral-200">
-                    Dining Table
+                  <span className="text-sm font-normal text-white">
+                    {t("tp_dialog_table_label")}
                   </span>
-                  <h2 className="text-4xl font-blacker">
+                  <h2 className="text-4xl font-black">
                     T-{selectedTable?.table_number}
                   </h2>
                 </div>
@@ -337,90 +338,108 @@ export default function TablePage() {
                     />
                   ) : (
                     <div className="w-32 h-32 bg-zinc-100 flex items-center justify-center text-zinc-400 text-[10px] font-bold">
-                      NO QR
+                      {t("tp_dialog_no_qr")}
                     </div>
                   )}
                 </div>
 
                 <div className="pt-4">
-                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/10">
-                    <Users className="h-3 w-3 text-zinc-400" />
-                    <span className="text-[11px] font-medium text-zinc-300">
-                      Cap. {selectedTable?.capacity} Persons
+                  <Badge variant={"default"}>
+                    <Users className="h-3 w-3 dark:text-black text-white" />
+                    <span className="text-[11px] font-medium text-white dark:text-black">
+                      {t("tp_dialog_capacity", {
+                        count: selectedTable?.capacity,
+                      })}
                     </span>
-                  </div>
+                  </Badge>
                 </div>
               </div>
             </div>
 
-            <div className="flex-1 p-8 space-y-8 bg-white dark:bg-neutral-900">
+            <div className="flex-1 px-4 py-5 space-y-8 bg-white dark:bg-neutral-900">
               <div>
-                <h3 className="text-xl font-bold text-zinc-900 dark:text-white">
-                  Table Management
+                <h3 className="text-2xl font-bold text-zinc-900 dark:text-neutral-100">
+                  {t("tp_dialog_title")}
                 </h3>
-                <p className="text-zinc-500 text-sm">
-                  Update status or schedule a reservation.
+                <p className="dark:text-neutral-300 text-muted-foreground text-sm">
+                  {t("tp_dialog_subtitle")}
                 </p>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 gap-4">
                 <button
                   disabled={updateTable.isPending}
                   onClick={() => handleUpdateStatus("available")}
-                  className="group flex items-center gap-3 p-4 rounded-full border-2 hover:border-emerald-500/30 hover:bg-emerald-50/50 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="group relative flex items-center gap-4 p-4 rounded-xl border bg-white dark:bg-neutral-900 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 transition-all disabled:opacity-50"
                 >
-                  {updateTable.isPending &&
-                  selectedTable?.status === "available" ? (
-                    <div className="h-2 w-2 rounded-full border border-zinc-300 border-t-emerald-500 animate-spin" />
-                  ) : (
-                    <div className="h-2 w-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
-                  )}
-                  <span className="text-sm font-medium text-zinc-600 group-hover:text-emerald-700">
+                  <div className="flex items-center justify-center w-5 h-5 rounded-xl bg-emerald-100 dark:bg-emerald-500/15">
                     {updateTable.isPending &&
-                    selectedTable?.status === "available"
-                      ? "Updating..."
-                      : "Set Available"}
-                  </span>
+                    selectedTable?.status === "available" ? (
+                      <div className="h-4 w-4 rounded-full border-2 border-emerald-500 border-t-transparent animate-spin" />
+                    ) : (
+                      <div className="h-3 w-3 rounded-full bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.6)]" />
+                    )}
+                  </div>
+
+                  <div className="flex flex-col text-left">
+                    <span className="text-sm font-semibold text-zinc-800 dark:text-white">
+                      {t("tp_btn_set_available")}
+                    </span>
+                    <span className="text-xs text-zinc-500 dark:text-neutral-400">
+                      {updateTable.isPending &&
+                      selectedTable?.status === "available"
+                        ? t("tp_btn_updating")
+                        : "Table ready for guests"}
+                    </span>
+                  </div>
                 </button>
 
                 <button
                   disabled={updateTable.isPending}
                   onClick={() => handleUpdateStatus("occupied")}
-                  className="group flex items-center gap-3 p-4 rounded-full border-2 hover:border-rose-500/30 hover:bg-rose-50/50 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="group relative flex items-center gap-4 p-4 rounded-xl border bg-white dark:bg-neutral-900 hover:border-rose-500/40 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-all disabled:opacity-50"
                 >
-                  {updateTable.isPending &&
-                  selectedTable?.status === "occupied" ? (
-                    <div className="h-2 w-2 rounded-full border border-zinc-300 border-t-rose-500 animate-spin" />
-                  ) : (
-                    <div className="h-2 w-2 rounded-full bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.5)]" />
-                  )}
-                  <span className="text-sm font-medium text-zinc-600 group-hover:text-rose-700">
+                  <div className="flex items-center justify-center w-5 h-5 rounded-xl bg-rose-100 dark:bg-rose-500/15">
                     {updateTable.isPending &&
-                    selectedTable?.status === "occupied"
-                      ? "Updating..."
-                      : "Set Occupied"}
-                  </span>
+                    selectedTable?.status === "occupied" ? (
+                      <div className="h-4 w-4 rounded-full border-2 border-rose-500 border-t-transparent animate-spin" />
+                    ) : (
+                      <div className="h-3 w-3 rounded-full bg-rose-500 shadow-[0_0_10px_rgba(244,63,94,0.6)]" />
+                    )}
+                  </div>
+
+                  <div className="flex flex-col text-left">
+                    <span className="text-sm font-semibold text-zinc-800 dark:text-white">
+                      {t("tp_btn_set_occupied")}
+                    </span>
+                    <span className="text-xs text-zinc-500 dark:text-neutral-400">
+                      {updateTable.isPending &&
+                      selectedTable?.status === "occupied"
+                        ? t("tp_btn_updating")
+                        : "Mark table as taken"}
+                    </span>
+                  </div>
                 </button>
               </div>
 
-              <div className="space-y-4 pt-4 border-t">
-                <label className="flex items-center gap-2 text-sm font-normal text-zinc-400">
-                  <Calendar className="h-3 w-3" /> Reservation Schedule
+              <div className="space-y-4 pt-4 border-t dark:border-neutral-800">
+                <label className="flex items-center gap-2 text-sm font-normal text-muted-foreground dark:text-neutral-300">
+                  <Calendar className="h-3 w-3" />{" "}
+                  {t("tp_label_reserve_schedule")}
                 </label>
-
                 <div className="flex gap-2">
                   <input
                     type="datetime-local"
-                    className="flex-1 border h-10 px-4 rounded text-xs font-semibold outline-none focus:ring-2 focus:ring-amber-500/10 focus:border-amber-500/50 transition-all"
+                    className="flex-1 border dark:border-neutral-700 bg-transparent dark:text-white h-9 px-4 rounded text-xs font-semibold outline-none focus:ring-2 focus:ring-amber-500/10 transition-all"
                     value={reservedUntil}
                     onChange={(e) => setReservedUntil(e.target.value)}
                   />
                   <Button
                     disabled={!reservedUntil}
                     onClick={() => handleUpdateStatus("reserved")}
-                    className="h-10 px-6 bg-amber-500 hover:bg-amber-600 text-white font-semibold disabled:opacity-30 disabled:shadow-none"
+                    className="bg-red-500 hover:bg-red-600 text-white font-semibold disabled:opacity-30"
                   >
-                    Save
+                    {t("tp_btn_save")}
                   </Button>
                 </div>
               </div>

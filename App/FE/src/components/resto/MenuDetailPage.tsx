@@ -56,7 +56,7 @@ export default function MenuDetailPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-white">
+      <div className="min-h-screen flex items-center justify-center bg-white dark:bg-neutral-900">
         <Loader2 className="animate-spin text-red-600" size={32} />
       </div>
     );

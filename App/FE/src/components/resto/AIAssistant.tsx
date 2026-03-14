@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from 'framer-motion'
-import { Send, X, MessageCircle, Sparkles, Flame, TicketCheck, Pin, LeafyGreen, Bot } from 'lucide-react'
+import { Send, X, MessageCircle, Flame, TicketCheck, Pin, LeafyGreen, Bot } from 'lucide-react'
 import { useEffect, useState } from 'react'
 
 interface Message {

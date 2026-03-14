@@ -74,8 +74,8 @@ class SettingController extends Controller
                 }
 
                 Image::read($file)
-                    ->scale(1000)
-                    ->encodeByExtension('webp', 90)
+                    ->cover(600, 400)
+                    ->encodeByExtension('webp', 80)
                     ->save($fullPath);
 
                 Setting::set($key, $directory . $filename, $request->group);
@@ -83,7 +83,7 @@ class SettingController extends Controller
                 if ($value !== "null" && $value !== null) {
                     $decoded = json_decode($value, true);
                     $finalValue = (json_last_error() === JSON_ERROR_NONE) ? $decoded : $value;
-    
+
                     Setting::set($key, $finalValue, $request->group);
                 }
             }

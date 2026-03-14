@@ -12,7 +12,7 @@ export function useLanguageSwitcher() {
       const token = import.meta.env.VITE_SIMPLELOCALIZE_TOKEN;
       try {
         const response = await fetch(
-          `https://cdn.simplelocalize.io/${token}/_latest/_languages`
+          `https://cdn.simplelocalize.io/${token}/_latest/_languages`,
         );
         const data = await response.json();
 
