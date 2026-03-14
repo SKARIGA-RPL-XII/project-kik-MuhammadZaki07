@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { useToast } from "@/context/ToastContext";
 import { useCart } from "@/hooks/useCart";
+import { useAuth } from "@/context/AuthContext";
 
 declare global {
   interface Window {
@@ -26,12 +27,16 @@ declare global {
 export default function PaymentPage() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { cartItems: cashierItems, clearCart: clearCashierCart } = useCashierCart();
+  const { cartItems: cashierItems, clearCart: clearCashierCart } =
+    useCashierCart();
   const { settings } = useSettings();
   const { useCreateTransaction } = useTransaction();
   const createMutation = useCreateTransaction();
   const { toast } = useToast();
   const { clearCart } = useCart();
+  const { user } = useAuth();
+  const [customerName, setCustomerName] = useState("");
+  const isRequiredToInputName = !user || user.role_name !== "customer";
 
   const isCustomer = location.pathname.includes("customer");
 
@@ -98,10 +103,13 @@ export default function PaymentPage() {
       order_type: orderData.orderType,
       order_source: isCustomer ? "qr_code" : "cashier_direct",
       payment_method: paymentMethod,
-      amount_paid: isCustomer && paymentMethod === "cash" 
-        ? 0 
-        : Math.round(paymentMethod === "cash" ? paidAmountNumeric : total),
+      amount_paid:
+        isCustomer && paymentMethod === "cash"
+          ? 0
+          : Math.round(paymentMethod === "cash" ? paidAmountNumeric : total),
       total_amount: Math.round(total),
+      customer_name:
+        user && user.role_name === "customer" ? user.username : customerName,
       settings: settings,
       items: items.map((item: any) => ({
         menu_id: item.id,
@@ -123,13 +131,20 @@ export default function PaymentPage() {
         if (transactionResult?.id) {
           if (!isCustomer) clearCashierCart();
           clearCart();
-          toast("success", "Success", isCustomer ? "Order Sent Successfully" : "Transaction completed");
+          toast(
+            "success",
+            "Success",
+            isCustomer ? "Order Sent Successfully" : "Transaction completed",
+          );
 
           if (isCustomer) {
             navigate("/order-success", { state: { order: transactionResult } });
           } else {
             navigate(`/invoice/${transactionResult.id}`, {
-              state: { transactionData: transactionResult, changeAmount: change },
+              state: {
+                transactionData: transactionResult,
+                changeAmount: change,
+              },
             });
           }
         }
@@ -169,7 +184,7 @@ export default function PaymentPage() {
         <div className="flex items-center justify-between mb-8">
           <Button
             variant="ghost"
-            onClick={() => navigate(-1)}  
+            onClick={() => navigate(-1)}
             className="flex items-center gap-2 text-sm"
           >
             <ChevronLeft className="h-4 w-4" />
@@ -229,6 +244,30 @@ export default function PaymentPage() {
           </div>
 
           <div className="lg:col-span-7 space-y-6">
+            {isRequiredToInputName && (
+              <div className="">
+                <label className="text-sm font-semibold text-slate-700 block mb-2">
+                  Nama Pelanggan <span className="text-red-500">*</span>
+                </label>
+                <Input
+                  type="text"
+                  placeholder={
+                    user?.role_name === "cashier"
+                      ? "Masukkan nama pembeli..."
+                      : "Masukkan nama Anda..."
+                  }
+                  className="h-12 border-slate-200 focus:ring-red-500"
+                  value={customerName}
+                  onChange={(e) => setCustomerName(e.target.value)}
+                />
+                <p className="text-[10px] text-slate-400 mt-2">
+                  {user?.role_name === "cashier"
+                    ? "Wajib diisi oleh kasir untuk keperluan laporan."
+                    : "Nama diperlukan untuk identifikasi pesanan Anda."}
+                </p>
+              </div>
+            )}
+
             <div>
               <h3 className="text-sm font-medium text-slate-600 mb-3">
                 Payment Method
@@ -309,9 +348,13 @@ export default function PaymentPage() {
                         <Info className="h-6 w-6" />
                       </div>
                       <div>
-                        <p className="font-semibold text-orange-900 text-sm">Pay at Cashier</p>
+                        <p className="font-semibold text-orange-900 text-sm">
+                          Pay at Cashier
+                        </p>
                         <p className="text-xs text-orange-700 leading-relaxed">
-                          Your order will be sent to the kitchen after you complete the payment at the cashier counter by showing your order barcode.
+                          Your order will be sent to the kitchen after you
+                          complete the payment at the cashier counter by showing
+                          your order barcode.
                         </p>
                       </div>
                     </div>
@@ -335,15 +378,21 @@ export default function PaymentPage() {
                 disabled={
                   createMutation.isPending ||
                   items.length === 0 ||
-                  (!isCustomer && paymentMethod === "cash" && (!amountPaid || parseInt(amountPaid) < total))
+                  // Logic Tambahan: Jika wajib isi nama tapi nama kosong, matikan tombol
+                  (isRequiredToInputName && !customerName.trim()) ||
+                  (!isCustomer &&
+                    paymentMethod === "cash" &&
+                    (!amountPaid || parseInt(amountPaid) < total))
                 }
                 onClick={handleProcessTransaction}
                 className="w-full h-14 text-base font-semibold"
               >
                 {createMutation.isPending ? (
                   <Loader2 className="animate-spin h-5 w-5" />
+                ) : isCustomer && paymentMethod === "cash" ? (
+                  "Confirm Order"
                 ) : (
-                  isCustomer && paymentMethod === "cash" ? "Confirm Order" : "Finalize Transaction"
+                  "Finalize Transaction"
                 )}
               </Button>
             </div>

@@ -22,7 +22,22 @@ class TransactionController extends Controller
 
     public function index(Request $request)
     {
-        $query = Transaction::with(['table', 'details.menu.attributes.levels'])
+        $query = Transaction::select([
+            'id',
+            'table_id',
+            'user_id',
+            'status',
+            'total_amount',
+            'payment_method',
+            'order_source',
+            'created_at'
+        ])
+            ->with([
+                'user:id,username',
+                'table:id,table_number,qr_code',
+                'details:id,transaction_id,menu_id,menu_qty,subtotal,attributes,price',
+                'details.menu:id,name,menu_image'
+            ])
             ->whereIn('status', ['paid', 'to_cook', 'cooking'])
             ->orderBy('created_at', 'asc');
 

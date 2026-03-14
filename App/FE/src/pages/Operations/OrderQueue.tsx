@@ -8,6 +8,7 @@ import {
   CheckCircle2,
   Loader2,
   ClipboardX,
+  User,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -129,7 +130,7 @@ export default function OrderQueuePage() {
             {orders?.map((order: any) => (
               <Card
                 key={order.id}
-                className="border border-zinc-200 shadow-sm hover:border-red-200 transition-colors bg-white"
+                className="border shadow-sm hover:border-red-200 dark:hover:border-red-500 transition-colors bg-white dark:bg-neutral-900"
               >
                 <CardHeader className="p-4 flex flex-row items-center justify-between space-y-0">
                   <div className="space-y-1">
@@ -150,10 +151,18 @@ export default function OrderQueuePage() {
                       ) : (
                         <Store className="h-3 w-3 mr-1" />
                       )}
-                      {order.order_source === "qr_code" ? "ONLINE" : "OFFLINE"}
+                      {order.order_source === "qr_code" ? "Online" : "Offline"}
                     </Badge>
-                    <CardTitle className="text-lg font-bold">
-                      Table Number : {order.table?.table_number || "No Table"}
+                    <CardTitle className="text-lg font-bold flex flex-col gap-1">
+                      <div className="flex items-center justify-between">
+                        <span>
+                          Table: {order.table?.table_number || "No Table"}
+                        </span>
+                      </div>
+                      <span className="text-sm font-medium text-muted-foreground flex items-center gap-1">
+                        <User className="h-3 w-3" />
+                        {order.user?.username || order.customer_name || "Guest"}
+                      </span>
                     </CardTitle>
                   </div>
                   <div className="text-right">
@@ -165,7 +174,7 @@ export default function OrderQueuePage() {
                     </p>
                   </div>
                 </CardHeader>
-                <CardContent className="p-4 pt-0 border-b border-zinc-50">
+                <CardContent className="p-4 pt-0 border-b">
                   <div className="flex items-center text-xs text-zinc-500 mb-4">
                     <Clock className="h-3 w-3 mr-1" /> Ordered at:{" "}
                     {new Date(order.created_at).toLocaleTimeString([], {
@@ -173,19 +182,19 @@ export default function OrderQueuePage() {
                       minute: "2-digit",
                     })}
                   </div>
-                  <div className="flex items-center justify-between bg-zinc-50 p-2 rounded-md">
-                    <span className="text-xs font-medium text-zinc-600">
+                  <div className="flex items-center justify-between bg-zinc-50 dark:bg-neutral-800 p-2 rounded-md">
+                    <span className="text-xs font-medium text-zinc-600 dark:text-neutral-300">
                       Status:
                     </span>
                     <Badge
                       variant="outline"
-                      className="bg-white border-zinc-200 text-zinc-700 font-bold uppercase text-[10px]"
+                      className="bg-white border-zinc-200 text-zinc-700 font-bold text-[10px]"
                     >
                       {order.status.replace("_", " ")}
                     </Badge>
                   </div>
                 </CardContent>
-                <CardFooter className="p-2 gap-2 bg-zinc-50/50">
+                <CardFooter className="p-2 gap-2">
                   <Button
                     variant="ghost"
                     size="sm"
@@ -197,7 +206,7 @@ export default function OrderQueuePage() {
                   <Button
                     variant="default"
                     size="sm"
-                    className="flex-1 h-9 text-xs bg-zinc-900 hover:bg-zinc-800 font-bold"
+                    className="flex-1 h-9 text-xs bg-red-500 hover:bg-red-700 font-bold dark:text-white"
                     onClick={() => handleUpdateStatus(order.id, order.status)}
                   >
                     {order.status === "to_cook"
@@ -235,13 +244,12 @@ export default function OrderQueuePage() {
       </ScrollArea>
 
       <Sheet open={!!selectedOrder} onOpenChange={() => setSelectedOrder(null)}>
-        <SheetContent className="w-[400px] sm:w-[450px] p-0 border-l border-zinc-200 z-[9999]">
+        <SheetContent className="w-[400px] sm:w-[450px] p-0 border-l z-[9999]">
           <div className="flex flex-col h-full bg-white">
-            {/* Header Sidebar - Minimalis */}
             <SheetHeader className="p-6 border-b">
               <div className="flex justify-between items-center">
                 <div>
-                  <Badge className="bg-red-50 text-red-600 hover:bg-red-50 border-red-100 shadow-none text-[10px] mb-1 uppercase">
+                  <Badge className="bg-red-50 text-red-600 hover:bg-red-50 border-red-100 shadow-none text-[10px] mb-1">
                     {selectedOrder?.status?.replace("_", " ")}
                   </Badge>
                   <SheetTitle className="text-xl font-bold">
@@ -252,7 +260,7 @@ export default function OrderQueuePage() {
                   </SheetDescription>
                 </div>
                 <div className="text-right">
-                  <p className="text-[10px] text-zinc-400 font-bold uppercase tracking-widest">
+                  <p className="text-[10px] text-zinc-400 font-bold">
                     Date
                   </p>
                   <p className="text-xs font-medium text-zinc-900">
@@ -265,19 +273,18 @@ export default function OrderQueuePage() {
 
             <ScrollArea className="flex-1 p-6">
               <div className="space-y-8">
-                {/* CONTENT: Detail Meja & QR Code */}
-                <div className="bg-zinc-50 rounded-2xl p-5 border border-zinc-100 relative overflow-hidden">
+                <div className="bg-zinc-50 rounded-lg p-5 border border-zinc-100 relative overflow-hidden">
                   <div className="relative z-10 flex justify-between items-center">
                     <div>
-                      <p className="text-[10px] font-black text-red-600 uppercase tracking-[0.2em] mb-1">
+                      <p className="text-xs font-medium text-red-600 mb-1">
                         Table Information
                       </p>
-                      <h3 className="text-3xl font-black text-zinc-900">
+                      <h3 className="text-2xl font-bold text-neutral-900 dark:text-neutral-300">
                         Number: {selectedOrder?.table?.table_number || "N/A"}
                       </h3>
                       <div className="flex gap-4 mt-3">
                         <div>
-                          <p className="text-[10px] text-zinc-400 font-bold uppercase">
+                          <p className="text-[10px] text-zinc-400 font-medium">
                             Capacity
                           </p>
                           <p className="text-sm font-bold text-zinc-700">
@@ -286,7 +293,7 @@ export default function OrderQueuePage() {
                         </div>
                         <div className="w-px h-8 bg-zinc-200" />
                         <div>
-                          <p className="text-[10px] text-zinc-400 font-bold uppercase">
+                          <p className="text-[10px] text-zinc-400 font-medium">
                             Payment
                           </p>
                           <p className="text-sm font-bold text-zinc-700 uppercase">
@@ -306,13 +313,11 @@ export default function OrderQueuePage() {
                       </div>
                     )}
                   </div>
-                  {/* Dekorasi Background */}
                   <QrCode className="absolute -bottom-4 -right-4 h-24 w-24 text-zinc-100 -z-0 opacity-50" />
                 </div>
 
-                {/* Order Items */}
                 <div>
-                  <h4 className="text-xs font-bold text-zinc-900 uppercase tracking-widest mb-4 flex items-center justify-between">
+                  <h4 className="text-sm font-semibold text-neutral-900 mb-4 flex items-center justify-between">
                     <span>Items List</span>
                     <span className="text-zinc-400">
                       {selectedOrder?.details?.length} Items
@@ -349,7 +354,6 @@ export default function OrderQueuePage() {
                   </div>
                 </div>
 
-                {/* Pricing Summary */}
                 <div className="pt-6 border-t-2 border-dashed border-zinc-100 space-y-3">
                   <div className="flex justify-between items-center text-sm">
                     <span className="text-zinc-500 font-medium">Subtotal</span>
@@ -358,10 +362,10 @@ export default function OrderQueuePage() {
                     </span>
                   </div>
                   <div className="flex justify-between items-center pt-2">
-                    <span className="text-sm font-black text-zinc-900 uppercase">
+                    <span className="text-sm font-semibold text-zinc-900">
                       Total Amount
                     </span>
-                    <span className="text-2xl font-black text-red-600">
+                    <span className="text-2xl font-bold text-red-600">
                       Rp {Number(selectedOrder?.total_amount).toLocaleString()}
                     </span>
                   </div>
@@ -372,7 +376,7 @@ export default function OrderQueuePage() {
             <div className="p-6 bg-white border-t border-zinc-100 mt-auto">
               <Button
                 disabled={updateMutation.isPending}
-                className="w-full h-14 bg-zinc-900 hover:bg-red-600 text-white font-black text-sm transition-all shadow-lg rounded-xl flex items-center justify-center gap-2"
+                className="w-full bg-red-500 text-white font-medium text-sm transition-all hover:bg-red-600 flex items-center justify-center gap-2"
                 onClick={() =>
                   handleUpdateStatus(selectedOrder?.id, selectedOrder?.status)
                 }
@@ -411,7 +415,7 @@ export default function OrderQueuePage() {
             </AlertDialogTitle>
             <AlertDialogDescription className="text-center">
               Are you sure you want to change this order status to{" "}
-              <span className="font-bold text-zinc-900 uppercase">
+              <span className="font-bold text-zinc-900">
                 "{statusToUpdate.replace("_", " ")}"
               </span>
               ?

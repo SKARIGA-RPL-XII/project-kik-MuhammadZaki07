@@ -57,10 +57,14 @@ class PosService
                 ? 'paid'
                 : 'pending_payment';
 
+
+            $isCashier = $data['order_source'] === 'cashier_direct';
+
             $transaction = Transaction::create([
                 'table_id' => $data['table_id'] ?? null,
                 'user_id' => Auth::id(),
-                'cashier_id' => Auth::id() ?? $cashierId,
+                'customer_name' => $data['customer_name'] ?? (Auth::user()->name ?? 'Guest'),
+                'cashier_id' => $isCashier ? ($cashierId ?? Auth::id()) : null,
                 'order_source' => $data['order_source'],
                 'status' => $status,
                 'transaction_code' => $transactionCode,
