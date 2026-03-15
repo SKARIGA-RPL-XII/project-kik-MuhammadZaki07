@@ -5,8 +5,8 @@ import { useSettings } from "@/context/SettingsContext";
 import PageMeta from "@/components/common/PageMeta";
 import { apiClient } from "@/lib/apiClient";
 import { useEffect, useState } from "react";
-import LoadingSpinner from "@/components/skeleton/LoadingSpinner";
 import InvoiceSkeleton from "@/components/skeleton/InvoiceSkeleton";
+import { formatDate } from "@/utils/dateHelper";
 
 export default function InvoicePage() {
   const { id } = useParams();
@@ -36,7 +36,7 @@ export default function InvoicePage() {
     fetchInvoice();
   }, []);
 
-if (loading) return <InvoiceSkeleton />;
+  if (loading) return <InvoiceSkeleton />;
 
   const subtotal =
     transactionData.details?.reduce(
@@ -58,13 +58,15 @@ if (loading) return <InvoiceSkeleton />;
     }
   };
 
+  console.log(transactionData);
+
   return (
     <>
       <PageMeta
         title="Invoice"
         description="Official invoice containing order details, payment summary, and transaction information."
       />
-      <div className="h-[120vh] bg-slate-100 flex flex-col items-center py-5 font-sans print:bg-white print:py-0">
+      <div className="h-[130vh] bg-slate-100 flex flex-col items-center py-5 font-sans print:bg-white print:py-0">
         {!isCustomer && (
           <Button
             variant="ghost"
@@ -114,24 +116,43 @@ if (loading) return <InvoiceSkeleton />;
                 </div>
               </div>
 
-              <div className="space-y-3 mb-8 border-t border-slate-100">
+              <div className="space-y-3 mb-8 border-t border-slate-100 pt-6">
                 <div className="flex justify-between text-sm">
-                  <span className="font-bold text-muted-foreground">
-                    Invoice
+                  <span className="font-bold text-muted-foreground uppercase text-[11px]">
+                    Invoice No
                   </span>
                   <span className="font-black text-slate-800 tracking-tight">
-                    #{transactionData.id}
+                    #{transactionData.transaction_code || transactionData.id}
                   </span>
                 </div>
+
                 <div className="flex justify-between text-sm">
-                  <span className="font-bold text-muted-foreground">Table</span>
+                  <span className="font-bold text-muted-foreground uppercase text-[11px]">
+                    Date
+                  </span>
                   <span className="font-black text-slate-800 tracking-tight">
-                    T-{transactionData.table_id || "0"}
+                    {formatDate(transactionData.transaction_date)} |{" "}
+                    {
+                      formatDate(transactionData.transaction_date, true).split(
+                        " ",
+                      )[1]
+                    }{" "}
+                    WIB
                   </span>
                 </div>
+
+                <div className="flex justify-between text-sm">
+                  <span className="font-bold text-muted-foreground uppercase text-[11px]">
+                    Table
+                  </span>
+                  <span className="font-black text-slate-800 tracking-tight">
+                    T-{transactionData.table?.table_number || "0"}
+                  </span>
+                </div>
+
                 <div className="flex justify-between items-center">
-                  <span className="font-bold text-muted-foreground">
-                    Payment Method
+                  <span className="font-bold text-muted-foreground uppercase text-[11px]">
+                    Payment
                   </span>
                   <span className="font-black text-slate-800 uppercase text-[10px] px-2 py-0.5 border-2 border-slate-900 rounded-md">
                     {transactionData.payment_method}

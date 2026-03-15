@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('tables', function (Blueprint $table) {
             $table->id();
             $table->string('table_number')->unique();
-            $table->enum('status', ['available', 'occupied'])
+            $table->enum('status', ['available', 'occupied','booked'])
                 ->default('available');
             $table->string('qr_code')->nullable();
             $table->foreignId('room_id')

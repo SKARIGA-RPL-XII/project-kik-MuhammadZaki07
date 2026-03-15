@@ -9,7 +9,7 @@ const InvoiceCashPage = () => {
   const navigate = useNavigate();
   const { order } = location.state || {};
   const { settings } = useSettings();
-  const [isPaid, setIsPaid] = useState(false);
+  const [isPaid, setIsPaid] = useState(false);  
 
   useEffect(() => {
     if (!order?.id) return;
@@ -42,7 +42,7 @@ const InvoiceCashPage = () => {
   const tax = settings.is_tax_active === 1 ? (subtotal * settings.tax_percent) / 100 : 0;
   const service = settings.is_service_active === 1 ? (subtotal * settings.service_percent) / 100 : 0;
   const total = subtotal + tax + service;
-
+  
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-neutral-900 flex justify-center">
       {isPaid && (

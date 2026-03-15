@@ -44,7 +44,7 @@ export function CartSummary({
     return acc + Math.round(price * (item.quantity || 0));
   }, 0);
 
-  const hideCartPaths = ["/profile-customer", "/transaction", "/menu/","/tables-customer"];
+  const hideCartPaths = ["/profile-customer", "/transaction", "/menu/","/tables-customer","/booking" , "payment-customer"];
 
   const shouldHide = hideCartPaths.some((path) =>
     location.pathname.includes(path),

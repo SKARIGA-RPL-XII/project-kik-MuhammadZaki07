@@ -21,6 +21,7 @@ export function MenuCard({ item, onOpenDetail }: MenuCardProps) {
   } = useMemo(() => getMenuItemStatus(item), [item]);
 
   const handleCardClick = () => {
+    if (window.location.pathname == "/booking") return;
     if (!isOutOfStock) navigate(`/menu/${item.id}`);
   };
 

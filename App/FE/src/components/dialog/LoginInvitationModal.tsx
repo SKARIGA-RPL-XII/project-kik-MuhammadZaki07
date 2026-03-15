@@ -41,14 +41,14 @@ export function LoginInvitationModal() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={handleClose}
-            className="fixed inset-0 z-[120] bg-neutral-900/50"
+            className="fixed inset-0 z-[200] bg-neutral-900/50"
           />
 
           <motion.div
             initial={{ opacity: 0, scale: 0.9, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.9, y: 20 }}
-            className="fixed inset-0 m-auto w-[90%] max-w-[400px] h-fit z-[130] bg-white rounded-2xl shadow-2xl shadow-neutral-200/50 overflow-hidden"
+            className="fixed inset-0 m-auto w-[90%] max-w-[400px] h-fit z-[300] bg-white rounded-2xl shadow-2xl shadow-neutral-200/50 overflow-hidden"
           >
             <button
               onClick={handleClose}

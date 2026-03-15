@@ -7,6 +7,7 @@ use App\Http\Controllers\AttributeController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BadgeController;
 use App\Http\Controllers\BannerController;
+use App\Http\Controllers\BookingController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DiscountController;
@@ -90,6 +91,12 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/transactions/search/{code}', [TransactionController::class, 'searchByCode']);
     Route::get('/dashboard/summary', [DashboardController::class, 'index']);
     Route::get('/user/transactions', [TransactionController::class, 'userTransactions']);
+
+    Route::prefix('bookings')->group(function () {
+        Route::get('/', [BookingController::class, 'index']);
+        Route::post('/', [BookingController::class, 'store']);
+        Route::post('/{id}/confirm', [BookingController::class, 'confirm']);
+    });
 });
 
 

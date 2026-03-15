@@ -84,6 +84,14 @@ export function AIAssistant({ onDisappear , isCartOpen }: AIAssistantProps) {
     setMessages((prev) => [...prev, newMessage])
   }
 
+  const hideCartPaths = ["/profile-customer", "/transaction", "/menu/","/tables-customer","/booking",'payment-customer'];
+
+   const shouldHide = hideCartPaths.some((path) =>
+    location.pathname.includes(path),
+  );
+
+  if (shouldHide) return null;
+
   return (
     <>
       <AnimatePresence>

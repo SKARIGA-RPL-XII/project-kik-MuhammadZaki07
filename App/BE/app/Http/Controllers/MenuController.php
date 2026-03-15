@@ -216,7 +216,7 @@ class MenuController extends Controller
 
         $img = Image::read($file)
             ->cover(600, 400)
-            ->encodeByExtension('webp', 80);
+            ->encodeByExtension('jpg', 80);
 
         Storage::disk('public')->put($path, (string) $img);
         return $path;

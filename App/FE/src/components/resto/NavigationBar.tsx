@@ -2,9 +2,21 @@ import { useTranslation } from "react-i18next";
 import { useNavigationBarLogic } from "@/hooks/useNavigationBar";
 import { m, AnimatePresence } from "framer-motion";
 import {
-  Dessert, LayoutGrid, Pizza, Search, Coffee, Utensils,
-  SlidersHorizontal, Beer, IceCream, Beef, Check, RotateCcw,
+  Dessert,
+  LayoutGrid,
+  Pizza,
+  Search,
+  Coffee,
+  Utensils,
+  SlidersHorizontal,
+  Beer,
+  IceCream,
+  Beef,
+  Check,
+  RotateCcw,
 } from "lucide-react";
+import { Button } from "../ui/button";
+import { useNavigate } from "react-router";
 
 const iconMap: Record<string, any> = {
   all: LayoutGrid,
@@ -38,6 +50,7 @@ export function NavigationBar({
     onSortChange,
     selectedSorts,
   });
+  const navigate = useNavigate();
 
   const sortOptions = [
     { id: "best_seller", label: t("nb_sort_best_seller") },
@@ -127,7 +140,11 @@ export function NavigationBar({
                           }`}
                         >
                           {selectedSorts.includes(opt.id) && (
-                            <Check size={14} className="text-white" strokeWidth={4} />
+                            <Check
+                              size={14}
+                              className="text-white"
+                              strokeWidth={4}
+                            />
                           )}
                         </div>
                         <span
@@ -147,6 +164,12 @@ export function NavigationBar({
             )}
           </AnimatePresence>
         </div>
+        <Button
+          className="bg-red-500 hover:bg-red-600 text-white"
+          onClick={() => navigate("/booking")}
+        >
+          Booking Meja Sekarang
+        </Button>
       </div>
 
       <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
@@ -162,7 +185,9 @@ export function NavigationBar({
                 key={cat.id}
                 onClick={() => onCategoryChange?.(cat.slug)}
                 className={`relative flex items-center gap-2 px-5 py-2.5 rounded-sm whitespace-nowrap transition-all ${
-                  isActive ? "text-white" : "text-neutral-500 hover:bg-neutral-100 dark:hover:bg-neutral-800"
+                  isActive
+                    ? "text-white"
+                    : "text-neutral-500 hover:bg-neutral-100 dark:hover:bg-neutral-800"
                 }`}
               >
                 {isActive && (
@@ -171,7 +196,10 @@ export function NavigationBar({
                     className="absolute inset-0 bg-red-600 rounded-sm z-0"
                   />
                 )}
-                <Icon size={14} className="relative z-10 text-[inherit] dark:text-neutral-300" />
+                <Icon
+                  size={14}
+                  className="relative z-10 text-[inherit] dark:text-neutral-300"
+                />
                 <span className="relative z-10 font-normal text-sm dark:text-neutral-300">
                   {cat.name}
                 </span>

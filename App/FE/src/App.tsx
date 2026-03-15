@@ -2,11 +2,16 @@ import { lazy, Suspense } from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router";
 import { ScrollToTop } from "./components/common/ScrollToTop";
 
-import { AuthMiddleware, GuestMiddleware, StaffMiddleware } from "./middleware/midleware";
+import {
+  AuthMiddleware,
+  GuestMiddleware,
+  StaffMiddleware,
+} from "./middleware/midleware";
 import { PermissionMiddleware } from "./middleware/PermissionMiddleware";
 
 import AppLayout from "./layout/AppLayout";
 import CustomerLayout from "./layout/CustomerLayout";
+import BookingLayout from "./pages/Booked/BookingLayout";
 
 const SignIn = lazy(() => import("./pages/AuthPages/SignIn"));
 const SignUp = lazy(() => import("./pages/AuthPages/SignUp"));
@@ -23,16 +28,28 @@ const Discount = lazy(() => import("./pages/Discount/Discount"));
 const Badge = lazy(() => import("./pages/Badge/Badge"));
 const Employe = lazy(() => import("./pages/Employe/Employe"));
 const Admin = lazy(() => import("./pages/Admin/Admin"));
-const GeneralSettingsPage = lazy(() => import("./pages/Settings/GeneralSettingsPage"));
+const GeneralSettingsPage = lazy(
+  () => import("./pages/Settings/GeneralSettingsPage"),
+);
 const TaxSettingsPage = lazy(() => import("./pages/Settings/TaxSettingsPage"));
-const PaymentSettingsPage = lazy(() => import("./pages/Settings/PaymentSettingsPage"));
+const PaymentSettingsPage = lazy(
+  () => import("./pages/Settings/PaymentSettingsPage"),
+);
 const CustomerPage = lazy(() => import("./pages/Customer/CustomerPage"));
 const NotFound = lazy(() => import("./pages/OtherPage/NotFound"));
-const RestaurantLayoutPage = lazy(() => import("./pages/Restaurant-layout/Index"));
+const RestaurantLayoutPage = lazy(
+  () => import("./pages/Restaurant-layout/Index"),
+);
 const NotificationPage = lazy(() => import("./pages/Notifications/Index"));
-const NotificationShow = lazy(() => import("./pages/Notifications/NotificationShow"));
-const RolesPermissionsPage = lazy(() => import("./pages/Settings/RolesSettingsPage"));
-const SystemConfigPage = lazy(() => import("./pages/Settings/SystemConfigPage"));
+const NotificationShow = lazy(
+  () => import("./pages/Notifications/NotificationShow"),
+);
+const RolesPermissionsPage = lazy(
+  () => import("./pages/Settings/RolesSettingsPage"),
+);
+const SystemConfigPage = lazy(
+  () => import("./pages/Settings/SystemConfigPage"),
+);
 const StockPage = lazy(() => import("./pages/Stock/StockPage"));
 const AdjustmentPage = lazy(() => import("./pages/Stock/AdjustmentPage"));
 const SupplierPage = lazy(() => import("./pages/Stock/SupplierPage"));
@@ -240,12 +257,45 @@ export default function App() {
                 </AuthMiddleware>
               }
             />
+            <Route
+              path="profile-customer"
+              element={
+                <AuthMiddleware>
+                  <CustomerProfilePage />
+                </AuthMiddleware>
+              }
+            />
+
+            <Route
+              path="booking"
+              element={
+                <AuthMiddleware>
+                  <BookingLayout />
+                </AuthMiddleware>
+              }
+            />
+
+            <Route
+              path="/tables-customer"
+              element={
+                <AuthMiddleware>
+                  <TablePage />
+                </AuthMiddleware>
+              }
+            />
+
+            <Route
+              path="/payment-customer"
+              element={
+                <AuthMiddleware>
+                  <PaymentPage />
+                </AuthMiddleware>
+              }
+            />
           </Route>
 
-          <Route path="/payment-customer" element={<PaymentPage />} />
           <Route path="/invoice/:id" element={<InvoicePage />} />
           <Route path="/order-success" element={<InvoiceCashPage />} />
-          <Route path="/tables-customer" element={<TablePage />} />
 
           <Route path="/404" element={<NotFound />} />
           <Route path="*" element={<Navigate to="/404" replace />} />

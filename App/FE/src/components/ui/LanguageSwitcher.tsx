@@ -59,8 +59,8 @@ export default function LanguageSwitcher() {
                   className={`flex w-full items-center gap-3 px-3 py-2 rounded-lg text-left transition-colors 
                     ${
                       currentLang === lang.key
-                        ? "bg-red-50 text-red-600"
-                        : "hover:bg-neutral-50 text-neutral-600"
+                        ? "bg-red-50 text-red-600 dark:bg-neutral-800"
+                        : "hover:bg-neutral-50 dark:bg-neutral-900 text-neutral-600"
                     }`}
                 >
                   <FlagIcon countryCode={lang.key} />

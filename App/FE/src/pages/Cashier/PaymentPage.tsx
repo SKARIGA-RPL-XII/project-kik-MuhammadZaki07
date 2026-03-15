@@ -39,6 +39,7 @@ export default function PaymentPage() {
   const isRequiredToInputName = !user || user.role_name !== "customer";
 
   const isCustomer = location.pathname.includes("customer");
+  const isBookingOnline = location.state?.is_booking_via_online || false;
 
   const items = useMemo(() => {
     return isCustomer ? location.state?.items || [] : cashierItems || [];
@@ -50,18 +51,23 @@ export default function PaymentPage() {
     `${currency} ${Math.round(value).toLocaleString()}`;
 
   const [paymentMethod, setPaymentMethod] = useState(
-    isCustomer ? "midtrans" : "cash",
+    isBookingOnline || isCustomer ? "midtrans" : "cash",
   );
   const [amountPaid, setAmountPaid] = useState("");
 
   const orderData = {
-    tableId: location.state?.tableId || null,
-    tableName:
-      location.state?.tableName ||
-      (location.state?.orderType === "take_away" ? "Take Away" : "No Table"),
+    tableId:
+      location.state?.selectedTableObject?.id ||
+      location.state?.tableId ||
+      null,
+
+    tableName: location.state?.selectedTableObject
+      ? `Table ${location.state.selectedTableObject.table_number}`
+      : location.state?.tableName ||
+        (location.state?.orderType === "take_away" ? "Take Away" : "No Table"),
+
     orderType: location.state?.orderType || "take_away",
   };
-
   const subtotal = useMemo(
     () =>
       Math.round(
@@ -154,10 +160,7 @@ export default function PaymentPage() {
             if (!isCustomer) clearCashierCart();
             clearCart();
             toast("success", "Success", "Payment Successful");
-            navigate(
-              isCustomer
-                ? `/order-status/${transactionResult?.id}`
-                : `/invoice/${transactionResult?.id}`,
+            navigate(`/invoice/${transactionResult?.id}`,
               {
                 state: { transactionData: transactionResult },
               },
@@ -205,8 +208,10 @@ export default function PaymentPage() {
                 <h1 className="text-xl font-semibold mt-1">
                   {orderData.tableName}
                 </h1>
-                <span className="text-xs text-red-600 mt-2 inline-block">
-                  {orderData.orderType.replace("_", " ")}
+                <span className="text-xs text-red-600 mt-2 inline-block font-medium">
+                  {isBookingOnline
+                    ? "Booking - Dine In"
+                    : orderData.orderType.replace("_", " ")}
                 </span>
               </div>
 
@@ -276,23 +281,29 @@ export default function PaymentPage() {
                 {[
                   { id: "cash", label: "Cash", icon: Banknote },
                   { id: "midtrans", label: "Digital / QRIS", icon: CreditCard },
-                ].map((method) => (
-                  <button
-                    key={method.id}
-                    onClick={() => {
-                      setPaymentMethod(method.id);
-                      if (method.id !== "cash") setAmountPaid("");
-                    }}
-                    className={`p-4 rounded-lg border text-left transition ${
-                      paymentMethod === method.id
-                        ? "border-red-600 bg-red-50"
-                        : "border-slate-200 bg-white hover:bg-slate-50"
-                    }`}
-                  >
-                    <method.icon className="h-5 w-5 mb-2" />
-                    <span className="text-sm font-medium">{method.label}</span>
-                  </button>
-                ))}
+                ]
+                  .filter((method) =>
+                    isBookingOnline ? method.id !== "cash" : true,
+                  )
+                  .map((method) => (
+                    <button
+                      key={method.id}
+                      onClick={() => {
+                        setPaymentMethod(method.id);
+                        if (method.id !== "cash") setAmountPaid("");
+                      }}
+                      className={`p-4 rounded-lg border text-left transition ${
+                        paymentMethod === method.id
+                          ? "border-red-600 bg-red-50"
+                          : "border-slate-200 bg-white hover:bg-slate-50"
+                      }`}
+                    >
+                      <method.icon className="h-5 w-5 mb-2" />
+                      <span className="text-sm font-medium">
+                        {method.label}
+                      </span>
+                    </button>
+                  ))}
               </div>
             </div>
 
