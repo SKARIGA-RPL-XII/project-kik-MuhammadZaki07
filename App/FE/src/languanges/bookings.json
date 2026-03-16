@@ -1,0 +1,91 @@
+{
+  "booking": {
+    "common": {
+      "back": "Kembali"
+    },
+    "step_info": "Langkah {{current}} dari {{total}}",
+    "step1": {
+      "title": "Kapan kamu datang?",
+      "description": "Isi detail reservasi dasar untuk memulai.",
+      "arrival_time": "Waktu Kedatangan",
+      "person_count": "Jumlah Orang",
+      "btn_next": "Lanjut Pilih Menu"
+    },
+    "step2": {
+      "title": "Pilih Menu",
+      "description": "Opsional: Pesan sekarang agar cepat disajikan.",
+      "loading": "Memuat menu lezat...",
+      "btn_skip": "Lewati",
+      "btn_confirm": "Konfirmasi",
+      "items": "Menu"
+    },
+    "step3": {
+      "title": "Pilih Meja",
+      "description": "Tentukan lokasi meja untuk reservasi kamu.",
+      "search_placeholder": "Cari nomor meja...",
+      "all_rooms": "Semua Ruangan",
+      "status_available": "Tersedia",
+      "status_occupied": "Terisi",
+      "status_reserved": "Dipesan",
+      "btn_finish": "Selesaikan Booking"
+    },
+    "step4": {
+      "title": "Review Pesanan",
+      "description": "Pastikan semua detail sudah sesuai",
+      "visit_info": "Informasi Kunjungan",
+      "selected_table": "Meja Pilihan",
+      "table_prefix": "Meja",
+      "time_person": "Waktu & Person",
+      "person_unit": "Orang",
+      "menu_list": "Daftar Menu",
+      "item_unit": "Item",
+      "notes_label": "Catatan",
+      "payment_detail": "Rincian Pembayaran",
+      "subtotal": "Subtotal",
+      "tax": "Pajak",
+      "service": "Biaya Layanan",
+      "grand_total": "Total Tagihan",
+      "payment_method": "Metode Pembayaran",
+      "payment_type": "Digital / QRIS",
+      "btn_confirm": "Konfirmasi & Bayar"
+    }
+  },
+  "checkout": {
+    "common": {
+      "back": "Kembali"
+    },
+    "status": {
+      "secure": "Pembayaran Aman"
+    },
+    "summary": {
+      "title": "Ringkasan Pesanan",
+      "type_booking": "Reservasi - Makan di Tempat",
+      "subtotal": "Subtotal",
+      "tax_service": "Pajak & Layanan",
+      "total": "Total",
+      "items_count": "{{count}} Item"
+    },
+    "form": {
+      "customer_name": "Nama Pelanggan",
+      "placeholder_cashier": "Masukkan nama pembeli...",
+      "placeholder_customer": "Masukkan nama Anda...",
+      "help_cashier": "Wajib diisi oleh kasir untuk keperluan laporan.",
+      "help_customer": "Nama diperlukan untuk identifikasi pesanan Anda."
+    },
+    "payment": {
+      "method_title": "Metode Pembayaran",
+      "cash": "Tunai",
+      "digital": "Digital / QRIS",
+      "amount_received": "Uang Diterima",
+      "change": "Kembalian",
+      "pay_cashier_title": "Bayar di Kasir",
+      "pay_cashier_desc": "Pesanan Anda akan dikirim ke dapur setelah Anda menyelesaikan pembayaran di counter kasir dengan menunjukkan barcode pesanan.",
+      "digital_title": "Pembayaran Digital",
+      "digital_desc": "Pembayaran aman via Midtrans Snap"
+    },
+    "btn": {
+      "confirm_order": "Konfirmasi Pesanan",
+      "finalize": "Selesaikan Transaksi"
+    }
+  }
+}

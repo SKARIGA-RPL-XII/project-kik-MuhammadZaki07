@@ -206,23 +206,27 @@ class TransactionController extends Controller
         }
     }
 
-    public function show($id)
-    {
-        $transaction = Transaction::with(['details.menu', 'table'])->find($id);
+   public function show($id)
+{
+    $transaction = Transaction::with([
+        'details.menu',
+        'table',
+        'cashier',
+        'user'
+    ])->find($id);
 
-        if (!$transaction) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Transaksi tidak ditemukan'
-            ], 404);
-        }
-
-
+    if (!$transaction) {
         return response()->json([
-            'status' => 'success',
-            'data' => $transaction
-        ]);
+            'status' => 'error',
+            'message' => 'Transaksi tidak ditemukan'
+        ], 404);
     }
+
+    return response()->json([
+        'status' => 'success',
+        'data' => $transaction
+    ]);
+}
 
     public function userTransactions()
     {

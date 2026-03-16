@@ -4,8 +4,10 @@ import Step2Menu from "./sections/Step2Menu";
 import Step3Table from "./sections/Step3Table";
 import Step4Review from "./sections/Step4Review";
 import { useNavigate } from "react-router";
+import { useTranslation } from "react-i18next";
 
 export default function BookingLayout() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
 
   const [step, setStep] = useState(() => {
@@ -59,12 +61,14 @@ export default function BookingLayout() {
             {[1, 2, 3, 4].map((s) => (
               <div
                 key={s}
-                className={`h-1.5 flex-1 rounded-full transition-all ${s <= step ? "bg-red-600" : "bg-zinc-200 dark:bg-neutral-800"}`}
+                className={`h-1.5 flex-1 rounded-full transition-all ${
+                  s <= step ? "bg-red-600" : "bg-zinc-200 dark:bg-neutral-800"
+                }`}
               />
             ))}
           </div>
           <span className="text-xs font-medium text-zinc-500 dark:text-red-500">
-            Step {step} of 4
+            {t("booking.step_info", { current: step, total: 4 })}
           </span>
         </div>
       </div>

@@ -91,6 +91,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/transactions/search/{code}', [TransactionController::class, 'searchByCode']);
     Route::get('/dashboard/summary', [DashboardController::class, 'index']);
     Route::get('/user/transactions', [TransactionController::class, 'userTransactions']);
+    Route::post('/transactions/{id}/confirm-payment', [TransactionController::class, 'confirmPayment']);
 
     Route::prefix('bookings')->group(function () {
         Route::get('/', [BookingController::class, 'index']);
@@ -167,7 +168,7 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
 |--------------------------------------------------------------------------
 */
 
-Route::post('/transactions/{id}/confirm-payment', [TransactionController::class, 'confirmPayment']);
+
 Route::get('tables', [TableController::class, 'index']);
 Route::get('tables/{table}', [TableController::class, 'show']);
 Route::get('rooms', [RoomController::class, 'index']);

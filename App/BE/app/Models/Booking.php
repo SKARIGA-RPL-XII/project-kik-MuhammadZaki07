@@ -5,10 +5,11 @@ namespace App\Models;
 use App\Notifications\GeneralNotification;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Notifications\Notifiable;
 
 class Booking extends Model
 {
-    use HasFactory;
+    use HasFactory , Notifiable;
 
     protected static function booted()
     {

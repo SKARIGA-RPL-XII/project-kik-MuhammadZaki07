@@ -30,8 +30,9 @@ export function OrdersView() {
     const isTaxActive = settings?.is_tax_active;
     const isServiceActive = settings?.is_service_active;
     const subtotal = selectedOrder.total_amount;
-    const taxAmount = isTaxActive ? (subtotal * taxPercent) / 100 : 0;
-    const serviceAmount = isServiceActive ? (subtotal * servicePercent) / 100 : 0;
+const taxAmount = isTaxActive ? Math.round((subtotal * taxPercent) / 100) : 0;
+    const serviceAmount = isServiceActive ? Math.round((subtotal * servicePercent) / 100) : 0;
+    
     const grandTotal = subtotal + taxAmount + serviceAmount;
 
     return (
@@ -53,7 +54,7 @@ export function OrdersView() {
           <div className="flex justify-between items-center">
             <div className="space-y-1">
               <p className="text-sm opacity-80 font-medium">{t("ov_status_label")}</p>
-              <h2 className="text-2xl font-black capitalize tracking-tight">{selectedOrder.status}</h2>
+              <h2 className="text-2xl font-bold capitalize tracking-tight">{selectedOrder.status}</h2>
             </div>
           </div>
         </Card>
@@ -76,17 +77,17 @@ export function OrdersView() {
             <Utensils size={16} className="text-red-600" />
             <h3 className="text-sm font-bold text-neutral-800 dark:text-neutral-200 font-display">{t("ov_section_items")}</h3>
           </div>
-          <Card className="overflow-hidden border-neutral-100 dark:border-neutral-800 rounded-[2rem] shadow-none border">
+          <Card className="overflow-hidden border-neutral-100 dark:border-neutral-800 rounded-lg shadow-none border">
             <div className="divide-y divide-neutral-50 dark:divide-neutral-800 max-h-[300px] overflow-y-auto">
               {selectedOrder.details.map((item: any, idx: number) => (
                 <div key={idx} className="p-4 flex justify-between items-center bg-white dark:bg-neutral-900">
                   <div className="flex gap-4 items-center">
-                    <div className="w-10 h-10 bg-red-50 dark:bg-red-950/30 rounded-xl flex items-center justify-center font-bold text-red-600 dark:text-red-400 text-sm">
-                      {item.quantity}x
+                    <div className="w-10 h-10 bg-red-50 dark:bg-red-950/30 rounded flex items-center justify-center">
+                      <img src={`${import.meta.env.VITE_STORAGE_URL}/${item.menu.menu_image}`} alt={item.menu?.name} />
                     </div>
                     <div>
                       <p className="text-sm font-bold text-neutral-800 dark:text-neutral-200">{item.menu?.name}</p>
-                      <p className="text-[11px] text-neutral-400 dark:text-neutral-500">Rp {new Intl.NumberFormat("id-ID").format(item.price_at_transaction)}</p>
+                      <p className="text-[11px] text-neutral-400 dark:text-neutral-500">Rp {new Intl.NumberFormat("id-ID").format(item.price)}</p>
                     </div>
                   </div>
                   <p className="text-sm font-bold text-neutral-800 dark:text-neutral-200">
@@ -103,7 +104,7 @@ export function OrdersView() {
             <Receipt size={16} className="text-red-600" />
             <h3 className="text-sm font-bold text-neutral-800 dark:text-neutral-200 font-display">{t("ov_section_bill")}</h3>
           </div>
-          <Card className="p-6 border-neutral-100 dark:border-neutral-800 rounded-[2rem] shadow-none bg-white dark:bg-neutral-900 space-y-3">
+          <Card className="p-6 border-neutral-100 dark:border-neutral-800 rounded-lg shadow-none bg-white dark:bg-neutral-900 space-y-3">
             <div className="flex justify-between text-sm">
               <span className="text-neutral-400 dark:text-neutral-500">{t("ov_bill_subtotal")}</span>
               <span className="font-bold text-neutral-800 dark:text-neutral-200">

@@ -36,6 +36,7 @@ class BookingController extends Controller
             return DB::transaction(function () use ($request) {
                 $transactionId = null;
                 $snapToken = null;
+                $user = Auth::user();
 
                 if ($request->has('items') && count($request->items) > 0) {
                     $orderData = [
@@ -62,6 +63,12 @@ class BookingController extends Controller
                     'transaction_id' => $transactionId,
                     'status' => 'pending'
                 ]);
+
+                $user->notify(new GeneralNotification(
+                    "Booking berhasil dibuat untuk tanggal " . date('d M Y H:i', strtotime($booking->booking_time)) . ". Menunggu konfirmasi admin.",
+                    "info",
+                    "/profile-customer?tab=orders"
+                ));
 
                 return response()->json([
                     'status' => 'success',
@@ -92,9 +99,18 @@ class BookingController extends Controller
     {
         try {
             DB::beginTransaction();
-            $booking = Booking::findOrFail($id);
+            $booking = Booking::with('user')->findOrFail($id);
             $booking->update(['status' => 'confirmed']);
             Table::where('id', $booking->table_id)->update(['status' => 'booked']);
+
+            if ($booking->user) {
+                $booking->user->notify(new GeneralNotification(
+                    "Booking kamu untuk meja " . ($booking->table->number ?? $id) . " telah dikonfirmasi!",
+                    "success",
+                    "/history-booking"
+                ));
+            }
+            
             DB::commit();
             return response()->json(['status' => 'success', 'message' => 'Booking confirmed']);
         } catch (Exception $e) {

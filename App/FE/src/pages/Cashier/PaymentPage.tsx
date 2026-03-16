@@ -17,6 +17,7 @@ import {
 import { useToast } from "@/context/ToastContext";
 import { useCart } from "@/hooks/useCart";
 import { useAuth } from "@/context/AuthContext";
+import { useTranslation } from "react-i18next";
 
 declare global {
   interface Window {
@@ -37,6 +38,7 @@ export default function PaymentPage() {
   const { user } = useAuth();
   const [customerName, setCustomerName] = useState("");
   const isRequiredToInputName = !user || user.role_name !== "customer";
+  const { t } = useTranslation();
 
   const isCustomer = location.pathname.includes("customer");
   const isBookingOnline = location.state?.is_booking_via_online || false;
@@ -182,7 +184,7 @@ export default function PaymentPage() {
   };
 
   return (
-    <div className="min-h-screen">
+ <div className="min-h-screen">
       <div className="max-w-6xl mx-auto px-6 py-8">
         <div className="flex items-center justify-between mb-8">
           <Button
@@ -191,26 +193,26 @@ export default function PaymentPage() {
             className="flex items-center gap-2 text-sm"
           >
             <ChevronLeft className="h-4 w-4" />
-            Back
+            {t("checkout.common.back")}
           </Button>
 
           <div className="flex items-center gap-2 text-sm text-emerald-600">
             <ShieldCheck className="h-4 w-4" />
-            Secure Checkout
+            {t("checkout.status.secure")}
           </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           <div className="lg:col-span-5">
-            <div className="bg-white rounded-xl border shadow-sm">
+            <div className="bg-white dark:bg-neutral-950 rounded-xl border shadow-sm">
               <div className="p-6 border-b">
-                <h2 className="text-sm text-slate-500">Order Summary</h2>
+                <h2 className="text-sm text-slate-500">{t("checkout.summary.title")}</h2>
                 <h1 className="text-xl font-semibold mt-1">
                   {orderData.tableName}
                 </h1>
-                <span className="text-xs text-red-600 mt-2 inline-block font-medium">
+                <span className="text-xs text-red-600 mt-2 inline-block font-medium uppercase">
                   {isBookingOnline
-                    ? "Booking - Dine In"
+                    ? t("checkout.summary.type_booking")
                     : orderData.orderType.replace("_", " ")}
                 </span>
               </div>
@@ -218,11 +220,11 @@ export default function PaymentPage() {
               <div className="p-6 space-y-3 text-sm">
                 {items.map((item: any, i: number) => (
                   <div key={i} className="flex justify-between">
-                    <span>
+                    <span className="dark:text-zinc-300">
                       <span className="font-medium mr-1">{item.quantity}x</span>
                       {item.name}
                     </span>
-                    <span>
+                    <span className="font-mono">
                       {formatCurrency(
                         (item.discount_price || item.price) * item.quantity,
                       )}
@@ -233,15 +235,15 @@ export default function PaymentPage() {
 
               <div className="p-6 border-t space-y-2 text-sm">
                 <div className="flex justify-between text-slate-500">
-                  <span>Subtotal</span>
+                  <span>{t("checkout.summary.subtotal")}</span>
                   <span>{formatCurrency(subtotal)}</span>
                 </div>
                 <div className="flex justify-between text-slate-500">
-                  <span>Tax & Service</span>
+                  <span>{t("checkout.summary.tax_service")}</span>
                   <span>{formatCurrency(tax + service)}</span>
                 </div>
                 <div className="flex justify-between font-semibold text-base pt-3 border-t">
-                  <span>Total</span>
+                  <span className="dark:text-zinc-200">{t("checkout.summary.total")}</span>
                   <span className="text-red-600">{formatCurrency(total)}</span>
                 </div>
               </div>
@@ -250,37 +252,37 @@ export default function PaymentPage() {
 
           <div className="lg:col-span-7 space-y-6">
             {isRequiredToInputName && (
-              <div className="">
-                <label className="text-sm font-semibold text-slate-700 block mb-2">
-                  Nama Pelanggan <span className="text-red-500">*</span>
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-slate-700 dark:text-zinc-300 block">
+                  {t("checkout.form.customer_name")} <span className="text-red-500">*</span>
                 </label>
                 <Input
                   type="text"
                   placeholder={
                     user?.role_name === "cashier"
-                      ? "Masukkan nama pembeli..."
-                      : "Masukkan nama Anda..."
+                      ? t("checkout.form.placeholder_cashier")
+                      : t("checkout.form.placeholder_customer")
                   }
                   className="h-12 border-slate-200 focus:ring-red-500"
                   value={customerName}
                   onChange={(e) => setCustomerName(e.target.value)}
                 />
-                <p className="text-[10px] text-slate-400 mt-2">
+                <p className="text-[10px] text-slate-400">
                   {user?.role_name === "cashier"
-                    ? "Wajib diisi oleh kasir untuk keperluan laporan."
-                    : "Nama diperlukan untuk identifikasi pesanan Anda."}
+                    ? t("checkout.form.help_cashier")
+                    : t("checkout.form.help_customer")}
                 </p>
               </div>
             )}
 
             <div>
-              <h3 className="text-sm font-medium text-slate-600 mb-3">
-                Payment Method
+              <h3 className="text-sm font-medium text-slate-600 dark:text-zinc-400 mb-3">
+                {t("checkout.payment.method_title")}
               </h3>
               <div className="grid grid-cols-2 gap-4">
                 {[
-                  { id: "cash", label: "Cash", icon: Banknote },
-                  { id: "midtrans", label: "Digital / QRIS", icon: CreditCard },
+                  { id: "cash", label: t("checkout.payment.cash"), icon: Banknote },
+                  { id: "midtrans", label: t("checkout.payment.digital"), icon: CreditCard },
                 ]
                   .filter((method) =>
                     isBookingOnline ? method.id !== "cash" : true,
@@ -294,12 +296,12 @@ export default function PaymentPage() {
                       }}
                       className={`p-4 rounded-lg border text-left transition ${
                         paymentMethod === method.id
-                          ? "border-red-600 bg-red-50"
-                          : "border-slate-200 bg-white hover:bg-slate-50"
+                          ? "border-red-600 bg-red-50 dark:bg-red-950/20"
+                          : "border-slate-200 bg-white dark:bg-neutral-900 hover:bg-slate-50"
                       }`}
                     >
-                      <method.icon className="h-5 w-5 mb-2" />
-                      <span className="text-sm font-medium">
+                      <method.icon className={`h-5 w-5 mb-2 ${paymentMethod === method.id ? "text-red-600" : ""}`} />
+                      <span className="text-sm font-medium dark:text-zinc-200">
                         {method.label}
                       </span>
                     </button>
@@ -307,17 +309,17 @@ export default function PaymentPage() {
               </div>
             </div>
 
-            <div className="bg-white p-6 rounded-xl border shadow-sm space-y-6">
+            <div className="bg-white dark:bg-neutral-950 p-6 rounded-xl border shadow-sm space-y-6">
               {paymentMethod === "cash" ? (
                 <>
                   {!isCustomer ? (
                     <>
                       <div>
-                        <label className="text-sm text-slate-600 block mb-2">
-                          Amount Received
+                        <label className="text-sm text-slate-600 dark:text-zinc-400 block mb-2">
+                          {t("checkout.payment.amount_received")}
                         </label>
                         <div className="relative overflow-hidden rounded-lg">
-                          <div className="absolute inset-y-0 left-0 bg-neutral-200 p-5 flex items-center pointer-events-none">
+                          <div className="absolute inset-y-0 left-0 bg-neutral-200 dark:bg-neutral-800 p-5 flex items-center pointer-events-none">
                             <span className="text-2xl font-semibold text-muted-foreground">
                               {currency}
                             </span>
@@ -343,9 +345,9 @@ export default function PaymentPage() {
                           </Button>
                         ))}
                       </div>
-                      <div className="p-6 rounded-lg bg-slate-100 flex justify-between items-center">
+                      <div className="p-6 rounded-lg bg-slate-100 dark:bg-neutral-900 flex justify-between items-center">
                         <div>
-                          <span className="text-xs text-slate-500">Change</span>
+                          <span className="text-xs text-slate-500">{t("checkout.payment.change")}</span>
                           <div className="text-2xl font-semibold text-red-600">
                             {formatCurrency(change)}
                           </div>
@@ -354,18 +356,16 @@ export default function PaymentPage() {
                       </div>
                     </>
                   ) : (
-                    <div className="p-6 rounded-xl bg-orange-50 border border-orange-200 flex gap-4 items-start">
-                      <div className="p-2 bg-orange-100 rounded-lg text-orange-600">
+                    <div className="p-6 rounded-xl bg-orange-50 dark:bg-orange-950/10 border border-orange-200 dark:border-orange-900/50 flex gap-4 items-start">
+                      <div className="p-2 bg-orange-100 dark:bg-orange-900/30 rounded-lg text-orange-600">
                         <Info className="h-6 w-6" />
                       </div>
                       <div>
-                        <p className="font-semibold text-orange-900 text-sm">
-                          Pay at Cashier
+                        <p className="font-semibold text-orange-900 dark:text-orange-400 text-sm">
+                          {t("checkout.payment.pay_cashier_title")}
                         </p>
-                        <p className="text-xs text-orange-700 leading-relaxed">
-                          Your order will be sent to the kitchen after you
-                          complete the payment at the cashier counter by showing
-                          your order barcode.
+                        <p className="text-xs text-orange-700 dark:text-orange-500/80 leading-relaxed">
+                          {t("checkout.payment.pay_cashier_desc")}
                         </p>
                       </div>
                     </div>
@@ -373,14 +373,14 @@ export default function PaymentPage() {
                 </>
               ) : (
                 <div className="py-12 flex flex-col items-center justify-center text-slate-500 gap-4">
-                  <div className="p-4 bg-red-50 rounded-full text-red-600">
+                  <div className="p-4 bg-red-50 dark:bg-red-950/20 rounded-full text-red-600">
                     <CreditCard className="h-8 w-8" />
                   </div>
                   <div className="text-center">
-                    <p className="font-semibold text-slate-900">
-                      Digital Payment
+                    <p className="font-semibold text-slate-900 dark:text-zinc-200">
+                      {t("checkout.payment.digital_title")}
                     </p>
-                    <p className="text-xs">Secure payment via Midtrans Snap</p>
+                    <p className="text-xs">{t("checkout.payment.digital_desc")}</p>
                   </div>
                 </div>
               )}
@@ -389,21 +389,20 @@ export default function PaymentPage() {
                 disabled={
                   createMutation.isPending ||
                   items.length === 0 ||
-                  // Logic Tambahan: Jika wajib isi nama tapi nama kosong, matikan tombol
                   (isRequiredToInputName && !customerName.trim()) ||
                   (!isCustomer &&
                     paymentMethod === "cash" &&
                     (!amountPaid || parseInt(amountPaid) < total))
                 }
                 onClick={handleProcessTransaction}
-                className="w-full h-14 text-base font-semibold"
+                className="w-full h-14 text-base font-semibold bg-red-600 hover:bg-red-700 uppercase"
               >
                 {createMutation.isPending ? (
                   <Loader2 className="animate-spin h-5 w-5" />
                 ) : isCustomer && paymentMethod === "cash" ? (
-                  "Confirm Order"
+                  t("checkout.btn.confirm_order")
                 ) : (
-                  "Finalize Transaction"
+                  t("checkout.btn.finalize")
                 )}
               </Button>
             </div>

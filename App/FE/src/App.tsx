@@ -283,16 +283,15 @@ export default function App() {
                 </AuthMiddleware>
               }
             />
-
-            <Route
-              path="/payment-customer"
-              element={
-                <AuthMiddleware>
-                  <PaymentPage />
-                </AuthMiddleware>
-              }
-            />
           </Route>
+          <Route
+            path="/payment-customer"
+            element={
+              <AuthMiddleware>
+              <PaymentPage />
+              </AuthMiddleware>
+            }
+          />
 
           <Route path="/invoice/:id" element={<InvoicePage />} />
           <Route path="/order-success" element={<InvoiceCashPage />} />

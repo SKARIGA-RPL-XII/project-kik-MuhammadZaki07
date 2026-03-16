@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { useNavigate } from "react-router";
 import { useTables } from "@/hooks/react-query/useTable";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -75,7 +74,9 @@ export default function Step3Table({
       return `${base} bg-red-50 dark:bg-red-950/20 opacity-50 cursor-not-allowed`;
     if (status === "reserved")
       return `${base} bg-yellow-50 dark:bg-yellow-950/20 opacity-50 cursor-not-allowed`;
-    return `${base} bg-green-50 dark:bg-green-950/20 hover:border-green-500 ${isSelected ? "ring-2 ring-green-500 scale-105" : ""}`;
+    return `${base} bg-green-50 dark:bg-green-950/20 hover:border-green-500 ${
+      isSelected ? "ring-2 ring-green-500 scale-105" : ""
+    }`;
   };
 
   const getSeatColor = (status: string) => {
@@ -85,7 +86,7 @@ export default function Step3Table({
   };
 
   return (
-    <div className="space-y-6 w-full animate-in fade-in slide-in-from-right-4 pb-">
+    <div className="space-y-6 w-full animate-in fade-in slide-in-from-right-4">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex items-center gap-4">
           <Button
@@ -97,9 +98,9 @@ export default function Step3Table({
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <div>
-            <h2 className="text-2xl font-bold">Pilih Meja</h2>
+            <h2 className="text-2xl font-bold uppercase">{t("booking.step3.title")}</h2>
             <p className="text-sm text-zinc-500">
-              Tentukan lokasi meja untuk reservasi kamu.
+              {t("booking.step3.description")}
             </p>
           </div>
         </div>
@@ -108,7 +109,7 @@ export default function Step3Table({
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
           <input
             className="w-full pl-10 h-10 bg-white dark:bg-neutral-800 border rounded-xl text-sm outline-none focus:ring-2 focus:ring-red-500/20"
-            placeholder="Cari nomor meja..."
+            placeholder={t("booking.step3.search_placeholder")}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
@@ -119,9 +120,11 @@ export default function Step3Table({
         <Button
           variant={selectedRoomId === "all" ? "default" : "outline"}
           onClick={() => setSelectedRoomId("all")}
-          className={`rounded-full px-6 text-sm font-semibold ${selectedRoomId === "all" ? "bg-red-600" : ""}`}
+          className={`rounded-full px-6 text-sm font-semibold ${
+            selectedRoomId === "all" ? "bg-red-600" : ""
+          }`}
         >
-          Semua Ruangan
+          {t("booking.step3.all_rooms")}
         </Button>
         {rooms.map((room: any) => (
           <Button
@@ -130,14 +133,16 @@ export default function Step3Table({
               selectedRoomId === room.id.toString() ? "default" : "outline"
             }
             onClick={() => setSelectedRoomId(room.id.toString())}
-            className={`rounded-full text-sm font-semibold ${selectedRoomId === room.id.toString() ? "bg-red-600" : ""}`}
+            className={`rounded-full text-sm font-semibold ${
+              selectedRoomId === room.id.toString() ? "bg-red-600" : ""
+            }`}
           >
             {room.name.toUpperCase()}
           </Button>
         ))}
       </div>
 
-      <ScrollArea className="h-[500px] rounded-lg border bg-white/50 dark:bg-neutral-900/50 py-5">
+      <ScrollArea className="h-[500px] rounded-lg border bg-white/50 dark:bg-neutral-900/50 py-5 px-6">
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-12">
           {isLoading
             ? Array.from({ length: 10 }).map((_, i) => (
@@ -158,7 +163,9 @@ export default function Step3Table({
                       }).map((_, i) => (
                         <div
                           key={i}
-                          className={`w-8 h-2 rounded-t-full transition-all ${getSeatColor(table.status)}`}
+                          className={`w-8 h-2 rounded-t-full transition-all ${getSeatColor(
+                            table.status,
+                          )}`}
                         />
                       ))}
                     </div>
@@ -172,7 +179,13 @@ export default function Step3Table({
                     >
                       <span
                         className={`font-black text-xs px-2 py-1 rounded-lg text-white mb-1
-                        ${table.status === "occupied" ? "bg-red-500" : table.status === "reserved" ? "bg-yellow-500" : "bg-green-500"}`}
+                        ${
+                          table.status === "occupied"
+                            ? "bg-red-500"
+                            : table.status === "reserved"
+                              ? "bg-yellow-500"
+                              : "bg-green-500"
+                        }`}
                       >
                         T-{table.table_number}
                       </span>
@@ -190,7 +203,9 @@ export default function Step3Table({
                       }).map((_, i) => (
                         <div
                           key={i}
-                          className={`w-8 h-2 rounded-b-full transition-all ${getSeatColor(table.status)}`}
+                          className={`w-8 h-2 rounded-b-full transition-all ${getSeatColor(
+                            table.status,
+                          )}`}
                         />
                       ))}
                     </div>
@@ -200,24 +215,24 @@ export default function Step3Table({
         </div>
       </ScrollArea>
 
-      <div className="fixed bottom-0 left-0 w-full p-3 bg-white dark:bg-neutral-950 border-t flex flex-col md:flex-row justify-between items-center z-50 gap-4">
+      <div className="fixed bottom-0 left-0 w-full p-3 bg-white dark:bg-neutral-950 border-t flex flex-col md:flex-row justify-between items-center z-50 gap-4 shadow-lg">
         <div className="flex items-center gap-4 border-l pl-8 border-zinc-100 dark:border-neutral-800 sm:flex">
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.4)]" />
             <span className="text-[10px] font-bold text-zinc-500 uppercase">
-              Tersedia
+              {t("booking.step3.status_available")}
             </span>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 rounded-full bg-red-500 opacity-50" />
             <span className="text-[10px] font-bold text-zinc-500 uppercase">
-              Terisi
+              {t("booking.step3.status_occupied")}
             </span>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 rounded-full bg-yellow-500 opacity-50" />
             <span className="text-[10px] font-bold text-zinc-500 uppercase">
-              Dipesan
+              {t("booking.step3.status_reserved")}
             </span>
           </div>
         </div>
@@ -226,7 +241,7 @@ export default function Step3Table({
           onClick={handleFinalConfirm}
           className="bg-red-500 hover:bg-red-600 text-white"
         >
-          Selesaikan Booking <Check className="ml-2 w-6 h-6" />
+          {t("booking.step3.btn_finish")} <Check className="ml-2 w-6 h-6" />
         </Button>
       </div>
     </div>

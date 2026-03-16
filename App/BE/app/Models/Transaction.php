@@ -42,4 +42,8 @@ class Transaction extends Model
     {
         return $this->hasOne(Booking::class);
     }
+
+    public function cashier(){
+        return $this->belongsTo(User::class, 'cashier_id');
+    }
 }

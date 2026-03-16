@@ -22,10 +22,10 @@ import { useToast } from "@/context/ToastContext";
 import { Link, useSearchParams } from "react-router";
 import { NotificationsView } from "./NotificationsView";
 import { useEffect, useState } from "react";
-import { useTranslation } from "react-i18next"; // + Import
+import { useTranslation } from "react-i18next";
 
 export default function CustomerProfilePage() {
-  const { t } = useTranslation(); // + Inisialisasi
+  const { t } = useTranslation();
   const { user, logout, loading } = useAuth();
   const { toast } = useToast();
   const logic = useCustomerProfile(user);
