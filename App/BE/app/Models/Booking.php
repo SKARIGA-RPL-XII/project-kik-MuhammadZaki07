@@ -3,13 +3,14 @@
 namespace App\Models;
 
 use App\Notifications\GeneralNotification;
+use App\Traits\LogsActivity;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Notifications\Notifiable;
 
 class Booking extends Model
 {
-    use HasFactory , Notifiable;
+    use HasFactory , Notifiable,LogsActivity;
 
     protected static function booted()
     {

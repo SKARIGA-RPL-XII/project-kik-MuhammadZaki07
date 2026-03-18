@@ -203,7 +203,7 @@ function Banner() {
                     {bannerPreview ? (
                       <div className="relative w-full h-full group">
                         <img
-                          src={bannerPreview}
+                          src={`${import.meta.env.VITE_STORAGE_URL}/${bannerPreview}`}
                           className="w-full h-60 object-cover"
                           alt="Preview"
                         />

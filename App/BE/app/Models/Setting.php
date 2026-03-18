@@ -2,11 +2,13 @@
 
 namespace App\Models;
 
+use App\Traits\LogsActivity;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Cache;
 
 class Setting extends Model
 {
+    use LogsActivity;
     protected $fillable = ['group', 'key', 'value', 'type'];
 
     public static function get(string $key, $default = null)

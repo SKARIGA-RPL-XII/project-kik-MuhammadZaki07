@@ -105,8 +105,8 @@ export const navConfig = {
       role: ["admin" ,"cashier" , "employe"],
       subItems: [
         { name: "Notifications", path: "/notifications" },
-        { name: "System Logs", path: "/notifications/logs" },
-        { name: "Activity History", path: "/notifications/activity" },
+        { name: "System Logs", path: "/system/logs" },
+        // { name: "Activity History", path: "/notifications/activity" },
       ],
     },
     {

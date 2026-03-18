@@ -14,9 +14,10 @@ import CustomerLayout from "./layout/CustomerLayout";
 import BookingLayout from "./pages/Booked/BookingLayout";
 import BookingPage from "./pages/bookings/BookingPage";
 import BookingFormPage from "./pages/bookings/BookingFormPage";
-import TransactionDetailPage from "./pages/Customer/TransactionDetailPage";
 import TransactionPage from "./pages/transactions/TransactionPage";
 import TransactionDetail from "./pages/transactions/TransactionDetailPage";
+import LogIndex from "./pages/Logs/LogIndex";
+import LogDetailPage from "./pages/Logs/LogDetail";
 
 const SignIn = lazy(() => import("./pages/AuthPages/SignIn"));
 const SignUp = lazy(() => import("./pages/AuthPages/SignUp"));
@@ -264,6 +265,8 @@ export default function App() {
               path="/reports/transactions/:id"
               element={<TransactionDetail />}
             />
+            <Route path="/system/logs" element={<LogIndex />} />
+            <Route path="/system/logs/:id" element={<LogDetailPage />} />
           </Route>
 
           <Route path="/auth" element={<GuestMiddleware />}>

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\ActivityLogController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\StockController;
 use App\Http\Controllers\SettingController;
@@ -86,7 +87,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/admins/import-mapping', [AdminController::class, 'importMapping']);
     Route::delete('/user/delete', [UserController::class, 'destroyAccount']);
     Route::get('/transactions/statistics', [TransactionDetailController::class, 'statistics']);
-     Route::get('/transactions/export', [TransactionController::class, 'exportAll']);
+    Route::get('/transactions/export', [TransactionController::class, 'exportAll']);
     Route::get('/transactions/export/{id}', [TransactionController::class, 'exportSingle']);
 
     Route::resource('transactions', TransactionController::class);
@@ -101,6 +102,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/transaction-details', [TransactionDetailController::class, 'index']);
     Route::get('/transaction-details/show/{id}', [TransactionDetailController::class, 'show']);
 
+    Route::get('/logs', [ActivityLogController::class, 'index']);
+    Route::get('/logs/{id}', [ActivityLogController::class, 'show']);
+    Route::delete('/logs/{id}', [ActivityLogController::class, 'destroy']);
+    Route::post('/logs/{id}/restore', [ActivityLogController::class, 'restore']);
 
 
     Route::prefix('bookings')->group(function () {
