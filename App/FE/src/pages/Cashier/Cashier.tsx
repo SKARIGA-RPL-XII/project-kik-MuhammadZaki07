@@ -1,5 +1,5 @@
-import { useState, useMemo, useEffect } from "react";
-import { Search, ClipboardList, Loader2 } from "lucide-react";
+import { useState, useMemo } from "react";
+import { Search, ClipboardList } from "lucide-react";
 import { useNavigate } from "react-router";
 
 import { Input } from "@/components/ui/input";
@@ -20,35 +20,32 @@ import { useCategories } from "@/hooks/react-query/useCategory";
 import { useCashierCart, MenuItem } from "@/hooks/useCashierCart";
 
 import { CategoryBar } from "./components/CategoryBar";
-import { ProductCard } from "./components/ProductCard";
 import { CartSidebar } from "./components/CartSidebar";
 import { EmptyState } from "@/components/resto/EmptyState";
 import { useTransaction } from "@/hooks/react-query/useTransaction";
 import ScanOrderDialog from "@/components/dialog/ScanOrderDialog";
+import useDebounce from "@/hooks/useDebounce";
+import { MenuListSkeleton } from "@/components/skeleton/MenuCardSkeleton";
+import { MenuCard } from "@/components/resto";
 
 export default function CashierPage() {
   const navigate = useNavigate();
-
-  const { data: menus, isLoading: menuLoading } = useMenus();
-  const { data: categories } = useCategories();
+  const { data: categories , isLoading : loadingCategory } = useCategories();
   const { cartItems, addToCart, updateQuantity, clearCart, removeFromCart } =
     useCashierCart();
 
   const [activeCategory, setActiveCategory] = useState("All Items");
   const [searchQuery, setSearchQuery] = useState("");
-  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const debouncedSearch = useDebounce(searchQuery, 500);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<any>(null);
   const [tempAttributes, setTempAttributes] = useState<Record<string, number>>(
     {},
   );
-
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      setDebouncedSearch(searchQuery);
-    }, 300);
-    return () => clearTimeout(handler);
-  }, [searchQuery]);
+  const { data: menus, isLoading: menuLoading } = useMenus({
+    search: debouncedSearch,
+    category: activeCategory === "All Items" ? undefined : activeCategory,
+  });
 
   const categoryList = useMemo(
     () =>
@@ -56,18 +53,9 @@ export default function CashierPage() {
     [categories],
   );
 
-  const filteredMenus = useMemo(() => {
-    const menuList = Array.isArray(menus) ? menus : (menus as any)?.data || [];
-    return menuList.filter((item: any) => {
-      const matchesCategory =
-        activeCategory === "All Items" ||
-        item.category?.name === activeCategory;
-      const matchesSearch = item.name
-        .toLowerCase()
-        .includes(debouncedSearch.toLowerCase());
-      return matchesCategory && matchesSearch;
-    });
-  }, [menus, activeCategory, debouncedSearch]);
+  const menuList = useMemo(() => {
+    return Array.isArray(menus) ? menus : (menus as any)?.data || [];
+  }, [menus]);
 
   const uniqueAttributes = useMemo(() => {
     if (!selectedProduct?.attributes) return [];
@@ -80,21 +68,22 @@ export default function CashierPage() {
   }, [selectedProduct]);
 
   const handleProductClick = (product: any) => {
-    if (product.attributes && product.attributes.length > 0) {
-      setSelectedProduct(product);
-      const initialAttrs: Record<string, number> = {};
-      const seen = new Set();
-      product.attributes.forEach((attr: any) => {
-        if (!seen.has(attr.id) && attr.levels?.length > 0) {
-          initialAttrs[attr.id] = attr.levels[0].id;
-          seen.add(attr.id);
-        }
-      });
-      setTempAttributes(initialAttrs);
-    } else {
-      addToCart(product, 1);
-    }
-  };
+  if (product.attributes && Array.isArray(product.attributes) && product.attributes.length > 0) {
+    setSelectedProduct(product);
+    const initialAttrs: Record<string, number> = {};
+    
+    product.attributes.forEach((attr: any) => {
+      if (attr.levels && attr.levels.length > 0) {
+        initialAttrs[attr.id] = attr.levels[0].id;
+      }
+    });
+    
+    setTempAttributes(initialAttrs);
+  } else {
+    addToCart(product, 1, {}); 
+  }
+};
+
 
   const handleConfirmAttributes = () => {
     if (selectedProduct) {
@@ -116,8 +105,9 @@ export default function CashierPage() {
       navigate("/payment", { state: { orderType: "take_away" } });
     }
   };
+
   const { useGetOrders } = useTransaction();
-  const { data: orders, isLoading } = useGetOrders();
+  const { data: orders } = useGetOrders();
 
   return (
     <div className="flex w-full overflow-hidden">
@@ -159,7 +149,7 @@ export default function CashierPage() {
                 </div>
               )}
             </div>
-            <ScanOrderDialog/>
+            <ScanOrderDialog />
           </div>
         </header>
 
@@ -167,28 +157,24 @@ export default function CashierPage() {
           categories={categoryList}
           activeCategory={activeCategory}
           onCategoryChange={setActiveCategory}
+          loading={loadingCategory}
         />
 
         <ScrollArea className="flex-1 px-6 py-6 min-h-0 overflow-y-auto">
           {menuLoading ? (
-            <div className="flex h-64 items-center justify-center w-full flex-col gap-3">
-              <Loader2 className="animate-spin text-red-600 h-8 w-8" />
-              <p className="text-sm font-normal text-muted-foreground ">
-                Syncing Menu Items...
-              </p>
-            </div>
+            <MenuListSkeleton />
           ) : (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-              {filteredMenus.map((item: any) => (
-                <ProductCard
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+              {menuList.map((item: any) => (
+               <MenuCard
                   key={item.id}
                   item={item}
-                  onClick={handleProductClick}
+                  onOpenDetail={handleProductClick}
                 />
               ))}
             </div>
           )}
-          {filteredMenus.length === 0 && !menuLoading && <EmptyState />}
+          {menuList.length === 0 && !menuLoading && <EmptyState />}
         </ScrollArea>
       </div>
 

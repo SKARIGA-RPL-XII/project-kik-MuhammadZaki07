@@ -3,21 +3,22 @@ export const formatDate = (
   withTime: boolean = false
 ): string => {
   if (!dateString) return "-";
-  
   const date = new Date(dateString);
-  
   if (isNaN(date.getTime())) return "-";
 
-  const day = String(date.getDate()).padStart(2, '0');
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const year = date.getFullYear();
+  const options: Intl.DateTimeFormatOptions = {
+    weekday: 'long',
+    day: '2-digit',
+    month: 'long',
+    year: 'numeric',
+  };
 
-  const dateFormatted = `${day}-${month}-${year}`;
+  const dateFormatted = date.toLocaleDateString('id-ID', options);
 
   if (withTime) {
     const hours = String(date.getHours()).padStart(2, '0');
     const minutes = String(date.getMinutes()).padStart(2, '0');
-    return `${dateFormatted} ${hours}:${minutes}`;
+    return `${dateFormatted} • ${hours}:${minutes}`;
   }
 
   return dateFormatted;

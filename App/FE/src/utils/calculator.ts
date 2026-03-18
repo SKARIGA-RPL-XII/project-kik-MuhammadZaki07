@@ -1,28 +1,23 @@
-export const calculateOrder = (items: any[], config: any) => {
-    const subtotal = items.reduce((acc, item) => acc + (item.price * item.quantity), 0);
+export const calculateOrder = (items: any[], settings: any) => {
+  const subtotal = items.reduce((acc, item) => {
+    const price = item.discount_price !== null && item.discount_price !== undefined
+      ? Number(item.discount_price)
+      : Number(item.price);
+    return acc + (price * Number(item.quantity));
+  }, 0);
 
-    const taxRate = Number(config.tax_percent?.value || 0);
-    const serviceRate = Number(config.service_percent?.value || 0);
-    const isTaxActive = config.is_tax_active?.value === 1;
-    const isServiceActive = config.is_service_active?.value === 1;
+  const servicePercent = Number(settings?.service_percent || 0);
+  const taxPercent = Number(settings?.tax_percent || 0);
 
-    const serviceAmount = isServiceActive ? (subtotal * serviceRate / 100) : 0;
+  const serviceAmount = (settings?.is_service_active == true || settings?.is_service_active == 1)
+    ? (subtotal * servicePercent / 100)
+    : 0;
 
-    let taxAmount = 0;
-    if (isTaxActive) {
-        if (config.tax_type?.value === "subtotal_only") {
-            taxAmount = (subtotal * taxRate / 100);
-        } else {
-            taxAmount = ((subtotal + serviceAmount) * taxRate / 100);
-        }
-    }
+  const taxAmount = (settings?.is_tax_active == true || settings?.is_tax_active == 1)
+    ? ((subtotal + serviceAmount) * taxPercent / 100)
+    : 0;
 
-    const total = subtotal + serviceAmount + taxAmount;
+  const total = subtotal + serviceAmount + taxAmount;
 
-    return {
-        subtotal,
-        serviceAmount,
-        taxAmount,
-        total: Math.round(total)
-    };
+  return { subtotal, serviceAmount, taxAmount, total };
 };

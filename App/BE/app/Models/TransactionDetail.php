@@ -8,12 +8,17 @@ class TransactionDetail extends Model
 {
     protected $guarded = ['id'];
 
+    protected $casts = [
+        'attributes' => 'array',
+    ];
+
     public function menu()
     {
         return $this->belongsTo(Menu::class);
     }
 
-    protected $casts = [
-        'attributes' => 'array',
-    ];
+    public function transaction()
+    {
+        return $this->belongsTo(Transaction::class);
+    }
 }

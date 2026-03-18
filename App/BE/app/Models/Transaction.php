@@ -19,7 +19,10 @@ class Transaction extends Model
         'transaction_date',
         'transaction_code',
         'paid_at',
-        'customer_name'
+        'customer_name',
+        'cooking_started_at',
+        'completed_at',
+        'total_duration'
     ];
 
     public function details()
@@ -38,12 +41,18 @@ class Transaction extends Model
         return $this->belongsTo(User::class);
     }
 
+    public function customer()
+    {
+        return $this->belongsTo(User::class, 'customer_id');
+    }
+
     public function booking()
     {
         return $this->hasOne(Booking::class);
     }
 
-    public function cashier(){
+    public function cashier()
+    {
         return $this->belongsTo(User::class, 'cashier_id');
     }
 }

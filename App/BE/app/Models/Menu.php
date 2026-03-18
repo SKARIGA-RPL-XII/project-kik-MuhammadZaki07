@@ -43,18 +43,27 @@ class Menu extends Model
     }
 
     public function getCalculatedStockAttribute()
-{
-    $ingredients = $this->stocks;
-    if ($ingredients->isEmpty()) return 0;
+    {
+        $ingredients = $this->stocks;
+        if ($ingredients->isEmpty()) return 0;
 
-    $availablePortions = [];
-    foreach ($ingredients as $ingredient) {
-        $portions = floor($ingredient->quantity / $ingredient->pivot->amount);
-        $availablePortions[] = $portions;
+        $availablePortions = [];
+        foreach ($ingredients as $ingredient) {
+            $portions = floor($ingredient->quantity / $ingredient->pivot->amount);
+            $availablePortions[] = $portions;
+        }
+
+        return min($availablePortions);
     }
 
-    return min($availablePortions);
-}
+    public function getFinalPriceAttribute()
+    {
+        if (!$this->discount || !$this->discount->is_active || now() > $this->discount->end_date) {
+            return $this->price;
+        }
+
+        return $this->price - ($this->price * $this->discount->value_discount / 100);
+    }
 
     public $hidden = ['category_id', 'discount_id'];
 }

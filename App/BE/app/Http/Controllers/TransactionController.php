@@ -2,6 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\NewOrderReceived;
+use App\Events\PaymentConfirmed;
+use App\Exports\TransactionsExport;
 use App\Http\Controllers\Controller;
 use App\Services\PosService;
 use App\Models\Transaction;
@@ -10,6 +13,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
+use Maatwebsite\Excel\Facades\Excel;
 
 class TransactionController extends Controller
 {
@@ -30,7 +34,9 @@ class TransactionController extends Controller
             'total_amount',
             'payment_method',
             'order_source',
-            'created_at'
+            'created_at',
+            'cooking_started_at',
+            'completed_at'
         ])
             ->with([
                 'user:id,username',
@@ -74,10 +80,12 @@ class TransactionController extends Controller
                 ], 404);
             }
 
-            if ($transaction->status === 'paid') {
+            $invalidStatuses = ['paid', 'completed', 'cancelled'];
+
+            if (in_array($transaction->status, $invalidStatuses)) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'This order has already been paid.'
+                    'message' => 'This order cannot be paid anymore.'
                 ], 400);
             }
 
@@ -116,7 +124,9 @@ class TransactionController extends Controller
             $result = $this->posService->execute($request->all(), $cashierId);
 
             $transaction = $result['transaction'];
-            $transaction->load(['details.menu']);
+            $transaction->load(['details.menu', 'table', 'user']);
+
+            event(new NewOrderReceived($transaction));
 
             return response()->json([
                 'status' => 'success',
@@ -144,7 +154,22 @@ class TransactionController extends Controller
 
         try {
             $transaction = Transaction::findOrFail($id);
-            $transaction->update(['status' => $request->status]);
+
+            $updateData = ['status' => $request->status];
+
+            if ($request->status === 'cooking' && !$transaction->cooking_started_at) {
+                $updateData['cooking_started_at'] = now();
+            }
+
+            if ($request->status === 'completed') {
+                $updateData['completed_at'] = now();
+                $updateData['total_duration'] = $transaction->created_at->diffInMinutes(now());
+            }
+
+            $transaction->update($updateData);
+
+            $transaction->load(['details.menu', 'table', 'user']);
+            event(new NewOrderReceived($transaction));
 
             return response()->json([
                 'status' => 'success',
@@ -189,13 +214,16 @@ class TransactionController extends Controller
                 ]);
 
                 $this->posService->decreaseInventory($transaction);
+                event(new PaymentConfirmed($transaction));
+                event(new NewOrderReceived($transaction));
 
-                broadcast(new \App\Events\PaymentConfirmed($transaction))->toOthers();
+
+                $transaction->load(['details.menu', 'table', 'user']);
 
                 return response()->json([
                     'status' => 'success',
                     'message' => 'Payment confirmed successfully',
-                    'data' => $transaction->load('details.menu')
+                    'data' => $transaction
                 ]);
             });
         } catch (Exception $e) {
@@ -206,27 +234,27 @@ class TransactionController extends Controller
         }
     }
 
-   public function show($id)
-{
-    $transaction = Transaction::with([
-        'details.menu',
-        'table',
-        'cashier',
-        'user'
-    ])->find($id);
+    public function show($id)
+    {
+        $transaction = Transaction::with([
+            'details.menu',
+            'table',
+            'cashier',
+            'user'
+        ])->find($id);
 
-    if (!$transaction) {
+        if (!$transaction) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Transaksi tidak ditemukan'
+            ], 404);
+        }
+
         return response()->json([
-            'status' => 'error',
-            'message' => 'Transaksi tidak ditemukan'
-        ], 404);
+            'status' => 'success',
+            'data' => $transaction
+        ]);
     }
-
-    return response()->json([
-        'status' => 'success',
-        'data' => $transaction
-    ]);
-}
 
     public function userTransactions()
     {
@@ -236,7 +264,7 @@ class TransactionController extends Controller
             $transactions = Transaction::with(['details.menu', 'table'])
                 ->where('user_id', $userId)
                 ->orderBy('created_at', 'desc')
-                ->get();
+                ->paginate(10);
 
             return response()->json([
                 'status' => 'success',
@@ -248,5 +276,21 @@ class TransactionController extends Controller
                 'message' => 'Failed to fetch transactions: ' . $e->getMessage()
             ], 500);
         }
+    }
+
+    public function exportAll()
+    {
+        return Excel::download(new TransactionsExport, 'semua_transaksi.xlsx');
+    }
+
+    public function exportSingle($id)
+    {
+        $check = Transaction::find($id);
+        // dd($check);
+        if (!$check) {
+            return response()->json(['message' => 'Data tidak ditemukan'], 404);
+        }
+
+        return Excel::download(new TransactionsExport($id), "transaksi_{$id}.xlsx");
     }
 }

@@ -54,12 +54,12 @@ const BannerCarousel: React.FC<BannerCarouselProps> = ({
   );
 
   useEffect(() => {
-    if (isLoading || !autoLoop || banners.length <= 1) return;
+    if (isLoading || !autoLoop || !banners || banners.length <= 1) return
     const interval = setInterval(() => {
       paginate(1);
     }, loopInterval);
     return () => clearInterval(interval);
-  }, [banners.length, autoLoop, loopInterval, isLoading, paginate]);
+}, [banners, autoLoop, loopInterval, isLoading, paginate]);
 
   if (isLoading) {
     return (

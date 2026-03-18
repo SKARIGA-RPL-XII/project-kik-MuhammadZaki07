@@ -42,8 +42,8 @@ export const UserService = {
   },
 
 
-  getTransactions: async () => {
-    const res = await apiClient.get("/user/transactions");
+getTransactions: async (page: number = 1) => {
+    const res = await apiClient.get(`/user/transactions?page=${page}`);
     return res.data.data;
   },
   

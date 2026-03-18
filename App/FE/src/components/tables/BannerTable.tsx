@@ -80,7 +80,7 @@ export default function BannerTable({
                   <TableCell className="px-5 py-4 text-start">
                     <div className="flex items-start gap-3">
                       <img
-                        src={`${banner.banner_image}`}
+                        src={`${import.meta.env.VITE_STORAGE_URL}/${banner.banner_image}`}
                         alt={banner.name}
                         loading="lazy"
                         className="w-72 h-36 rounded object-cover"

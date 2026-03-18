@@ -38,6 +38,10 @@ return new class extends Migration
             $table->timestamp('transaction_date')->useCurrent();
             $table->enum('order_source', ['qr_code', 'cashier_direct'])->default('cashier_direct');
             $table->string('snap_token')->nullable();
+
+            $table->timestamp('cooking_started_at')->nullable();
+            $table->timestamp('completed_at')->nullable();
+            $table->integer('total_duration')->nullable();
             $table->timestamps();
         });
     }

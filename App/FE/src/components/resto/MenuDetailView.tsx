@@ -4,6 +4,7 @@ import { X, Minus, Plus, ShoppingBag, ChevronRight } from "lucide-react";
 import Button from "../ui/button/Button";
 import { useTranslation } from "react-i18next";
 import { Badge } from "../ui/badge";
+import { getMenuItemStatus } from "@/utils/getMenuItemStatus";
 
 export function MenuDetailView({ menu, isOpen, onClose, onAddToCart }: any) {
   const { t } = useTranslation();
@@ -12,10 +13,15 @@ export function MenuDetailView({ menu, isOpen, onClose, onAddToCart }: any) {
     Record<number, number>
   >({});
 
+  // LOGIC: Menggunakan helper tanpa mengubah UI
+  const { 
+    hasDiscount, 
+    discountedPrice: activePrice, 
+    imagePath: imageUrl 
+  } = useMemo(() => getMenuItemStatus(menu || {}), [menu]);
+
   const discountValue = menu?.discount?.value_discount || 0;
   const discountAmount = (menu?.price * discountValue) / 100;
-  const activePrice = Math.round((menu?.price || 0) - discountAmount);
-  const hasDiscount = discountValue > 0;
 
   const uniqueAttributes = useMemo(() => {
     if (!menu?.attributes) return [];
@@ -55,8 +61,6 @@ export function MenuDetailView({ menu, isOpen, onClose, onAddToCart }: any) {
     onClose();
   };
 
-  const imageUrl = `${import.meta.env.VITE_STORAGE_URL}/${menu.menu_image}`;
-
   return (
     <AnimatePresence>
       {isOpen && (
@@ -73,7 +77,7 @@ export function MenuDetailView({ menu, isOpen, onClose, onAddToCart }: any) {
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            className="relative w-full max-w-[1000px] bg-white dark:bg-neutral-900 border rounded-xl overflow-hidden flex flex-col md:flex-row h-auto max-h-[90vh] shadow-[0_32px_64px_-12px_rgba(0,0,0,0.3)]"
+            className="relative w-full max-w-[1000px] bg-white dark:bg-neutral-900 rounded-xl overflow-hidden flex flex-col md:flex-row h-auto max-h-[90vh] shadow-[0_32px_64px_-12px_rgba(0,0,0,0.3)]"
           >
             <div className="relative w-full md:w-[48%] h-72 md:h-auto bg-neutral-100 dark:bg-neutral-900 overflow-hidden">
               <img
@@ -101,15 +105,15 @@ export function MenuDetailView({ menu, isOpen, onClose, onAddToCart }: any) {
             <div className="flex-1 flex flex-col min-w-0 bg-white dark:bg-neutral-900">
               <div className="px-5 pt-5 flex justify-between items-start">
                 <div className="space-y-2">
-                  <div className="flex items-center gap-2 text-red-600">
-                    <div className="h-1 w-20 bg-red-600 rounded-full" />
-                    <div className="">
-                      <Badge variant={'outline'}>{menu.category?.name}</Badge>
-                    </div>
-                  </div>
                   <h2 className="text-4xl font-bold text-neutral-900 dark:text-neutral-300 leading-none">
                     {menu.name}
                   </h2>
+                  <div className="flex items-center gap-2 text-red-600">
+                    <div className="">
+                      <Badge variant={"outline"}>{menu.category?.name}</Badge>
+                    </div>
+                    <div className="h-1 w-20 bg-red-600 rounded-full" />
+                  </div>
                 </div>
 
                 <button
@@ -148,7 +152,7 @@ export function MenuDetailView({ menu, isOpen, onClose, onAddToCart }: any) {
                                   [attr.id]: level.id,
                                 }))
                               }
-                              className={`group relative w-25 h-9 rounded-lg border-2 text-sm font-normal transition-all duration-300 ${
+                              className={`group relative w-25 h-8 rounded border text-xs font-normal transition-all duration-300 ${
                                 isSelected
                                   ? "border-red-600 bg-red-600 text-white dark:text-neutral-300 -translate-y-1"
                                   : "bg-neutral-50/50 dark:bg-neutral-900 text-neutral-400"
@@ -164,7 +168,7 @@ export function MenuDetailView({ menu, isOpen, onClose, onAddToCart }: any) {
                 </div>
               </div>
 
-              <div className="px-5 py-5 border-t bg-white dark:bg-neutral-900">
+              <div className="px-5 py-4 border-t bg-white dark:bg-neutral-900">
                 <div className="flex items-end justify-between mb-8">
                   <div className="space-y-1">
                     <span className="text-sm font-medium text-neutral-400 dark:text-neutral-300 block">
@@ -182,7 +186,7 @@ export function MenuDetailView({ menu, isOpen, onClose, onAddToCart }: any) {
                           <span className="flex items-center gap-1 text-[10px] font-medium text-red-600 bg-red-50 px-2 py-0.5 rounded-lg border border-red-100">
                             {t("mv_save_amount", {
                               amount: (
-                                discountAmount * quantity
+                                ((menu.price - activePrice) * quantity)
                               ).toLocaleString("id-ID"),
                             })}
                           </span>
@@ -191,10 +195,10 @@ export function MenuDetailView({ menu, isOpen, onClose, onAddToCart }: any) {
                     </div>
                   </div>
 
-                  <div className="flex items-center bg-neutral-100 dark:bg-neutral-800 rounded-sm p-1.5">
+                  <div className="flex items-center bg-neutral-100 dark:bg-neutral-800 rounded-sm p-1">
                     <button
                       onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                      className="w-8 h-8 flex items-center justify-center rounded bg-white dark:bg-neutral-500 dark:text-neutral-300 text-neutral-400 hover:text-red-600 transition-all active:scale-90"
+                      className="w-6 h-6 flex items-center justify-center rounded bg-white dark:bg-neutral-500 dark:text-neutral-300 text-neutral-400 hover:text-red-600 transition-all active:scale-90"
                     >
                       <Minus size={18} />
                     </button>
@@ -203,7 +207,7 @@ export function MenuDetailView({ menu, isOpen, onClose, onAddToCart }: any) {
                     </span>
                     <button
                       onClick={() => setQuantity(quantity + 1)}
-                      className="w-8 h-8 flex items-center justify-center rounded bg-white dark:bg-neutral-500 dark:text-neutral-300 text-neutral-400 hover:text-red-600 transition-all active:scale-90"
+                      className="w-6 h-6 flex items-center justify-center rounded bg-white dark:bg-neutral-500 dark:text-neutral-300 text-neutral-400 hover:text-red-600 transition-all active:scale-90"
                     >
                       <Plus size={18} />
                     </button>

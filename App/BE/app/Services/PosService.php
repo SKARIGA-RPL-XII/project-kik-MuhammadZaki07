@@ -4,7 +4,7 @@ namespace App\Services;
 
 use App\Models\{Transaction, Menu, Stock, Table, AttributeLevel, Badge, User};
 use App\Notifications\GeneralNotification;
-use Illuminate\Support\Facades\{DB, Auth};
+use Illuminate\Support\Facades\{DB, Auth, Log};
 use Midtrans\Snap;
 use Midtrans\Config;
 use Exception;
@@ -67,7 +67,8 @@ class PosService
                 'cashier_id' => $isCashier ? ($cashierId ?? Auth::id()) : null,
                 'order_source' => $data['order_source'],
                 'status' => $status,
-                'transaction_code' => $transactionCode,
+                // 'transaction_code' => $transactionCode,
+                'transaction_code' => "TR-MLG-" . $transactionCode,
                 'total_amount' => $grandTotal,
                 'amount_paid' => ($status === 'paid') ? ($data['amount_paid'] ?? $grandTotal) : null,
                 'payment_method' => $data['payment_method'],
@@ -176,45 +177,88 @@ class PosService
         }
     }
 
+    // private function generateMidtransToken($transaction, $items, $settings)
+    // {
+    //     Config::$serverKey = config('midtrans.server_key');
+    //     Config::$isProduction = (bool) config('midtrans.is_production');
+    //     Config::$isSanitized = true;
+    //     Config::$is3ds = true;
+
+    //     $availableMethods = is_string($settings['available_methods'] ?? '')
+    //         ? json_decode($settings['available_methods'], true)
+    //         : ($settings['available_methods'] ?? []);
+
+    //     $enabledPayments = collect($availableMethods)
+    //         ->filter(fn($method) => (isset($method['active']) && $method['active'] == 1))
+    //         ->pluck('id')
+    //         ->toArray();
+
+    //     $params = [
+    //         'transaction_details' => [
+    //             'order_id' => 'TRX-' . $transaction->id . '-' . time(),
+    //             'gross_amount' => (int) $transaction->total_amount,
+    //         ],
+    //         // 'callbacks' => [
+    //         //     'finish' => env('FRONTEND_URL') . '/cashier',
+    //         // ],
+    //         'item_details' => collect($items)->map(function ($t) {
+    //             return [
+    //                 'id' => $t['menu']->id,
+    //                 'price' => (int) $t['price'],
+    //                 'quantity' => $t['quantity'],
+    //                 'name' => substr($t['menu']->name, 0, 50)
+    //             ];
+    //         })->toArray(),
+    //     ];
+
+    //     if (!empty($enabledPayments)) {
+    //         $params['enabled_payments'] = $enabledPayments;
+    //     }
+
+    //     return Snap::getSnapToken($params);
+    // }
+
     private function generateMidtransToken($transaction, $items, $settings)
     {
-        Config::$serverKey = config('midtrans.server_key');
-        Config::$isProduction = (bool) config('midtrans.is_production');
-        Config::$isSanitized = true;
-        Config::$is3ds = true;
+        try {
+            Config::$serverKey = config('midtrans.server_key');
+            Config::$isProduction = (bool) config('midtrans.is_production');
+            Config::$isSanitized = true;
+            Config::$is3ds = true;
 
-        $availableMethods = is_string($settings['available_methods'] ?? '')
-            ? json_decode($settings['available_methods'], true)
-            : ($settings['available_methods'] ?? []);
+            $availableMethods = is_string($settings['available_methods'] ?? '')
+                ? json_decode($settings['available_methods'], true)
+                : ($settings['available_methods'] ?? []);
 
-        $enabledPayments = collect($availableMethods)
-            ->filter(fn($method) => (isset($method['active']) && $method['active'] == 1))
-            ->pluck('id')
-            ->toArray();
+            $enabledPayments = collect($availableMethods)
+                ->filter(fn($method) => (isset($method['active']) && $method['active'] == 1))
+                ->pluck('id')
+                ->toArray();
 
-        $params = [
-            'transaction_details' => [
-                'order_id' => 'TRX-' . $transaction->id . '-' . time(),
-                'gross_amount' => (int) $transaction->total_amount,
-            ],
-            // 'callbacks' => [
-            //     'finish' => env('FRONTEND_URL') . '/cashier',
-            // ],
-            'item_details' => collect($items)->map(function ($t) {
-                return [
-                    'id' => $t['menu']->id,
-                    'price' => (int) $t['price'],
-                    'quantity' => $t['quantity'],
-                    'name' => substr($t['menu']->name, 0, 50)
-                ];
-            })->toArray(),
-        ];
+            $params = [
+                'transaction_details' => [
+                    'order_id' => 'TRX-' . $transaction->id . '-' . time(),
+                    'gross_amount' => (int) $transaction->total_amount,
+                ],
+                'item_details' => collect($items)->map(function ($t) {
+                    return [
+                        'id' => $t['menu']->id,
+                        'price' => (int) $t['price'],
+                        'quantity' => $t['quantity'],
+                        'name' => substr($t['menu']->name, 0, 50)
+                    ];
+                })->toArray(),
+            ];
 
-        if (!empty($enabledPayments)) {
-            $params['enabled_payments'] = $enabledPayments;
+            if (!empty($enabledPayments)) {
+                $params['enabled_payments'] = $enabledPayments;
+            }
+
+            return Snap::getSnapToken($params);
+        } catch (Exception $e) {
+            Log::error("Midtrans Error: " . $e->getMessage());
+            return null;
         }
-
-        return Snap::getSnapToken($params);
     }
 
     public function updateUserBadge($userId)
@@ -243,5 +287,18 @@ class PosService
             ));
             broadcast(new \App\Events\UserLevelUp($user, $eligibleBadge))->toOthers();
         }
+    }
+
+
+    public function completePaymentProcess(Transaction $transaction)
+    {
+        $this->decreaseInventory($transaction);
+
+        $transaction->load(['details.menu', 'table', 'user']);
+
+        event(new \App\Events\PaymentConfirmed($transaction));
+        event(new \App\Events\NewOrderReceived($transaction));
+
+        return $transaction;
     }
 }

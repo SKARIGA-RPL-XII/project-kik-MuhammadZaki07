@@ -1,25 +1,37 @@
-import { useQuery } from "@tanstack/react-query";
+import { useInfiniteQuery } from "@tanstack/react-query";
 import { UserService } from "@/services/user.service";
 
 export function useOrdersLogic() {
-  const { 
-    data: orders = [], 
+  const {
+    data,
     isLoading: loading,
     error,
-    refetch 
-  } = useQuery({
+    refetch,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useInfiniteQuery({
     queryKey: ["transactions"],
-    queryFn: async () => {
-      const data = await UserService.getTransactions();
-      return data || [];
+    queryFn: async ({ pageParam = 1 }) => {
+      const response = await UserService.getTransactions(pageParam);
+      return response.data; 
+    },
+    initialPageParam: 1,
+    getNextPageParam: (lastPage: any, allPages) => {
+      return lastPage?.length === 10 ? allPages.length + 1 : undefined;
     },
     staleTime: 1000 * 60 * 3,
   });
 
-  return { 
-    orders, 
-    loading, 
+  const orders = data?.pages.flatMap((page) => page) || [];
+
+  return {
+    orders,
+    loading,
     error,
-    refetch 
+    refetch,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
   };
 }

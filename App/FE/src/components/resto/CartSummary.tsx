@@ -17,8 +17,10 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useState } from "react";
 import { useSettings } from "@/context/SettingsContext";
 import { useLocation, useNavigate, useSearchParams } from "react-router";
-import { useTranslation } from "react-i18next"; // + Import
+import { useTranslation } from "react-i18next";
 import { LiquidGlassCard } from "../ui/liquid-glass";
+import { calculateOrder } from "@/utils/calculator";
+import { formatCurrency } from "@/lib/currency";
 
 interface CartSummaryProps {
   isOpen?: boolean;
@@ -38,13 +40,19 @@ export function CartSummary({
 }: CartSummaryProps) {
   const { t } = useTranslation();
   const location = useLocation();
+  const { settings } = useSettings();
   const itemCount = items.reduce((acc, item) => acc + (item.quantity || 0), 0);
-  const total = items.reduce((acc, item) => {
-    const price = item.discount_price || item.price || 0;
-    return acc + Math.round(price * (item.quantity || 0));
-  }, 0);
+  
+  const { total } = calculateOrder(items, settings);
 
-  const hideCartPaths = ["/profile-customer", "/transaction", "/menu/","/tables-customer","/booking" , "payment-customer"];
+  const hideCartPaths = [
+    "/profile-customer",
+    "/transaction",
+    "/menu/",
+    "/tables-customer",
+    "/booking",
+    "payment-customer",
+  ];
 
   const shouldHide = hideCartPaths.some((path) =>
     location.pathname.includes(path),
@@ -53,78 +61,81 @@ export function CartSummary({
   if (shouldHide) return null;
 
   return (
- <AnimatePresence mode="wait">
-  {!isOpen && (
-    <motion.div
-      key="premium-cart-bar"
-      initial={{ y: 100, opacity: 0 }}
-      animate={{ y: 0, opacity: 1 }}
-      exit={{ y: 100, opacity: 0 }}
-      transition={{ type: "spring", stiffness: 400, damping: 30 }}
-      className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[60] flex justify-center px-4 w-full max-w-lg cursor-pointer"
-      onClick={onToggle}
-    >
-      <LiquidGlassCard className="w-full pointer-events-none" draggable={false}>
-        <div className="relative w-full max-w-lg rounded-full px-4 py-2.5 flex items-center justify-between hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 overflow-hidden">
-          
-          <div className="relative flex items-center justify-between w-full pointer-events-auto">
-            
-            <div className="flex items-center gap-4">
-              <div className="flex items-center -space-x-3">
-                {items.length > 0 ? (
-                  items.slice(0, 3).map((item, idx) => (
-                    <motion.img
-                      layoutId={`cart-img-${item.key || idx}`}
-                      key={item.key || idx}
-                      initial={{ scale: 0.5, opacity: 0 }}
-                      animate={{ scale: 1, opacity: 1 }}
-                      transition={{ type: "spring", stiffness: 300, damping: 20 }}
-                      src={`${import.meta.env.VITE_STORAGE_URL}/${item.image}`}
-                      className="w-10 h-10 rounded-full border-2 object-cover bg-white shadow-sm"
-                      style={{ zIndex: 10 - idx }}
-                      alt="item"
-                    />
-                  ))
-                ) : (
-                  <div className="w-10 h-10 rounded-full bg-red-500 flex items-center justify-center">
-                    <ShoppingCart size={18} className="text-neutral-200" />
+    <AnimatePresence mode="wait">
+      {!isOpen && (
+        <motion.div
+          key="premium-cart-bar"
+          initial={{ y: 100, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          exit={{ y: 100, opacity: 0 }}
+          transition={{ type: "spring", stiffness: 400, damping: 30 }}
+          className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[60] flex justify-center px-4 w-full max-w-lg cursor-pointer"
+          onClick={onToggle}
+        >
+          <LiquidGlassCard
+            className="w-full pointer-events-none"
+            draggable={false}
+          >
+            <div className="relative w-full max-w-lg rounded-full px-4 py-2.5 flex items-center justify-between hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 overflow-hidden">
+              <div className="relative flex items-center justify-between w-full pointer-events-auto">
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center -space-x-3">
+                    {items.length > 0 ? (
+                      items.slice(0, 3).map((item, idx) => (
+                        <motion.img
+                          layoutId={`cart-img-${item.key || idx}`}
+                          key={item.key || idx}
+                          initial={{ scale: 0.5, opacity: 0 }}
+                          animate={{ scale: 1, opacity: 1 }}
+                          transition={{
+                            type: "spring",
+                            stiffness: 300,
+                            damping: 20,
+                          }}
+                          src={`${import.meta.env.VITE_STORAGE_URL}/${item.image}`}
+                          className="w-10 h-10 rounded-full border-2 border-white dark:border-zinc-800 object-cover bg-white shadow-sm"
+                          style={{ zIndex: 10 - idx }}
+                          alt="item"
+                        />
+                      ))
+                    ) : (
+                      <div className="w-10 h-10 rounded-full bg-red-500 flex items-center justify-center">
+                        <ShoppingCart size={18} className="text-neutral-200" />
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
 
-              <div className="flex flex-col">
-                <span className="dark:text-white font-medium text-sm leading-none mb-1">
-                  {items.length > 0
-                    ? t("cart_items_count", { count: itemCount })
-                    : t("cart_empty")}
-                </span>
+                  <div className="flex flex-col">
+                    <span className="dark:text-white font-medium text-sm leading-none mb-1">
+                      {items.length > 0
+                        ? t("cart_items_count", { count: itemCount })
+                        : t("cart_empty")}
+                    </span>
+                    <span className="text-zinc-400 text-xs font-normal">
+                      {items.length > 0
+                        ? formatCurrency(total)
+                        : t("cart_start_ordering")}
+                    </span>
+                  </div>
+                </div>
 
-                <span className="text-zinc-400 text-xs font-normal">
-                  {items.length > 0
-                    ? `Rp ${total.toLocaleString("id-ID")}`
-                    : t("cart_start_ordering")}
-                </span>
+                <Button
+                  variant="link"
+                  className="text-black dark:text-white hover:bg-transparent hover:no-underline font-medium text-xs gap-2"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onToggle();
+                  }}
+                >
+                  {items.length > 0 ? t("cart_btn_review") : t("cart_btn_open")}
+                  <ChevronRight size={16} className="text-red-500" />
+                </Button>
               </div>
             </div>
-
-            <Button
-              variant="link"
-              className="text-black dark:text-white hover:bg-transparent hover:no-underline font-medium text-xs gap-2"
-              onClick={(e) => {
-                e.stopPropagation()
-                onToggle()
-              }}
-            >
-              {items.length > 0 ? t("cart_btn_review") : t("cart_btn_open")}
-              <ChevronRight size={16} className="text-red-500" />
-            </Button>
-
-          </div>
-        </div>
-      </LiquidGlassCard>
-    </motion.div>
-  )}
-</AnimatePresence>
+          </LiquidGlassCard>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 }
 
@@ -143,6 +154,10 @@ CartSummary.SidebarContent = function SidebarContent({
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const tableIdFromUrl = searchParams.get("table");
+  const { subtotal, serviceAmount, taxAmount, total } = calculateOrder(
+    items,
+    settings,
+  );
 
   const toggleSelectAll = () => {
     if (selectedItems.length === items.length) {
@@ -159,22 +174,9 @@ CartSummary.SidebarContent = function SidebarContent({
   };
 
   const handleBulkDelete = () => {
-    selectedItems.forEach((key) => onRemoveItem(key));
+    selectedItems.forEach((key) => onRemoveItem?.(key));
     setSelectedItems([]);
   };
-
-  const currentSubtotal = items.reduce((acc, item) => {
-    const price = item.discount_price || item.price;
-    return acc + Math.round(price * item.quantity);
-  }, 0);
-
-  const taxRate = settings?.is_tax_active ? settings.tax_percent / 100 : 0;
-  const serviceRate = settings?.is_service_active
-    ? settings.service_percent / 100
-    : 0;
-  const serviceAmount = Math.round(currentSubtotal * serviceRate);
-  const taxAmount = Math.round(currentSubtotal * taxRate);
-  const totalAmount = currentSubtotal + taxAmount + serviceAmount;
 
   const onConfirmAction = () => {
     if (orderType === "dine_in" && !tableIdFromUrl) {
@@ -185,7 +187,7 @@ CartSummary.SidebarContent = function SidebarContent({
       navigate("/payment-customer", {
         state: {
           orderType,
-          totalAmount,
+          totalAmount: total,
           tableId: tableIdFromUrl,
           items: items,
         },
@@ -257,9 +259,8 @@ CartSummary.SidebarContent = function SidebarContent({
       <ScrollArea className="flex-1 bg-zinc-50/50 dark:bg-zinc-950">
         <div className="p-3 space-y-2">
           {items.map((item) => {
-            const hasDiscount =
-              item.discount_price && item.discount_price < item.price;
-            const activePrice = hasDiscount ? item.discount_price : item.price;
+            const activePrice = item.discount_price ?? item.price;
+            const hasDiscount = activePrice < item.price;
 
             return (
               <div
@@ -280,7 +281,7 @@ CartSummary.SidebarContent = function SidebarContent({
                 <div className="flex-1 min-w-0">
                   <div className="flex justify-between items-start">
                     <div className="flex gap-3 min-w-0">
-                      <div className="h-12 w-12 rounded-lg bg-zinc-100 overflow-hidden shrink-0 border border-zinc-200">
+                      <div className="h-14 w-14 rounded-lg bg-zinc-100 overflow-hidden shrink-0 border border-zinc-200">
                         <img
                           src={`${import.meta.env.VITE_STORAGE_URL}/${item.image}`}
                           className="h-full w-full object-cover"
@@ -291,20 +292,31 @@ CartSummary.SidebarContent = function SidebarContent({
                         <h4 className="font-bold text-zinc-900 dark:text-zinc-100 text-xs truncate uppercase tracking-tight">
                           {item.name}
                         </h4>
-                        <div className="flex items-center gap-2">
+                 
+                        {item.selectedAttributes && item.selectedAttributes.length > 0 && (
+                          <div className="grid grid-cols-3 lg:grid-cols-2 gap-1 mt-1">
+                            {item.selectedAttributes.map((attr: any, idx: number) => (
+                              <span key={idx} className="text-[9px] bg-zinc-100 dark:bg-zinc-800 px-1.5 py-0.5 rounded text-zinc-500">
+                                {attr.name}: {attr.level}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+
+                        <div className="flex items-center gap-2 mt-1">
                           <p className="font-black text-red-600 text-[10px]">
-                            Rp {activePrice.toLocaleString("id-ID")}
+                            {formatCurrency(activePrice)}
                           </p>
                           {hasDiscount && (
                             <p className="text-[9px] text-zinc-400 line-through decoration-zinc-400">
-                              Rp {item.price.toLocaleString("id-ID")}
+                              {formatCurrency(item.price)}
                             </p>
                           )}
                         </div>
                       </div>
                     </div>
                     <p className="font-black text-zinc-900 dark:text-zinc-100 text-xs whitespace-nowrap ml-2">
-                      Rp {(activePrice * item.quantity).toLocaleString("id-ID")}
+                      {formatCurrency(activePrice * item.quantity)}
                     </p>
                   </div>
                   <div className="flex items-center justify-between mt-3">
@@ -313,8 +325,9 @@ CartSummary.SidebarContent = function SidebarContent({
                         variant="ghost"
                         size="icon"
                         className="h-6 w-6"
+                        disabled={item.quantity <= 1}
                         onClick={() =>
-                          onUpdateQuantity(item.key, item.quantity - 1)
+                          onUpdateQuantity?.(item.key, item.quantity - 1)
                         }
                       >
                         <Minus className="h-3 w-3" />
@@ -327,7 +340,7 @@ CartSummary.SidebarContent = function SidebarContent({
                         size="icon"
                         className="h-6 w-6"
                         onClick={() =>
-                          onUpdateQuantity(item.key, item.quantity + 1)
+                          onUpdateQuantity?.(item.key, item.quantity + 1)
                         }
                       >
                         <Plus className="h-3 w-3" />
@@ -337,7 +350,7 @@ CartSummary.SidebarContent = function SidebarContent({
                       variant="ghost"
                       size="icon"
                       className="h-7 w-7 text-zinc-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
-                      onClick={() => onRemoveItem(item.key)}
+                      onClick={() => onRemoveItem?.(item.key)}
                     >
                       <Trash2 className="h-3.5 w-3.5" />
                     </Button>
@@ -353,7 +366,7 @@ CartSummary.SidebarContent = function SidebarContent({
         <div className="grid grid-cols-2 gap-2 mb-2">
           <Button
             variant="outline"
-            className={`h-12 flex flex-col gap-1 border-2 transition-all ${orderType === "dine_in" ? "border-red-600 bg-red-50 text-red-600" : "hover:text-red-500"}`}
+            className={`h-12 flex flex-col shadow-none gap-1 border-2 transition-all ${orderType === "dine_in" ? "border-red-600 bg-red-50 dark:bg-red-950/20 text-red-600" : "hover:text-red-500"}`}
             onClick={() => setOrderType("dine_in")}
           >
             <Utensils className="h-4 w-4" />
@@ -363,7 +376,7 @@ CartSummary.SidebarContent = function SidebarContent({
           </Button>
           <Button
             variant="outline"
-            className={`h-12 flex flex-col gap-1 border-2 transition-all ${orderType === "take_away" ? "border-red-600 bg-red-50 text-red-600" : "hover:text-red-500"}`}
+            className={`h-12 flex flex-col shadow-none gap-1 border-2 transition-all ${orderType === "take_away" ? "border-red-600 bg-red-50 dark:bg-red-950/20 text-red-600" : "hover:text-red-500"}`}
             onClick={() => setOrderType("take_away")}
           >
             <ShoppingBag className="h-4 w-4" />
@@ -373,11 +386,11 @@ CartSummary.SidebarContent = function SidebarContent({
           </Button>
         </div>
 
-        <div className="space-y-1.5 border-b  pb-3">
+        <div className="space-y-1.5 border-b pb-3">
           <div className="flex justify-between text-[10px] font-bold text-zinc-400 dark:text-neutral-300 uppercase">
             <span>{t("cart_label_subtotal")}</span>
             <span className="text-zinc-900 font-black dark:text-neutral-300">
-              Rp {currentSubtotal.toLocaleString("id-ID")}
+              {formatCurrency(subtotal)}
             </span>
           </div>
           {settings?.is_service_active && (
@@ -386,7 +399,7 @@ CartSummary.SidebarContent = function SidebarContent({
                 {t("cart_label_service")} ({settings.service_percent}%)
               </span>
               <span className="text-zinc-900 dark:text-neutral-300">
-                Rp {serviceAmount.toLocaleString("id-ID")}
+                {formatCurrency(serviceAmount)}
               </span>
             </div>
           )}
@@ -396,7 +409,7 @@ CartSummary.SidebarContent = function SidebarContent({
                 {t("cart_label_tax")} ({settings.tax_percent}%)
               </span>
               <span className="text-zinc-900 dark:text-neutral-300">
-                Rp {taxAmount.toLocaleString("id-ID")}
+                {formatCurrency(taxAmount)}
               </span>
             </div>
           )}
@@ -407,16 +420,16 @@ CartSummary.SidebarContent = function SidebarContent({
             {t("cart_label_total_payment")}
           </span>
           <span className="text-3xl font-black text-zinc-900 dark:text-neutral-300 tracking-tighter">
-            Rp {totalAmount.toLocaleString("id-ID")}
+            {formatCurrency(total)}
           </span>
         </div>
 
         <Button
-          className="w-full h-10 bg-red-600 hover:bg-red-700 text-white font-normal rounded-lg flex items-center justify-center gap-3 active:scale-[0.98] transition-transform"
+          className="w-full bg-red-600 hover:bg-red-700 text-white font-medium flex items-center justify-center gap-3 active:scale-[0.98] transition-transform"
           disabled={items.length === 0 || isPending}
           onClick={onConfirmAction}
         >
-          <span className="text-md">
+          <span className="text-sm uppercase tracking-wider">
             {orderType === "dine_in" && !tableIdFromUrl
               ? t("cart_btn_select_table")
               : t("cart_btn_checkout")}

@@ -1,4 +1,4 @@
-import { useTranslation } from "react-i18next"; // 1. Import hook
+import { useTranslation } from "react-i18next";
 import BannerCarousel from "@/components/carousel/BannerCarousel";
 import PageMeta from "@/components/common/PageMeta";
 import { MenuCard, NavigationBar } from "@/components/resto";

@@ -1,22 +1,27 @@
 import { useNavigate, useParams } from "react-router";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, Share2, Printer } from "lucide-react";
+import { ChevronLeft, Share2, Printer, Download } from "lucide-react";
 import { useSettings } from "@/context/SettingsContext";
 import PageMeta from "@/components/common/PageMeta";
 import { apiClient } from "@/lib/apiClient";
 import { useEffect, useState } from "react";
 import InvoiceSkeleton from "@/components/skeleton/InvoiceSkeleton";
 import { formatDate } from "@/utils/dateHelper";
+import { useAuth } from "@/context/AuthContext";
 
 export default function InvoicePage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { settings } = useSettings();
+  const { user } = useAuth();
+
+  const isCashier = user?.role_name === "cashier" || user?.role_id === 5;
 
   const [transactionData, setTransactionData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const isCustomer =
+  const isCustomerSource =
     transactionData?.order_source === "qr_code" ||
+    transactionData?.order_source === "customer_app" ||
     window.location.pathname.includes("customer");
 
   useEffect(() => {
@@ -51,14 +56,14 @@ export default function InvoicePage() {
     : 0;
 
   const handleDone = () => {
-    if (isCustomer) {
+    if (isCashier) {
+      navigate("/cashier");
+    } else if (isCustomerSource) {
       navigate("/");
     } else {
-      navigate("/cashier");
+      navigate("/");
     }
   };
-
-  console.log(transactionData);
 
   return (
     <>
@@ -67,7 +72,7 @@ export default function InvoicePage() {
         description="Official invoice containing order details, payment summary, and transaction information."
       />
       <div className="h-[130vh] bg-slate-100 flex flex-col items-center py-5 font-sans print:bg-white print:py-0">
-        {!isCustomer && (
+        {!isCustomerSource && (
           <Button
             variant="ghost"
             onClick={() => navigate("/cashier")}
@@ -84,7 +89,10 @@ export default function InvoicePage() {
             </div>
           </div>
 
-          <div className="bg-white max-w-lg w-[90%] sm:w-full mx-auto -mt-7 relative overflow-hidden print:shadow-none print:mt-0">
+          <div
+            id="invoice-content"
+            className="bg-white max-w-lg w-[90%] sm:w-full mx-auto -mt-7 relative overflow-hidden print:shadow-none print:mt-0"
+          >
             <div
               className="absolute inset-0 pointer-events-none opacity-[0.04] z-0 print:opacity-[0.05]"
               style={{
@@ -181,6 +189,22 @@ export default function InvoicePage() {
               </div>
 
               <div className="border-t-2 border-slate-100 pt-6 space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span className="font-bold text-muted-foreground uppercase text-[11px]">
+                    Customer
+                  </span>
+                  <span className="font-black text-slate-800 tracking-tight">
+                    {transactionData.user?.username || "-"}
+                  </span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="font-bold text-muted-foreground uppercase text-[11px]">
+                    Cashier
+                  </span>
+                  <span className="font-black text-slate-800 tracking-tight">
+                    {transactionData.cashier?.username || "-"}
+                  </span>
+                </div>
                 <div className="flex justify-between text-[13px] font-bold text-muted-foreground">
                   <span>Subtotal</span>
                   <span>
@@ -236,7 +260,16 @@ export default function InvoicePage() {
             Share to email
           </Button>
 
-          {!isCustomer && (
+          <Button
+            variant="outline"
+            onClick={() => window.print()}
+            className="flex-1 h-10 font-bold text-xs border-slate-200 bg-white hover:bg-slate-50 transition-all active:scale-95"
+          >
+            <Download className="h-4 w-4 mr-2" />
+            Save PDF
+          </Button>
+
+          {!isCustomerSource && (
             <Button
               variant="outline"
               onClick={() => window.print()}

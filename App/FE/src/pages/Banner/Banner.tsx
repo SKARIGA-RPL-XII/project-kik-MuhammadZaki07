@@ -22,7 +22,10 @@ import { Plus, UploadCloud, Image as ImageIcon } from "lucide-react";
 import LoadingSpinner from "@/components/skeleton/LoadingSpinner";
 import { useToast } from "@/context/ToastContext";
 import { ActionGuard } from "@/components/guard/ActionGuard";
-import { useBannersAdmin, useBannerMutations } from "@/hooks/react-query/useBanner";
+import {
+  useBannersAdmin,
+  useBannerMutations,
+} from "@/hooks/react-query/useBanner";
 
 function Banner() {
   const [openDialog, setOpenDialog] = useState(false);
@@ -33,16 +36,16 @@ function Banner() {
   const [isActive, setIsActive] = useState(true);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [bannerPreview, setBannerPreview] = useState<string | null>(null);
-  
+
   const { toast } = useToast();
-  const { data: bannerRes, isLoading: loading, refetch } = useBannersAdmin();
+  const { data: bannerRes, isLoading, refetch } = useBannersAdmin();
   const { createBanner, updateBanner } = useBannerMutations();
 
   const banners = useMemo(() => {
     if (!bannerRes?.data?.data) return [];
     return bannerRes.data.data.map((b: any) => ({
       ...b,
-      banner_image: `${import.meta.env.VITE_STORAGE_URL}/${b.banner_image}`,
+      banner_image: `${b.banner_image}`,
     }));
   }, [bannerRes]);
 
@@ -84,28 +87,33 @@ function Banner() {
 
     const mutation = editingId ? updateBanner : createBanner;
 
-    mutation.mutate(
-      editingId ? { id: editingId, formData: fd } : fd,
-      {
-        onSuccess: () => {
-          toast("success", "Success", editingId ? "Banner updated successfully" : "Banner published successfully");
-          resetForm();
-          setOpenDialog(false);
-        },
-        onError: (err: any) => {
-          if (typeof err === "object") {
-            const validationErrors: Record<string, string> = {};
-            Object.entries(err).forEach(([key, messages]) => {
-              validationErrors[key] = Array.isArray(messages) ? messages[0] : (messages as string);
-            });
-            setErrors(validationErrors);
-            toast("error", "Validation Error", "Please check your input");
-          } else {
-            toast("error", "Failed", err || "Something went wrong");
-          }
+    mutation.mutate(editingId ? { id: editingId, formData: fd } : fd, {
+      onSuccess: () => {
+        toast(
+          "success",
+          "Success",
+          editingId
+            ? "Banner updated successfully"
+            : "Banner published successfully",
+        );
+        resetForm();
+        setOpenDialog(false);
+      },
+      onError: (err: any) => {
+        if (typeof err === "object") {
+          const validationErrors: Record<string, string> = {};
+          Object.entries(err).forEach(([key, messages]) => {
+            validationErrors[key] = Array.isArray(messages)
+              ? messages[0]
+              : (messages as string);
+          });
+          setErrors(validationErrors);
+          toast("error", "Validation Error", "Please check your input");
+        } else {
+          toast("error", "Failed", err || "Something went wrong");
         }
-      }
-    );
+      },
+    });
   };
 
   const handleEdit = (banner: any) => {
@@ -122,12 +130,20 @@ function Banner() {
 
   return (
     <>
-      <PageMeta title="Banner Management" description="Manage high-impact marketing banners" />
+      <PageMeta
+        title="Banner Management"
+        description="Manage high-impact marketing banners"
+      />
       <PageBreadcrumb pageTitle="Marketing Banners" />
 
-      {banners.length > 0 && (
+      {banners && banners.length > 0 && (
         <div className="mb-8 overflow-hidden rounded-2xl shadow-sm border border-gray-100 dark:border-white/5">
-          <BannerCarousel banners={banners} autoLoop loopInterval={4000} />
+          <BannerCarousel
+            banners={banners}
+            autoLoop={true}
+            isLoading={isLoading}
+            loopInterval={5000}
+          />
         </div>
       )}
 
@@ -138,8 +154,12 @@ function Banner() {
       >
         <div className="flex justify-between items-center mb-6">
           <div className="space-y-1">
-            <h4 className="text-lg font-semibold text-gray-900 dark:text-white">Banner List</h4>
-            <p className="text-sm text-gray-500 dark:text-gray-400">Manage your promotional content</p>
+            <h4 className="text-lg font-semibold text-gray-900 dark:text-white">
+              Banner List
+            </h4>
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              Manage your promotional content
+            </p>
           </div>
 
           <ActionGuard module="banner" action="write">
@@ -165,7 +185,9 @@ function Banner() {
                   <AlertDialogTitle className="text-2xl font-bold">
                     {editingId ? "Modify Banner" : "New Promotion Banner"}
                   </AlertDialogTitle>
-                  <p className="text-sm text-gray-500">Enter details below to publish your banner</p>
+                  <p className="text-sm text-gray-500">
+                    Enter details below to publish your banner
+                  </p>
                 </AlertDialogHeader>
 
                 <div className="space-y-5">
@@ -180,7 +202,11 @@ function Banner() {
                     <input {...getInputProps()} />
                     {bannerPreview ? (
                       <div className="relative w-full h-full group">
-                        <img src={bannerPreview} className="w-full h-60 object-cover" alt="Preview" />
+                        <img
+                          src={bannerPreview}
+                          className="w-full h-60 object-cover"
+                          alt="Preview"
+                        />
                         <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                           <div className="bg-white/20 backdrop-blur-md p-3 rounded-full">
                             <UploadCloud className="text-white" />
@@ -192,12 +218,20 @@ function Banner() {
                         <div className="w-16 h-16 bg-red-50 dark:bg-red-500/10 rounded-full flex items-center justify-center mb-4">
                           <ImageIcon className="text-red-500" size={28} />
                         </div>
-                        <p className="text-gray-700 dark:text-gray-300 font-medium">Click to upload or drag and drop</p>
-                        <p className="text-xs text-gray-500 mt-1">SVG, PNG, JPG or WEBP (Max. 2MB)</p>
+                        <p className="text-gray-700 dark:text-gray-300 font-medium">
+                          Click to upload or drag and drop
+                        </p>
+                        <p className="text-xs text-gray-500 mt-1">
+                          SVG, PNG, JPG or WEBP (Max. 2MB)
+                        </p>
                       </div>
                     )}
                   </div>
-                  {errors.banner_image && <p className="text-xs font-medium text-red-500 -mt-2 ml-1">{errors.banner_image}</p>}
+                  {errors.banner_image && (
+                    <p className="text-xs font-medium text-red-500 -mt-2 ml-1">
+                      {errors.banner_image}
+                    </p>
+                  )}
 
                   <div className="space-y-4">
                     <Input
@@ -205,9 +239,15 @@ function Banner() {
                       placeholder="e.g. Summer Special 2026"
                       value={title}
                       error={!!errors.title}
-                      onChange={(e: ChangeEvent<HTMLInputElement>) => setTitle(e.target.value)}
+                      onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                        setTitle(e.target.value)
+                      }
                     />
-                    {errors.title && <p className="text-xs font-medium text-red-500 mt-1 ml-1">{errors.title}</p>}
+                    {errors.title && (
+                      <p className="text-xs font-medium text-red-500 mt-1 ml-1">
+                        {errors.title}
+                      </p>
+                    )}
 
                     <Textarea
                       label="Description"
@@ -215,23 +255,49 @@ function Banner() {
                       value={description}
                       onChange={(val) => setDescription(val)}
                     />
-                    {errors.description && <p className="text-xs font-medium text-red-500 mt-1 ml-1">{errors.description}</p>}
+                    {errors.description && (
+                      <p className="text-xs font-medium text-red-500 mt-1 ml-1">
+                        {errors.description}
+                      </p>
+                    )}
 
                     <div className="p-4 bg-gray-100 dark:bg-neutral-900/50 rounded-xl border border-gray-100 dark:border-white/5">
                       <div className="flex items-center justify-between">
                         <div className="space-y-0.5">
-                          <p className="text-sm font-semibold">Visibility Status</p>
-                          <p className="text-xs text-gray-500">Toggle to show/hide this banner</p>
+                          <p className="text-sm font-semibold">
+                            Visibility Status
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            Toggle to show/hide this banner
+                          </p>
                         </div>
-                        <Switch checked={isActive} onChange={(v) => setIsActive(v)} />
+                        <Switch
+                          checked={isActive}
+                          onChange={(v) => setIsActive(v)}
+                        />
                       </div>
                     </div>
                   </div>
 
                   <AlertDialogFooter className="gap-3 mt-6 flex items-center">
-                    <AlertDialogCancel onClick={resetForm} disabled={submitting}>Discard</AlertDialogCancel>
-                    <Button onClick={handleSubmit} disabled={submitting} className="h-10 min-w-[140px]">
-                      {submitting ? <LoadingSpinner /> : <span>{editingId ? "Save Changes" : "Publish Banner"}</span>}
+                    <AlertDialogCancel
+                      onClick={resetForm}
+                      disabled={submitting}
+                    >
+                      Discard
+                    </AlertDialogCancel>
+                    <Button
+                      onClick={handleSubmit}
+                      disabled={submitting}
+                      className="h-10 min-w-[140px]"
+                    >
+                      {submitting ? (
+                        <LoadingSpinner />
+                      ) : (
+                        <span>
+                          {editingId ? "Save Changes" : "Publish Banner"}
+                        </span>
+                      )}
                     </Button>
                   </AlertDialogFooter>
                 </div>
@@ -240,7 +306,12 @@ function Banner() {
           </ActionGuard>
         </div>
 
-        <BannerTable banners={banners} loading={loading} onRefresh={refetch} onEdit={handleEdit} />
+        <BannerTable
+          banners={banners}
+          loading={isLoading}
+          onRefresh={refetch}
+          onEdit={handleEdit}
+        />
       </ComponentCard>
     </>
   );

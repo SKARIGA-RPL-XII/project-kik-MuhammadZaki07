@@ -3,6 +3,7 @@ import { Plus, PackageX, Crown } from "lucide-react";
 import { useNavigate } from "react-router";
 import { useMemo } from "react";
 import { getMenuItemStatus } from "@/utils/getMenuItemStatus";
+import { formatCurrency } from "@/lib/currency";
 
 interface MenuCardProps {
   item: any;
@@ -21,8 +22,15 @@ export function MenuCard({ item, onOpenDetail }: MenuCardProps) {
   } = useMemo(() => getMenuItemStatus(item), [item]);
 
   const handleCardClick = () => {
-    if (window.location.pathname == "/booking") return;
-    if (!isOutOfStock) navigate(`/menu/${item.id}`);
+    const isDisabledPath = ["/booking", "/cashier"].includes(
+      window.location.pathname,
+    );
+
+    if (isDisabledPath) return;
+
+    if (!isOutOfStock) {
+      navigate(`/menu/${item.id}`);
+    }
   };
 
   return (
@@ -40,7 +48,6 @@ export function MenuCard({ item, onOpenDetail }: MenuCardProps) {
               : "cursor-pointer border-neutral-100 dark:border-neutral-800 hover:border-red-200 dark:hover:border-red-900/50"
         }`}
     >
-      
       {/* {isBestSeller && (
         <>
           <motion.div
@@ -105,11 +112,11 @@ export function MenuCard({ item, onOpenDetail }: MenuCardProps) {
           </div>
         )}
 
-        {!isOutOfStock && hasDiscount && (
+        {!isOutOfStock && hasDiscount && item.discount && (
           <div className="absolute top-0 left-0 z-10">
             <div className="relative bg-gradient-to-br from-rose-500 via-rose-600 to-red-700 text-white px-3 py-1.5 rounded-br-xl font-black text-[10px] uppercase shadow-md">
               <span className="relative z-10">
-                {item.discount?.value_discount}% OFF
+                {item.discount.value_discount}% OFF
               </span>
             </div>
           </div>
@@ -137,13 +144,13 @@ export function MenuCard({ item, onOpenDetail }: MenuCardProps) {
           <div className="flex flex-col">
             {hasDiscount && (
               <span className="text-[9px] text-neutral-400 dark:text-neutral-600 line-through font-bold">
-                Rp {item.price.toLocaleString("id-ID")}
+                {formatCurrency(item.price)}
               </span>
             )}
             <span
               className={`text-[14px] font-black ${isOutOfStock ? "text-neutral-500" : hasDiscount ? "text-rose-600 dark:text-rose-500" : "text-neutral-900 dark:text-neutral-100"}`}
             >
-              Rp {discountedPrice.toLocaleString("id-ID")}
+              {formatCurrency(discountedPrice)}
             </span>
           </div>
 

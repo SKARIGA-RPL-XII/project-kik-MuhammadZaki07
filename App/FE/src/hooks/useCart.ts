@@ -1,3 +1,4 @@
+import { getMenuItemStatus } from "@/utils/getMenuItemStatus";
 import { useCallback, useEffect, useState } from "react";
 
 const CART_KEY = "restaurant_cart";
@@ -42,6 +43,7 @@ export function useCart() {
       return [];
     }
   }, []);
+  
 
   useEffect(() => {
     setCartItems(loadCart());
@@ -87,12 +89,7 @@ const addToCart = useCallback((item: MenuItem, quantity: number) => {
     const key = generateKey(item);
     
     const existingIndex = current.findIndex(ci => ci.key === key);
-
-    // Tambahkan Logic Diskon di sini
-    let finalDiscountPrice: number | null = null;
-    if (item.discount && item.discount.is_active === 1) {
-      finalDiscountPrice = item.price - (item.price * item.discount.value_discount / 100);
-    }
+    const { discountedPrice, hasDiscount } = getMenuItemStatus(item);
 
     if (existingIndex > -1) {
       const updated = [...current];
@@ -106,7 +103,7 @@ const addToCart = useCallback((item: MenuItem, quantity: number) => {
         id: item.id,
         name: item.name,
         price: item.price,
-        discount_price: finalDiscountPrice,
+        discount_price: hasDiscount ? discountedPrice : null,
         image: item.menu_image,
         quantity,
         selectedAttributes: formatAttributes(item),
@@ -114,7 +111,7 @@ const addToCart = useCallback((item: MenuItem, quantity: number) => {
       };
       updateCart([...current, newItem]);
     }
-  }, [loadCart, updateCart]);
+}, [loadCart, updateCart]);
 
   const updateQuantity = useCallback((key: string, quantity: number) => {
     const current = loadCart();
@@ -130,6 +127,7 @@ const addToCart = useCallback((item: MenuItem, quantity: number) => {
   }, [loadCart, updateCart]);
 
   const clearCart = useCallback(() => updateCart([]), [updateCart]);
+  
 
   return { cartItems, addToCart, updateQuantity, removeFromCart, clearCart };
 }

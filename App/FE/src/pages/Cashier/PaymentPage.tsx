@@ -18,6 +18,7 @@ import { useToast } from "@/context/ToastContext";
 import { useCart } from "@/hooks/useCart";
 import { useAuth } from "@/context/AuthContext";
 import { useTranslation } from "react-i18next";
+import { BookingService } from "@/services/booking.service";
 
 declare global {
   interface Window {
@@ -106,6 +107,46 @@ export default function PaymentPage() {
       return;
     }
 
+    if (isBookingOnline) {
+      const bookingPayload = {
+        table_id: orderData.tableId,
+        booking_time: location.state?.booking_time,
+        number_of_people: location.state?.number_of_people,
+        notes: location.state?.notes,
+        items: items.map((item: any) => ({
+          menu_id: item.id,
+          quantity: item.quantity,
+        })),
+        payment_method: paymentMethod,
+        total_amount: total,
+        settings: settings,
+      };
+
+      console.log("[Log] Processing ONLINE BOOKING...", bookingPayload);
+
+      try {
+        const res = await BookingService.createBooking(bookingPayload);
+        if (res.error) throw new Error(res.error);
+
+        const snapToken = res.data?.data?.snap_token;
+
+        // Logic Midtrans Snap tetap sama
+        if (snapToken) {
+          window.snap.pay(snapToken, {
+            onSuccess: () => {
+              clearCart();
+              navigate("/order-success");
+            },
+            // ... onPending, onError dll
+          });
+        }
+        return; // Berhenti di sini, jangan lanjut ke transaksi biasa
+      } catch (err: any) {
+        toast("error", "Booking Failed", err.message);
+        return;
+      }
+    }
+
     const payload = {
       table_id: orderData.tableId,
       order_type: orderData.orderType,
@@ -162,11 +203,9 @@ export default function PaymentPage() {
             if (!isCustomer) clearCashierCart();
             clearCart();
             toast("success", "Success", "Payment Successful");
-            navigate(`/invoice/${transactionResult?.id}`,
-              {
-                state: { transactionData: transactionResult },
-              },
-            );
+            navigate(`/invoice/${transactionResult?.id}`, {
+              state: { transactionData: transactionResult },
+            });
           },
           onPending: () => {
             if (!isCustomer) clearCashierCart();
@@ -184,7 +223,7 @@ export default function PaymentPage() {
   };
 
   return (
- <div className="min-h-screen">
+    <div className="min-h-screen">
       <div className="max-w-6xl mx-auto px-6 py-8">
         <div className="flex items-center justify-between mb-8">
           <Button
@@ -206,7 +245,9 @@ export default function PaymentPage() {
           <div className="lg:col-span-5">
             <div className="bg-white dark:bg-neutral-950 rounded-xl border shadow-sm">
               <div className="p-6 border-b">
-                <h2 className="text-sm text-slate-500">{t("checkout.summary.title")}</h2>
+                <h2 className="text-sm text-slate-500">
+                  {t("checkout.summary.title")}
+                </h2>
                 <h1 className="text-xl font-semibold mt-1">
                   {orderData.tableName}
                 </h1>
@@ -243,7 +284,9 @@ export default function PaymentPage() {
                   <span>{formatCurrency(tax + service)}</span>
                 </div>
                 <div className="flex justify-between font-semibold text-base pt-3 border-t">
-                  <span className="dark:text-zinc-200">{t("checkout.summary.total")}</span>
+                  <span className="dark:text-zinc-200">
+                    {t("checkout.summary.total")}
+                  </span>
                   <span className="text-red-600">{formatCurrency(total)}</span>
                 </div>
               </div>
@@ -254,7 +297,8 @@ export default function PaymentPage() {
             {isRequiredToInputName && (
               <div className="space-y-2">
                 <label className="text-sm font-semibold text-slate-700 dark:text-zinc-300 block">
-                  {t("checkout.form.customer_name")} <span className="text-red-500">*</span>
+                  {t("checkout.form.customer_name")}{" "}
+                  <span className="text-red-500">*</span>
                 </label>
                 <Input
                   type="text"
@@ -281,8 +325,16 @@ export default function PaymentPage() {
               </h3>
               <div className="grid grid-cols-2 gap-4">
                 {[
-                  { id: "cash", label: t("checkout.payment.cash"), icon: Banknote },
-                  { id: "midtrans", label: t("checkout.payment.digital"), icon: CreditCard },
+                  {
+                    id: "cash",
+                    label: t("checkout.payment.cash"),
+                    icon: Banknote,
+                  },
+                  {
+                    id: "midtrans",
+                    label: t("checkout.payment.digital"),
+                    icon: CreditCard,
+                  },
                 ]
                   .filter((method) =>
                     isBookingOnline ? method.id !== "cash" : true,
@@ -300,7 +352,9 @@ export default function PaymentPage() {
                           : "border-slate-200 bg-white dark:bg-neutral-900 hover:bg-slate-50"
                       }`}
                     >
-                      <method.icon className={`h-5 w-5 mb-2 ${paymentMethod === method.id ? "text-red-600" : ""}`} />
+                      <method.icon
+                        className={`h-5 w-5 mb-2 ${paymentMethod === method.id ? "text-red-600" : ""}`}
+                      />
                       <span className="text-sm font-medium dark:text-zinc-200">
                         {method.label}
                       </span>
@@ -347,7 +401,9 @@ export default function PaymentPage() {
                       </div>
                       <div className="p-6 rounded-lg bg-slate-100 dark:bg-neutral-900 flex justify-between items-center">
                         <div>
-                          <span className="text-xs text-slate-500">{t("checkout.payment.change")}</span>
+                          <span className="text-xs text-slate-500">
+                            {t("checkout.payment.change")}
+                          </span>
                           <div className="text-2xl font-semibold text-red-600">
                             {formatCurrency(change)}
                           </div>
@@ -380,7 +436,9 @@ export default function PaymentPage() {
                     <p className="font-semibold text-slate-900 dark:text-zinc-200">
                       {t("checkout.payment.digital_title")}
                     </p>
-                    <p className="text-xs">{t("checkout.payment.digital_desc")}</p>
+                    <p className="text-xs">
+                      {t("checkout.payment.digital_desc")}
+                    </p>
                   </div>
                 </div>
               )}

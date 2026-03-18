@@ -24,6 +24,7 @@ use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\TableController;
 use App\Http\Controllers\TasksController;
 use App\Http\Controllers\TransactionController;
+use App\Http\Controllers\TransactionDetailController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Broadcast;
 use Illuminate\Support\Facades\Route;
@@ -84,14 +85,23 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/admins/export', [AdminController::class, 'export']);
     Route::post('/admins/import-mapping', [AdminController::class, 'importMapping']);
     Route::delete('/user/delete', [UserController::class, 'destroyAccount']);
+    Route::get('/transactions/statistics', [TransactionDetailController::class, 'statistics']);
+     Route::get('/transactions/export', [TransactionController::class, 'exportAll']);
+    Route::get('/transactions/export/{id}', [TransactionController::class, 'exportSingle']);
 
     Route::resource('transactions', TransactionController::class);
     Route::patch('/transactions/{id}/status', [TransactionController::class, 'updateStatus']);
+    Route::patch('/transactions', [TransactionController::class, 'index']);
     Route::post('/cashier/checkout', [TransactionController::class, 'store']);
     Route::get('/transactions/search/{code}', [TransactionController::class, 'searchByCode']);
     Route::get('/dashboard/summary', [DashboardController::class, 'index']);
     Route::get('/user/transactions', [TransactionController::class, 'userTransactions']);
     Route::post('/transactions/{id}/confirm-payment', [TransactionController::class, 'confirmPayment']);
+
+    Route::get('/transaction-details', [TransactionDetailController::class, 'index']);
+    Route::get('/transaction-details/show/{id}', [TransactionDetailController::class, 'show']);
+
+
 
     Route::prefix('bookings')->group(function () {
         Route::get('/', [BookingController::class, 'index']);

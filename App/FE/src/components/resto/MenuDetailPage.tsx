@@ -65,9 +65,7 @@ export default function MenuDetailPage() {
   if (isError || !menu) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-neutral-50 p-6 text-center">
-        <p className="text-neutral-500 mb-4">
-          {t("md_error_title")}
-        </p>
+        <p className="text-neutral-500 mb-4">{t("md_error_title")}</p>
         <button
           onClick={() => nav(-1)}
           className="text-red-600 font-bold underline"
@@ -84,7 +82,7 @@ export default function MenuDetailPage() {
 
   const handleAdd = () => {
     const isAllAttributesSelected = uniqueAttributes.every(
-      (attr: any) => selectedAttributes[attr.id]
+      (attr: any) => selectedAttributes[attr.id],
     );
     if (!isAllAttributesSelected) {
       toast("warning", t("md_toast_warning"), "");
@@ -93,7 +91,7 @@ export default function MenuDetailPage() {
 
     addToCart(
       { ...menu, selectedAttributes, finalPrice: priceData.discountedPrice },
-      quantity
+      quantity,
     );
     nav(-1);
   };
@@ -111,7 +109,10 @@ export default function MenuDetailPage() {
           onClick={() => nav(-1)}
           className="absolute top-4 left-5 bg-white dark:bg-neutral-800 shadow-lg rounded-full p-3 active:scale-90 transition-transform"
         >
-          <ArrowLeft size={18} className="text-neutral-900 dark:text-neutral-300" />
+          <ArrowLeft
+            size={18}
+            className="text-neutral-900 dark:text-neutral-300"
+          />
         </button>
       </div>
 

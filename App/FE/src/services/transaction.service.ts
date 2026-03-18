@@ -59,16 +59,17 @@ export class TransactionService {
     } catch (err: any) {
       return {
         data: null,
-        error:
-          err?.response?.data?.message ||
-          "Failed to fetch transaction",
+        error: err?.response?.data?.message || "Failed to fetch transaction",
       };
     }
   }
 
   static async updateStatus(transactionId: number, status: string) {
     try {
-      const res = await apiClient.patch(`/transactions/${transactionId}/status`, { status });
+      const res = await apiClient.patch(
+        `/transactions/${transactionId}/status`,
+        { status },
+      );
       return {
         data: res.data.data,
         error: null,
@@ -81,14 +82,11 @@ export class TransactionService {
     }
   }
 
-  static async payCash(
-    transactionId: number,
-    payload: CashPaymentPayload
-  ) {
+  static async payCash(transactionId: number, payload: CashPaymentPayload) {
     try {
       const res = await apiClient.put(
         `/transactions/${transactionId}`,
-        payload
+        payload,
       );
       return {
         data: res.data.data,
@@ -101,6 +99,36 @@ export class TransactionService {
           err?.response?.data?.message ||
           err?.response?.data?.errors ||
           "Payment failed",
+      };
+    }
+  }
+
+  static async getDashboardStats() {
+    try {
+      const res = await apiClient.get("/transactions/statistics");
+      return {
+        data: res.data.data,
+        error: null,
+      };
+    } catch (err: any) {
+      return {
+        data: null,
+        error: err?.response?.data?.message || "Failed to fetch statistics",
+      };
+    }
+  }
+
+  static async getTransactionDetail(id: string | number) {
+    try {
+      const res = await apiClient.get(`/transaction-details/show/${id}`);
+      return {
+        data: res.data,
+        error: null,
+      };
+    } catch (err: any) {
+      return {
+        data: null,
+        error: err?.response?.data?.message || "Failed to fetch detail",
       };
     }
   }

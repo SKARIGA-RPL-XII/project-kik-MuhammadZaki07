@@ -16,6 +16,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useState } from "react";
 import { useSettings } from "@/context/SettingsContext";
 import { useNavigate } from "react-router";
+import { formatCurrency } from "@/lib/currency";
+import { calculateOrder } from "@/utils/calculator";
 
 interface CartSidebarProps {
   isOpen: boolean;
@@ -43,6 +45,10 @@ export function CartSidebar({
   const { settings } = useSettings();
   const navigate = useNavigate();
 
+  const { subtotal, serviceAmount, taxAmount, total } = calculateOrder(
+    items,
+    settings,
+  );
 
   const toggleSelectAll = () => {
     if (selectedItems.length === items.length) {
@@ -62,20 +68,6 @@ export function CartSidebar({
     selectedItems.forEach((key) => onRemove(key));
     setSelectedItems([]);
   };
-
-  const currentSubtotal = items.reduce((acc, item) => {
-    const price = item.discount_price || item.price;
-    return acc + Math.round(price * item.quantity);
-  }, 0);
-
-  const taxRate = settings?.is_tax_active ? settings.tax_percent / 100 : 0;
-  const serviceRate = settings?.is_service_active
-    ? settings.service_percent / 100
-    : 0;
-
-  const serviceAmount = Math.round(currentSubtotal * serviceRate);
-  const taxAmount = Math.round(currentSubtotal * taxRate);
-  const totalAmount = currentSubtotal + taxAmount + serviceAmount;
 
   const onConfirmAction = () => {
     if (orderType === "dine_in") {
@@ -134,7 +126,7 @@ export function CartSidebar({
                     >
                       <X className="h-5 w-5" />
                     </Button>
-                    <h2 className="font-semibold text-lg text-zinc-900 dark:text-zinc-100 ">
+                    <h2 className="font-semibold text-lg text-zinc-900 dark:text-zinc-100">
                       Order Summary
                     </h2>
                   </div>
@@ -151,9 +143,9 @@ export function CartSidebar({
                       variant="ghost"
                       size="icon"
                       onClick={onClear}
-                      className="text-zinc-400 dark:text-white bg-red-500 h-9 w-9"
+                      className="text-white bg-red-500 h-9 w-9"
                     >
-                      <Trash2 className="h-4 w-4" />
+                      <Trash2 className="h-4 w-4" color="white" />
                     </Button>
                   )}
                 </div>
@@ -186,29 +178,35 @@ export function CartSidebar({
                 <div className="p-3 space-y-2">
                   <AnimatePresence>
                     {items.map((item) => {
-                      const activePrice = item.discount_price || item.price;
+                      const isSelected = selectedItems.includes(item.key);
                       const hasDiscount =
-                        !!item.discount_price &&
-                        item.discount_price < item.price;
+                        item.discount_price !== null && item.discount_price > 0;
+                      const displayPrice = hasDiscount
+                        ? item.discount_price
+                        : item.price;
 
                       return (
                         <motion.div
                           layout
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, scale: 0.95 }}
                           key={item.key}
-                          className={`group relative p-3 rounded-sm border transition-all flex gap-3 
-                            ${selectedItems.includes(item.key) ? "bg-white dark:bg-zinc-900 border-red-500" : "bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800"}`}
+                          className={`group relative p-3 rounded-lg border transition-all flex gap-3 
+                              ${isSelected ? "bg-red-50/30 dark:bg-red-900/10 border-red-500" : "bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800"}`}
                         >
                           <div className="pt-0.5">
                             <Checkbox
-                              checked={selectedItems.includes(item.key)}
+                              checked={isSelected}
                               onCheckedChange={() => toggleItem(item.key)}
-                              className="border-zinc-300 dark:border-zinc-600 data-[state=checked]:bg-red-500"
+                              className="border-zinc-300 dark:border-zinc-600 data-[state=checked]:bg-red-500 data-[state=checked]:border-red-500"
                             />
                           </div>
+
                           <div className="flex-1 min-w-0">
                             <div className="flex justify-between items-start">
                               <div className="flex gap-3 min-w-0">
-                                <div className="h-10 w-10 rounded-lg bg-zinc-100 dark:bg-zinc-800 overflow-hidden shrink-0 border border-zinc-200 dark:border-zinc-700">
+                                <div className="h-12 w-12 rounded-lg bg-zinc-100 dark:bg-zinc-800 overflow-hidden shrink-0 border border-zinc-200 dark:border-zinc-700">
                                   <img
                                     src={`${import.meta.env.VITE_STORAGE_URL}/${item.image}`}
                                     className="h-full w-full object-cover"
@@ -216,15 +214,32 @@ export function CartSidebar({
                                   />
                                 </div>
                                 <div className="truncate">
-                                  <h4 className="font-bold text-zinc-900 dark:text-zinc-100 text-xs truncate uppercase tracking-tight">
+                                  <h4 className="font-bold text-zinc-900 dark:text-zinc-100 text-[13px] truncate uppercase tracking-tight">
                                     {item.name}
                                   </h4>
-                                  <div className="flex items-center gap-2">
-                                    <p className="font-black text-red-600 dark:text-red-400 text-[10px]">
-                                      Rp {activePrice.toLocaleString()}
+
+                                  {item.selectedAttributes?.length > 0 && (
+                                    <div className="flex flex-wrap gap-1 mt-1">
+                                      {item.selectedAttributes.map(
+                                        (attr: any, idx: number) => (
+                                          <span
+                                            key={idx}
+                                            className="text-[9px] bg-zinc-100 dark:bg-zinc-800 px-1.5 py-0.5 rounded-sm text-zinc-500 border border-zinc-200 dark:border-zinc-700"
+                                          >
+                                            {attr.name ? `${attr.name}: ` : ""}
+                                            {attr.level || attr.value}
+                                          </span>
+                                        ),
+                                      )}
+                                    </div>
+                                  )}
+
+                                  <div className="flex items-center gap-2 mt-1">
+                                    <p className="font-black text-red-600 dark:text-red-400 text-xs">
+                                      Rp {displayPrice.toLocaleString()}
                                     </p>
                                     {hasDiscount && (
-                                      <span className="text-[9px] text-zinc-400 line-through decoration-zinc-500">
+                                      <span className="text-[10px] text-zinc-400 line-through">
                                         Rp {item.price.toLocaleString()}
                                       </span>
                                     )}
@@ -233,30 +248,34 @@ export function CartSidebar({
                               </div>
                               <p className="font-black text-zinc-900 dark:text-zinc-100 text-xs whitespace-nowrap ml-2">
                                 Rp{" "}
-                                {Math.round(
-                                  activePrice * item.quantity,
+                                {(
+                                  Math.round(displayPrice) * item.quantity
                                 ).toLocaleString()}
                               </p>
                             </div>
+
                             <div className="flex items-center justify-between mt-3">
                               <div className="flex items-center gap-1 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg p-0.5">
                                 <Button
                                   variant="ghost"
                                   size="icon"
-                                  className="h-6 w-6"
+                                  className="h-7 w-7 hover:bg-white dark:hover:bg-zinc-700"
                                   onClick={() =>
-                                    onUpdateQty(item.key, item.quantity - 1)
+                                    onUpdateQty(
+                                      item.key,
+                                      Math.max(1, item.quantity - 1),
+                                    )
                                   }
                                 >
                                   <Minus className="h-3 w-3" />
                                 </Button>
-                                <span className="w-6 text-center font-black text-[10px] dark:text-zinc-200">
+                                <span className="w-8 text-center font-black text-xs dark:text-zinc-200">
                                   {item.quantity}
                                 </span>
                                 <Button
                                   variant="ghost"
                                   size="icon"
-                                  className="h-6 w-6"
+                                  className="h-7 w-7 hover:bg-white dark:hover:bg-zinc-700"
                                   onClick={() =>
                                     onUpdateQty(item.key, item.quantity + 1)
                                   }
@@ -267,10 +286,10 @@ export function CartSidebar({
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                className="h-7 w-7 text-zinc-300 dark:text-zinc-600 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                                className="h-8 w-8 text-zinc-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors"
                                 onClick={() => onRemove(item.key)}
                               >
-                                <Trash2 className="h-3.5 w-3.5" />
+                                <Trash2 className="h-4 w-4" />
                               </Button>
                             </div>
                           </div>
@@ -285,7 +304,7 @@ export function CartSidebar({
                 <div className="grid grid-cols-2 gap-2 mb-2">
                   <Button
                     variant="outline"
-                    className={`h-12 flex hover:text-red-500 hover:bg-red-100/50 flex-col gap-1 items-center justify-center border-2 transition-all ${orderType === "dine_in" ? "border-red-600 bg-red-50 text-red-600" : "border-zinc-100"}`}
+                    className={`h-12 flex flex-col gap-1 items-center justify-center border-2 transition-all ${orderType === "dine_in" ? "border-red-600 bg-red-50 text-red-600" : "border-zinc-100"}`}
                     onClick={() => setOrderType("dine_in")}
                   >
                     <Utensils className="h-4 w-4" />
@@ -293,7 +312,7 @@ export function CartSidebar({
                   </Button>
                   <Button
                     variant="outline"
-                    className={`h-12 flex hover:text-red-500 hover:bg-red-100/50 flex-col gap-1 items-center justify-center border-2 transition-all ${orderType === "take_away" ? "border-red-600 bg-red-50 text-red-600" : "border-zinc-100"}`}
+                    className={`h-12 flex flex-col gap-1 items-center justify-center border-2 transition-all ${orderType === "take_away" ? "border-red-600 bg-red-50 text-red-600" : "border-zinc-100"}`}
                     onClick={() => setOrderType("take_away")}
                   >
                     <ShoppingBag className="h-4 w-4" />
@@ -305,14 +324,14 @@ export function CartSidebar({
                   <div className="flex justify-between text-xs font-semibold text-zinc-400 uppercase">
                     <span>Subtotal</span>
                     <span className="text-zinc-900 dark:text-zinc-200 text-xs font-black">
-                      Rp {currentSubtotal.toLocaleString()}
+                      {formatCurrency(subtotal)}
                     </span>
                   </div>
                   {settings?.is_service_active && (
                     <div className="flex justify-between text-xs font-semibold text-zinc-400 uppercase">
                       <span>Service ({settings.service_percent}%)</span>
                       <span className="text-zinc-900 dark:text-zinc-200 text-xs font-black">
-                        Rp {serviceAmount.toLocaleString()}
+                        {formatCurrency(serviceAmount)}
                       </span>
                     </div>
                   )}
@@ -320,7 +339,7 @@ export function CartSidebar({
                     <div className="flex justify-between text-xs font-semibold text-zinc-400 uppercase">
                       <span>Tax ({settings.tax_percent}%)</span>
                       <span className="text-zinc-900 dark:text-zinc-200 text-xs font-black">
-                        Rp {taxAmount.toLocaleString()}
+                        {formatCurrency(taxAmount)}
                       </span>
                     </div>
                   )}
@@ -331,12 +350,12 @@ export function CartSidebar({
                     Total Amount
                   </span>
                   <span className="text-3xl font-black text-zinc-900 dark:text-zinc-50 tracking-tighter">
-                    Rp {totalAmount.toLocaleString()}
+                    {formatCurrency(total)}
                   </span>
                 </div>
 
                 <Button
-                  className="w-full h-12 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg flex items-center justify-center gap-3 group"
+                  className="w-full bg-red-600 hover:bg-red-700 text-white font-medium flex items-center justify-center gap-3 group"
                   disabled={items.length === 0 || isPending}
                   onClick={onConfirmAction}
                 >

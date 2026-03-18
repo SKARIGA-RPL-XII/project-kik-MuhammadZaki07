@@ -12,6 +12,11 @@ import { PermissionMiddleware } from "./middleware/PermissionMiddleware";
 import AppLayout from "./layout/AppLayout";
 import CustomerLayout from "./layout/CustomerLayout";
 import BookingLayout from "./pages/Booked/BookingLayout";
+import BookingPage from "./pages/bookings/BookingPage";
+import BookingFormPage from "./pages/bookings/BookingFormPage";
+import TransactionDetailPage from "./pages/Customer/TransactionDetailPage";
+import TransactionPage from "./pages/transactions/TransactionPage";
+import TransactionDetail from "./pages/transactions/TransactionDetailPage";
 
 const SignIn = lazy(() => import("./pages/AuthPages/SignIn"));
 const SignUp = lazy(() => import("./pages/AuthPages/SignUp"));
@@ -59,7 +64,9 @@ const CashierPage = lazy(() => import("./pages/Cashier/Cashier"));
 const TablePage = lazy(() => import("./pages/Cashier/TablePage"));
 const PaymentPage = lazy(() => import("./pages/Cashier/PaymentPage"));
 const InvoicePage = lazy(() => import("./pages/Cashier/InvoicePage"));
-const InvoiceCashPage = lazy(() => import("./components/resto/InvoicePage"));
+const InvoiceCashPage = lazy(
+  () => import("./components/resto/InvoiceCashPage"),
+);
 const CustomerProfilePage = lazy(() => import("./pages/Customer/ProfilePage"));
 
 const PageLoader = () => (
@@ -239,6 +246,24 @@ export default function App() {
                 }
               />
             </Route>
+
+            <Route path="/operations/reservation" element={<BookingPage />} />
+
+            <Route
+              path="/operations/reservation/create"
+              element={<BookingFormPage />}
+            />
+
+            <Route
+              path="/operations/reservation/edit/:id"
+              element={<BookingFormPage />}
+            />
+
+            <Route path="/reports/transactions" element={<TransactionPage />} />
+            <Route
+              path="/reports/transactions/:id"
+              element={<TransactionDetail />}
+            />
           </Route>
 
           <Route path="/auth" element={<GuestMiddleware />}>
@@ -274,21 +299,21 @@ export default function App() {
                 </AuthMiddleware>
               }
             />
-
-            <Route
-              path="/tables-customer"
-              element={
-                <AuthMiddleware>
-                  <TablePage />
-                </AuthMiddleware>
-              }
-            />
           </Route>
           <Route
             path="/payment-customer"
             element={
               <AuthMiddleware>
-              <PaymentPage />
+                <PaymentPage />
+              </AuthMiddleware>
+            }
+          />
+
+          <Route
+            path="/tables-customer"
+            element={
+              <AuthMiddleware>
+                <TablePage />
               </AuthMiddleware>
             }
           />

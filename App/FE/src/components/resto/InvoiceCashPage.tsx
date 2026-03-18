@@ -3,29 +3,45 @@ import Barcode from "react-barcode";
 import { useLocation, useNavigate } from "react-router";
 import { Home, Printer, Clock, Info, Phone } from "lucide-react";
 import { useSettings } from "@/context/SettingsContext";
+import { calculateOrder } from "@/utils/calculator";
+import { formatCurrency } from "@/lib/currency";
 
 const InvoiceCashPage = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { order } = location.state || {};
   const { settings } = useSettings();
-  const [isPaid, setIsPaid] = useState(false);  
+  const [isPaid, setIsPaid] = useState(false);
 
   useEffect(() => {
     if (!order?.id) return;
 
-    const channel = `transactions.${order.id}`;
-    
-    window.Echo.channel(channel)
-      .listen(".payment.confirmed", (e: any) => {
+    const channelName = `transactions.${order.id}`;
+    const channel = window.Echo.channel(channelName);
+
+    channel.listen(".payment.confirmed", (payload: any) => {
+      let data;
+      try {
+        data = typeof payload === "string" ? JSON.parse(payload) : payload;
+
+        if (data.transaction) {
+          data = data.transaction;
+        }
+      } catch (e) {
+        console.error("Gagal parse data:", e);
+        return;
+      }
+
+      if (data.status === "paid" || data.status === "completed") {
         setIsPaid(true);
         setTimeout(() => {
           navigate(`/invoice/${order.id}`);
         }, 2000);
-      });
+      }
+    });
 
     return () => {
-      window.Echo.leaveChannel(channel);
+      window.Echo.leaveChannel(channelName);
     };
   }, [order?.id, navigate]);
 
@@ -37,23 +53,36 @@ const InvoiceCashPage = () => {
     );
   }
 
-  const currency = settings.currency_symbol || "Rp";
-  const subtotal = order.total_amount;
-  const tax = settings.is_tax_active === 1 ? (subtotal * settings.tax_percent) / 100 : 0;
-  const service = settings.is_service_active === 1 ? (subtotal * settings.service_percent) / 100 : 0;
-  const total = subtotal + tax + service;
-  
+  const { subtotal, taxAmount, serviceAmount, total } = calculateOrder(
+    order.details.map((item: any) => ({
+      price: item.price,
+      discount_price: null,
+      quantity: item.menu_qty,
+    })),
+    settings,
+  );
+
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-neutral-900 flex justify-center">
       {isPaid && (
         <div className="fixed inset-0 z-[100] bg-white/90 backdrop-blur-sm flex flex-col items-center justify-center animate-in fade-in duration-500">
-           <div className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mb-4 animate-bounce">
-              <svg className="w-8 h-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={4} d="M5 13l4 4L19 7" />
-              </svg>
-           </div>
-           <h2 className="text-xl font-bold">Payment Confirmed!</h2>
-           <p className="text-zinc-500 text-sm">Redirecting to receipt...</p>
+          <div className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mb-4 animate-bounce">
+            <svg
+              className="w-8 h-8 text-white"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={4}
+                d="M5 13l4 4L19 7"
+              />
+            </svg>
+          </div>
+          <h2 className="text-xl font-bold">Payment Confirmed!</h2>
+          <p className="text-zinc-500 text-sm">Redirecting to receipt...</p>
         </div>
       )}
 
@@ -104,51 +133,47 @@ const InvoiceCashPage = () => {
                 <div>
                   <p className="text-sm font-medium">{item.menu?.name}</p>
                   <p className="text-xs text-zinc-500 dark:text-neutral-200">
-                    {item.menu_qty} × {currency} {item.price.toLocaleString()}
+                    {item.menu_qty} × {formatCurrency(item.price)}
                   </p>
                   {item.attributes?.length > 0 && (
-                    <p className="text-xs text-zinc-400 italic dark:text-neutral-200">
-                      {item.attributes.join(", ")}
+                    <p className="text-[10px] text-zinc-400 italic dark:text-neutral-400 leading-tight">
+                      {item.attributes
+                        .map((attr: any) => `${attr.name}: ${attr.level}`)
+                        .join(", ")}
                     </p>
                   )}
                 </div>
                 <p className="text-sm font-semibold">
-                  {currency} {item.subtotal.toLocaleString()}
+                  {formatCurrency(item.subtotal)}
                 </p>
               </div>
             ))}
           </div>
 
           <div className="border-t pt-4 space-y-2">
-            <div className="flex justify-between text-sm text-zinc-600 lowercase">
+            <div className="flex justify-between text-sm text-zinc-600">
               <span>subtotal</span>
-              <span>
-                {currency} {subtotal.toLocaleString()}
-              </span>
+              <span>{formatCurrency(subtotal)}</span>
             </div>
 
             {settings.is_tax_active === 1 && (
-              <div className="flex justify-between text-sm text-zinc-600 lowercase">
+              <div className="flex justify-between text-sm text-zinc-600">
                 <span>tax ({settings.tax_percent}%)</span>
-                <span>
-                  {currency} {tax.toLocaleString()}
-                </span>
+                <span>{formatCurrency(taxAmount)}</span>
               </div>
             )}
 
             {settings.is_service_active === 1 && (
-              <div className="flex justify-between text-sm text-zinc-600 lowercase">
+              <div className="flex justify-between text-sm text-zinc-600">
                 <span>service ({settings.service_percent}%)</span>
-                <span>
-                  {currency} {service.toLocaleString()}
-                </span>
+                <span>{formatCurrency(serviceAmount)}</span>
               </div>
             )}
 
             <div className="flex justify-between items-center pt-2 border-t border-dashed">
               <span className="font-semibold">Total</span>
               <span className="text-xl font-bold text-red-600">
-                {currency} {total.toLocaleString()}
+                {formatCurrency(total)}
               </span>
             </div>
           </div>
@@ -158,8 +183,9 @@ const InvoiceCashPage = () => {
               <div className="w-full [&>svg]:w-full [&>svg]:h-auto px-10">
                 <Barcode
                   value={order.transaction_code}
-                  width={1.2}
-                  height={50}
+                  width={2}
+                  height={60}
+                  format="CODE128"
                   displayValue={false}
                   margin={0}
                 />
@@ -170,13 +196,16 @@ const InvoiceCashPage = () => {
               </p>
             </div>
 
-            <p className="text-xs text-zinc-500 mt-3 dark:text-neutral-200 lowercase">Order ID #{order.id}</p>
+            <p className="text-xs text-zinc-500 mt-3 dark:text-neutral-200">
+              Order ID #{order.id}
+            </p>
           </div>
 
           <div className="flex gap-3 text-zinc-500 text-xs dark:text-neutral-200">
             <Info size={16} className="text-red-500 flex-shrink-0" />
             <p>
-              Please present this barcode to the cashier to complete your payment.
+              Please present this barcode to the cashier to complete your
+              payment.
             </p>
           </div>
         </div>

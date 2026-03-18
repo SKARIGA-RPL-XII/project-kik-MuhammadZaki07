@@ -17,3 +17,8 @@ Broadcast::channel('notifications.role.{roleId}', function ($user, $roleId) {
 Broadcast::channel('notifications.global', function () {
     return true;
 });
+
+
+// Broadcast::channel('transactions.{id}', function ($user, $id) {
+//     return true;
+// });
