@@ -37,7 +37,6 @@ const BookingPage = () => {
 
   return (
     <div className="p-6 min-h-screen bg-white dark:bg-neutral-950 text-neutral-800 dark:text-neutral-200 transition-colors">
-      {/* Header & Stats */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Booking Management</h1>
@@ -52,7 +51,6 @@ const BookingPage = () => {
         </button>
       </div>
 
-      {/* Mini Stats Card - No Shadow, Border Only */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         {[
           { label: "Total Bookings", value: data?.data?.length || 0, icon: <CalendarIcon size={20}/> },
@@ -71,7 +69,6 @@ const BookingPage = () => {
         ))}
       </div>
 
-      {/* Table Section */}
       <div className="border border-neutral-100 dark:border-neutral-800 rounded-2xl overflow-hidden bg-white dark:bg-neutral-950">
         <div className="p-4 border-b border-neutral-100 dark:border-neutral-800 flex flex-col md:flex-row gap-4 justify-between">
           <div className="relative w-full md:w-80">

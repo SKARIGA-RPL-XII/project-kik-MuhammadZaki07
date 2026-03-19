@@ -12,17 +12,27 @@ class Booking extends Model
 {
     use HasFactory , Notifiable,LogsActivity;
 
-    protected static function booted()
-    {
-        static::created(function ($booking) {
-            $cashiers = User::where('role', 'cashier')->get();
-            $message = "Booking Baru! Meja {$booking->table->table_number} oleh {$booking->user->username}";
+ protected static function booted()
+{
+    static::created(function ($booking) {
+        $cashiers = User::where('role_id', 5)->get();
 
-            foreach ($cashiers as $cashier) {
-                $cashier->notify(new GeneralNotification($message, 'booking', '/cashier/bookings'));
-            }
-        });
-    }
+        $booking->load(['table', 'user']);
+
+        $tableName = $booking->table->table_number ?? "Meja #".$booking->table_id;
+        $customerName = $booking->user->username ?? 'Pelanggan';
+
+        $message = "Booking Baru! {$tableName} oleh {$customerName}";
+
+        foreach ($cashiers as $cashier) {
+            $cashier->notify(new GeneralNotification(
+                $message,
+                'booking',
+                '/cashier/bookings'
+            ));
+        }
+    });
+}
 
     protected $fillable = [
         'user_id',

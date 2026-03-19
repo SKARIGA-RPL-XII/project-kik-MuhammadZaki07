@@ -122,7 +122,7 @@ export default function PaymentPage() {
         settings: settings,
       };
 
-      console.log("[Log] Processing ONLINE BOOKING...", bookingPayload);
+      // console.log("[Log] Processing ONLINE BOOKING...", bookingPayload);
 
       try {
         const res = await BookingService.createBooking(bookingPayload);
@@ -130,17 +130,15 @@ export default function PaymentPage() {
 
         const snapToken = res.data?.data?.snap_token;
 
-        // Logic Midtrans Snap tetap sama
         if (snapToken) {
           window.snap.pay(snapToken, {
             onSuccess: () => {
               clearCart();
               navigate("/order-success");
             },
-            // ... onPending, onError dll
           });
         }
-        return; // Berhenti di sini, jangan lanjut ke transaksi biasa
+        return;
       } catch (err: any) {
         toast("error", "Booking Failed", err.message);
         return;

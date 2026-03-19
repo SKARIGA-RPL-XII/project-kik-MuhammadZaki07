@@ -5,6 +5,7 @@ import Button from "../ui/button/Button";
 import { useTranslation } from "react-i18next";
 import { Badge } from "../ui/badge";
 import { getMenuItemStatus } from "@/utils/getMenuItemStatus";
+import { formatCurrency } from "@/lib/currency";
 
 export function MenuDetailView({ menu, isOpen, onClose, onAddToCart }: any) {
   const { t } = useTranslation();
@@ -13,15 +14,13 @@ export function MenuDetailView({ menu, isOpen, onClose, onAddToCart }: any) {
     Record<number, number>
   >({});
 
-  // LOGIC: Menggunakan helper tanpa mengubah UI
-  const { 
-    hasDiscount, 
-    discountedPrice: activePrice, 
-    imagePath: imageUrl 
+  const {
+    hasDiscount,
+    discountedPrice: activePrice,
+    imagePath: imageUrl,
   } = useMemo(() => getMenuItemStatus(menu || {}), [menu]);
 
   const discountValue = menu?.discount?.value_discount || 0;
-  const discountAmount = (menu?.price * discountValue) / 100;
 
   const uniqueAttributes = useMemo(() => {
     if (!menu?.attributes) return [];
@@ -64,7 +63,7 @@ export function MenuDetailView({ menu, isOpen, onClose, onAddToCart }: any) {
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+        <div className="fixed inset-0 h-screen z-[200] flex items-center justify-center p-4">
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -77,7 +76,7 @@ export function MenuDetailView({ menu, isOpen, onClose, onAddToCart }: any) {
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            className="relative w-full max-w-[1000px] bg-white dark:bg-neutral-900 rounded-xl overflow-hidden flex flex-col md:flex-row h-auto max-h-[90vh] shadow-[0_32px_64px_-12px_rgba(0,0,0,0.3)]"
+            className="relative w-full max-w-[1000px] bg-white dark:bg-neutral-900 rounded-xl overflow-hidden flex flex-col md:flex-row h-[60vh] shadow-[0_32px_64px_-12px_rgba(0,0,0,0.3)]"
           >
             <div className="relative w-full md:w-[48%] h-72 md:h-auto bg-neutral-100 dark:bg-neutral-900 overflow-hidden">
               <img
@@ -103,17 +102,17 @@ export function MenuDetailView({ menu, isOpen, onClose, onAddToCart }: any) {
             </div>
 
             <div className="flex-1 flex flex-col min-w-0 bg-white dark:bg-neutral-900">
-              <div className="px-5 pt-5 flex justify-between items-start">
+              <div className="px-5 py-5 flex justify-between items-start">
                 <div className="space-y-2">
-                  <h2 className="text-4xl font-bold text-neutral-900 dark:text-neutral-300 leading-none">
-                    {menu.name}
-                  </h2>
                   <div className="flex items-center gap-2 text-red-600">
                     <div className="">
                       <Badge variant={"outline"}>{menu.category?.name}</Badge>
                     </div>
                     <div className="h-1 w-20 bg-red-600 rounded-full" />
                   </div>
+                  <h2 className="text-4xl font-bold text-neutral-900 dark:text-neutral-300 leading-none">
+                    {menu.name}
+                  </h2>
                 </div>
 
                 <button
@@ -124,12 +123,12 @@ export function MenuDetailView({ menu, isOpen, onClose, onAddToCart }: any) {
                 </button>
               </div>
 
-              <div className="px-5 pt-3 overflow-y-auto custom-scrollbar flex-1">
+              <div className="px-5 overflow-y-auto custom-scrollbar flex-1">
                 <p className="text-neutral-500 dark:text-neutral-300 text-sm leading-relaxed mb-10 font-normal max-w-md">
                   {menu.description}
                 </p>
 
-                <div className="space-y-10 mb-10">
+                <div className="space-y-10 mb-5">
                   {uniqueAttributes.map((attr: any) => (
                     <div key={attr.id} className="space-y-2">
                       <div className="flex items-center gap-3">
@@ -168,85 +167,74 @@ export function MenuDetailView({ menu, isOpen, onClose, onAddToCart }: any) {
                 </div>
               </div>
 
-              <div className="px-5 py-4 border-t bg-white dark:bg-neutral-900">
-                <div className="flex items-end justify-between mb-8">
-                  <div className="space-y-1">
-                    <span className="text-sm font-medium text-neutral-400 dark:text-neutral-300 block">
-                      {t("mv_subtotal")}
-                    </span>
-                    <div className="flex items-center gap-3">
-                      <p className="text-4xl font-bold text-neutral-900 dark:text-neutral-300 tracking-tighter">
-                        Rp {(activePrice * quantity).toLocaleString("id-ID")}
+              <div className="px-5 py-3.5 border-t bg-white dark:bg-neutral-900 shadow-lg">
+                <div className="flex items-center justify-between gap-4">
+                  <div className="flex flex-col min-w-0">
+                    <div className="flex items-center gap-2">
+                      <p className="text-2xl font-bold text-neutral-900 dark:text-white tracking-tighter leading-none">
+                        {formatCurrency(activePrice * quantity)}
                       </p>
                       {hasDiscount && (
-                        <div className="flex flex-col">
-                          <span className="text-sm text-neutral-300 line-through font-bold decoration-red-400">
-                            Rp {(menu.price * quantity).toLocaleString("id-ID")}
-                          </span>
-                          <span className="flex items-center gap-1 text-[10px] font-medium text-red-600 bg-red-50 px-2 py-0.5 rounded-lg border border-red-100">
-                            {t("mv_save_amount", {
-                              amount: (
-                                ((menu.price - activePrice) * quantity)
-                              ).toLocaleString("id-ID"),
-                            })}
-                          </span>
-                        </div>
+                        <span className="text-[9px] font-medium text-white bg-red-600 px-1.5 py-0.5 rounded-md animate-bounce-short">
+                          PROMO
+                        </span>
                       )}
+                    </div>
+
+                    <div className="flex items-center gap-1.5 mt-2">
+                      <div className="w-1.5 h-1.5 rounded-full bg-yellow-300 animate-pulse" />
+                      <span className="text-[10px] font-normal text-neutral-400 dark:text-neutral-500 italic leading-none">
+                        {quantity > 1
+                          ? `Harga update otomatis (${quantity} item)`
+                          : "Belum termasuk pajak & layanan"}
+                      </span>
                     </div>
                   </div>
 
-                  <div className="flex items-center bg-neutral-100 dark:bg-neutral-800 rounded-sm p-1">
-                    <button
-                      onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                      className="w-6 h-6 flex items-center justify-center rounded bg-white dark:bg-neutral-500 dark:text-neutral-300 text-neutral-400 hover:text-red-600 transition-all active:scale-90"
+                  <div className="flex items-center gap-3">
+                    <div className="flex items-center bg-neutral-100 dark:bg-neutral-800 rounded-sm h-10 p-1 shrink-0">
+                      <button
+                        onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                        className="w-7 h-7 flex items-center justify-center rounded-sm bg-white dark:bg-neutral-700 shadow-sm text-neutral-500 hover:text-red-600 active:scale-90 transition-all"
+                      >
+                        <Minus size={14} />
+                      </button>
+                      <span className="px-3 text-sm font-bold text-neutral-900 dark:text-neutral-200 tabular-nums">
+                        {quantity}
+                      </span>
+                      <button
+                        onClick={() => setQuantity(quantity + 1)}
+                        className="w-7 h-7 flex items-center justify-center rounded-sm bg-white dark:bg-neutral-700 shadow-sm text-neutral-500 hover:text-red-600 active:scale-90 transition-all"
+                      >
+                        <Plus size={14} />
+                      </button>
+                    </div>
+
+                    <Button
+                      className={`text-sm rounded-sm h-10 flex font-medium items-center gap-2 group transition-all duration-300 ${
+                        isAllAttributesSelected
+                          ? "bg-red-600 hover:bg-red-700 text-white"
+                          : "bg-neutral-100 text-neutral-400 cursor-not-allowed"
+                      }`}
+                      onClick={handleAdd}
+                      disabled={!isAllAttributesSelected}
                     >
-                      <Minus size={18} />
-                    </button>
-                    <span className="px-5 text-lg font-medium text-neutral-900 dark:text-neutral-300 min-w-[50px] text-center">
-                      {quantity}
-                    </span>
-                    <button
-                      onClick={() => setQuantity(quantity + 1)}
-                      className="w-6 h-6 flex items-center justify-center rounded bg-white dark:bg-neutral-500 dark:text-neutral-300 text-neutral-400 hover:text-red-600 transition-all active:scale-90"
-                    >
-                      <Plus size={18} />
-                    </button>
+                      <ShoppingBag
+                        size={18}
+                        className={
+                          isAllAttributesSelected
+                            ? "group-hover:rotate-12 transition-transform"
+                            : ""
+                        }
+                      />
+                      <span>
+                        {isAllAttributesSelected
+                          ? t("mv_btn_confirm")
+                          : "Pilih Opsi"}
+                      </span>
+                    </Button>
                   </div>
                 </div>
-
-                <Button
-                  className={`w-full font-medium text-md flex items-center justify-center gap-4 group transition-all duration-500 ${
-                    isAllAttributesSelected
-                      ? "bg-neutral-900 hover:bg-red-600 text-white"
-                      : "bg-neutral-100 text-neutral-400 cursor-not-allowed"
-                  }`}
-                  onClick={handleAdd}
-                  disabled={!isAllAttributesSelected}
-                >
-                  <ShoppingBag
-                    size={20}
-                    className={
-                      isAllAttributesSelected
-                        ? "group-hover:rotate-12 transition-transform"
-                        : ""
-                    }
-                  />
-                  <span>
-                    {isAllAttributesSelected
-                      ? t("mv_btn_confirm")
-                      : `${t("mv_select_prefix")} ${
-                          uniqueAttributes.find(
-                            (a: any) => !selectedAttributes[a.id],
-                          )?.name || t("mv_attr_placeholder")
-                        }`}
-                  </span>
-                  {isAllAttributesSelected && (
-                    <ChevronRight
-                      size={20}
-                      className="opacity-0 group-hover:opacity-100 group-hover:translate-x-2 transition-all"
-                    />
-                  )}
-                </Button>
               </div>
             </div>
           </motion.div>

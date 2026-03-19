@@ -16,7 +16,7 @@ import {
   RotateCcw,
 } from "lucide-react";
 import { Button } from "../ui/button";
-import { useNavigate } from "react-router";
+import { useLocation, useNavigate } from "react-router";
 
 const iconMap: Record<string, any> = {
   all: LayoutGrid,
@@ -51,6 +51,8 @@ export function NavigationBar({
     selectedSorts,
   });
   const navigate = useNavigate();
+  const location = useLocation();
+  const isBookingPage = location.pathname === "/booking";
 
   const sortOptions = [
     { id: "best_seller", label: t("nb_sort_best_seller") },
@@ -76,7 +78,7 @@ export function NavigationBar({
             onChange={(e) => actions.setSearchTerm(e.target.value)}
             onFocus={() => actions.setIsFocused(true)}
             onBlur={() => actions.setIsFocused(false)}
-            className="w-full pl-10 pr-4 py-3 rounded-sm bg-neutral-50 border dark:bg-neutral-900 focus:bg-white dark:text-neutral-300 focus:border-red-500 transition-all outline-none text-sm text-neutral-900 shadow-sm"
+            className="w-full pl-10 pr-4 py-3 rounded-sm bg-white border dark:bg-neutral-900 focus:bg-white dark:text-neutral-300 focus:border-red-500 transition-all outline-none text-sm text-neutral-900"
           />
         </div>
 
@@ -86,7 +88,7 @@ export function NavigationBar({
             className={`relative flex items-center justify-center w-11 h-11 border rounded-sm transition-all ${
               selectedSorts.length > 0
                 ? "bg-red-50 border-red-500 dark:bg-neutral-900 text-red-600"
-                : "bg-white dark:bg-neutral-900 text-neutral-600 hover:bg-neutral-50"
+                  : "bg-white dark:bg-neutral-900 text-neutral-600 hover:bg-neutral-50"
             }`}
           >
             <SlidersHorizontal size={20} />
@@ -164,17 +166,26 @@ export function NavigationBar({
             )}
           </AnimatePresence>
         </div>
-        <Button
-          className="bg-red-500 hover:bg-red-600 text-white"
-          onClick={() => navigate("/booking")}
-        >
-          Booking Meja Sekarang
-        </Button>
+        {!isBookingPage && (
+          <Button
+            className="bg-red-500 hover:bg-red-600 text-white"
+            onClick={() => navigate("/booking")}
+          >
+            Booking Meja Sekarang
+          </Button>
+        )}
       </div>
 
       <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
         {state.isLoading ? (
-          <div className="h-9 w-24 rounded-sm bg-neutral-100 animate-pulse" />
+          <div className="flex gap-2">
+            {Array.from({ length: 7 }).map((_, i) => (
+              <div
+                key={i}
+                className="h-9 w-24 rounded-sm bg-neutral-100 dark:bg-neutral-800 animate-pulse"
+              />
+            ))}
+          </div>
         ) : (
           state.categories.map((cat) => {
             const Icon = iconMap[cat.slug] || Utensils;

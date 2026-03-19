@@ -218,48 +218,55 @@ class PosService
     //     return Snap::getSnapToken($params);
     // }
 
-    private function generateMidtransToken($transaction, $items, $settings)
-    {
-        try {
-            Config::$serverKey = config('midtrans.server_key');
-            Config::$isProduction = (bool) config('midtrans.is_production');
-            Config::$isSanitized = true;
-            Config::$is3ds = true;
+  private function generateMidtransToken($transaction, $items, $settings)
+{
+    try {
+        Config::$serverKey = config('midtrans.server_key');
+        Config::$isProduction = (bool) config('midtrans.is_production');
+        Config::$isSanitized = true;
+        Config::$is3ds = true;
 
-            $availableMethods = is_string($settings['available_methods'] ?? '')
-                ? json_decode($settings['available_methods'], true)
-                : ($settings['available_methods'] ?? []);
+        $settings = is_array($settings) ? $settings : [];
 
+        $methodsRaw = $settings['available_methods'] ?? [];
+
+        $availableMethods = is_string($methodsRaw)
+            ? json_decode($methodsRaw, true)
+            : $methodsRaw;
+
+        $enabledPayments = [];
+        if (is_array($availableMethods)) {
             $enabledPayments = collect($availableMethods)
                 ->filter(fn($method) => (isset($method['active']) && $method['active'] == 1))
                 ->pluck('id')
                 ->toArray();
-
-            $params = [
-                'transaction_details' => [
-                    'order_id' => 'TRX-' . $transaction->id . '-' . time(),
-                    'gross_amount' => (int) $transaction->total_amount,
-                ],
-                'item_details' => collect($items)->map(function ($t) {
-                    return [
-                        'id' => $t['menu']->id,
-                        'price' => (int) $t['price'],
-                        'quantity' => $t['quantity'],
-                        'name' => substr($t['menu']->name, 0, 50)
-                    ];
-                })->toArray(),
-            ];
-
-            if (!empty($enabledPayments)) {
-                $params['enabled_payments'] = $enabledPayments;
-            }
-
-            return Snap::getSnapToken($params);
-        } catch (Exception $e) {
-            Log::error("Midtrans Error: " . $e->getMessage());
-            return null;
         }
+
+        $params = [
+            'transaction_details' => [
+                'order_id' => 'TRX-' . $transaction->id . '-' . time(),
+                'gross_amount' => (int) $transaction->total_amount,
+            ],
+            'item_details' => collect($items)->map(function ($t) {
+                return [
+                    'id' => $t['menu']->id,
+                    'price' => (int) $t['price'],
+                    'quantity' => $t['quantity'],
+                    'name' => substr($t['menu']->name, 0, 50)
+                ];
+            })->toArray(),
+        ];
+
+        if (!empty($enabledPayments)) {
+            $params['enabled_payments'] = $enabledPayments;
+        }
+
+        return Snap::getSnapToken($params);
+    } catch (Exception $e) {
+        Log::error("Midtrans Error: " . $e->getMessage());
+        return null;
     }
+}
 
     public function updateUserBadge($userId)
     {
