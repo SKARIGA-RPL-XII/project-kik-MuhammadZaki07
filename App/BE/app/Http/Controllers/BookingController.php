@@ -40,8 +40,8 @@ class BookingController extends Controller
                 $transactionId = null;
                 $snapToken = null;
                 $hasItems = $request->has('items') && count($request->items) > 0;
+                $settings = DB::table('settings')->pluck('value', 'key')->toArray();
 
-                // 1. Logic Jika Ada Pesanan Menu
                 if ($hasItems) {
                     $orderData = [
                         'table_id' => $request->table_id,
@@ -56,7 +56,6 @@ class BookingController extends Controller
 
                     $orderResult = $this->posService->execute($orderData);
 
-                    // VALIDASI KRITIKAL: Jika pilih Midtrans tapi Token Gagal/Null
                     if ($request->payment_method !== 'cash' && empty($orderResult['snap_token'])) {
                         throw new Exception("Gagal menginisialisasi pembayaran Midtrans. Silakan coba lagi.");
                     }
@@ -65,7 +64,6 @@ class BookingController extends Controller
                     $snapToken = $orderResult['snap_token'] ?? null;
                 }
 
-                // 2. Buat Data Booking
                 $booking = Booking::create([
                     'user_id' => $user->id,
                     'table_id' => $request->table_id,
@@ -73,10 +71,9 @@ class BookingController extends Controller
                     'number_of_people' => $request->number_of_people,
                     'notes' => $request->notes,
                     'transaction_id' => $transactionId,
-                    'status' => $hasItems ? 'pending' : 'confirmed' // Kalau cuma meja, langsung confirm aja
+                    'status' => 'pending'
                 ]);
 
-                // Load relasi agar Frontend dapet data lengkap
                 $booking->load(['table', 'user']);
 
                 return response()->json([
@@ -107,23 +104,27 @@ class BookingController extends Controller
     public function confirm($id)
     {
         try {
-            DB::beginTransaction();
-            $booking = Booking::with('user')->findOrFail($id);
-            $booking->update(['status' => 'confirmed']);
-            Table::where('id', $booking->table_id)->update(['status' => 'booked']);
+            return DB::transaction(function () use ($id) {
+                /** @var \App\Models\Booking $booking */
+                $booking = Booking::with('table')->findOrFail($id);
 
-            if ($booking->user) {
-                $booking->user->notify(new GeneralNotification(
-                    "Booking kamu untuk meja " . ($booking->table->number ?? $id) . " telah dikonfirmasi!",
-                    "success",
-                    "/history-booking"
-                ));
-            }
+                $booking->update(['status' => 'confirmed']);
 
-            DB::commit();
-            return response()->json(['status' => 'success', 'message' => 'Booking confirmed']);
+                if ($booking->table) {
+                    $booking->table->update(['status' => 'booked']);
+                }
+
+                if ($booking->user) {
+                    $booking->user->notify(new GeneralNotification(
+                        "Booking meja {$booking->table->table_number} telah dikonfirmasi!",
+                        "success",
+                        "/history-booking"
+                    ));
+                }
+
+                return response()->json(['status' => 'success', 'message' => 'Booking confirmed & Table secured']);
+            });
         } catch (Exception $e) {
-            DB::rollBack();
             return response()->json(['status' => 'error', 'message' => $e->getMessage()], 500);
         }
     }

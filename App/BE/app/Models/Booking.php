@@ -10,29 +10,29 @@ use Illuminate\Notifications\Notifiable;
 
 class Booking extends Model
 {
-    use HasFactory , Notifiable,LogsActivity;
+    use HasFactory, Notifiable, LogsActivity;
 
- protected static function booted()
-{
-    static::created(function ($booking) {
-        $cashiers = User::where('role_id', 5)->get();
+    protected static function booted()
+    {
+        static::created(function ($booking) {
+            $cashiers = User::where('role_id', 5)->get();
 
-        $booking->load(['table', 'user']);
+            $booking->load(['table', 'user']);
 
-        $tableName = $booking->table->table_number ?? "Meja #".$booking->table_id;
-        $customerName = $booking->user->username ?? 'Pelanggan';
+            $tableName = $booking->table->table_number ?? "Meja #" . $booking->table_id;
+            $customerName = $booking->user->username ?? 'Pelanggan';
 
-        $message = "Booking Baru! {$tableName} oleh {$customerName}";
+            $message = "Booking Baru! {$tableName} oleh {$customerName}";
 
-        foreach ($cashiers as $cashier) {
-            $cashier->notify(new GeneralNotification(
-                $message,
-                'booking',
-                '/cashier/bookings'
-            ));
-        }
-    });
-}
+            foreach ($cashiers as $cashier) {
+                $cashier->notify(new GeneralNotification(
+                    $message,
+                    'booking',
+                    '/cashier/bookings'
+                ));
+            }
+        });
+    }
 
     protected $fillable = [
         'user_id',
