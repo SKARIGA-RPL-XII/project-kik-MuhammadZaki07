@@ -2,17 +2,14 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Controllers\Controller;
 use App\Models\Booking;
-use App\Models\Table;
-use App\Models\User;
 use App\Notifications\GeneralNotification;
 use App\Services\PosService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Exception;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log;
+use Exception;
+use Midtrans\Snap;
 
 class BookingController extends Controller
 {
@@ -23,95 +20,83 @@ class BookingController extends Controller
         $this->posService = $posService;
     }
 
+    public function index()
+    {
+        $bookings = Booking::with(['user', 'table', 'transaction.details.menu'])
+            ->orderBy('booking_time', 'desc')
+            ->get();
+
+        return response()->json(['status' => 'success', 'data' => $bookings]);
+    }
+
     public function store(Request $request)
     {
         $request->validate([
-            'table_id' => 'required|exists:tables,id',
-            'booking_time' => 'required|date',
+            'table_id'         => 'required|exists:tables,id',
+            'booking_time'     => 'required|date',
             'number_of_people' => 'required|integer|min:1',
-            'items' => 'nullable|array',
-            'payment_method' => 'required_with:items|in:cash,midtrans,qris',
-            'total_amount' => 'required_with:items',
+            'items'            => 'nullable|array',
+            'payment_method'   => 'required_with:items',
         ]);
 
         try {
             return DB::transaction(function () use ($request) {
-                $user = Auth::user();
                 $transactionId = null;
-                $snapToken = null;
-                $hasItems = $request->has('items') && count($request->items) > 0;
-                $settings = DB::table('settings')->pluck('value', 'key')->toArray();
+                $snapToken     = null;
 
-                if ($hasItems) {
-                    $orderData = [
-                        'table_id' => $request->table_id,
-                        'order_type' => 'dine_in',
-                        'order_source' => 'qr_code',
-                        'items' => $request->items,
+                if ($request->has('items') && count($request->items) > 0) {
+                    $orderResult = $this->posService->executeBooking([
+                        'table_id'       => $request->table_id,
+                        'items'          => $request->items,
                         'payment_method' => $request->payment_method,
-                        'customer_name' => $user->username,
-                        'total_amount' => $request->total_amount,
-                        'settings' => $request->settings
-                    ];
-
-                    $orderResult = $this->posService->execute($orderData);
-
-                    if ($request->payment_method !== 'cash' && empty($orderResult['snap_token'])) {
-                        throw new Exception("Gagal menginisialisasi pembayaran Midtrans. Silakan coba lagi.");
-                    }
+                        'settings'       => $request->settings
+                    ]);
 
                     $transactionId = $orderResult['transaction']->id;
-                    $snapToken = $orderResult['snap_token'] ?? null;
+                    $snapToken     = $orderResult['snap_token'];
                 }
 
                 $booking = Booking::create([
-                    'user_id' => $user->id,
-                    'table_id' => $request->table_id,
-                    'booking_time' => $request->booking_time,
+                    'user_id'          => Auth::id(),
+                    'table_id'         => $request->table_id,
+                    'booking_time'     => $request->booking_time,
                     'number_of_people' => $request->number_of_people,
-                    'notes' => $request->notes,
-                    'transaction_id' => $transactionId,
-                    'status' => 'pending'
+                    'notes'            => $request->notes,
+                    'transaction_id'   => $transactionId,
+                    'status'           => 'pending'
                 ]);
-
-                $booking->load(['table', 'user']);
 
                 return response()->json([
                     'status' => 'success',
-                    'message' => 'Booking created successfully',
                     'data' => [
-                        'booking' => $booking,
+                        'booking'    => $booking->load('table'),
                         'snap_token' => $snapToken
                     ]
                 ], 201);
             });
         } catch (Exception $e) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Booking failed: ' . $e->getMessage()
-            ], 500);
+            return response()->json(['status' => 'error', 'message' => $e->getMessage()], 500);
         }
-    }
-
-    public function index()
-    {
-        $bookings = Booking::with(['user', 'table', 'transaction'])
-            ->orderBy('booking_time', 'asc')
-            ->get();
-        return response()->json(['status' => 'success', 'data' => $bookings]);
     }
 
     public function confirm($id)
     {
         try {
             return DB::transaction(function () use ($id) {
-                /** @var \App\Models\Booking $booking */
-                $booking = Booking::with('table')->findOrFail($id);
+                $booking = Booking::with(['table', 'transaction.details.menu', 'user'])->findOrFail($id);
+
+                if ($booking->status !== 'pending') {
+                    throw new Exception("Booking has already been processed.");
+                }
 
                 $booking->update(['status' => 'confirmed']);
 
                 if ($booking->table) {
                     $booking->table->update(['status' => 'booked']);
+                }
+
+                if ($booking->transaction) {
+                    $this->posService->completePaymentProcess($booking->transaction);
                 }
 
                 if ($booking->user) {
@@ -122,10 +107,40 @@ class BookingController extends Controller
                     ));
                 }
 
-                return response()->json(['status' => 'success', 'message' => 'Booking confirmed & Table secured']);
+                return response()->json(['status' => 'success']);
             });
         } catch (Exception $e) {
             return response()->json(['status' => 'error', 'message' => $e->getMessage()], 500);
+        }
+    }
+
+    public function getSnapToken($id)
+    {
+        $transaction = \App\Models\Transaction::with(['user'])->findOrFail($id);
+
+        if ($transaction->snap_token) {
+            return response()->json(['snap_token' => $transaction->snap_token]);
+        }
+
+        $params = [
+            'transaction_details' => [
+                'order_id' => $transaction->transaction_code,
+                'gross_amount' => (int) $transaction->total_amount,
+            ],
+            'customer_details' => [
+                'first_name' => $transaction->user->name ?? $transaction->customer_name ?? 'Customer',
+                'email' => $transaction->user->email ?? 'customer@mail.com',
+            ],
+        ];
+
+        try {
+            $snapToken = Snap::getSnapToken($params);
+
+            $transaction->update(['snap_token' => $snapToken]);
+
+            return response()->json(['snap_token' => $snapToken]);
+        } catch (Exception $e) {
+            return response()->json(['message' => $e->getMessage()], 500);
         }
     }
 }

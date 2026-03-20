@@ -98,6 +98,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/dashboard/summary', [DashboardController::class, 'index']);
     Route::get('/user/transactions', [TransactionController::class, 'userTransactions']);
     Route::post('/transactions/{id}/confirm-payment', [TransactionController::class, 'confirmPayment']);
+    Route::get('/transactions/{id}/snap-token', [TransactionController::class, 'getSnapToken']);
+
 
     Route::get('/transaction-details', [TransactionDetailController::class, 'index']);
     Route::get('/transaction-details/show/{id}', [TransactionDetailController::class, 'show']);

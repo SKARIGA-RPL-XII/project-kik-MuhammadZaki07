@@ -209,10 +209,22 @@ export default function PaymentPage() {
             if (!isCustomer) clearCashierCart();
             clearCart();
             toast("warning", "Pending", "Waiting for payment");
-            navigate(isCustomer ? "/customer/orders" : "/cashier");
+            navigate(isCustomer ? "/profile-customer?tab=orders" : "/cashier", {
+              state: { selectedOrder: transactionResult },
+            });
           },
-          onError: () => toast("error", "Failed", "Payment failed"),
-          onClose: () => toast("info", "Cancelled", "Payment popup closed"),
+          onError: () => {
+            toast("error", "Failed", "Payment failed");
+            navigate(isCustomer ? "/profile-customer?tab=orders" : "/cashier", {
+              state: { selectedOrder: transactionResult },
+            });
+          },
+          onClose: () => {
+            toast("info", "Cancelled", "Payment popup closed");
+            navigate(isCustomer ? "/profile-customer?tab=orders" : "/cashier", {
+              state: { selectedOrder: transactionResult },
+            });
+          },
         });
       }
     } catch (error: any) {

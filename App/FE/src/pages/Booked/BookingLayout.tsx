@@ -7,6 +7,7 @@ import { useNavigate } from "react-router";
 import { useTranslation } from "react-i18next";
 import { BookingService } from "@/services/booking.service";
 import { useToast } from "@/context/ToastContext";
+import { openSnapPopup } from "@/utils/midtransHandler";
 
 export default function BookingLayout() {
   const { t } = useTranslation();
@@ -16,7 +17,7 @@ export default function BookingLayout() {
     const savedStep = localStorage.getItem("booking_step");
     return savedStep ? parseInt(savedStep) : 1;
   });
-  const {toast} = useToast();
+  const { toast } = useToast();
 
   const [bookingData, setBookingData] = useState(() => {
     const savedData = localStorage.getItem("booking_data");
@@ -44,76 +45,88 @@ export default function BookingLayout() {
     setBookingData((prev: any) => ({ ...prev, ...newData }));
   };
 
-const handleFinalFinish = async (finalData: any) => {
-  try {
-    // 1. Cek apakah ada pesanan menu atau cuma booking meja
-    const hasItems = finalData.items && finalData.items.length > 0;
+  const handleFinalFinish = async (finalData: any) => {
+    try {
+      const hasItems = finalData.items && finalData.items.length > 0;
 
-    const bookingPayload = {
-      table_id: finalData.table_id,
-      booking_time: finalData.booking_time,
-      number_of_people: finalData.number_of_people,
-      notes: finalData.notes,
-      // Jika ada item pakai midtrans, jika tidak bisa 'manual' atau 'none'
-      payment_method: hasItems ? "midtrans" : "cash", 
-      total_amount: hasItems 
-        ? finalData.items.reduce((acc: number, item: any) => 
-            acc + (item.discount_price || item.price) * item.quantity, 0)
-        : 0,
-      items: hasItems 
-        ? finalData.items.map((item: any) => ({
-            menu_id: item.id,
-            quantity: item.quantity,
-            attributes: Object.values(item.selectedAttributes || {}), 
-          }))
-        : [], // Kosongkan jika skip menu
-    };
+      const bookingPayload = {
+        table_id: finalData.table_id,
+        booking_time: finalData.booking_time,
+        number_of_people: finalData.number_of_people,
+        notes: finalData.notes,
+        payment_method: hasItems ? "midtrans" : "cash",
+        total_amount: hasItems
+          ? finalData.items.reduce(
+              (acc: number, item: any) =>
+                acc + (item.discount_price || item.price) * item.quantity,
+              0,
+            )
+          : 0,
+        items: hasItems
+          ? finalData.items.map((item: any) => ({
+              menu_id: item.id,
+              quantity: item.quantity,
+              attributes: Object.values(item.selectedAttributes || {}),
+            }))
+          : [],
+      };
 
-    console.log("[Log] Processing Booking...", hasItems ? "With Menu" : "Only Table");
+      const res = await BookingService.createBooking(bookingPayload);
+      if (res.error) throw new Error(res.error);
 
-    const res = await BookingService.createBooking(bookingPayload);
-    if (res.error) throw new Error(res.error);
+      const bookingInfo = res.data?.data?.booking;
+      const snapToken = res.data?.data?.snap_token;
 
-    console.log("res" , res);
-    
+      if (hasItems && snapToken) {
+        await openSnapPopup(snapToken, {
+          onSuccess: () => {
+            localStorage.removeItem("booking_step");
+            localStorage.removeItem("booking_data");
+            toast(
+              "success",
+              "Pembayaran Berhasil",
+              "Pesanan & Meja telah dikonfirmasi.",
+            );
+            navigate(`/invoice/${bookingInfo.transaction_id}`, {
+              state: { transactionData: bookingInfo },
+            });
+          },
+          onPending: () => {
+            localStorage.removeItem("booking_step");
+            localStorage.removeItem("booking_data");
+            toast("warning", "Pending", "Segera bayar agar pesanan diproses.");
+            navigate("/profile-customer?tab=orders", {
+              state: { selectedOrder: bookingInfo },
+            });
+          },
+          onError: () => toast("error", "Gagal", "Pembayaran bermasalah."),
+          onClose: () => {
+            localStorage.removeItem("booking_step");
+            localStorage.removeItem("booking_data");
+            toast(
+              "info",
+              "Batal",
+              "Selesaikan pembayaran nanti di menu Order.",
+            );
+            navigate("/profile-customer?tab=orders", {
+              state: { selectedOrder: bookingInfo },
+            });
+          },
+        });
+        return;
+      }
 
-    const bookingInfo = res.data?.data?.booking;
-    const snapToken = res.data?.data?.snap_token;
-    console.log(snapToken);
-    
-
-    // --- LOGIC PERCABANGAN SETELAH API ---
-
-    // KONDISI A: Ada Menu & Wajib Bayar Midtrans
-    if (hasItems && snapToken) {
-      window.snap.pay(snapToken, {
-        onSuccess: () => {
-          localStorage.removeItem("booking_step");
-          localStorage.removeItem("booking_data");
-          toast("success", "Pembayaran Berhasil", "Pesanan & Meja telah dikonfirmasi.");
-          navigate(`/invoice/${bookingInfo.transaction_id}`);
-        },
-        onPending: () => {
-          toast("warning", "Pending", "Segera bayar agar pesanan diproses.");
-          navigate("/customer/orders");
-        },
-        onError: () => toast("error", "Gagal", "Pembayaran dibatalkan."),
-        onClose: () => toast("info", "Batal", "Selesaikan pembayaran nanti di menu Order."),
+      localStorage.removeItem("booking_step");
+      localStorage.removeItem("booking_data");
+      toast("success", "Booking Berhasil", "Meja Anda sudah dipesan.");
+      navigate("/profile-customer?tab=orders", {
+        state: { selectedOrder: bookingInfo },
       });
-      return; // Stop di sini kalau masuk Midtrans
+    } catch (err: any) {
+      console.error(err);
+      toast("error", "Gagal Booking", err.message || "Sistem sedang sibuk.");
     }
-
-    // KONDISI B: Ga Pesen Menu (Skip) / Total 0
-    localStorage.removeItem("booking_step");
-    localStorage.removeItem("booking_data");
-    toast("success", "Booking Berhasil", "Meja Anda sudah dipesan, silakan datang tepat waktu.");
-    navigate("/"); // Langsung ke Home sesuai request kamu
-
-  } catch (err: any) {
-    console.error(err);
-    toast("error", "Gagal Booking", err.message || "Sistem sedang sibuk.");
-  }
-};
+  };
 
   return (
     <div className="min-h-screen dark:bg-neutral-900 pb-20">

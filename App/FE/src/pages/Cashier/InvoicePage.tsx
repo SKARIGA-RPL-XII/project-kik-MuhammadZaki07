@@ -154,7 +154,7 @@ export default function InvoicePage() {
                     Table
                   </span>
                   <span className="font-black text-slate-800 tracking-tight">
-                    T-{transactionData.table?.table_number || "0"}
+                    T-{transactionData.table?.table_number ??  "-"}
                   </span>
                 </div>
 

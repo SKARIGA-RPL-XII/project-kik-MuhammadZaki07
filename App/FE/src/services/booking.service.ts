@@ -13,6 +13,7 @@ export class BookingService {
     }
   }
 
+
   static async createBooking(payload: any) {
     try {
       const res = await apiClient.post("/bookings", payload);

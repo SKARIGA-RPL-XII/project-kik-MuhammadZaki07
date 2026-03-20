@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import {
-  Clock,
   ArrowLeft,
   Smartphone,
   Store,
@@ -61,7 +60,14 @@ export default function OrderQueuePage() {
         ? "cashier_direct"
         : undefined;
 
-  const { data: orders, isLoading, refetch } = useGetOrders(apiFilter);
+  const {
+    data: orders,
+    isLoading,
+    refetch,
+  } = useGetOrders({
+    orderSource: apiFilter,
+    search: "",
+  });
   const updateMutation = useUpdateStatus();
 
   useEffect(() => {
@@ -73,8 +79,18 @@ export default function OrderQueuePage() {
       playNotificationSound();
 
       if (Notification.permission === "granted" && document.hidden) {
-        new Notification("New Order!", {
-          body: `Order received from ${e.order?.customer_name || "Table " + e.order?.table?.table_number}`,
+        const customerName = e.order?.customer_name;
+        const tableNumber = e.order?.table?.table_number;
+
+        const locationInfo = tableNumber
+          ? `Table ${tableNumber}`
+          : "Takeaway / Online";
+        const displayName = customerName
+          ? `${customerName} (${locationInfo})`
+          : locationInfo;
+
+        new Notification("New Order! 🍔", {
+          body: `Order received from ${displayName}`,
           icon: "/notification.png",
         });
       }

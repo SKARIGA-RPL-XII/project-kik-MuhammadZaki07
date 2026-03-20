@@ -4,9 +4,8 @@ namespace App\Services;
 
 use App\Models\Transaction;
 use App\Models\Table;
-use App\Models\User;
-use App\Notifications\GeneralNotification;
-use App\Services\PosService;
+use Exception;
+use Illuminate\Support\Facades\Log;
 
 class MidtransService
 {
@@ -17,41 +16,63 @@ class MidtransService
         $this->posService = $posService;
     }
 
-    public function handleNotification(array $payload)
+    public function handleNotification($notification)
     {
-        $orderIdParts = explode('-', $payload['order_id']);
-        $transactionId = $orderIdParts[1];
+        $serverKey = config('midtrans.server_key');
+        $orderId = $notification['order_id'];
+        $statusCode = $notification['status_code'];
+        $grossAmount = $notification['gross_amount'];
+        $signatureKey = $notification['signature_key'];
 
-        $transaction = Transaction::with('details')->findOrFail($transactionId);
+        $validSignature = hash("sha512", $orderId . $statusCode . $grossAmount . $serverKey);
+        if ($signatureKey !== $validSignature) {
+            Log::error("Midtrans: Invalid Signature untuk Order " . $orderId);
+            return null;
+        }
 
-        $status = $payload['transaction_status'];
-        $type = $payload['payment_type'];
+        $lastHyphenPos = strrpos($orderId, '-');
+        if ($lastHyphenPos !== false) {
+            $originalCode = substr($orderId, 0, $lastHyphenPos);
+        } else {
+            $originalCode = $orderId;
+        }
 
-        if ($status == 'settlement' || $status == 'capture') {
-            if ($transaction->status !== 'paid') {
+        Log::info("DEBUG: Midtrans kirim $orderId | Hasil potong jadi: $originalCode");
+
+        $transaction = Transaction::where('transaction_code', $originalCode)->first();
+
+        if ($transaction) {
+            $status = $notification['transaction_status'];
+
+            if ($status == 'settlement' || $status == 'capture') {
+                Log::info("Mulai update status lunas untuk: " . $transaction->transaction_code);
+
                 $transaction->update([
-                    'status' => 'paid',
-                    'paid_at' => now(),
-                    'payment_method' => $type
+                    'status'         => 'to_cook',
+                    'payment_method' => $notification['payment_type'] ?? 'midtrans',
+                    'amount_paid'    => (int) $notification['gross_amount'],
+                    'change_amount'  => 0,
+                    'paid_at'        => now(),
                 ]);
 
-                $this->posService->decreaseInventory($transaction);
-
-                if ($transaction->user_id) {
-                    $user = User::find($transaction->user_id);
-                    $user->notify(new GeneralNotification(
-                        "Pembayaran Berhasil! Pesanan {$transaction->transaction_code} sedang disiapkan. Terima kasih sudah memesan!",
-                        'payment_success',
-                        '/profile-customer'
-                    ));
+                try {
+                    $this->posService->completePaymentProcess($transaction);
+                    Log::info("Stok berhasil dikurangi untuk: " . $transaction->transaction_code);
+                } catch (Exception $e) {
+                    Log::error("Gagal potong stok di Webhook: " . $e->getMessage());
                 }
-            }
-        } elseif ($status == 'expire' || $status == 'cancel' || $status == 'deny') {
-            $transaction->update(['status' => 'failed']);
 
-            if ($transaction->table_id) {
-                Table::where('id', $transaction->table_id)->update(['status' => 'available']);
+                Log::info("Webhook Success Full Process: " . $transaction->transaction_code);
+            } elseif (in_array($status, ['deny', 'expire', 'cancel'])) {
+                $transaction->update(['status' => 'failed']);
+
+                if ($transaction->table_id) {
+                    Table::where('id', $transaction->table_id)->update(['status' => 'available']);
+                }
+                Log::info("Webhook: Transaksi " . $transaction->transaction_code . " gagal/expired.");
             }
+        } else {
+            Log::warning("Webhook Warning: Transaksi $originalCode tidak ditemukan di DB.");
         }
 
         return $transaction;

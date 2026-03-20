@@ -14,6 +14,10 @@ class PosService
     public function execute(array $data, $cashierId = null)
     {
         return DB::transaction(function () use ($data, $cashierId) {
+            Log::info("=== [START TRANSACTION] ===");
+            Log::info("Order Source: " . $data['order_source'] . " | Method: " . $data['payment_method']);
+
+
             $taxRate = (float) (DB::table('settings')->where('key', 'tax_percent')->first()->value ?? 0);
             $serviceRate = (float) (DB::table('settings')->where('key', 'service_percent')->first()->value ?? 0);
             $transactionCode = date('ymd') . str_pad(rand(0, 999999), 6, '0', STR_PAD_LEFT);
@@ -53,7 +57,7 @@ class PosService
                 $grandTotal = $data['total_amount'];
             }
 
-            $status = ($data['payment_method'] === 'cash' && $data['order_source'] === 'cashier_direct')
+            $status = ($data['order_source'] === 'cashier_direct' && $data['payment_method'] === 'cash')
                 ? 'paid'
                 : 'pending_payment';
 
@@ -76,8 +80,14 @@ class PosService
                 'paid_at' => ($status === 'paid') ? now() : null,
             ]);
 
+            Log::info("Transaction Created: " . $transaction->transaction_code . " with Status: " . $status);
+
             if ($status === 'paid') {
+                Log::info("Direct Cashier Order: Processing Stock Immediately.");
                 $this->decreaseInventory($transaction);
+                $transaction->update(['status' => 'cooking']);
+            } else {
+                Log::info("Online/Pending Order: Stock not reduced yet. Waiting for payment.");
             }
 
             foreach ($tempItems as $t) {
@@ -102,11 +112,77 @@ class PosService
         });
     }
 
+    public function executeBooking(array $data)
+    {
+        return DB::transaction(function () use ($data) {
+            $taxRate = (float) (DB::table('settings')->where('key', 'tax_percent')->first()->value ?? 0);
+            $serviceRate = (float) (DB::table('settings')->where('key', 'service_percent')->first()->value ?? 0);
+
+            $transactionCode = "TR-BOK-" . date('ymd') . str_pad(rand(0, 9999), 4, '0', STR_PAD_LEFT);
+
+            $subtotal = 0;
+            $tempItems = [];
+
+            foreach ($data['items'] as $item) {
+                $menu = Menu::findOrFail($item['menu_id']);
+                $itemSubtotal = $menu->price * $item['quantity'];
+                $subtotal += $itemSubtotal;
+
+                $tempItems[] = [
+                    'menu' => $menu,
+                    'quantity' => $item['quantity'],
+                    'price' => $menu->price,
+                    'subtotal' => $itemSubtotal,
+                    'attributes' => $item['attributes'] ?? [],
+                ];
+            }
+
+            $serviceAmount = round(($subtotal * $serviceRate) / 100);
+            $taxAmount = round((($subtotal + $serviceAmount) * $taxRate) / 100);
+            $grandTotal = $subtotal + $serviceAmount + $taxAmount;
+
+            $transaction = Transaction::create([
+                'table_id' => $data['table_id'],
+                'user_id' => Auth::id(),
+                'customer_name' => Auth::user()->name,
+                'order_source' => 'qr_code',
+                'status' => 'pending_payment',
+                'transaction_code' => $transactionCode,
+                'total_amount' => $grandTotal,
+                'payment_method' => $data['payment_method'],
+                'transaction_date' => now(),
+            ]);
+
+            foreach ($tempItems as $t) {
+                $transaction->details()->create([
+                    'menu_id' => $t['menu']->id,
+                    'menu_qty' => $t['quantity'],
+                    'price' => $t['price'],
+                    'subtotal' => $t['subtotal'],
+                    'attributes' => $t['attributes'],
+                ]);
+            }
+
+            $snapToken = null;
+            if ($data['payment_method'] !== 'cash') {
+                $snapToken = $this->generateMidtransToken($transaction, $tempItems, $data['settings'] ?? []);
+                $transaction->update(['snap_token' => $snapToken]);
+            }
+
+            return [
+                'transaction' => $transaction,
+                'snap_token' => $snapToken
+            ];
+        });
+    }
+
     public function decreaseInventory($transaction)
     {
+        Log::info("--- [DECREASING STOCK] --- for Transaction: " . $transaction->transaction_code);
         foreach ($transaction->details as $detail) {
             $menu = Menu::with('stocks')->find($detail->menu_id);
             $this->processStockReduction($menu, $detail->menu_qty);
+            Log::info("Processing Menu: " . $menu->name . " | Qty: " . $detail->menu_qty);
             if (!empty($detail->attributes)) {
                 $this->processAttributeStock($detail->attributes, $detail->menu_qty);
             }
@@ -122,6 +198,7 @@ class PosService
                 "/orders/{$transaction->id}"
             ));
         }
+        Log::info("--- [STOCK REDUCED SUCCESSFULLY] ---");
     }
 
     private function processStockReduction($menu, $qty)
@@ -218,55 +295,85 @@ class PosService
     //     return Snap::getSnapToken($params);
     // }
 
-  private function generateMidtransToken($transaction, $items, $settings)
-{
-    try {
-        Config::$serverKey = config('midtrans.server_key');
-        Config::$isProduction = (bool) config('midtrans.is_production');
-        Config::$isSanitized = true;
-        Config::$is3ds = true;
+    public function generateMidtransToken($transaction, $items, $settings)
+    {
+        try {
+            Config::$serverKey = config('midtrans.server_key');
+            Config::$isProduction = (bool) config('midtrans.is_production');
+            Config::$isSanitized = true;
+            Config::$is3ds = true;
 
-        $settings = is_array($settings) ? $settings : [];
+            $settings = is_array($settings) ? $settings : [];
+            $availableMethods = is_string($settings['available_methods'] ?? '')
+                ? json_decode($settings['available_methods'], true)
+                : ($settings['available_methods'] ?? []);
 
-        $methodsRaw = $settings['available_methods'] ?? [];
+            $enabledPayments = [];
+            if (is_array($availableMethods)) {
+                $enabledPayments = collect($availableMethods)
+                    ->filter(fn($method) => (isset($method['active']) && $method['active'] == 1))
+                    ->pluck('id')
+                    ->toArray();
+            }
 
-        $availableMethods = is_string($methodsRaw)
-            ? json_decode($methodsRaw, true)
-            : $methodsRaw;
-
-        $enabledPayments = [];
-        if (is_array($availableMethods)) {
-            $enabledPayments = collect($availableMethods)
-                ->filter(fn($method) => (isset($method['active']) && $method['active'] == 1))
-                ->pluck('id')
-                ->toArray();
-        }
-
-        $params = [
-            'transaction_details' => [
-                'order_id' => 'TRX-' . $transaction->id . '-' . time(),
-                'gross_amount' => (int) $transaction->total_amount,
-            ],
-            'item_details' => collect($items)->map(function ($t) {
+            $itemDetails = collect($items)->map(function ($t) {
                 return [
                     'id' => $t['menu']->id,
                     'price' => (int) $t['price'],
                     'quantity' => $t['quantity'],
                     'name' => substr($t['menu']->name, 0, 50)
                 ];
-            })->toArray(),
-        ];
+            })->toArray();
 
-        if (!empty($enabledPayments)) {
-            $params['enabled_payments'] = $enabledPayments;
+            $subtotal = collect($items)->sum(fn($i) => $i['price'] * $i['quantity']);
+
+            $serviceRate = (float) (DB::table('settings')->where('key', 'service_percent')->first()->value ?? 0);
+            $taxRate = (float) (DB::table('settings')->where('key', 'tax_percent')->first()->value ?? 0);
+
+            $serviceAmount = round(($subtotal * $serviceRate) / 100);
+            $taxAmount = round((($subtotal + $serviceAmount) * $taxRate) / 100);
+
+            if ($serviceAmount > 0) {
+                $itemDetails[] = [
+                    'id' => 'SERVICE-CHG',
+                    'price' => (int) $serviceAmount,
+                    'quantity' => 1,
+                    'name' => 'Service Charge'
+                ];
+            }
+
+            if ($taxAmount > 0) {
+                $itemDetails[] = [
+                    'id' => 'TAX-CHG',
+                    'price' => (int) $taxAmount,
+                    'quantity' => 1,
+                    'name' => 'Tax / Pajak'
+                ];
+            }
+
+            $params = [
+                'transaction_details' => [
+                    'order_id' => $transaction->transaction_code . '-' . time(),
+                    'gross_amount' => (int) round($transaction->total_amount),
+                ],
+                'expiry' => [
+                    'start_time' => now()->format('Y-m-d H:i:s P'),
+                    'unit' => 'minutes',
+                    'duration' => 60
+                ],
+                'item_details' => $itemDetails,
+            ];
+
+            if (!empty($enabledPayments)) {
+                $params['enabled_payments'] = $enabledPayments;
+            }
+
+            return Snap::getSnapToken($params);
+        } catch (Exception $e) {
+            Log::error("Midtrans Error: " . $e->getMessage());
+            return null;
         }
-
-        return Snap::getSnapToken($params);
-    } catch (Exception $e) {
-        Log::error("Midtrans Error: " . $e->getMessage());
-        return null;
     }
-}
 
     public function updateUserBadge($userId)
     {
@@ -295,7 +402,6 @@ class PosService
             broadcast(new \App\Events\UserLevelUp($user, $eligibleBadge))->toOthers();
         }
     }
-
 
     public function completePaymentProcess(Transaction $transaction)
     {

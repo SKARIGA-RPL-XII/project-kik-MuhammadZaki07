@@ -45,8 +45,6 @@ export default function Step4Review({ data, onBack, onConfirm }: any) {
 
   const total = subtotal + tax + service;
 
-  console.log(data);
-  
   const handleConfirmClick = () => {
     const finalItems = data.items.map((item: any) => {
       const hasDiscount = item.discount?.is_active && item.discount.value_discount > 0;

@@ -16,7 +16,11 @@ export interface CashPaymentPayload {
 }
 
 export class TransactionService {
-  static async getAll(params?: { order_source?: string }) {
+  static async getAll(params?: {
+    order_source?: string;
+    search?: string;
+    page?: number;
+  }) {
     try {
       const res = await apiClient.get("/transactions", { params });
       return {
@@ -78,6 +82,18 @@ export class TransactionService {
       return {
         data: null,
         error: err?.response?.data?.message || "Failed to update status",
+      };
+    }
+  }
+
+  static async getSnapToken(id: number) {
+    try {
+      const res = await apiClient.get(`/transactions/${id}/snap-token`);
+      return { data: res.data, error: null };
+    } catch (err: any) {
+      return {
+        data: null,
+        error: err?.response?.data?.message || "Failed to get payment token",
       };
     }
   }

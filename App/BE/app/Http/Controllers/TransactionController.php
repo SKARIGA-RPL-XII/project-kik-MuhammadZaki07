@@ -6,14 +6,19 @@ use App\Events\NewOrderReceived;
 use App\Events\PaymentConfirmed;
 use App\Exports\TransactionsExport;
 use App\Http\Controllers\Controller;
+use App\Models\Setting;
 use App\Services\PosService;
 use App\Models\Transaction;
+use App\Notifications\GeneralNotification;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Maatwebsite\Excel\Facades\Excel;
+use Midtrans\Config;
+use Midtrans\Snap;
 
 class TransactionController extends Controller
 {
@@ -168,6 +173,16 @@ class TransactionController extends Controller
 
             $transaction->update($updateData);
 
+            if ($request->status === 'completed' && $transaction->user) {
+                $msg = "Pesanan #TRX-{$transaction->id} sudah selesai! Silakan ambil atau tunggu pelayan mengantarkannya.";
+
+                $transaction->user->notify(new GeneralNotification(
+                    $msg,
+                    'success',
+                    "/profile-customer?tab=orders"
+                ));
+            }
+
             $transaction->load(['details.menu', 'table', 'user']);
             event(new NewOrderReceived($transaction));
 
@@ -195,42 +210,46 @@ class TransactionController extends Controller
         }
 
         try {
+            Log::info("=== [CONFIRMING PAYMENT] ===");
             return DB::transaction(function () use ($request, $id) {
-                $transaction = Transaction::where('status', 'pending_payment')->lockForUpdate()->findOrFail($id);
+                $transaction = Transaction::where('status', 'pending_payment')
+                    ->lockForUpdate()
+                    ->findOrFail($id);
+                Log::info("Found Pending Transaction: " . $transaction->transaction_code);
 
                 $amountPaid = (float) $request->amount_paid;
                 $totalAmount = (float) $transaction->total_amount;
 
                 if ($amountPaid < $totalAmount) {
-                    throw new Exception("Payment insufficient. Total: " . number_format($totalAmount));
+                    throw new Exception("Pembayaran kurang! Total: " . number_format($totalAmount));
                 }
 
                 $transaction->update([
-                    'status' => 'paid',
+                    'status' => 'cooking',
                     'amount_paid' => $amountPaid,
                     'change_amount' => $amountPaid - $totalAmount,
                     'paid_at' => now(),
                     'cashier_id' => Auth::id(),
                 ]);
 
+                Log::info("Status Updated to COOKING. Now calling Inventory Service.");
+
                 $this->posService->decreaseInventory($transaction);
+
+                Log::info("=== [PAYMENT CONFIRMED & STOCK UPDATED] ===");
+
                 event(new PaymentConfirmed($transaction));
                 event(new NewOrderReceived($transaction));
 
-
-                $transaction->load(['details.menu', 'table', 'user']);
-
                 return response()->json([
                     'status' => 'success',
-                    'message' => 'Payment confirmed successfully',
-                    'data' => $transaction
+                    'message' => 'Pembayaran Berhasil. Pesanan diteruskan ke Dapur.',
+                    'data' => $transaction->load(['details.menu', 'table'])
                 ]);
             });
         } catch (Exception $e) {
-            return response()->json([
-                'status' => 'error',
-                'message' => $e->getMessage()
-            ], 400);
+            Log::error("!!! [PAYMENT ERROR] !!! : " . $e->getMessage());
+            return response()->json(['status' => 'error', 'message' => $e->getMessage()], 400);
         }
     }
 
@@ -292,5 +311,54 @@ class TransactionController extends Controller
         }
 
         return Excel::download(new TransactionsExport($id), "transaksi_{$id}.xlsx");
+    }
+
+    public function getSnapToken($id)
+    {
+        try {
+            $transaction = Transaction::with(['user'])->findOrFail($id);
+            $settingsRaw = Setting::first();
+            $allSettings = $settingsRaw ? json_decode($settingsRaw->settings, true) : [];
+
+            if ($transaction->snap_token) {
+                return response()->json(['snap_token' => $transaction->snap_token]);
+            }
+
+            $availableMethods = $allSettings['available_methods']['value'] ?? [];
+            $enabledPayments = [];
+
+            if (is_array($availableMethods)) {
+                $enabledPayments = collect($availableMethods)
+                    ->filter(fn($method) => (isset($method['active']) && $method['active'] == 1))
+                    ->pluck('id')
+                    ->toArray();
+            }
+
+            $params = [
+                'transaction_details' => [
+                    'order_id' => $transaction->transaction_code . '-' . time(),
+                    'gross_amount' => (int) round($transaction->total_amount),
+                ],
+                'customer_details' => [
+                    'first_name' => $transaction->user->name ?? $transaction->customer_name ?? 'Guest',
+                    'email'      => $transaction->user->email ?? 'cust@mail.com',
+                ],
+                'enabled_payments' => !empty($enabledPayments) ? $enabledPayments : null,
+            ];
+
+            Config::$serverKey = config('midtrans.server_key');
+            Config::$isProduction = false;
+
+            $snapToken = Snap::getSnapToken($params);
+
+            $transaction->update(['snap_token' => $snapToken]);
+
+            return response()->json(['snap_token' => $snapToken]);
+        } catch (Exception $e) {
+            return response()->json([
+                'message' => 'Gagal memproses pembayaran',
+                'debug'   => $e->getMessage()
+            ], 500);
+        }
     }
 }

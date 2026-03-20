@@ -34,6 +34,7 @@ return Application::configure(basePath: dirname(__DIR__))
     $middleware->validateCsrfTokens(except: [
         'broadcasting/auth',
         'api/broadcasting/auth',
+        'api/midtrans/callback',
     ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

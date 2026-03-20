@@ -32,7 +32,7 @@ const InvoiceCashPage = () => {
         return;
       }
 
-      if (data.status === "paid" || data.status === "completed") {
+     if (payload.status === "cooking" || payload.status === "paid" || payload.status === "completed") {
         setIsPaid(true);
         setTimeout(() => {
           navigate(`/invoice/${order.id}`);
@@ -183,7 +183,7 @@ const InvoiceCashPage = () => {
               <div className="w-full [&>svg]:w-full [&>svg]:h-auto px-10">
                 <Barcode
                   value={order.transaction_code}
-                  width={2}
+                  width={1}
                   height={60}
                   format="CODE128"
                   displayValue={false}
@@ -191,7 +191,7 @@ const InvoiceCashPage = () => {
                 />
               </div>
 
-              <p className="mt-4 font-mono text-sm font-normal text-zinc-400 dark:text-neutral-200 tracking-[1.2em]">
+              <p className="mt-4 font-mono text-xs font-normal text-zinc-400 dark:text-neutral-200 tracking-[1.2em]">
                 {order.transaction_code}
               </p>
             </div>
