@@ -29,55 +29,71 @@ class BookingController extends Controller
         return response()->json(['status' => 'success', 'data' => $bookings]);
     }
 
-    public function store(Request $request)
-    {
-        $request->validate([
-            'table_id'         => 'required|exists:tables,id',
-            'booking_time'     => 'required|date',
-            'number_of_people' => 'required|integer|min:1',
-            'items'            => 'nullable|array',
-            'payment_method'   => 'required_with:items',
-        ]);
+public function store(Request $request)
+{
+    $request->validate([
+        'table_id'         => 'required|exists:tables,id',
+        'booking_time'     => 'required|date',
+        'number_of_people' => 'required|integer|min:1',
+        'items'            => 'nullable|array',
+        'payment_method'   => 'required_with:items',
+    ]);
 
-        try {
-            return DB::transaction(function () use ($request) {
-                $transactionId = null;
-                $snapToken     = null;
+    try {
+        return DB::transaction(function () use ($request) {
+            $startTime = \Carbon\Carbon::parse($request->booking_time);
+            $endTime = $startTime->copy()->addMinutes(120);
 
-                if ($request->has('items') && count($request->items) > 0) {
-                    $orderResult = $this->posService->executeBooking([
-                        'table_id'       => $request->table_id,
-                        'items'          => $request->items,
-                        'payment_method' => $request->payment_method,
-                        'settings'       => $request->settings
-                    ]);
+            $isBooked = Booking::where('table_id', $request->table_id)
+                ->whereIn('status', ['pending', 'confirmed'])
+                ->where(function ($query) use ($startTime, $endTime) {
+                    $query->where('booking_time', '<', $endTime)
+                          ->where('end_time', '>', $startTime);
+                })
+                ->exists();
 
-                    $transactionId = $orderResult['transaction']->id;
-                    $snapToken     = $orderResult['snap_token'];
-                }
+            if ($isBooked) {
+                throw new Exception("Maaf, meja ini sudah dipesan pada jam tersebut. Silakan pilih waktu atau meja lain.");
+            }
 
-                $booking = Booking::create([
-                    'user_id'          => Auth::id(),
-                    'table_id'         => $request->table_id,
-                    'booking_time'     => $request->booking_time,
-                    'number_of_people' => $request->number_of_people,
-                    'notes'            => $request->notes,
-                    'transaction_id'   => $transactionId,
-                    'status'           => 'pending'
+            $transactionId = null;
+            $snapToken     = null;
+
+            if ($request->has('items') && count($request->items) > 0) {
+                $orderResult = $this->posService->executeBooking([
+                    'table_id'       => $request->table_id,
+                    'items'          => $request->items,
+                    'payment_method' => $request->payment_method,
+                    'settings'       => $request->settings
                 ]);
 
-                return response()->json([
-                    'status' => 'success',
-                    'data' => [
-                        'booking'    => $booking->load('table'),
-                        'snap_token' => $snapToken
-                    ]
-                ], 201);
-            });
-        } catch (Exception $e) {
-            return response()->json(['status' => 'error', 'message' => $e->getMessage()], 500);
-        }
+                $transactionId = $orderResult['transaction']->id;
+                $snapToken     = $orderResult['snap_token'];
+            }
+
+            $booking = Booking::create([
+                'user_id'          => Auth::id(),
+                'table_id'         => $request->table_id,
+                'booking_time'     => $startTime,
+                'end_time'         => $endTime,
+                'number_of_people' => $request->number_of_people,
+                'notes'            => $request->notes,
+                'transaction_id'   => $transactionId,
+                'status'           => 'pending'
+            ]);
+
+            return response()->json([
+                'status' => 'success',
+                'data' => [
+                    'booking'    => $booking->load('table'),
+                    'snap_token' => $snapToken
+                ]
+            ], 201);
+        });
+    } catch (Exception $e) {
+        return response()->json(['status' => 'error', 'message' => $e->getMessage()], 500);
     }
+}
 
     public function confirm($id)
     {

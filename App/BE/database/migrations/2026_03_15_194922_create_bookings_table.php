@@ -9,20 +9,23 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
-   public function up(): void
-{
-    Schema::create('bookings', function (Blueprint $table) {
-        $table->id();
-        $table->foreignId('user_id')->nullable()->constrained('users')->cascadeOnDelete();
-        $table->foreignId('table_id')->constrained('tables')->cascadeOnDelete();
-        $table->dateTime('booking_time');
-        $table->integer('number_of_people');
-        $table->enum('status', ['pending', 'confirmed', 'cancelled', 'completed'])->default('pending');
-        $table->text('notes')->nullable();
-        $table->foreignId('transaction_id')->nullable()->constrained('transactions');
-        $table->timestamps();
-    });
-}
+    public function up(): void
+    {
+        Schema::create('bookings', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('user_id')->nullable()->constrained('users')->cascadeOnDelete();
+            $table->foreignId('table_id')->constrained('tables')->cascadeOnDelete();
+            $table->dateTime('booking_time');
+            $table->integer('number_of_people');
+            $table->enum('status', ['pending', 'confirmed', 'cancelled', 'completed','pending_confirmation'])->default('pending');
+            $table->text('notes')->nullable();
+            $table->integer('duration_minutes')->default(120)->after('booking_time');
+            $table->dateTime('end_time')->nullable()->after('duration_minutes');
+            $table->decimal('deposit_amount', 15, 2)->default(0)->after('status');
+            $table->foreignId('transaction_id')->nullable()->constrained('transactions');
+            $table->timestamps();
+        });
+    }
 
     /**
      * Reverse the migrations.

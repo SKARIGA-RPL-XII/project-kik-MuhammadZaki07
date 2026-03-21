@@ -24,7 +24,8 @@ class Transaction extends Model
         'customer_name',
         'cooking_started_at',
         'completed_at',
-        'total_duration'
+        'total_duration',
+        'pending_confirmation'
     ];
 
     public function details()

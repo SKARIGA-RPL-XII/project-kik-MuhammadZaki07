@@ -22,6 +22,7 @@ return new class extends Migration
 
             $table->enum('status', [
                 'pending_payment',
+                'pending_confirmation',
                 'paid',
                 'to_cook',
                 'cooking',

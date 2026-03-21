@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Booking;
 use App\Models\Transaction;
 use App\Models\Table;
 use Exception;
@@ -47,24 +48,42 @@ class MidtransService
             if ($status == 'settlement' || $status == 'capture') {
                 Log::info("Mulai update status lunas untuk: " . $transaction->transaction_code);
 
-                $transaction->update([
-                    'status'         => 'to_cook',
-                    'payment_method' => $notification['payment_type'] ?? 'midtrans',
-                    'amount_paid'    => (int) $notification['gross_amount'],
-                    'change_amount'  => 0,
-                    'paid_at'        => now(),
-                ]);
+                $booking = Booking::where('transaction_id', $transaction->id)->first();
+                if ($booking) {
+                    $transaction->update([
+                        'status'         => 'settlement',
+                        'payment_method' => $notification['payment_type'] ?? 'midtrans',
+                        'amount_paid'    => (int) $notification['gross_amount'],
+                        'paid_at'        => now(),
+                    ]);
 
-                try {
-                    $this->posService->completePaymentProcess($transaction);
-                    Log::info("Stok berhasil dikurangi untuk: " . $transaction->transaction_code);
-                } catch (Exception $e) {
-                    Log::error("Gagal potong stok di Webhook: " . $e->getMessage());
+                    $booking->update(['status' => 'pending_confirmation']);
+                    Log::info("Webhook: Booking {$booking->id} dibayar. Menunggu konfirmasi admin.");
+                } else {
+                    $transaction->update([
+                        'status'         => 'to_cook',
+                        'payment_method' => $notification['payment_type'] ?? 'midtrans',
+                        'amount_paid'    => (int) $notification['gross_amount'],
+                        'change_amount'  => 0,
+                        'paid_at'        => now(),
+                    ]);
+
+                    try {
+                        $this->posService->completePaymentProcess($transaction);
+                        Log::info("Stok berhasil dikurangi untuk: " . $transaction->transaction_code);
+                    } catch (Exception $e) {
+                        Log::error("Gagal potong stok di Webhook: " . $e->getMessage());
+                    }
                 }
 
                 Log::info("Webhook Success Full Process: " . $transaction->transaction_code);
             } elseif (in_array($status, ['deny', 'expire', 'cancel'])) {
                 $transaction->update(['status' => 'failed']);
+
+                $booking = Booking::where('transaction_id', $transaction->id)->first();
+                if ($booking) {
+                    $booking->update(['status' => 'cancelled']);
+                }
 
                 if ($transaction->table_id) {
                     Table::where('id', $transaction->table_id)->update(['status' => 'available']);
