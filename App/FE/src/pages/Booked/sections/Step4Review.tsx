@@ -17,22 +17,23 @@ export default function Step4Review({ data, onBack, onConfirm }: any) {
   const { t } = useTranslation();
   const { settings } = useSettings();
   
+  const BOOKING_FEE = 50000;
   const currency = settings?.currency_symbol || "Rp";
 
   const formatCurrency = (value: number) =>
-    `${currency} ${Math.round(value).toLocaleString()}`;
+    `${currency} ${Math.round(value).toLocaleString("id-ID")}`;
 
   const subtotal = useMemo(() => {
-    return Math.round(
-      data.items?.reduce((acc: number, item: any) => {
-        const hasDiscount = item.discount?.is_active && item.discount.value_discount > 0;
-        const priceAfterDiscount = hasDiscount 
-          ? item.price * (1 - item.discount.value_discount / 100) 
-          : item.price;
-        
-        return acc + (priceAfterDiscount * item.quantity);
-      }, 0) || 0
-    );
+    const itemsTotal = data.items?.reduce((acc: number, item: any) => {
+      const hasDiscount = item.discount?.is_active && item.discount.value_discount > 0;
+      const priceAfterDiscount = hasDiscount 
+        ? item.price * (1 - item.discount.value_discount / 100) 
+        : item.price;
+      
+      return acc + (priceAfterDiscount * item.quantity);
+    }, 0) || 0;
+
+    return Math.round(itemsTotal);
   }, [data.items]);
 
   const tax = settings?.is_tax_active
@@ -43,9 +44,12 @@ export default function Step4Review({ data, onBack, onConfirm }: any) {
     ? Math.round(subtotal * (settings.service_percent / 100))
     : 0;
 
-  const total = subtotal + tax + service;
+  const isOnlyBooking = !data.items || data.items.length === 0;
+  const total = isOnlyBooking ? BOOKING_FEE : (subtotal + tax + service);
 
   const handleConfirmClick = () => {
+    const cleanedTime = data.booking_time.replace("T", " ") + ":00";
+
     const finalItems = data.items.map((item: any) => {
       const hasDiscount = item.discount?.is_active && item.discount.value_discount > 0;
       const finalPrice = hasDiscount 
@@ -53,11 +57,31 @@ export default function Step4Review({ data, onBack, onConfirm }: any) {
         : item.price;
       
       return {
-        ...item,  
-        discount_price: Math.round(finalPrice)
+        menu_id: item.id,
+        quantity: item.quantity,
+        price: item.price,
+        discount_price: Math.round(finalPrice),
+        attributes: item.attributes || []
       };
     });
-    onConfirm({ ...data, items: finalItems });
+
+    const finalPayload = {
+      table_id: data.table_id,
+      booking_time: cleanedTime,
+      number_of_people: data.number_of_people,
+      notes: data.notes,
+      payment_method: "midtrans",
+      items: finalItems,
+      settings: {
+        tax_percent: { value: settings?.tax_percent || 0 },
+        service_percent: { value: settings?.service_percent || 0 },
+      },
+      gross_amount: total
+    };
+
+    // console.log(finalPayload);
+    
+    onConfirm(finalPayload);
   };
 
   return (
@@ -105,49 +129,54 @@ export default function Step4Review({ data, onBack, onConfirm }: any) {
             {data.items?.length || 0} {t("booking.step4.item_unit")}
           </span>
         </div>
-        <div className="divide-y border-b">
-          {data.items?.map((item: any) => {
-            const hasDiscount = item.discount?.is_active && item.discount.value_discount > 0;
-            const priceAfterDiscount = hasDiscount 
-              ? item.price * (1 - item.discount.value_discount / 100) 
-              : item.price;
+        
+        {isOnlyBooking ? (
+          <div className="p-8 text-center">
+            <p className="text-sm text-zinc-500 italic">Tidak ada menu yang dipilih.</p>
+            <p className="text-xs text-red-500 font-bold mt-1">Dikenakan Biaya Komitmen Reservasi</p>
+          </div>
+        ) : (
+          <div className="divide-y border-b">
+            {data.items?.map((item: any) => {
+              const hasDiscount = item.discount?.is_active && item.discount.value_discount > 0;
+              const priceAfterDiscount = hasDiscount 
+                ? item.price * (1 - item.discount.value_discount / 100) 
+                : item.price;
 
-            return (
-              <div key={item.id} className="p-4 flex justify-between items-center hover:bg-zinc-50 dark:hover:bg-neutral-900 transition-colors">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 overflow-hidden rounded bg-zinc-100 dark:bg-neutral-800 flex items-center justify-center font-black text-red-600">
-                    <img 
-                      src={`${import.meta.env.VITE_STORAGE_URL}/${item.menu_image}`} 
-                      alt={item.name} 
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <p className="text-sm font-bold">{item.name}</p>
-                      {hasDiscount && (
-                        <span className="text-[9px] bg-red-100 text-red-600 px-1 rounded font-bold">
-                          -{item.discount.value_discount}%
-                        </span>
-                      )}
+              return (
+                <div key={item.id} className="p-4 flex justify-between items-center hover:bg-zinc-50 dark:hover:bg-neutral-900 transition-colors">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 overflow-hidden rounded bg-zinc-100 dark:bg-neutral-800 flex items-center justify-center font-black text-red-600">
+                      <img 
+                        src={`${import.meta.env.VITE_STORAGE_URL}/${item.menu_image}`} 
+                        alt={item.name} 
+                        className="w-full h-full object-cover"
+                      />
                     </div>
-                    <div className="flex items-center gap-1.5">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm font-bold">{item.name}</p>
+                        {hasDiscount && (
+                          <span className="text-[9px] bg-red-100 text-red-600 px-1 rounded font-bold">
+                            -{item.discount.value_discount}%
+                          </span>
+                        )}
+                      </div>
                       <p className="text-[10px] text-zinc-400 font-mono">
-                        {hasDiscount ? (
-                          <span className="line-through mr-1">{formatCurrency(item.price)}</span>
-                        ) : null}
+                        {hasDiscount && <span className="line-through mr-1">{formatCurrency(item.price)}</span>}
                         {formatCurrency(priceAfterDiscount)} x {item.quantity}
                       </p>
                     </div>
                   </div>
+                  <p className="text-sm font-black text-zinc-800 dark:text-zinc-200">
+                    {formatCurrency(priceAfterDiscount * item.quantity)}
+                  </p>
                 </div>
-                <p className="text-sm font-black text-zinc-800 dark:text-zinc-200">
-                  {formatCurrency(priceAfterDiscount * item.quantity)}
-                </p>
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+        )}
+
         {data.notes && (
           <div className="p-4 bg-yellow-50/50 dark:bg-yellow-950/10">
             <p className="text-[10px] text-yellow-600 uppercase font-black mb-1">{t("booking.step4.notes_label")}:</p>
@@ -162,21 +191,30 @@ export default function Step4Review({ data, onBack, onConfirm }: any) {
           <span className="text-sm font-semibold text-zinc-600">{t("booking.step4.payment_detail")}</span>
         </div>
         <div className="p-5 space-y-3">
-          <div className="flex justify-between text-sm">
-            <span className="text-zinc-500">{t("booking.step4.subtotal")}</span>
-            <span className="font-medium">{formatCurrency(subtotal)}</span>
-          </div>
-          {settings?.is_tax_active && (
+          {isOnlyBooking ? (
             <div className="flex justify-between text-sm">
-              <span className="text-zinc-500">{t("booking.step4.tax")} ({settings.tax_percent}%)</span>
-              <span className="font-medium">{formatCurrency(tax)}</span>
+              <span className="text-zinc-500">Biaya Reservasi (DP)</span>
+              <span className="font-medium">{formatCurrency(BOOKING_FEE)}</span>
             </div>
-          )}
-          {settings?.is_service_active && (
-            <div className="flex justify-between text-sm">
-              <span className="text-zinc-500">{t("booking.step4.service")} ({settings.service_percent}%)</span>
-              <span className="font-medium">{formatCurrency(service)}</span>
-            </div>
+          ) : (
+            <>
+              <div className="flex justify-between text-sm">
+                <span className="text-zinc-500">{t("booking.step4.subtotal")}</span>
+                <span className="font-medium">{formatCurrency(subtotal)}</span>
+              </div>
+              {settings?.is_tax_active && (
+                <div className="flex justify-between text-sm">
+                  <span className="text-zinc-500">{t("booking.step4.tax")} ({settings.tax_percent}%)</span>
+                  <span className="font-medium">{formatCurrency(tax)}</span>
+                </div>
+              )}
+              {settings?.is_service_active && (
+                <div className="flex justify-between text-sm">
+                  <span className="text-zinc-500">{t("booking.step4.service")} ({settings.service_percent}%)</span>
+                  <span className="font-medium">{formatCurrency(service)}</span>
+                </div>
+              )}
+            </>
           )}
           <div className="pt-3 border-t flex justify-between items-center">
             <span className="text-base font-bold">{t("booking.step4.grand_total")}</span>

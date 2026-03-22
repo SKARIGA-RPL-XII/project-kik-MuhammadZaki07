@@ -303,69 +303,63 @@ class PosService
             Config::$isSanitized = true;
             Config::$is3ds = true;
 
-            $settings = is_array($settings) ? $settings : [];
-            $availableMethods = is_string($settings['available_methods'] ?? '')
-                ? json_decode($settings['available_methods'], true)
-                : ($settings['available_methods'] ?? []);
+            $itemDetails = [];
+            $subtotal = 0;
 
-            $enabledPayments = [];
-            if (is_array($availableMethods)) {
-                $enabledPayments = collect($availableMethods)
-                    ->filter(fn($method) => (isset($method['active']) && $method['active'] == 1))
-                    ->pluck('id')
-                    ->toArray();
-            }
-
-            $itemDetails = collect($items)->map(function ($t) {
-                return [
-                    'id' => $t['menu']->id,
-                    'price' => (int) $t['price'],
-                    'quantity' => $t['quantity'],
-                    'name' => substr($t['menu']->name, 0, 50)
-                ];
-            })->toArray();
-
-            $subtotal = collect($items)->sum(fn($i) => $i['price'] * $i['quantity']);
-
-            $serviceRate = (float) (DB::table('settings')->where('key', 'service_percent')->first()->value ?? 0);
-            $taxRate = (float) (DB::table('settings')->where('key', 'tax_percent')->first()->value ?? 0);
-
-            $serviceAmount = round(($subtotal * $serviceRate) / 100);
-            $taxAmount = round((($subtotal + $serviceAmount) * $taxRate) / 100);
-
-            if ($serviceAmount > 0) {
+            if (empty($items)) {
                 $itemDetails[] = [
-                    'id' => 'SERVICE-CHG',
-                    'price' => (int) $serviceAmount,
+                    'id'       => 'DEP-' . $transaction->id,
+                    'price'    => (int) $transaction->total_amount,
                     'quantity' => 1,
-                    'name' => 'Service Charge'
+                    'name'     => 'Deposit / Booking Fee'
                 ];
-            }
+            } else {
+                $itemDetails = collect($items)->map(function ($t) {
+                    return [
+                        'id'       => 'MN-' . $t['menu']->id,
+                        'price'    => (int) $t['price'],
+                        'quantity' => $t['quantity'],
+                        'name'     => substr($t['menu']->name, 0, 50)
+                    ];
+                })->toArray();
 
-            if ($taxAmount > 0) {
-                $itemDetails[] = [
-                    'id' => 'TAX-CHG',
-                    'price' => (int) $taxAmount,
-                    'quantity' => 1,
-                    'name' => 'Tax / Pajak'
-                ];
+                $taxPercent = $settings['tax_percent']['value'] ?? 0;
+                $servicePercent = $settings['service_percent']['value'] ?? 0;
+                $subtotal = collect($items)->sum(fn($i) => $i['price'] * $i['quantity']);
+
+                $serviceAmount = round(($subtotal * $servicePercent) / 100);
+                $taxAmount = round((($subtotal + $serviceAmount) * $taxPercent) / 100);
+
+                if ($serviceAmount > 0) {
+                    $itemDetails[] = ['id' => 'SVC-CHG', 'price' => (int)$serviceAmount, 'quantity' => 1, 'name' => 'Service Charge'];
+                }
+                if ($taxAmount > 0) {
+                    $itemDetails[] = ['id' => 'TAX-CHG', 'price' => (int)$taxAmount, 'quantity' => 1, 'name' => 'Tax'];
+                }
             }
 
             $params = [
                 'transaction_details' => [
-                    'order_id' => $transaction->transaction_code . '-' . time(),
+                    'order_id'     => $transaction->transaction_code . '-' . time(),
                     'gross_amount' => (int) round($transaction->total_amount),
                 ],
-                'expiry' => [
-                    'start_time' => now()->format('Y-m-d H:i:s P'),
-                    'unit' => 'minutes',
-                    'duration' => 60
-                ],
                 'item_details' => $itemDetails,
+                'customer_details' => [
+                    'first_name' => Auth::user()->username ?? 'Customer',
+                    'email'      => Auth::user()->email,
+                ],
             ];
 
-            if (!empty($enabledPayments)) {
-                $params['enabled_payments'] = $enabledPayments;
+            $methods = $settings['available_methods']['value'] ?? [];
+            if (is_array($methods)) {
+                $enabledPayments = collect($methods)
+                    ->filter(fn($method) => (isset($method['active']) && $method['active'] == 1))
+                    ->pluck('id')
+                    ->toArray();
+
+                if (!empty($enabledPayments)) {
+                    $params['enabled_payments'] = $enabledPayments;
+                }
             }
 
             return Snap::getSnapToken($params);

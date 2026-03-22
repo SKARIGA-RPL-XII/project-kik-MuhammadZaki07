@@ -31,34 +31,31 @@ class MidtransService
             return null;
         }
 
-        $lastHyphenPos = strrpos($orderId, '-');
-        if ($lastHyphenPos !== false) {
-            $originalCode = substr($orderId, 0, $lastHyphenPos);
-        } else {
-            $originalCode = $orderId;
+        $transaction = Transaction::where('transaction_code', $orderId)->first();
+
+        if (!$transaction) {
+            $lastHyphenPos = strrpos($orderId, '-');
+            if ($lastHyphenPos !== false) {
+                $originalCode = substr($orderId, 0, $lastHyphenPos);
+                $transaction = Transaction::where('transaction_code', $originalCode)->first();
+            }
         }
-
-        Log::info("DEBUG: Midtrans kirim $orderId | Hasil potong jadi: $originalCode");
-
-        $transaction = Transaction::where('transaction_code', $originalCode)->first();
 
         if ($transaction) {
             $status = $notification['transaction_status'];
 
-            if ($status == 'settlement' || $status == 'capture') {
-                Log::info("Mulai update status lunas untuk: " . $transaction->transaction_code);
-
+            if (in_array($status, ['settlement', 'capture'])) {
                 $booking = Booking::where('transaction_id', $transaction->id)->first();
+
                 if ($booking) {
                     $transaction->update([
-                        'status'         => 'settlement',
+                        'status'         => 'paid',
                         'payment_method' => $notification['payment_type'] ?? 'midtrans',
                         'amount_paid'    => (int) $notification['gross_amount'],
                         'paid_at'        => now(),
                     ]);
 
                     $booking->update(['status' => 'pending_confirmation']);
-                    Log::info("Webhook: Booking {$booking->id} dibayar. Menunggu konfirmasi admin.");
                 } else {
                     $transaction->update([
                         'status'         => 'to_cook',
@@ -70,28 +67,24 @@ class MidtransService
 
                     try {
                         $this->posService->completePaymentProcess($transaction);
-                        Log::info("Stok berhasil dikurangi untuk: " . $transaction->transaction_code);
                     } catch (Exception $e) {
                         Log::error("Gagal potong stok di Webhook: " . $e->getMessage());
                     }
                 }
-
-                Log::info("Webhook Success Full Process: " . $transaction->transaction_code);
             } elseif (in_array($status, ['deny', 'expire', 'cancel'])) {
                 $transaction->update(['status' => 'failed']);
 
                 $booking = Booking::where('transaction_id', $transaction->id)->first();
                 if ($booking) {
                     $booking->update(['status' => 'cancelled']);
-                }
 
-                if ($transaction->table_id) {
-                    Table::where('id', $transaction->table_id)->update(['status' => 'available']);
+                    if ($booking->table_id) {
+                        Table::where('id', $booking->table_id)->update(['status' => 'available']);
+                    }
                 }
-                Log::info("Webhook: Transaksi " . $transaction->transaction_code . " gagal/expired.");
             }
         } else {
-            Log::warning("Webhook Warning: Transaksi $originalCode tidak ditemukan di DB.");
+            Log::warning("Webhook Warning: Transaksi $orderId tidak ditemukan di DB.");
         }
 
         return $transaction;
