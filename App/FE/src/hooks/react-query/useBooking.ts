@@ -19,6 +19,14 @@ export const useBookingMutations = () => {
     },
   });
 
+  const approveBooking = useMutation({
+    mutationFn: (id: number) => BookingService.approveBooking(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["bookings"] });
+      queryClient.invalidateQueries({ queryKey: ["tables"] });
+    },
+  });
+
   const deleteBooking = useMutation({
     mutationFn: (id: number) => BookingService.deleteBooking(id),
     onSuccess: () => {
@@ -27,5 +35,5 @@ export const useBookingMutations = () => {
     },
   });
 
-  return { createBooking, deleteBooking };
+  return { createBooking, deleteBooking , approveBooking };
 };

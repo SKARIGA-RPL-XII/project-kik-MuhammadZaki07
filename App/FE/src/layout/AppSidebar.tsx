@@ -47,29 +47,27 @@ const AppSidebar: React.FC = () => {
     }
   }, [openKey]);
 
-  const filterRole = (items: NavItem[]) => {
-    return items
-      .map((item) => {
-        const parentKey = item.name.toLowerCase();
-        const hasParentAccess = can(parentKey, "view");
+const filterRole = (items: NavItem[]) => {
+  return items
+    .map((item) => {
+      // Prioritaskan item.permission, jika tidak ada baru pakai item.name
+      const permissionKey = (item.permission || item.name).toLowerCase();
+      const hasParentAccess = can(permissionKey, "view");
 
-        if (item.subItems) {
-          const filteredSubItems = item.subItems.filter((sub) => {
-            return can(sub.name.toLowerCase(), "view");
-          });
+      if (item.subItems) {
+        const filteredSubItems = item.subItems.filter((sub) => {
+          return can(sub.name.toLowerCase(), "view");
+        });
 
-          if (!hasParentAccess || filteredSubItems.length === 0) return null;
+        if (!hasParentAccess || filteredSubItems.length === 0) return null;
 
-          return {
-            ...item,
-            subItems: filteredSubItems,
-          };
-        }
+        return { ...item, subItems: filteredSubItems };
+      }
 
-        return hasParentAccess ? item : null;
-      })
-      .filter((item): item is NavItem => item !== null);
-  };
+      return hasParentAccess ? item : null;
+    })
+    .filter((item): item is NavItem => item !== null);
+};
 
   const renderSection = (
     title: string,
@@ -151,8 +149,18 @@ const AppSidebar: React.FC = () => {
       </div>
 
       <nav className="flex flex-col overflow-y-auto no-scrollbar">
-        {renderSection("Menu", navConfig.main, "main")}
-        {renderSection("Others", navConfig.others, "others")}
+      <nav className="flex flex-col overflow-y-auto no-scrollbar pb-10">
+  {renderSection("Overview", navConfig.overview, "overview" as any)}
+  
+  <div className="my-2 border-t border-neutral-100 dark:border-neutral-800" />
+  {renderSection("Point of Sales", navConfig.pos, "pos" as any)}
+  
+  <div className="my-2 border-t border-neutral-100 dark:border-neutral-800" />
+  {renderSection("Management", navConfig.management, "management" as any)}
+  
+  <div className="my-2 border-t border-neutral-100 dark:border-neutral-800" />
+  {renderSection("System & Settings", navConfig.system, "system" as any)}
+</nav>
       </nav>
     </aside>
   );

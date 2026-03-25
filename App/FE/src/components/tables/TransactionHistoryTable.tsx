@@ -14,8 +14,6 @@ import {
   Loader2,
   Receipt,
   User,
-  ChevronLeft,
-  ChevronRight,
   Eye,
   FileDown,
 } from "lucide-react";

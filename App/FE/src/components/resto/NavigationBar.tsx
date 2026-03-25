@@ -171,7 +171,7 @@ export function NavigationBar({
             className="bg-red-500 hover:bg-red-600 text-white"
             onClick={() => navigate("/booking")}
           >
-            Booking Meja Sekarang
+           {t("button.booking_now")}
           </Button>
         )}
       </div>

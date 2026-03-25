@@ -113,8 +113,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::prefix('bookings')->group(function () {
         Route::get('/', [BookingController::class, 'index']);
         Route::post('/', [BookingController::class, 'store']);
-         Route::put('/{id}/approve', [BookingController::class, 'approve']);
-         Route::put('/{id}/reject', [BookingController::class, 'reject']);
+        Route::put('/{id}/approve', [BookingController::class, 'approve']);
+        Route::put('/{id}/reject', [BookingController::class, 'reject']);
+        Route::delete('/{id}', [BookingController::class, 'destroy']);
     });
 });
 

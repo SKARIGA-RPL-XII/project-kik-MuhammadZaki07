@@ -34,11 +34,9 @@ class MidtransService
         $transaction = Transaction::where('transaction_code', $orderId)->first();
 
         if (!$transaction) {
-            $lastHyphenPos = strrpos($orderId, '-');
-            if ($lastHyphenPos !== false) {
-                $originalCode = substr($orderId, 0, $lastHyphenPos);
-                $transaction = Transaction::where('transaction_code', $originalCode)->first();
-            }
+            $parts = explode('-', $orderId);
+            $originalCode = $parts[0] . '-' . $parts[1] . '-' . $parts[2];
+            $transaction = Transaction::where('transaction_code', $originalCode)->first();
         }
 
         if ($transaction) {
@@ -55,20 +53,29 @@ class MidtransService
                         'paid_at'        => now(),
                     ]);
 
-                    $booking->update(['status' => 'pending_confirmation']);
+                    $booking->update(['status' => 'confirmed']);
+
+                    if ($booking->table_id) {
+                        Table::where('id', $booking->table_id)->update(['status' => 'booked']);
+                    }
+
+                    try {
+                        $this->posService->completePaymentProcess($transaction);
+                    } catch (Exception $e) {
+                        Log::error("Gagal potong stok Booking: " . $e->getMessage());
+                    }
                 } else {
                     $transaction->update([
                         'status'         => 'to_cook',
                         'payment_method' => $notification['payment_type'] ?? 'midtrans',
                         'amount_paid'    => (int) $notification['gross_amount'],
-                        'change_amount'  => 0,
                         'paid_at'        => now(),
                     ]);
 
                     try {
                         $this->posService->completePaymentProcess($transaction);
                     } catch (Exception $e) {
-                        Log::error("Gagal potong stok di Webhook: " . $e->getMessage());
+                        Log::error("Gagal potong stok Order: " . $e->getMessage());
                     }
                 }
             } elseif (in_array($status, ['deny', 'expire', 'cancel'])) {
@@ -77,14 +84,11 @@ class MidtransService
                 $booking = Booking::where('transaction_id', $transaction->id)->first();
                 if ($booking) {
                     $booking->update(['status' => 'cancelled']);
-
                     if ($booking->table_id) {
                         Table::where('id', $booking->table_id)->update(['status' => 'available']);
                     }
                 }
             }
-        } else {
-            Log::warning("Webhook Warning: Transaksi $orderId tidak ditemukan di DB.");
         }
 
         return $transaction;

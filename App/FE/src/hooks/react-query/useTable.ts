@@ -5,6 +5,8 @@ export const useTables = (query?: TableQuery) => {
   return useQuery({
     queryKey: ["tables", query],
     queryFn: () => TableService.getTables(query),
+    refetchInterval: 10000,
+    refetchIntervalInBackground: true,
   });
 };
 

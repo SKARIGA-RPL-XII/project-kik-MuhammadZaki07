@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Booking;
+use App\Models\Table;
+use App\Models\Transaction;
 use App\Notifications\GeneralNotification;
 use App\Services\LogService;
 use App\Services\PosService;
@@ -11,6 +13,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Exception;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use Midtrans\Snap;
 
 class BookingController extends Controller
@@ -22,12 +25,20 @@ class BookingController extends Controller
         $this->posService = $posService;
     }
 
-    public function index()
+    public function index(Request $request)
     {
-        $bookings = Booking::with(['user', 'table', 'transaction.details.menu'])
-            ->orderBy('booking_time', 'desc')
-            ->get();
+        $query = Booking::with(['user', 'table', 'transaction.details.menu']);
 
+        if ($request->has('search')) {
+            $search = $request->search;
+            $query->whereHas('user', function ($q) use ($search) {
+                $q->where('username', 'like', "%$search%");
+            })->orWhereHas('table', function ($q) use ($search) {
+                $q->where('table_number', 'like', "%$search%");
+            });
+        }
+
+        $bookings = $query->orderBy('booking_time', 'desc')->get();
         return response()->json(['status' => 'success', 'data' => $bookings]);
     }
 
@@ -47,7 +58,7 @@ class BookingController extends Controller
                 $endTime = $startTime->copy()->addMinutes(120);
 
                 $isBooked = Booking::where('table_id', $request->table_id)
-                    ->whereIn('status', ['pending_payment', 'pending_confirmation', 'confirmed'])
+                    ->whereIn('status', ['pending_payment', 'pending', 'confirmed'])
                     ->where(function ($query) use ($startTime, $endTime) {
                         $query->where('booking_time', '<', $endTime)
                             ->where('end_time', '>', $startTime);
@@ -72,17 +83,27 @@ class BookingController extends Controller
                     $transactionId = $orderResult['transaction']->id;
                     $snapToken     = $orderResult['snap_token'];
                 } else {
-                    $transaction = \App\Models\Transaction::create([
+                    $taxPercent = $request->settings['tax_percent'] ?? 0;
+                    $servicePercent = $request->settings['service_percent'] ?? 0;
+
+                    $baseBookingFee = 50000;
+                    $serviceAmount = round(($baseBookingFee * $servicePercent) / 100);
+                    $taxAmount = round((($baseBookingFee + $serviceAmount) * $taxPercent) / 100);
+                    $finalTotal = $baseBookingFee + $serviceAmount + $taxAmount;
+
+                    $transaction = Transaction::create([
                         'user_id' => Auth::id(),
-                        'transaction_code' => 'BK-' . strtoupper(\Illuminate\Support\Str::random(8)),
-                        'total_amount' => 50000,
-                        'status' => 'pending',
+                        'transaction_code' => 'BK-' . strtoupper(Str::random(8)),
+                        'total_amount' => $finalTotal,
+                        'status' => 'pending_payment',
                         'payment_method' => 'midtrans'
                     ]);
 
                     $transactionId = $transaction->id;
-                    $snapResponse = $this->getSnapToken($transactionId);
-                    $snapToken = $snapResponse->getData()->snap_token;
+
+                    $snapToken = $this->posService->generateMidtransToken($transaction, [], $request->settings ?? []);
+
+                    $transaction->update(['snap_token' => $snapToken]);
                 }
 
                 $booking = Booking::create([
@@ -106,61 +127,6 @@ class BookingController extends Controller
             });
         } catch (Exception $e) {
             return response()->json(['status' => 'error', 'message' => $e->getMessage()], 500);
-        }
-    }
-
-    public function approve($id)
-    {
-        try {
-            return DB::transaction(function () use ($id) {
-                $booking = Booking::with(['table', 'transaction', 'user'])->findOrFail($id);
-
-                if ($booking->status !== 'pending_confirmation') {
-                    return response()->json([
-                        'status' => 'error',
-                        'message' => "Hanya booking status 'pending_confirmation' yang bisa di-approve."
-                    ], 400);
-                }
-
-                // 1. Update Booking
-                $booking->update(['status' => 'confirmed']);
-
-                // 2. Update Meja jadi 'booked' (bukan 'occupied' lagi kalau belum jamnya)
-                if ($booking->table) {
-                    $booking->table->update(['status' => 'booked']);
-                }
-
-                // 3. Proses Stok/POS
-                if ($booking->transaction) {
-                    $this->posService->completePaymentProcess($booking->transaction);
-                }
-
-                // 4. Catat Log Aktivitas (Sangat Penting buat Laporan Admin)
-                \App\Services\LogService::write(
-                    'Booking',
-                    'Approve',
-                    "Admin mengonfirmasi booking #{$booking->id} untuk user {$booking->user->username}",
-                    ['status' => 'pending_confirmation'],
-                    ['status' => 'confirmed']
-                );
-
-                // 5. Notifikasi User
-                if ($booking->user) {
-                    $booking->user->notify(new GeneralNotification(
-                        "Reservasi Berhasil! Meja {$booking->table->table_number} sudah kami siapkan untukmu.",
-                        "booking_success",
-                        "/history-booking"
-                    ));
-                }
-
-                return response()->json([
-                    'status' => 'success',
-                    'message' => 'Booking berhasil dikonfirmasi oleh Admin.'
-                ]);
-            });
-        } catch (Exception $e) {
-            Log::error("Gagal Approve Booking: " . $e->getMessage());
-            return response()->json(['status' => 'error', 'message' => 'Terjadi kesalahan sistem.'], 500);
         }
     }
 
@@ -206,9 +172,51 @@ class BookingController extends Controller
         }
     }
 
+    public function approve($id)
+    {
+        return DB::transaction(function () use ($id) {
+            $booking = Booking::with(['table', 'transaction'])->findOrFail($id);
+
+            if ($booking->status === 'confirmed') {
+                return response()->json(['message' => 'Booking sudah dikonfirmasi.'], 400);
+            }
+
+            $booking->update(['status' => 'confirmed']);
+
+            if ($booking->table) {
+                $booking->table->update(['status' => 'booked']);
+            }
+
+            if ($booking->transaction && $booking->transaction->status !== 'paid') {
+                $booking->transaction->update(['status' => 'paid', 'paid_at' => now()]);
+            }
+
+            return response()->json(['status' => 'success', 'message' => 'Booking dikonfirmasi manual.']);
+        });
+    }
+
+    public function destroy($id)
+    {
+        return DB::transaction(function () use ($id) {
+            $booking = Booking::findOrFail($id);
+
+            if ($booking->table_id) {
+                Table::where('id', $booking->table_id)->update(['status' => 'available']);
+            }
+
+            if ($booking->transaction_id) {
+                $booking->transaction()->update(['status' => 'cancelled']);
+            }
+
+            $booking->delete();
+
+            return response()->json(['status' => 'success', 'message' => 'Booking berhasil dihapus.']);
+        });
+    }
+
     public function getSnapToken($id)
     {
-        $transaction = \App\Models\Transaction::with(['user'])->findOrFail($id);
+        $transaction = Transaction::with(['user'])->findOrFail($id);
 
         if ($transaction->snap_token) {
             return response()->json(['snap_token' => $transaction->snap_token]);

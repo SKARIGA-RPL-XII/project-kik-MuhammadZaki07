@@ -73,7 +73,7 @@ export default function TablePage() {
 
   const handleUpdateStatus = (status: string) => {
     const payload: any = { status };
-    if (status === "reserved") {
+    if (status === "reserved" || status === "booked") {
       if (!reservedUntil)
         return toast(
           "warning",
@@ -124,6 +124,8 @@ export default function TablePage() {
         return `${base} bg-red-50 dark:bg-red-950/20 hover:border-red-500 ${isSelected ? "ring-4 ring-red-300 scale-105" : ""}`;
       case "reserved":
         return `${base} bg-yellow-50 dark:bg-yellow-950/20 hover:border-yellow-500 ${isSelected ? "ring-4 ring-yellow-300 scale-105" : ""}`;
+      case "booked":
+        return `${base} bg-yellow-50 dark:bg-yellow-950/20 hover:border-yellow-500 ${isSelected ? "ring-4 ring-yellow-300 scale-105" : ""}`;
       default:
         return `${base} bg-green-50 dark:bg-green-950/20 hover:border-green-500 ${isSelected ? "ring-2 ring-green-300 dark:ring-green-500 scale-105" : ""}`;
     }
@@ -134,6 +136,8 @@ export default function TablePage() {
       case "occupied":
         return "hover:bg-red-50 bg-neutral-200 dark:bg-neutral-800";
       case "reserved":
+        return "hover:bg-yellow-50 bg-neutral-200 dark:bg-neutral-800";
+      case "booked":
         return "hover:bg-yellow-50 bg-neutral-200 dark:bg-neutral-800";
       default:
         return "hover:bg-green-50 bg-neutral-200 dark:bg-neutral-800";
@@ -227,7 +231,7 @@ export default function TablePage() {
                       >
                         <span
                           className={`font-black w-10 h-10 rounded-full flex justify-center items-center text-sm mb-1 text-white
-                        ${table.status === "occupied" ? "bg-red-500" : table.status === "reserved" ? "bg-yellow-500" : "bg-green-500"}`}
+  ${table.status === "occupied" ? "bg-red-500" : table.status === "reserved" || table.status === "booked" ? "bg-yellow-500" : "bg-green-500"}`}
                         >
                           T-{table.table_number}
                         </span>

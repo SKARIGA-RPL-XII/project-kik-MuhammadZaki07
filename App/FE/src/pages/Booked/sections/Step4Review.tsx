@@ -18,7 +18,12 @@ export default function Step4Review({ data, onBack, onConfirm }: any) {
   const { settings } = useSettings();
   
   const BOOKING_FEE = 50000;
+  
   const currency = settings?.currency_symbol || "Rp";
+  const isTaxActive = settings?.is_tax_active === 1;
+  const isServiceActive = settings?.is_service_active === 1;
+  const taxPercent = Number(settings?.tax_percent) || 0;
+  const servicePercent = Number(settings?.service_percent) || 0;
 
   const formatCurrency = (value: number) =>
     `${currency} ${Math.round(value).toLocaleString("id-ID")}`;
@@ -36,21 +41,18 @@ export default function Step4Review({ data, onBack, onConfirm }: any) {
     return Math.round(itemsTotal);
   }, [data.items]);
 
-  const tax = settings?.is_tax_active
-    ? Math.round(subtotal * (settings.tax_percent / 100))
-    : 0;
-
-  const service = settings?.is_service_active
-    ? Math.round(subtotal * (settings.service_percent / 100))
-    : 0;
-
   const isOnlyBooking = !data.items || data.items.length === 0;
-  const total = isOnlyBooking ? BOOKING_FEE : (subtotal + tax + service);
+  
+  const baseAmount = isOnlyBooking ? BOOKING_FEE : subtotal;
+
+  const tax = isTaxActive ? Math.round(baseAmount * (taxPercent / 100)) : 0;
+  const service = isServiceActive ? Math.round(baseAmount * (servicePercent / 100)) : 0;
+  const total = baseAmount + tax + service;
 
   const handleConfirmClick = () => {
     const cleanedTime = data.booking_time.replace("T", " ") + ":00";
 
-    const finalItems = data.items.map((item: any) => {
+    const finalItems = data.items?.map((item: any) => {
       const hasDiscount = item.discount?.is_active && item.discount.value_discount > 0;
       const finalPrice = hasDiscount 
         ? item.price * (1 - item.discount.value_discount / 100) 
@@ -63,7 +65,7 @@ export default function Step4Review({ data, onBack, onConfirm }: any) {
         discount_price: Math.round(finalPrice),
         attributes: item.attributes || []
       };
-    });
+    }) || [];
 
     const finalPayload = {
       table_id: data.table_id,
@@ -73,14 +75,12 @@ export default function Step4Review({ data, onBack, onConfirm }: any) {
       payment_method: "midtrans",
       items: finalItems,
       settings: {
-        tax_percent: { value: settings?.tax_percent || 0 },
-        service_percent: { value: settings?.service_percent || 0 },
+        tax_percent: taxPercent,
+        service_percent: servicePercent,
       },
       gross_amount: total
     };
 
-    // console.log(finalPayload);
-    
     onConfirm(finalPayload);
   };
 
@@ -96,6 +96,7 @@ export default function Step4Review({ data, onBack, onConfirm }: any) {
         </div>
       </div>
 
+      {/* Info Kunjungan */}
       <div className="bg-white dark:bg-neutral-950 border rounded-lg overflow-hidden shadow-none">
         <div className="p-4 border-b bg-zinc-50/50 dark:bg-neutral-900/50 flex items-center gap-2">
           <MapPin className="h-4 w-4 text-red-600" />
@@ -119,6 +120,7 @@ export default function Step4Review({ data, onBack, onConfirm }: any) {
         </div>
       </div>
 
+      {/* Daftar Menu */}
       <div className="bg-white dark:bg-neutral-950 border rounded-lg overflow-hidden shadow-none">
         <div className="p-4 border-b bg-zinc-50/50 dark:bg-neutral-900/50 flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -185,37 +187,34 @@ export default function Step4Review({ data, onBack, onConfirm }: any) {
         )}
       </div>
 
+      {/* Rincian Pembayaran */}
       <div className="bg-white dark:bg-neutral-950 border rounded-lg overflow-hidden shadow-none">
         <div className="p-4 border-b bg-zinc-50/50 dark:bg-neutral-900/50 flex items-center gap-2">
           <ReceiptText className="h-4 w-4 text-red-600" />
           <span className="text-sm font-semibold text-zinc-600">{t("booking.step4.payment_detail")}</span>
         </div>
         <div className="p-5 space-y-3">
-          {isOnlyBooking ? (
+          <div className="flex justify-between text-sm">
+            <span className="text-zinc-500">
+              {isOnlyBooking ? "Biaya Reservasi (DP)" : t("booking.step4.subtotal")}
+            </span>
+            <span className="font-medium">{formatCurrency(baseAmount)}</span>
+          </div>
+
+          {isTaxActive && tax > 0 && (
             <div className="flex justify-between text-sm">
-              <span className="text-zinc-500">Biaya Reservasi (DP)</span>
-              <span className="font-medium">{formatCurrency(BOOKING_FEE)}</span>
+              <span className="text-zinc-500">{t("booking.step4.tax")} ({taxPercent}%)</span>
+              <span className="font-medium">{formatCurrency(tax)}</span>
             </div>
-          ) : (
-            <>
-              <div className="flex justify-between text-sm">
-                <span className="text-zinc-500">{t("booking.step4.subtotal")}</span>
-                <span className="font-medium">{formatCurrency(subtotal)}</span>
-              </div>
-              {settings?.is_tax_active && (
-                <div className="flex justify-between text-sm">
-                  <span className="text-zinc-500">{t("booking.step4.tax")} ({settings.tax_percent}%)</span>
-                  <span className="font-medium">{formatCurrency(tax)}</span>
-                </div>
-              )}
-              {settings?.is_service_active && (
-                <div className="flex justify-between text-sm">
-                  <span className="text-zinc-500">{t("booking.step4.service")} ({settings.service_percent}%)</span>
-                  <span className="font-medium">{formatCurrency(service)}</span>
-                </div>
-              )}
-            </>
           )}
+
+          {isServiceActive && service > 0 && (
+            <div className="flex justify-between text-sm">
+              <span className="text-zinc-500">{t("booking.step4.service")} ({servicePercent}%)</span>
+              <span className="font-medium">{formatCurrency(service)}</span>
+            </div>
+          )}
+
           <div className="pt-3 border-t flex justify-between items-center">
             <span className="text-base font-bold">{t("booking.step4.grand_total")}</span>
             <span className="text-xl font-black text-red-600">{formatCurrency(total)}</span>
@@ -223,6 +222,7 @@ export default function Step4Review({ data, onBack, onConfirm }: any) {
         </div>
       </div>
 
+      {/* Bottom Bar */}
       <div className="fixed bottom-0 left-0 w-full p-4 bg-white dark:bg-neutral-950 border-t z-50 shadow-[0_-4px_20px_rgba(0,0,0,0.05)]">
         <div className="max-w-3xl mx-auto flex items-center justify-between gap-4">
           <div className="hidden sm:block">

@@ -8,6 +8,7 @@ import { useTranslation } from "react-i18next";
 import { BookingService } from "@/services/booking.service";
 import { useToast } from "@/context/ToastContext";
 import { openSnapPopup } from "@/utils/midtransHandler";
+import { useSettings } from "@/context/SettingsContext";
 
 export default function BookingLayout() {
   const { t } = useTranslation();
@@ -18,6 +19,7 @@ export default function BookingLayout() {
     return savedStep ? parseInt(savedStep) : 1;
   });
   const { toast } = useToast();
+  const { settings } = useSettings();
 
   const [bookingData, setBookingData] = useState(() => {
     const savedData = localStorage.getItem("booking_data");
@@ -45,87 +47,55 @@ export default function BookingLayout() {
     setBookingData((prev: any) => ({ ...prev, ...newData }));
   };
 
-  const handleFinalFinish = async (finalData: any) => {
-    try {
-      const hasItems = finalData.items && finalData.items.length > 0;
+const handleFinalFinish = async (finalData: any) => {
+  try {    
+    const res = await BookingService.createBooking(finalData);
 
-      const bookingPayload = {
-        table_id: finalData.table_id,
-        booking_time: finalData.booking_time,
-        number_of_people: finalData.number_of_people,
-        notes: finalData.notes,
-        payment_method: hasItems ? "midtrans" : "cash",
-        total_amount: hasItems
-          ? finalData.items.reduce(
-              (acc: number, item: any) =>
-                acc + (item.discount_price || item.price) * item.quantity,
-              0,
-            )
-          : 0,
-        items: hasItems
-          ? finalData.items.map((item: any) => ({
-              menu_id: item.id,
-              quantity: item.quantity,
-              attributes: Object.values(item.selectedAttributes || {}),
-            }))
-          : [],
-      };
+    if (res.error) throw new Error(res.error);
 
-      const res = await BookingService.createBooking(bookingPayload);
-      if (res.error) throw new Error(res.error);
+    const bookingInfo = res.data?.data?.booking;
+    const snapToken = res.data?.data?.snap_token;
 
-      const bookingInfo = res.data?.data?.booking;
-      const snapToken = res.data?.data?.snap_token;
-
-      if (hasItems && snapToken) {
-        await openSnapPopup(snapToken, {
-          onSuccess: () => {
-            localStorage.removeItem("booking_step");
-            localStorage.removeItem("booking_data");
-            toast(
-              "success",
-              "Pembayaran Berhasil",
-              "Pesanan & Meja telah dikonfirmasi.",
-            );
-            navigate(`/invoice/${bookingInfo.transaction_id}`, {
-              state: { transactionData: bookingInfo },
-            });
-          },
-          onPending: () => {
-            localStorage.removeItem("booking_step");
-            localStorage.removeItem("booking_data");
-            toast("warning", "Pending", "Segera bayar agar pesanan diproses.");
-            navigate("/profile-customer?tab=orders", {
-              state: { selectedOrder: bookingInfo },
-            });
-          },
-          onError: () => toast("error", "Gagal", "Pembayaran bermasalah."),
-          onClose: () => {
-            localStorage.removeItem("booking_step");
-            localStorage.removeItem("booking_data");
-            toast(
-              "info",
-              "Batal",
-              "Selesaikan pembayaran nanti di menu Order.",
-            );
-            navigate("/profile-customer?tab=orders", {
-              state: { selectedOrder: bookingInfo },
-            });
-          },
-        });
-        return;
-      }
-
-      localStorage.removeItem("booking_step");
-      localStorage.removeItem("booking_data");
-      toast("success", "Booking Berhasil", "Meja Anda sudah dipesan.");
-      navigate("/profile-customer?tab=orders", {
-        state: { selectedOrder: bookingInfo },
+    if (snapToken) {
+      await openSnapPopup(snapToken, {
+        onSuccess: (result) => {
+          console.log("Midtrans Success:", result);
+          clearBookingSession();
+          toast("success", "Pembayaran Berhasil", "Pesanan & Meja telah dikonfirmasi.");
+          navigate(`/invoice/${bookingInfo.transaction_id}`, {
+            state: { transactionData: bookingInfo },
+          });
+        },
+        onPending: (result) => {
+          console.log("Midtrans Pending:", result);
+          clearBookingSession();
+          toast("warning", "Pending", "Segera bayar agar pesanan diproses.");
+          navigate("/profile-customer?tab=orders");
+        },
+        onError: (result) => {
+          console.error("Midtrans Error:", result);
+          toast("error", "Gagal", "Pembayaran bermasalah, silakan coba lagi.");
+        },
+        onClose: () => {
+          clearBookingSession();
+          toast("info", "Pembayaran Ditunda", "Selesaikan pembayaran nanti di menu Order.");
+          navigate("/profile-customer?tab=orders");
+        },
       });
-    } catch (err: any) {
-      console.error(err);
-      toast("error", "Gagal Booking", err.message || "Sistem sedang sibuk.");
+    } else {
+      clearBookingSession();
+      toast("success", "Booking Berhasil", "Meja Anda sudah dipesan.");
+      navigate("/profile-customer?tab=orders");
     }
+  } catch (err: any) {
+    console.error("Booking Error:", err);
+    toast("error", "Gagal Booking", err.message || "Sistem sedang sibuk.");
+  }
+};
+
+  const clearBookingSession = () => {
+    localStorage.removeItem("booking_step");
+    localStorage.removeItem("booking_data");
   };
 
   return (

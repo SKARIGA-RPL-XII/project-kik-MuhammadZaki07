@@ -304,16 +304,30 @@ class PosService
             Config::$is3ds = true;
 
             $itemDetails = [];
-            $subtotal = 0;
 
             if (empty($items)) {
+                $taxPercent = $settings['tax_percent'] ?? 0;
+                $servicePercent = $settings['service_percent'] ?? 0;
+
+                $baseFee = 50000;
+                $serviceAmount = round(($baseFee * $servicePercent) / 100);
+                $taxAmount = round((($baseFee + $serviceAmount) * $taxPercent) / 100);
+
                 $itemDetails[] = [
-                    'id'       => 'DEP-' . $transaction->id,
-                    'price'    => (int) $transaction->total_amount,
+                    'id'       => 'BOK-' . $transaction->id,
+                    'price'    => (int) $baseFee,
                     'quantity' => 1,
-                    'name'     => 'Deposit / Booking Fee'
+                    'name'     => 'Booking Fee (Meja)'
                 ];
-            } else {
+
+                if ($serviceAmount > 0) {
+                    $itemDetails[] = ['id' => 'SVC-BOK', 'price' => (int)$serviceAmount, 'quantity' => 1, 'name' => 'Service Charge'];
+                }
+                if ($taxAmount > 0) {
+                    $itemDetails[] = ['id' => 'TAX-BOK', 'price' => (int)$taxAmount, 'quantity' => 1, 'name' => 'Pajak (Tax)'];
+                }
+            }
+            else {
                 $itemDetails = collect($items)->map(function ($t) {
                     return [
                         'id'       => 'MN-' . $t['menu']->id,
@@ -323,8 +337,9 @@ class PosService
                     ];
                 })->toArray();
 
-                $taxPercent = $settings['tax_percent']['value'] ?? 0;
-                $servicePercent = $settings['service_percent']['value'] ?? 0;
+                $taxPercent = $settings['tax_percent']['value'] ?? ($settings['tax_percent'] ?? 0);
+                $servicePercent = $settings['service_percent']['value'] ?? ($settings['service_percent'] ?? 0);
+
                 $subtotal = collect($items)->sum(fn($i) => $i['price'] * $i['quantity']);
 
                 $serviceAmount = round(($subtotal * $servicePercent) / 100);
@@ -334,23 +349,25 @@ class PosService
                     $itemDetails[] = ['id' => 'SVC-CHG', 'price' => (int)$serviceAmount, 'quantity' => 1, 'name' => 'Service Charge'];
                 }
                 if ($taxAmount > 0) {
-                    $itemDetails[] = ['id' => 'TAX-CHG', 'price' => (int)$taxAmount, 'quantity' => 1, 'name' => 'Tax'];
+                    $itemDetails[] = ['id' => 'TAX-CHG', 'price' => (int)$taxAmount, 'quantity' => 1, 'name' => 'Pajak (Tax)'];
                 }
             }
+
+            $finalGrossAmount = collect($itemDetails)->sum(fn($item) => $item['price'] * $item['quantity']);
 
             $params = [
                 'transaction_details' => [
                     'order_id'     => $transaction->transaction_code . '-' . time(),
-                    'gross_amount' => (int) round($transaction->total_amount),
+                    'gross_amount' => (int) $finalGrossAmount,
                 ],
                 'item_details' => $itemDetails,
                 'customer_details' => [
-                    'first_name' => Auth::user()->username ?? 'Customer',
+                    'first_name' => Auth::user()->name ?? 'Pelanggan',
                     'email'      => Auth::user()->email,
                 ],
             ];
 
-            $methods = $settings['available_methods']['value'] ?? [];
+            $methods = $settings['available_methods']['value'] ?? ($settings['available_methods'] ?? []);
             if (is_array($methods)) {
                 $enabledPayments = collect($methods)
                     ->filter(fn($method) => (isset($method['active']) && $method['active'] == 1))

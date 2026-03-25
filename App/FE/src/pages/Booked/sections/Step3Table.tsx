@@ -72,7 +72,7 @@ export default function Step3Table({
     const base = "border-2 transition-all duration-300";
     if (status === "occupied")
       return `${base} bg-red-50 dark:bg-red-950/20 opacity-50 cursor-not-allowed`;
-    if (status === "reserved")
+    if (status === "reserved" || status === "booked")
       return `${base} bg-yellow-50 dark:bg-yellow-950/20 opacity-50 cursor-not-allowed`;
     return `${base} bg-green-50 dark:bg-green-950/20 hover:border-green-500 ${
       isSelected ? "ring-2 ring-green-500 scale-105" : ""
@@ -81,7 +81,8 @@ export default function Step3Table({
 
   const getSeatColor = (status: string) => {
     if (status === "occupied") return "bg-red-200 dark:bg-red-800";
-    if (status === "reserved") return "bg-yellow-200 dark:bg-yellow-800";
+    if (status === "reserved" || status === "booked")
+      return "bg-yellow-200 dark:bg-yellow-800";
     return "bg-neutral-200 dark:bg-neutral-800";
   };
 
@@ -98,7 +99,9 @@ export default function Step3Table({
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <div>
-            <h2 className="text-2xl font-bold uppercase">{t("booking.step3.title")}</h2>
+            <h2 className="text-2xl font-bold uppercase">
+              {t("booking.step3.title")}
+            </h2>
             <p className="text-sm text-zinc-500">
               {t("booking.step3.description")}
             </p>
@@ -178,14 +181,8 @@ export default function Step3Table({
                         ${getStatusStyles(table.status, isSelected)}`}
                     >
                       <span
-                        className={`font-black text-xs px-2 py-1 rounded-lg text-white mb-1
-                        ${
-                          table.status === "occupied"
-                            ? "bg-red-500"
-                            : table.status === "reserved"
-                              ? "bg-yellow-500"
-                              : "bg-green-500"
-                        }`}
+                        className={`font-black w-10 h-10 rounded-full flex justify-center items-center text-sm mb-1 text-white
+  ${table.status === "occupied" ? "bg-red-500" : table.status === "reserved" || table.status === "booked" ? "bg-yellow-500" : "bg-green-500"}`}
                       >
                         T-{table.table_number}
                       </span>

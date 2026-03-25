@@ -21,16 +21,41 @@ export type NavItem = {
 };
 
 export const navConfig = {
-  main: [
+  overview: [
     {
-      name: "Overview",
+      name: "Dashboard",
       icon: <GridIcon />,
+      path: "/dashboard",
       role: ["admin", "cashier"],
-      subItems: [
-        { name: "Dashboard", path: "/dashboard" },
-        { name: "Calendar", path: "/calendar" },
-      ],
     },
+    {
+      name: "Notifications",
+      icon: <Bell />,
+      path: "/notifications",
+      role: ["admin", "cashier", "employe"],
+    },
+  ],
+  pos: [
+    {
+      name: "Cashier",
+      icon: <MonitorSmartphone />,
+      role: ["cashier"],
+      path: "/cashier",
+    },
+    {
+      name: "Table List",
+      icon: <Utensils />,
+      role: ["cashier"],
+      path: "/tables",
+    },
+    {
+      name: "Order Queue",
+      icon: <ClipboardList />,
+      path: "/operations/orders",
+      role: ["admin", "cashier"],
+    },
+  ],
+  management: [
     {
       name: "Master Data",
       icon: <MdFastfood />,
@@ -45,29 +70,15 @@ export const navConfig = {
       ],
     },
     {
-      name: "Cashier",
-      icon: <MonitorSmartphone />,
-      role: ["cashier"],
-      path: "/cashier",
-    },
-    {
-      name: "Table",
-      icon: <Utensils />,
-      role: ["cashier"],
-      path: "/tables",
-    },
-    {
-      name: "Account",
-      icon: <UserSquare />,
-      role: ["admin", "cashier"],
+      name: "Inventory",
+      icon: <Package />,
+      role: ["admin"],
       subItems: [
-        { name: "Staff", path: "/staf" },
-        { name: "Admin", path: "/admin" },
-        { name: "User Profile", path: "/profile" },
+        { name: "Stock List", path: "/inventory/stock" },
+        { name: "Stock Adjustment", path: "/inventory/adjustment" },
+        { name: "Suppliers", path: "/inventory/suppliers" },
       ],
     },
-  ],
-  others: [
     {
       name: "Reports",
       icon: <BarChart3 />,
@@ -79,42 +90,29 @@ export const navConfig = {
         { name: "Transaction History", path: "/reports/transactions" },
       ],
     },
-    {
-      name: "Inventory",
-      icon: <Package />,
-      role: ["admin"],
-      subItems: [
-        { name: "Stock List", path: "/inventory/stock" },
-        { name: "Stock Adjustment", path: "/inventory/adjustment" },
-        { name: "Suppliers", path: "/inventory/suppliers" },
-      ],
-    },
+  ],
+  system: [
     {
       name: "Operations",
-      icon: <ClipboardList />,
+      icon: <Settings />, 
       role: ["admin"],
       subItems: [
-        { name: "Order Queue", path: "/operations/orders" },
         { name: "Kitchen Display", path: "/operations/kitchen" },
         { name: "Reservation", path: "/operations/reservation" },
-      ],
-    },
-    {
-      name: "Notifications",
-      icon: <Bell />,
-      role: ["admin" ,"cashier" , "employe"],
-      subItems: [
-        { name: "Notifications", path: "/notifications" },
+        { name: "Calendar", path: "/calendar" },
         { name: "System Logs", path: "/system/logs" },
-        // { name: "Activity History", path: "/notifications/activity" },
       ],
     },
     {
-      name: "Settings",
-      icon: <Settings />,
+      name: "Account & Settings",
+      icon: <UserSquare />,
+      permission: "account", // Pengecekan 'can' akan pakai string in
       role: ["admin"],
       subItems: [
-        { name: "General", path: "/settings/general" },
+        { name: "Staff", path: "/staf" },
+        { name: "Admin", path: "/admin" },
+        { name: "User Profile", path: "/profile" },
+        { name: "General Settings", path: "/settings/general" },
         { name: "Tax & Service", path: "/settings/tax" },
         { name: "Payment Methods", path: "/settings/payment" },
         { name: "Roles & Permissions", path: "/settings/roles" },

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Booking;
 use App\Models\Table;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -20,6 +21,9 @@ class TableController extends Controller
         $page = max(1, (int) $request->query('page', 1));
         $size = (int) $request->query('size', 1000);
 
+        $now = now();
+        $threeHoursLater = now()->addHours(3);
+
         $query = Table::with('room')
             ->when($search, fn($q) => $q->where('table_number', 'like', "%{$search}%"))
             ->when($status, fn($q) => $q->where('status', $status))
@@ -31,6 +35,25 @@ class TableController extends Controller
             ->skip(($page - 1) * $size)
             ->take($size)
             ->get();
+
+        $tables->transform(function ($table) {
+            if ($table->status === 'available') {
+                $now = now();
+
+                $hasActiveBooking = Booking::where('table_id', $table->id)
+                    ->whereIn('status', ['confirmed', 'paid'])
+                    ->where(function ($query) use ($now) {
+                        $query->whereRaw('DATE_SUB(booking_time, INTERVAL 3 HOUR) <= ?', [$now])
+                            ->where('end_time', '>=', $now);
+                    })
+                    ->exists();
+
+                if ($hasActiveBooking) {
+                    $table->status = 'reserved';
+                }
+            }
+            return $table;
+        });
 
         return response()->json([
             "message" => "success get tables",

@@ -29,9 +29,11 @@ export default function RolesPermissionsPage() {
   const [success, setSuccess] = useState("");
 
   const roles = ["admin", "employe", "user", "customer", "cashier"];
-  const menuSections = [
-    { title: "Main Navigation", items: navConfig.main },
-    { title: "Other Modules", items: navConfig.others },
+const menuSections = [
+    { title: "Overview", items: navConfig.overview || [] },
+    { title: "Point of Sales", items: navConfig.pos || [] },
+    { title: "Management", items: navConfig.management || [] },
+    { title: "System & Settings", items: navConfig.system || [] },
   ];
 
   useEffect(() => {
