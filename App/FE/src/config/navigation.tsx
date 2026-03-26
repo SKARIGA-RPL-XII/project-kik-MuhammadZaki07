@@ -85,7 +85,7 @@ export const navConfig = {
       role: ["admin"],
       subItems: [
         { name: "Sales Report", path: "/reports/sales" },
-        { name: "Daily Revenue", path: "/reports/daily-revenue" },
+        // { name: "Daily Revenue", path: "/reports/daily-revenue" },
         { name: "Top Selling Menu", path: "/reports/top-menu" },
         { name: "Transaction History", path: "/reports/transactions" },
       ],
@@ -97,7 +97,7 @@ export const navConfig = {
       icon: <Settings />, 
       role: ["admin"],
       subItems: [
-        { name: "Kitchen Display", path: "/operations/kitchen" },
+        // { name: "Kitchen Display", path: "/operations/kitchen" },
         { name: "Reservation", path: "/operations/reservation" },
         { name: "Calendar", path: "/calendar" },
         { name: "System Logs", path: "/system/logs" },
@@ -106,7 +106,7 @@ export const navConfig = {
     {
       name: "Account & Settings",
       icon: <UserSquare />,
-      permission: "account", // Pengecekan 'can' akan pakai string in
+      permission: "account",
       role: ["admin"],
       subItems: [
         { name: "Staff", path: "/staf" },

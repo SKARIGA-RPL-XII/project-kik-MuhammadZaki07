@@ -30,7 +30,7 @@ export default function NotificationDropdown() {
   const getDownloadUrl = (n: any) => n.download_url || n.data?.download_url;
 
   return (
-    <div className="relative z-[9999]" title="Notification">
+    <div className="relative z-[9999] active:scale-95" title="Notification">
       <button
         className="relative flex items-center justify-center text-neutral-500 transition-colors bg-white border border-neutral-200 rounded-full h-11 w-11 hover:bg-neutral-100 dark:border-neutral-800 dark:bg-neutral-900"
         onClick={toggleDropdown}

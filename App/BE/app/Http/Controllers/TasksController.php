@@ -4,94 +4,84 @@ namespace App\Http\Controllers;
 
 use App\Models\Tasks;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class TasksController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index()
     {
-        $data = Tasks::all();
-        return Controller::OKE('success' , 'succes get data' , $data , 200);
+        $data = Tasks::where('user_id', Auth::id())
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return Controller::OKE('success', 'Success get data', $data, 200);
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(Request $request)
     {
         $request->validate([
-            "task_name" => "string|required",
-            "description" =>"required|string",
-            "start_date" => "date",
-            "end_date" => "date"
+            "title"       => "required|string",
+            "description" => "nullable|string",
+            "priority"    => "in:low,medium,high",
+            "start_date"  => "nullable|date",
+            "end_date"    => "nullable|date"
         ]);
 
         $task = Tasks::create([
-            "task_name" => $request->task_name,
+            "user_id"     => Auth::id(),
+            "title"       => $request->title,
             "description" => $request->description,
-            "start_date" => $request->start_date,
-            "end_date" => $request->end_date,
-            "task_from" => $request->user()->role->name
+            "priority"    => $request->priority ?? 'medium',
+            "status"      => 'pending',
+            "start_date"  => $request->start_date,
+            "end_date"    => $request->end_date,
         ]);
 
-        return Controller::OKE('success' , 'succes create data' , $task, 200);
+        return Controller::OKE('success', 'Success create data', $task, 200);
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(Tasks $tasks)
+    public function update(Request $request, Tasks $task)
     {
-        //
-    }
+        if ($task->user_id !== Auth::id()) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(Tasks $tasks)
-    {
-
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, Tasks $tasks)
-    {
         $request->validate([
-            "task_name" => "required|string",
-            "description" =>"required|string",
-            "start_date" => "date",
-            "end_date" => "date"
+            "title"       => "string",
+            "description" => "nullable|string",
+            "priority"    => "in:low,medium,high",
+            "status"      => "in:pending,completed",
+            "start_date"  => "nullable|date",
+            "end_date"    => "nullable|date"
         ]);
 
-        $tasks->create([
-            "task_name" => $request->task_name,
-            "description" => $request->description,
-            "start_date" => $request->start_date,
-            "end_date" => $request->end_date,
-            "task_from" => $request->user()->role->name
-        ]);
+        $task->update($request->only([
+            'title', 'description', 'priority', 'status', 'start_date', 'end_date'
+        ]));
 
-        return Controller::OKE('success' , 'succes update data' , $tasks, 200);
+        return Controller::OKE('success', 'Success update data', $task, 200);
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(Tasks $tasks)
+    public function destroy(Tasks $task)
     {
-        $tasks->delete();
-        return Controller::OKE('success' , 'succes delete data' , [], 200);
+        if ($task->user_id !== Auth::id()) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $task->delete();
+        return Controller::OKE('success', 'Success delete data', [], 200);
+    }
+
+    public function toggleStatus(Tasks $task)
+    {
+        if ($task->user_id !== Auth::id()) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $task->update([
+            'status' => $task->status === 'pending' ? 'completed' : 'pending'
+        ]);
+
+        return Controller::OKE('success', 'Status updated', $task, 200);
     }
 }

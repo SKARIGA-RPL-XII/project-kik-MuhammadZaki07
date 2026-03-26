@@ -48,18 +48,18 @@ export function LoginInvitationModal() {
             initial={{ opacity: 0, scale: 0.9, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.9, y: 20 }}
-            className="fixed inset-0 m-auto w-[90%] max-w-[400px] h-fit z-[300] bg-white rounded-2xl shadow-2xl shadow-neutral-200/50 overflow-hidden"
+            className="fixed inset-0 m-auto w-[90%] max-w-[400px] h-fit z-[300] bg-white rounded-2xl shadow-2xl shadow-neutral-200/50 dark:bg-neutral-900 overflow-hidden"
           >
             <button
               onClick={handleClose}
-              className="absolute top-4 right-4 p-2 text-neutral-400 hover:text-neutral-600 transition-colors"
+              className="absolute top-4 right-4 p-2 dark:text-neutral-300 text-neutral-400 hover:text-neutral-600 transition-colors"
             >
               <X size={20} />
             </button>
 
             <div className="p-8">
               <div className="mb-8">
-                <h2 className="text-xl font-semibold text-neutral-900 mb-2">
+                <h2 className="text-xl font-semibold text-neutral-900 dark:text-white mb-2">
                   {t("invite_title")}
                 </h2>
                 <p className="text-sm text-neutral-500 leading-relaxed">
@@ -73,7 +73,7 @@ export function LoginInvitationModal() {
                     <Clock size={18} />
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-neutral-800">
+                    <p className="text-sm font-medium text-neutral-800 dark:text-white">
                       {t("invite_feature_order_title")}
                     </p>
                     <p className="text-xs text-neutral-500">
@@ -87,7 +87,7 @@ export function LoginInvitationModal() {
                     <Gift size={18} />
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-neutral-800">
+                    <p className="text-sm font-medium text-neutral-800 dark:text-white">
                       {t("invite_feature_loyalty_title")}
                     </p>
                     <p className="text-xs text-neutral-500">
@@ -100,14 +100,14 @@ export function LoginInvitationModal() {
               <div className="flex flex-col gap-3">
                 <button
                   onClick={handleLogin}
-                  className="w-full py-3.5 bg-red-600 hover:bg-red-700 text-white rounded-xl text-sm font-medium transition-all flex items-center justify-center gap-2 group"
+                  className="w-full py-3.5 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-2 group"
                 >
                   {t("invite_btn_login")}
                   <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
                 </button>
                 <button
                   onClick={handleClose}
-                  className="w-full py-3.5 bg-neutral-50 hover:bg-neutral-100 text-neutral-600 rounded-xl text-sm font-medium transition-colors"
+                  className="w-full py-3.5 bg-neutral-50 dark:bg-neutral-800 dark:text-white hover:bg-neutral-100 text-neutral-600 rounded-lg text-sm font-medium transition-colors"
                 >
                   {t("invite_btn_guest")}
                 </button>

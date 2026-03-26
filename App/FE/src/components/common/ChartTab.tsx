@@ -1,11 +1,10 @@
-import { useState } from "react";
+interface ChartTabProps {
+  selected: "monthly" | "quarterly" | "annually";
+  onSelect: (value: "monthly" | "quarterly" | "annually") => void;
+}
 
-const ChartTab: React.FC = () => {
-  const [selected, setSelected] = useState<
-    "optionOne" | "optionTwo" | "optionThree"
-  >("optionOne");
-
-  const getButtonClass = (option: "optionOne" | "optionTwo" | "optionThree") =>
+const ChartTab: React.FC<ChartTabProps> = ({ selected, onSelect }) => {
+  const getButtonClass = (option: string) =>
     selected === option
       ? "shadow-theme-xs text-neutral-900 dark:text-white bg-white dark:bg-neutral-800"
       : "text-neutral-500 dark:text-neutral-400";
@@ -13,28 +12,22 @@ const ChartTab: React.FC = () => {
   return (
     <div className="flex items-center gap-0.5 rounded-lg bg-neutral-100 p-0.5 dark:bg-neutral-900">
       <button
-        onClick={() => setSelected("optionOne")}
-        className={`px-3 py-2 font-medium w-full rounded-md text-theme-sm hover:text-neutral-900   dark:hover:text-white ${getButtonClass(
-          "optionOne"
-        )}`}
+        onClick={() => onSelect("monthly")}
+        className={`px-3 py-2 font-medium w-full rounded-md text-theme-sm hover:text-neutral-900 dark:hover:text-white transition-all ${getButtonClass("monthly")}`}
       >
         Monthly
       </button>
 
       <button
-        onClick={() => setSelected("optionTwo")}
-        className={`px-3 py-2 font-medium w-full rounded-md text-theme-sm hover:text-neutral-900   dark:hover:text-white ${getButtonClass(
-          "optionTwo"
-        )}`}
+        onClick={() => onSelect("quarterly")}
+        className={`px-3 py-2 font-medium w-full rounded-md text-theme-sm hover:text-neutral-900 dark:hover:text-white transition-all ${getButtonClass("quarterly")}`}
       >
         Quarterly
       </button>
 
       <button
-        onClick={() => setSelected("optionThree")}
-        className={`px-3 py-2 font-medium w-full rounded-md text-theme-sm hover:text-neutral-900   dark:hover:text-white ${getButtonClass(
-          "optionThree"
-        )}`}
+        onClick={() => onSelect("annually")}
+        className={`px-3 py-2 font-medium w-full rounded-md text-theme-sm hover:text-neutral-900 dark:hover:text-white transition-all ${getButtonClass("annually")}`}
       >
         Annually
       </button>

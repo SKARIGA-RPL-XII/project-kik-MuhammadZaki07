@@ -6,7 +6,7 @@ export const ThemeToggleButton: React.FC = () => {
   return (
     <button
       onClick={toggleTheme}
-      className="relative flex items-center justify-center text-neutral-500 transition-colors bg-white border border-neutral-200 rounded-full hover:text-dark-900 h-11 w-11 hover:bg-neutral-100 hover:text-neutral-700 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-400 dark:hover:bg-neutral-800 dark:hover:text-white"
+      className="relative active:scale-95 flex items-center justify-center text-neutral-500 transition-colors bg-white border border-neutral-200 rounded-full hover:text-dark-900 h-11 w-11 hover:bg-neutral-100 hover:text-neutral-700 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-400 dark:hover:bg-neutral-800 dark:hover:text-white"
     >
       <svg
         className="hidden dark:block"

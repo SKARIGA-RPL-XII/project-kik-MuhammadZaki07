@@ -130,7 +130,7 @@ export default function CashierPage() {
                 placeholder="Search product by name..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 h-10 focus-visible:ring-red-500 rounded transition-all duration-200 shadow-sm"
+                className="pl-10 h-10 focus-visible:ring-red-500 rounded transition-all duration-200 shadow-none"
               />
             </div>
 

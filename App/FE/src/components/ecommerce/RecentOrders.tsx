@@ -6,200 +6,118 @@ import {
   TableRow,
 } from "../ui/table";
 import Badge from "../ui/badge/Badge";
-
-// Define the TypeScript interface for the table rows
-interface Product {
-  id: number; // Unique identifier for each product
-  name: string; // Product name
-  variants: string; // Number of variants (e.g., "1 Variant", "2 Variants")
-  category: string; // Category of the product
-  price: string; // Price of the product (as a string with currency symbol)
-  // status: string; // Status of the product
-  image: string; // URL or path to the product image
-  status: "Delivered" | "Pending" | "Canceled"; // Status of the product
-}
-
-// Define the table data using the interface
-const tableData: Product[] = [
-  {
-    id: 1,
-    name: "MacBook Pro 13”",
-    variants: "2 Variants",
-    category: "Laptop",
-    price: "$2399.00",
-    status: "Delivered",
-    image: "/images/product/product-01.jpg", // Replace with actual image URL
-  },
-  {
-    id: 2,
-    name: "Apple Watch Ultra",
-    variants: "1 Variant",
-    category: "Watch",
-    price: "$879.00",
-    status: "Pending",
-    image: "/images/product/product-02.jpg", // Replace with actual image URL
-  },
-  {
-    id: 3,
-    name: "iPhone 15 Pro Max",
-    variants: "2 Variants",
-    category: "SmartPhone",
-    price: "$1869.00",
-    status: "Delivered",
-    image: "/images/product/product-03.jpg", // Replace with actual image URL
-  },
-  {
-    id: 4,
-    name: "iPad Pro 3rd Gen",
-    variants: "2 Variants",
-    category: "Electronics",
-    price: "$1699.00",
-    status: "Canceled",
-    image: "/images/product/product-04.jpg", // Replace with actual image URL
-  },
-  {
-    id: 5,
-    name: "AirPods Pro 2nd Gen",
-    variants: "1 Variant",
-    category: "Accessories",
-    price: "$240.00",
-    status: "Delivered",
-    image: "/images/product/product-05.jpg", // Replace with actual image URL
-  },
-];
+import { useDashboard } from "@/hooks/react-query/useDashboard";
+import { Link } from "react-router";
 
 export default function RecentOrders() {
+  const { useLatestTransactions } = useDashboard();
+  const { data: transactions, isLoading } = useLatestTransactions();
+
+  const formatIDR = (amount: number) => {
+    return new Intl.NumberFormat("id-ID", {
+      style: "currency",
+      currency: "IDR",
+      minimumFractionDigits: 0,
+    }).format(amount);
+  };
+
   return (
     <div className="overflow-hidden rounded-2xl border border-neutral-200 bg-white px-4 pb-3 pt-4 dark:border-neutral-800 dark:bg-white/[0.03] sm:px-6">
       <div className="flex flex-col gap-2 mb-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h3 className="text-lg font-semibold text-neutral-800 dark:text-white/90">
-            Recent Orders
+            Pesanan Terbaru
           </h3>
+          <p className="text-sm text-neutral-500 dark:text-neutral-400">
+            Daftar transaksi yang baru saja masuk ke sistem
+          </p>
         </div>
 
         <div className="flex items-center gap-3">
-          <button className="inline-flex items-center gap-2 rounded-lg border border-neutral-300 bg-white px-4 py-2.5 text-theme-sm font-medium text-neutral-700 shadow-theme-xs hover:bg-neutral-50 hover:text-neutral-800 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-400 dark:hover:bg-white/[0.03] dark:hover:text-neutral-200">
-            <svg
-              className="stroke-current fill-white dark:fill-neutral-800"
-              width="20"
-              height="20"
-              viewBox="0 0 20 20"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M2.29004 5.90393H17.7067"
-                stroke=""
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-              <path
-                d="M17.7075 14.0961H2.29085"
-                stroke=""
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-              <path
-                d="M12.0826 3.33331C13.5024 3.33331 14.6534 4.48431 14.6534 5.90414C14.6534 7.32398 13.5024 8.47498 12.0826 8.47498C10.6627 8.47498 9.51172 7.32398 9.51172 5.90415C9.51172 4.48432 10.6627 3.33331 12.0826 3.33331Z"
-                fill=""
-                stroke=""
-                strokeWidth="1.5"
-              />
-              <path
-                d="M7.91745 11.525C6.49762 11.525 5.34662 12.676 5.34662 14.0959C5.34661 15.5157 6.49762 16.6667 7.91745 16.6667C9.33728 16.6667 10.4883 15.5157 10.4883 14.0959C10.4883 12.676 9.33728 11.525 7.91745 11.525Z"
-                fill=""
-                stroke=""
-                strokeWidth="1.5"
-              />
-            </svg>
-            Filter
-          </button>
-          <button className="inline-flex items-center gap-2 rounded-lg border border-neutral-300 bg-white px-4 py-2.5 text-theme-sm font-medium text-neutral-700 shadow-theme-xs hover:bg-neutral-50 hover:text-neutral-800 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-400 dark:hover:bg-white/[0.03] dark:hover:text-neutral-200">
-            See all
-          </button>
+          <Link to={'/reports/transactions?page=1'} className="inline-flex items-center gap-2 rounded-lg border border-neutral-300 bg-white px-4 py-2.5 text-theme-sm font-medium text-neutral-700 shadow-theme-xs hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-400">
+            Lihat Semua
+          </Link>
         </div>
       </div>
+
       <div className="max-w-full overflow-x-auto">
         <Table>
-          {/* Table Header */}
           <TableHeader className="border-neutral-100 dark:border-neutral-800 border-y">
             <TableRow>
-              <TableCell
-                isHeader
-                className="py-3 font-medium text-neutral-500 text-start text-theme-xs dark:text-neutral-400"
-              >
-                Products
+              <TableCell className="py-3 font-medium text-neutral-500 text-start text-theme-xs dark:text-neutral-400">
+                Kode Transaksi
               </TableCell>
-              <TableCell
-                isHeader
-                className="py-3 font-medium text-neutral-500 text-start text-theme-xs dark:text-neutral-400"
-              >
-                Category
+              <TableCell className="py-3 font-medium text-neutral-500 text-start text-theme-xs dark:text-neutral-400">
+                Waktu
               </TableCell>
-              <TableCell
-                isHeader
-                className="py-3 font-medium text-neutral-500 text-start text-theme-xs dark:text-neutral-400"
-              >
-                Price
+              <TableCell className="py-3 font-medium text-neutral-500 text-start text-theme-xs dark:text-neutral-400">
+                Total Harga
               </TableCell>
-              <TableCell
-                isHeader
-                className="py-3 font-medium text-neutral-500 text-start text-theme-xs dark:text-neutral-400"
-              >
+              <TableCell className="py-3 font-medium text-neutral-500 text-start text-theme-xs dark:text-neutral-400">
                 Status
               </TableCell>
             </TableRow>
           </TableHeader>
 
-          {/* Table Body */}
-
           <TableBody className="divide-y divide-neutral-100 dark:divide-neutral-800">
-            {tableData.map((product) => (
-              <TableRow key={product.id} className="">
-                <TableCell className="py-3">
-                  <div className="flex items-center gap-3">
-                    <div className="h-[50px] w-[50px] overflow-hidden rounded-md">
-                      <img
-                        src={product.image}
-                        className="h-[50px] w-[50px]"
-                        alt={product.name}
-                      />
+            {isLoading ? (
+              [1, 2, 3].map((i) => (
+                <TableRow key={i} className="animate-pulse">
+                  <TableCell className="py-4"><div className="h-4 w-24 bg-neutral-100 rounded"></div></TableCell>
+                  <TableCell className="py-4"><div className="h-4 w-20 bg-neutral-100 rounded"></div></TableCell>
+                  <TableCell className="py-4"><div className="h-4 w-24 bg-neutral-100 rounded"></div></TableCell>
+                  <TableCell className="py-4"><div className="h-6 w-16 bg-neutral-100 rounded-full"></div></TableCell>
+                </TableRow>
+              ))
+            ) : (
+              transactions?.map((trx) => (
+                <TableRow key={trx.id}>
+                  <TableCell className="py-3">
+                    <div className="flex items-center gap-3">
+                      <div className="flex items-center justify-center h-10 w-10 rounded-md bg-blue-50 text-blue-600 font-bold text-xs dark:bg-blue-500/10">
+                        #{trx.id}
+                      </div>
+                      <div>
+                        <p className="font-medium text-neutral-800 text-theme-sm dark:text-white/90">
+                          {trx.invoice_number || `TRX-${trx.id}`}
+                        </p>
+                        <span className="text-neutral-500 text-theme-xs dark:text-neutral-400">
+                          Kasir ID: {trx.user_id}
+                        </span>
+                      </div>
                     </div>
-                    <div>
-                      <p className="font-medium text-neutral-800 text-theme-sm dark:text-white/90">
-                        {product.name}
-                      </p>
-                      <span className="text-neutral-500 text-theme-xs dark:text-neutral-400">
-                        {product.variants}
-                      </span>
-                    </div>
-                  </div>
-                </TableCell>
-                <TableCell className="py-3 text-neutral-500 text-theme-sm dark:text-neutral-400">
-                  {product.price}
-                </TableCell>
-                <TableCell className="py-3 text-neutral-500 text-theme-sm dark:text-neutral-400">
-                  {product.category}
-                </TableCell>
-                <TableCell className="py-3 text-neutral-500 text-theme-sm dark:text-neutral-400">
-                  <Badge
-                    size="sm"
-                    color={
-                      product.status === "Delivered"
-                        ? "success"
-                        : product.status === "Pending"
-                        ? "warning"
-                        : "error"
-                    }
-                  >
-                    {product.status}
-                  </Badge>
+                  </TableCell>
+                  <TableCell className="py-3 text-neutral-500 text-theme-sm dark:text-neutral-400">
+                    {new Date(trx.created_at).toLocaleTimeString("id-ID", { hour: '2-digit', minute: '2-digit' })} WIB
+                  </TableCell>
+                  <TableCell className="py-3 font-semibold text-neutral-800 text-theme-sm dark:text-white/90">
+                    {formatIDR(trx.total_price)}
+                  </TableCell>
+                  <TableCell className="py-3 text-neutral-500 text-theme-sm dark:text-neutral-400">
+                    <Badge
+                      size="sm"
+                      color={
+                        trx.status === "paid" || trx.status === "completed"
+                          ? "success"
+                          : trx.status === "pending"
+                          ? "warning"
+                          : "error"
+                      }
+                    >
+                      {trx.status.toUpperCase()}
+                    </Badge>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
+            
+            {!isLoading && transactions?.length === 0 && (
+              <TableRow>
+                <TableCell colSpan={4} className="py-10 text-center text-neutral-500">
+                  Belum ada transaksi hari ini.
                 </TableCell>
               </TableRow>
-            ))}
+            )}
           </TableBody>
         </Table>
       </div>

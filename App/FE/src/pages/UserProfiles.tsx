@@ -166,7 +166,7 @@ export default function UserProfiles() {
           <div className="col-span-12 lg:col-span-8">
             <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-lg  overflow-hidden transition-colors">
               <div className="px-6 py-4 border-b border-neutral-100 dark:border-neutral-800 bg-neutral-50/30 dark:bg-neutral-800/20 flex justify-between items-center">
-                <h3 className="text-xl uppercase font-bold text-muted-foreground">
+                <h3 className="text-xl font-medium text-muted-foreground">
                   Identity Details
                 </h3>
               </div>
@@ -382,7 +382,7 @@ function InfoGroup({
     <div className="space-y-1.5">
       <div className="flex items-center gap-2 text-neutral-400 dark:text-neutral-500">
         <span className="opacity-70 text-red-500 dark:text-red-400">{icon}</span>
-        <span className="text-xs uppercase font-bold text-muted-foreground">
+        <span className="text-sm font-medium text-muted-foreground">
           {label}
         </span>
       </div>

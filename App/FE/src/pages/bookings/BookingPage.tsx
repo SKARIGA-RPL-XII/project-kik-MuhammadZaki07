@@ -12,6 +12,7 @@ import {
 import { useNavigate } from "react-router";
 import BookingTable from "@/components/tables/BookingTable";
 import { useToast } from "@/context/ToastContext";
+import { Card } from "@/components/ui/card";
 
 const BookingPage = () => {
   const navigate = useNavigate();
@@ -108,9 +109,9 @@ const BookingPage = () => {
             icon: <CheckCircle size={20} className="text-green-500" />,
           },
         ].map((stat, i) => (
-          <div
+          <Card
             key={i}
-            className="p-5 border rounded-xl flex items-center justify-between bg-neutral-50/50 dark:bg-neutral-950 dark:border-white/[0.05]"
+            className="p-5 shadow-none border rounded-xl flex items-center justify-between"
           >
             <div>
               <p className="text-sm text-neutral-500 font-medium mb-1">
@@ -121,7 +122,7 @@ const BookingPage = () => {
             <div className="p-3 bg-white dark:bg-neutral-800 rounded-xl border border-neutral-100 dark:border-neutral-800">
               {stat.icon}
             </div>
-          </div>
+          </Card>
         ))}
       </div>
 

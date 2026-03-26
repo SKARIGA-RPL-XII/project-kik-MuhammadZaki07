@@ -66,7 +66,7 @@ export default function SignUpForm() {
           className="inline-flex items-center text-sm text-neutral-500 transition-colors hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-300"
         >
           <ChevronLeftIcon className="size-5" />
-          Back to dashboard
+          Back
         </Link>
       </div>
       <div className="flex flex-col justify-center flex-1 w-full max-w-md mx-auto">

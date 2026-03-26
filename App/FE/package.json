@@ -40,6 +40,7 @@
     "jspdf": "^4.2.0",
     "lucide-react": "^0.563.0",
     "motion": "^12.36.0",
+    "ogl": "^1.0.11",
     "radix-ui": "^1.4.3",
     "react": "^19.0.0",
     "react-apexcharts": "^1.7.0",

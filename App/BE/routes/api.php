@@ -117,6 +117,22 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::put('/{id}/reject', [BookingController::class, 'reject']);
         Route::delete('/{id}', [BookingController::class, 'destroy']);
     });
+
+    Route::get('/metrics', [DashboardController::class, 'getMetrics']);
+    Route::get('/sales-chart', [DashboardController::class, 'getSalesChart']);
+    Route::get('/best-sellers', [DashboardController::class, 'getBestSellers']);
+    Route::get('/transaction-stats', [DashboardController::class, 'getTransactionStats']);
+
+
+    Route::prefix('dashboard')->group(function () {
+        Route::get('/metrics', [DashboardController::class, 'getMetrics']);
+        Route::get('/sales-chart', [DashboardController::class, 'getSalesChart']);
+        Route::get('/best-sellers', [DashboardController::class, 'getBestSellers']);
+        Route::get('/transaction-stats', [DashboardController::class, 'getTransactionStats']);
+        Route::get('/latest-transactions', [DashboardController::class, 'getLatestTransactions']);
+    });
+
+    Route::patch('tasks/{task}/toggle', [TasksController::class, 'toggleStatus']);
 });
 
 
