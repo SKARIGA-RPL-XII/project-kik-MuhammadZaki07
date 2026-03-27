@@ -87,6 +87,7 @@ export const navConfig = {
         { name: "Sales Report", path: "/reports/sales" },
         // { name: "Daily Revenue", path: "/reports/daily-revenue" },
         { name: "Top Selling Menu", path: "/reports/top-menu" },
+        { name: "Report Explorer", path: "/reports/report-exploler" },
         { name: "Transaction History", path: "/reports/transactions" },
       ],
     },

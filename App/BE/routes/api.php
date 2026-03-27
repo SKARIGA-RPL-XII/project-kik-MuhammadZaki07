@@ -18,6 +18,7 @@ use App\Http\Controllers\EventController;
 use App\Http\Controllers\MenuController;
 use App\Http\Controllers\MidtransWebhookController;
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\ReportController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\RoomController;
 use App\Http\Controllers\StockAdjustmentController;
@@ -133,6 +134,9 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 
     Route::patch('tasks/{task}/toggle', [TasksController::class, 'toggleStatus']);
+    Route::get('/reports/top-selling', [ReportController::class, 'getTopSellingMenu']);
+    Route::get('/reports/sales-summary', [ReportController::class, 'getSalesSummary']);
+    Route::get('/reports/explorer', [ReportController::class, 'getTransactionExplorer']);
 });
 
 

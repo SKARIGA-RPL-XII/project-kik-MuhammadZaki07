@@ -88,7 +88,8 @@ export default function WelcomeBanner() {
             {user?.profile_image && (
               <img 
                 src={user.profile_image} 
-                alt="Profile" 
+                alt="Profile"
+                draggable={false}
                 className="w-20 h-20 rounded-lg object-cover border-2 border-white/30  hidden md:block"
               />
             )}
@@ -119,7 +120,7 @@ export default function WelcomeBanner() {
                 </span>{" "}
                 👋
               </h2>
-              <p className="max-w-md text-sm font-medium text-white/80 italic line-clamp-1">
+              <p className="max-w-md text-sm font-normal text-white/80 italic">
                 "{dailyQuote}"
               </p>
             </div>

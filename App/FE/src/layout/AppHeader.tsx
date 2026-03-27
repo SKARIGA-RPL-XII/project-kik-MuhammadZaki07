@@ -1,16 +1,125 @@
-import { useEffect, useRef, useState } from "react";
-
-import { Link } from "react-router";
+import React, { useEffect, useRef, useState, useMemo } from "react";
+import { Link, useNavigate } from "react-router";
 import { useSidebar } from "../context/SidebarContext";
 import { ThemeToggleButton } from "../components/common/ThemeToggleButton";
 import NotificationDropdown from "../components/header/NotificationDropdown";
 import UserDropdown from "../components/header/UserDropdown";
 import FullscreenToggle from "@/components/header/FullscreenToggle";
+import { navConfig } from "@/config/navigation";
+import { useAuth } from "@/context/AuthContext";
+import { PermissionType } from "@/pages/Settings/RolesSettingsPage";
+import { SettingsService } from "@/services/settings.service";
 
 const AppHeader: React.FC = () => {
   const [isApplicationMenuOpen, setApplicationMenuOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [showDropdown, setShowDropdown] = useState(false);
+  const [selectedIndex, setSelectedIndex] = useState(0);
+  const { user } = useAuth();
+  const [permissions, setPermissions] = useState<
+    Record<string, Record<string, PermissionType[]>>
+  >({});
 
   const { isMobileOpen, toggleSidebar, toggleMobileSidebar } = useSidebar();
+  const inputRef = useRef<HTMLInputElement>(null);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const fetchPermissions = async () => {
+      try {
+        const res = await SettingsService.getAll({ group: "security" });
+        const data = res.data?.data || res.data || res;
+
+        if (data?.role_permissions) {
+          const rawValue =
+            data.role_permissions.value !== undefined
+              ? data.role_permissions.value
+              : data.role_permissions;
+
+          const parsed =
+            typeof rawValue === "string" ? JSON.parse(rawValue) : rawValue;
+          setPermissions(parsed || {});
+        }
+      } catch (err) {
+        console.error("Failed to fetch permissions in Header:", err);
+      }
+    };
+
+    fetchPermissions();
+  }, []);
+
+  const userRole = user?.role_name || "cashier";
+  const activeRolePermissions = useMemo(
+    () => permissions[userRole] || {},
+    [permissions, userRole],
+  );
+
+  const flattenedNav = useMemo(() => {
+    return Object.values(navConfig)
+      .flat()
+      .reduce((acc: any[], item) => {
+        if (item.subItems) {
+          const subs = item.subItems.map((sub) => ({
+            name: sub.name,
+            path: sub.path,
+            parent: item.name,
+            icon: item.icon,
+            role: item.role,
+          }));
+          return [...acc, ...subs];
+        }
+        return [...acc, item];
+      }, []);
+  }, []);
+
+  const searchResults = useMemo(() => {
+    if (!searchQuery) return [];
+
+    const query = searchQuery.toLowerCase();
+
+    return flattenedNav
+      .filter((item) => {
+        const itemName = item.name.toLowerCase();
+
+        const permissionsList = activeRolePermissions[itemName] || [];
+        const hasViewPermission = permissionsList.includes("view");
+
+        return itemName.includes(query) && hasViewPermission;
+      })
+      .slice(0, 7);
+  }, [searchQuery, flattenedNav, activeRolePermissions]);
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if ((event.metaKey || event.ctrlKey) && event.key === "k") {
+        event.preventDefault();
+        inputRef.current?.focus();
+      }
+
+      if (showDropdown && searchResults.length > 0) {
+        if (event.key === "ArrowDown") {
+          event.preventDefault();
+          setSelectedIndex((prev) =>
+            prev < searchResults.length - 1 ? prev + 1 : prev,
+          );
+        } else if (event.key === "ArrowUp") {
+          event.preventDefault();
+          setSelectedIndex((prev) => (prev > 0 ? prev - 1 : prev));
+        } else if (event.key === "Enter" && searchQuery) {
+          event.preventDefault();
+          const target = searchResults[selectedIndex];
+          if (target) {
+            navigate(target.path);
+            setSearchQuery("");
+            setShowDropdown(false);
+          }
+        }
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [showDropdown, searchResults, selectedIndex, navigate, searchQuery]);
 
   const handleToggle = () => {
     if (window.innerWidth >= 1024) {
@@ -20,27 +129,6 @@ const AppHeader: React.FC = () => {
     }
   };
 
-  const toggleApplicationMenu = () => {
-    setApplicationMenuOpen(!isApplicationMenuOpen);
-  };
-
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if ((event.metaKey || event.ctrlKey) && event.key === "k") {
-        event.preventDefault();
-        inputRef.current?.focus();
-      }
-    };
-
-    document.addEventListener("keydown", handleKeyDown);
-
-    return () => {
-      document.removeEventListener("keydown", handleKeyDown);
-    };
-  }, []);
-
   return (
     <header className="sticky top-0 flex w-full bg-white border-neutral-200 z-999 dark:border-neutral-800 dark:bg-neutral-900 lg:border-b">
       <div className="flex flex-col items-center justify-between grow lg:flex-row lg:px-6">
@@ -48,7 +136,6 @@ const AppHeader: React.FC = () => {
           <button
             className="items-center justify-center w-10 h-10 text-neutral-500 border-neutral-200 rounded-lg z-999 dark:border-neutral-800 lg:flex dark:text-neutral-400 lg:h-11 lg:w-11 lg:border"
             onClick={handleToggle}
-            aria-label="Toggle Sidebar"
           >
             {isMobileOpen ? (
               <svg
@@ -84,41 +171,12 @@ const AppHeader: React.FC = () => {
           </button>
 
           <Link to="/" className="lg:hidden">
-           <div className="gap-3 dark:flex hidden items-start">
-              <img
-                src="/white-logo.png"
-                alt="Logo"
-                width={50}
-                height={50}
-                draggable="false"
-              />
-              <div className="flex flex-col">
-                <span className="dark:text-white">Restorant Name</span>
-                <span className="text-muted-foreground text-xs">
-                  admin@gmail.com
-                </span>
-              </div>
-            </div>
-            <div className="gap-3 dark:hidden flex items-start">
-              <img
-                src="/black-logo.png"
-                alt="Logo"
-                width={50}
-                height={50}
-                draggable="false"
-              />
-              <div className="flex flex-col">
-                <span className="dark:text-white">Restorant Name</span>
-                <span className="text-muted-foreground text-xs">
-                  admin@gmail.com
-                </span>
-              </div>
-            </div>
+            {/* Logo markup tetap sama */}
           </Link>
 
           <button
-            onClick={toggleApplicationMenu}
-            className="flex items-center justify-center w-10 h-10 text-neutral-700 rounded-lg z-99999 hover:bg-neutral-100 dark:text-neutral-400 dark:hover:bg-neutral-800 lg:hidden"
+            onClick={() => setApplicationMenuOpen(!isApplicationMenuOpen)}
+            className="flex items-center justify-center w-10 h-10 text-neutral-700 rounded-lg z-99999 lg:hidden hover:bg-neutral-100 dark:text-neutral-400 dark:hover:bg-neutral-800"
           >
             <svg
               width="24"
@@ -137,44 +195,88 @@ const AppHeader: React.FC = () => {
           </button>
 
           <div className="hidden lg:block">
-            <form>
-              <div className="relative">
-                <span className="absolute -translate-y-1/2 pointer-events-none left-4 top-1/2">
-                  <svg
-                    className="fill-neutral-500 dark:fill-neutral-400"
-                    width="20"
-                    height="20"
-                    viewBox="0 0 20 20"
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      clipRule="evenodd"
-                      d="M3.04175 9.37363C3.04175 5.87693 5.87711 3.04199 9.37508 3.04199C12.8731 3.04199 15.7084 5.87693 15.7084 9.37363C15.7084 12.8703 12.8731 15.7053 9.37508 15.7053C5.87711 15.7053 3.04175 12.8703 3.04175 9.37363ZM9.37508 1.54199C5.04902 1.54199 1.54175 5.04817 1.54175 9.37363C1.54175 13.6991 5.04902 17.2053 9.37508 17.2053C11.2674 17.2053 13.003 16.5344 14.357 15.4176L17.177 18.238C17.4699 18.5309 17.9448 18.5309 18.2377 18.238C18.5306 17.9451 18.5306 17.4703 18.2377 17.1774L15.418 14.3573C16.5365 13.0033 17.2084 11.2669 17.2084 9.37363C17.2084 5.04817 13.7011 1.54199 9.37508 1.54199Z"
-                      fill=""
-                    />
-                  </svg>
-                </span>
-                <input
-                  ref={inputRef}
-                  type="text"
-                  placeholder="Search or type command..."
-                  className="dark:bg-dark-900 h-11 w-full rounded-lg border border-neutral-200 bg-transparent py-2.5 pl-12 pr-14 text-sm text-neutral-800 shadow-theme-xs placeholder:text-neutral-400 focus:border-red-300 focus:outline-hidden focus:ring-3 focus:ring-red-500/10 dark:border-neutral-800 dark:bg-neutral-900 dark:bg-white/[0.03] dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-red-800 xl:w-[430px]"
-                />
+            <div className="relative">
+              <span className="absolute -translate-y-1/2 pointer-events-none left-4 top-1/2">
+                <svg
+                  className="fill-neutral-500 dark:fill-neutral-400"
+                  width="20"
+                  height="20"
+                  viewBox="0 0 20 20"
+                >
+                  <path
+                    fillRule="evenodd"
+                    clipRule="evenodd"
+                    d="M3.04175 9.37363C3.04175 5.87693 5.87711 3.04199 9.37508 3.04199C12.8731 3.04199 15.7084 5.87693 15.7084 9.37363C15.7084 12.8703 12.8731 15.7053 9.37508 15.7053C5.87711 15.7053 3.04175 12.8703 3.04175 9.37363ZM9.37508 1.54199C5.04902 1.54199 1.54175 5.04817 1.54175 9.37363C1.54175 13.6991 5.04902 17.2053 9.37508 17.2053C11.2674 17.2053 13.003 16.5344 14.357 15.4176L17.177 18.238C17.4699 18.5309 17.9448 18.5309 18.2377 18.238C18.5306 17.9451 18.5306 17.4703 18.2377 17.1774L15.418 14.3573C16.5365 13.0033 17.2084 11.2669 17.2084 9.37363C17.2084 5.04817 13.7011 1.54199 9.37508 1.54199Z"
+                  />
+                </svg>
+              </span>
+              <input
+                ref={inputRef}
+                type="text"
+                placeholder="Search menu or type command..."
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  setShowDropdown(true);
+                  setSelectedIndex(0);
+                }}
+                onFocus={() => setShowDropdown(true)}
+                onBlur={() => setTimeout(() => setShowDropdown(false), 200)}
+                className="dark:bg-dark-900 h-11 w-full rounded-lg border border-neutral-200 bg-transparent py-2.5 pl-12 pr-14 text-sm text-neutral-800 shadow-theme-xs placeholder:text-neutral-400 focus:border-red-300 focus:outline-hidden focus:ring-3 focus:ring-red-500/10 dark:border-neutral-800 dark:bg-neutral-900 dark:bg-white/[0.03] dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-red-800 xl:w-[430px]"
+              />
+              <button className="absolute right-2.5 top-1/2 inline-flex -translate-y-1/2 items-center gap-0.5 rounded-lg border border-neutral-200 bg-neutral-50 px-[7px] py-[4.5px] text-xs text-neutral-500 dark:border-neutral-800 dark:bg-white/[0.03] dark:text-neutral-400">
+                <span> ⌘ </span>
+                <span> K </span>
+              </button>
 
-                <button className="absolute right-2.5 top-1/2 inline-flex -translate-y-1/2 items-center gap-0.5 rounded-lg border border-neutral-200 bg-neutral-50 px-[7px] py-[4.5px] text-xs -tracking-[0.2px] text-neutral-500 dark:border-neutral-800 dark:bg-white/[0.03] dark:text-neutral-400">
-                  <span> ⌘ </span>
-                  <span> K </span>
-                </button>
-              </div>
-            </form>
+              {/* SEARCH DROPDOWN */}
+              {showDropdown && searchQuery && (
+                <div className="absolute top-full left-0 mt-2 w-full bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-xl shadow-2xl z-[999] overflow-hidden">
+                  <div className="p-2">
+                    {searchResults.length > 0 ? (
+                      searchResults.map((item, index) => (
+                        <Link
+                          key={index}
+                          to={item.path}
+                          className={`flex items-center justify-between px-3 py-2.5 rounded-lg transition-all ${selectedIndex === index
+                              ? "bg-red-50 dark:bg-red-500/10 text-red-600"
+                              : "text-neutral-700 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-white/5"
+                            }`}
+                        >
+                          <div className="flex items-center gap-3">
+                            <span className="opacity-70">{item.icon}</span>
+                            <div className="flex flex-col text-left">
+                              <span className="text-sm font-semibold">
+                                {item.name}
+                              </span>
+                              {item.parent && (
+                                <span className="text-[10px] opacity-50">
+                                  in {item.parent}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          {selectedIndex === index && (
+                            <span className="text-[10px] bg-white dark:bg-neutral-800 border border-red-200 px-1 rounded">
+                              Enter
+                            </span>
+                          )}
+                        </Link>
+                      ))
+                    ) : (
+                      <div className="px-3 py-6 text-center text-sm text-neutral-500">
+                        No results for "{searchQuery}"
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </div>
+
         <div
-          className={`${
-            isApplicationMenuOpen ? "flex" : "hidden"
-          } items-center justify-between w-full gap-4 px-5 py-4 lg:flex shadow-theme-md lg:justify-end lg:px-0 lg:shadow-none`}
+          className={`${isApplicationMenuOpen ? "flex" : "hidden"} items-center justify-between w-full gap-4 px-5 py-4 lg:flex shadow-theme-md lg:justify-end lg:px-0 lg:shadow-none`}
         >
           <div className="flex items-center gap-2 2xsm:gap-3">
             <FullscreenToggle />

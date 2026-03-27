@@ -18,6 +18,9 @@ import TransactionPage from "./pages/transactions/TransactionPage";
 import TransactionDetail from "./pages/transactions/TransactionDetailPage";
 import LogIndex from "./pages/Logs/LogIndex";
 import LogDetailPage from "./pages/Logs/LogDetail";
+import TopSellingPage from "./pages/reports/TopSellingPage";
+import SalesReportPage from "./pages/reports/SalesReportPage";
+import ReportExplorerPage from "./pages/reports/ReportExplorerPage";
 
 const SignIn = lazy(() => import("./pages/AuthPages/SignIn"));
 const SignUp = lazy(() => import("./pages/AuthPages/SignUp"));
@@ -267,6 +270,9 @@ export default function App() {
             />
             <Route path="/system/logs" element={<LogIndex />} />
             <Route path="/system/logs/:id" element={<LogDetailPage />} />
+            <Route path="/reports/top-menu" element={<TopSellingPage />} />
+            <Route path="/reports/sales" element={<SalesReportPage />} />
+            <Route path="/reports/report-exploler" element={<ReportExplorerPage />} />
           </Route>
 
           <Route path="/auth" element={<GuestMiddleware />}>
