@@ -3,11 +3,13 @@ import { GridIcon } from "../icons";
 import {
   BarChart3,
   Bell,
+  CalendarCheck,
   ClipboardList,
+  FileText,
+  Fingerprint,
   MonitorSmartphone,
   Package,
   Settings,
-  Square,
   UserSquare,
   Utensils,
 } from "lucide-react";
@@ -33,6 +35,32 @@ export const navConfig = {
       icon: <Bell />,
       path: "/notifications",
       role: ["admin", "cashier", "employe"],
+    },
+  ],
+  hr: [
+    {
+      name: "Attendance",
+      icon: <Fingerprint />,
+      path: "/attendance",
+      role: ["admin", "cashier", "employee"],
+    },
+    {
+      name: "Leave & Permits",
+      icon: <FileText />,
+      path: "/leaves",
+      role: ["admin", "cashier", "employee"],
+    },
+    {
+      name: "Leave",
+      icon: <FileText />,
+      path: "/leaves-approval",
+      role: ["admin", "cashier", "employee"],
+    },
+    {
+      name: "Duty Schedule",
+      icon: <CalendarCheck />,
+      path: "/schedule",
+      role: ["admin", "cashier", "employee"],
     },
   ],
   pos: [
@@ -95,7 +123,7 @@ export const navConfig = {
   system: [
     {
       name: "Operations",
-      icon: <Settings />, 
+      icon: <Settings />,
       role: ["admin"],
       subItems: [
         // { name: "Kitchen Display", path: "/operations/kitchen" },

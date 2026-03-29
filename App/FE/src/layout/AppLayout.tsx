@@ -72,21 +72,24 @@ const LayoutContent: React.FC = () => {
     });
   };
 
-  return (
-    <div className="min-h-screen xl:flex custom-scrollbar">
-      <div>
+return (
+    <div className="min-h-screen xl:flex overflow-hidden">
+      <div className="shrink-0">
         <AppSidebar />
         <Backdrop />
       </div>
+      
       <div
-        className={`flex-1 transition-all duration-300 ease-in-out custom-scrollbar ${
+        className={`flex-1 flex flex-col min-w-0 transition-all duration-300 ease-in-out ${
           isExpanded || isHovered ? "lg:ml-[290px]" : "lg:ml-[90px]"
         } ${isMobileOpen ? "ml-0" : ""}`}
       >
         <AppHeader />
-        <div className="p-4 mx-auto max-w-(--breakpoint-2xl) md:p-6 custom-scrollbar">
+        
+        {/* Kontainer Utama: Hilangkan max-w agar board bisa memanjang ke kanan */}
+        <main className="flex-1 min-h-0 min-w-0 p-4 md:p-6 overflow-hidden">
           <Outlet />
-        </div>
+        </main>
       </div>
     </div>
   );

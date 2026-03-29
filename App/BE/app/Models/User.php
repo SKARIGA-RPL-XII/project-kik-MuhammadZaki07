@@ -14,7 +14,7 @@ use NotificationChannels\WebPush\HasPushSubscriptions;
 class User extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasApiTokens, HasFactory, Notifiable, HasPushSubscriptions , LogsActivity;
+    use HasApiTokens, HasFactory, Notifiable, HasPushSubscriptions, LogsActivity;
 
     /**
      * The attributes that are mass assignable.
@@ -45,6 +45,21 @@ class User extends Authenticatable
     public function getTotalSpendAttribute()
     {
         return $this->transactions()->where('status', 'completed')->sum('total_amount');
+    }
+
+    public function schedules()
+    {
+        return $this->hasMany(Schedule::class);
+    }
+
+    public function attendances()
+    {
+        return $this->hasMany(Attendance::class);
+    }
+
+    public function leaves()
+    {
+        return $this->hasMany(Leave::class);
     }
 
     /**

@@ -32,6 +32,7 @@ class DatabaseSeeder extends Seeder
             EmployeSeeder::class,
             StockAdjustmentSeeder::class,
             CustomerSimulatedSeeder::class,
+            ShiftSeeder::class
         ]);
 
         DB::statement('SET FOREIGN_KEY_CHECKS=1;');

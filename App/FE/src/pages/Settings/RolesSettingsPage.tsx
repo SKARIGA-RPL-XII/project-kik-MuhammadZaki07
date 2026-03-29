@@ -24,6 +24,7 @@ export default function RolesPermissionsPage() {
   const roles = ["admin", "employe", "user", "customer", "cashier"];
   const menuSections = [
     { title: "Overview", items: navConfig.overview || [] },
+    { title: "Human Resource", items: navConfig.hr || [] },
     { title: "Point of Sales", items: navConfig.pos || [] },
     { title: "Management", items: navConfig.management || [] },
     { title: "System & Settings", items: navConfig.system || [] },

@@ -1,39 +1,38 @@
-import { apiClient } from "../lib/apiClient";
+import { apiClient } from "@/lib/apiClient";
 
-export const DutyScheduleService = {
-  getAll: (params?: any) =>
-    apiClient.get("/duty-schedules", { params }),
+export interface Shift {
+  id: number;
+  name: string;
+  start_time: string;
+  end_time: string;
+  late_tolerance: number;
+  late_penalty: number;
+  created_at?: string;
+  updated_at?: string;
+}
 
-  getById: (id: number) =>
-    apiClient.get(`/duty-schedules/${id}`),
-
-  create: (payload: {
-    user_id: number;
-    shift_id: number;
-    date: string;
-  }) => {
-    const formData = new FormData();
-    formData.append("user_id", String(payload.user_id));
-    formData.append("shift_id", String(payload.shift_id));
-    formData.append("date", payload.date);
-
-    return apiClient.post("/duty-schedules", formData);
+export const shiftService = {
+  getAll: async (): Promise<Shift[]> => {
+    const response = await apiClient.get("/shifts");
+    return response.data.data;
   },
 
-  update: (id: number, payload: {
-    user_id: number;
-    shift_id: number;
-    date: string;
-  }) => {
-    const formData = new FormData();
-    formData.append("_method", "PUT");
-    formData.append("user_id", String(payload.user_id));
-    formData.append("shift_id", String(payload.shift_id));
-    formData.append("date", payload.date);
-
-    return apiClient.post(`/duty-schedules/${id}`, formData);
+  getById: async (id: number): Promise<Shift> => {
+    const response = await apiClient.get(`/shifts/${id}`);
+    return response.data.data;
   },
 
-  delete: (id: number) =>
-    apiClient.delete(`/duty-schedules/${id}`),
+  create: async (data: Partial<Shift>): Promise<Shift> => {
+    const response = await apiClient.post("/shifts", data);
+    return response.data.data;
+  },
+
+  update: async (id: number, data: Partial<Shift>): Promise<Shift> => {
+    const response = await apiClient.put(`/shifts/${id}`, data);
+    return response.data.data;
+  },
+
+  delete: async (id: number): Promise<void> => {
+    await apiClient.delete(`/shifts/${id}`);
+  },
 };

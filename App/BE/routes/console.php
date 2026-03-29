@@ -27,3 +27,5 @@ Schedule::call(function () {
         Log::info("Scheduler: Transaction {$transaction->transaction_code} auto-cancelled.");
     }
 })->everyMinute();
+
+Schedule::command('attendance:process-alpha')->dailyAt('23:55');

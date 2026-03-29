@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\ActivityLogController;
 use App\Http\Controllers\AdminController;
+use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\StockController;
 use App\Http\Controllers\SettingController;
 use App\Http\Controllers\AttributeController;
@@ -15,12 +16,15 @@ use App\Http\Controllers\DiscountController;
 use App\Http\Controllers\DutyScheduleController;
 use App\Http\Controllers\EmployeController;
 use App\Http\Controllers\EventController;
+use App\Http\Controllers\LeaveController;
 use App\Http\Controllers\MenuController;
 use App\Http\Controllers\MidtransWebhookController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\RoomController;
+use App\Http\Controllers\ScheduleController;
+use App\Http\Controllers\ShiftController;
 use App\Http\Controllers\StockAdjustmentController;
 use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\TableController;
@@ -137,6 +141,18 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/reports/top-selling', [ReportController::class, 'getTopSellingMenu']);
     Route::get('/reports/sales-summary', [ReportController::class, 'getSalesSummary']);
     Route::get('/reports/explorer', [ReportController::class, 'getTransactionExplorer']);
+
+    Route::apiResource('shifts', ShiftController::class);
+    Route::apiResource('schedules', ScheduleController::class);
+    Route::post('schedules/bulk', [ScheduleController::class, 'bulkStore']);
+    Route::get('/attendance/status-today', [AttendanceController::class, 'statusToday']);
+    Route::post('/attendance/clock-in', [AttendanceController::class, 'clockIn']);
+    Route::post('/attendance/clock-out', [AttendanceController::class, 'clockOut']);
+
+    Route::get('/leaves/me', [LeaveController::class, 'myLeaves']);
+    Route::get('/leaves', [LeaveController::class, 'index']);
+    Route::post('/leaves', [LeaveController::class, 'store']);
+    Route::post('/leaves/{id}/approve', [LeaveController::class, 'approve']);
 });
 
 

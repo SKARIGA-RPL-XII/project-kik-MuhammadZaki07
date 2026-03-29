@@ -2,64 +2,70 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Controller;
 use App\Models\Shift;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
 
 class ShiftController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index()
     {
-        //
+        $shifts = Shift::all();
+        return response()->json([
+            'success' => true,
+            'data' => $shifts
+        ]);
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(Request $request)
     {
-        //
+        $validator = Validator::make($request->all(), [
+            'name' => 'required|string|max:255',
+            'start_time' => 'required|date_format:H:i',
+            'end_time' => 'required|date_format:H:i',
+            'late_tolerance' => 'nullable|integer',
+            'late_penalty' => 'nullable|numeric',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json($validator->errors(), 422);
+        }
+
+        $shift = Shift::create($request->all());
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Shift created successfully',
+            'data' => $shift
+        ], 201);
     }
 
-    /**
-     * Display the specified resource.
-     */
     public function show(Shift $shift)
     {
-        //
+        return response()->json([
+            'success' => true,
+            'data' => $shift
+        ]);
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(Shift $shift)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
     public function update(Request $request, Shift $shift)
     {
-        //
+        $shift->update($request->all());
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Shift updated successfully',
+            'data' => $shift
+        ]);
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
     public function destroy(Shift $shift)
     {
-        //
+        $shift->delete();
+        return response()->json([
+            'success' => true,
+            'message' => 'Shift deleted successfully'
+        ]);
     }
 }
