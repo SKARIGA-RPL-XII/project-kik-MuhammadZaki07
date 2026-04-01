@@ -8,6 +8,7 @@ import { SidebarItem } from "@/components/sidebar/SidebarItem";
 import { usePermission } from "@/hooks/usePermission";
 import SidebarSkeleton from "@/components/skeleton/SidebarSkeleton";
 import { useSettings } from "@/context/SettingsContext";
+import { isDesktop } from "@/utils/platform";
 
 const AppSidebar: React.FC = () => {
   const { isExpanded, isMobileOpen, isHovered, setIsHovered } = useSidebar();
@@ -110,7 +111,7 @@ const AppSidebar: React.FC = () => {
 
   return (
     <aside
-      className={`fixed mt-16 flex flex-col lg:mt-0 top-0 px-5 left-0 bg-white dark:bg-neutral-900 border-r dark:border-neutral-800 h-screen transition-all duration-300 z-50 ${showFull ? "w-[290px]" : "w-[90px]"} ${isMobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}`}
+      className={`fixed mt-16 ${isDesktop() && "top-3"} flex flex-col lg:mt-0 top-0 px-5 left-0 bg-white dark:bg-neutral-900 border-r dark:border-neutral-800 h-screen transition-all duration-300 z-50 ${showFull ? "w-[290px]" : "w-[90px]"} ${isMobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}`}
       onMouseEnter={() => !isExpanded && setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >

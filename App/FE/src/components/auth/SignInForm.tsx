@@ -14,6 +14,7 @@ export default function SignInForm() {
   const { toast } = useToast();
 
   const navigate = useNavigate();
+  const isElectron = navigator.userAgent.toLowerCase().includes("electron");
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -33,11 +34,22 @@ export default function SignInForm() {
     if (res?.status === "success") {
       toast("success", "Login Success", "Welcome back!");
 
+      if (isElectron && res.user.role_name !== "cashier") {
+        toast(
+          "error",
+          "Access Denied",
+          "Desktop version is for Cashiers only.",
+        );
+        return;
+      }
+
       setTimeout(() => {
         if (res.user.role_name === "admin") {
-          window.location.href="/dashboard"
+          window.location.href = "/dashboard";
         } else if (res.user.role_name === "cashier") {
-          window.location.href="/cashier"
+          window.location.href = "/cashier";
+        } else if (res.user.role_name === "employe") {
+          window.location.href = "/dashboard-employe";
         } else {
           navigate("/");
         }
@@ -68,7 +80,7 @@ export default function SignInForm() {
           </div>
           <div>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-1 sm:gap-5">
-            <GoogleLoginButton text="Sign in with Google" />
+              <GoogleLoginButton text="Sign in with Google" />
             </div>
             <div className="relative py-3 sm:py-5">
               <div className="absolute inset-0 flex items-center">
@@ -138,17 +150,19 @@ export default function SignInForm() {
               </div>
             </form>
 
-            <div className="mt-5">
-              <p className="text-sm font-normal text-center text-neutral-700 dark:text-neutral-400 sm:text-start">
-                Don&apos;t have an account? {""}
-                <Link
-                  to="/auth/sign-up"
-                  className="text-red-500 hover:text-red-600 dark:text-red-400"
-                >
-                  Sign Up
-                </Link>
-              </p>
-            </div>
+            {!isElectron && (
+              <div className="mt-5">
+                <p className="text-sm font-normal text-center text-neutral-700 dark:text-neutral-400 sm:text-start">
+                  Don&apos;t have an account? {""}
+                  <Link
+                    to="/auth/sign-up"
+                    className="text-red-500 hover:text-red-600 dark:text-red-400"
+                  >
+                    Sign Up
+                  </Link>
+                </p>
+              </div>
+            )}
           </div>
         </div>
       </div>

@@ -10,6 +10,7 @@ import {
   MonitorSmartphone,
   Package,
   Settings,
+  UserCheck,
   UserSquare,
   Utensils,
 } from "lucide-react";
@@ -51,8 +52,8 @@ export const navConfig = {
       role: ["admin", "cashier", "employee"],
     },
     {
-      name: "Leave",
-      icon: <FileText />,
+      name: "Leaves Approval",
+      icon: <UserCheck />,
       path: "/leaves-approval",
       role: ["admin", "cashier", "employee"],
     },

@@ -7,6 +7,14 @@ export interface SchedulePayload {
   is_picket?: boolean;
   is_holiday?: boolean;
   note?: string;
+  day_name?: string;
+  start_time?: string; 
+  end_time?: string;
+}
+
+export interface BulkSchedulePayload {
+  schedules: SchedulePayload[];
+  dates: string[];
 }
 
 export const scheduleService = {
@@ -25,8 +33,8 @@ export const scheduleService = {
     return response.data;
   },
 
-  bulkSaveSchedules: async (payload: { schedules: any[]; dates: string[] }) => {
+  bulkSaveSchedules: async (payload: BulkSchedulePayload) => {
     const response = await apiClient.post('/schedules/bulk', payload);
     return response.data;
-},
+  },
 };

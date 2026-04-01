@@ -216,7 +216,10 @@ export const useScheduleLogic = (
   const { shifts: shiftsRaw, isLoading: shiftsLoading } = useShifts();
 
   const sortedShifts = useMemo(() => sortShifts(shiftsRaw ?? []), [shiftsRaw]);
-  const shiftKeys = useMemo(() => sortedShifts.map((s) => String(s.id)), [sortedShifts]);
+  const shiftKeys = useMemo(
+    () => sortedShifts.map((s) => String(s.id)),
+    [sortedShifts],
+  );
   const weekDates = useMemo(() => getWeekDateStrings(), []);
 
   const [weeklySchedule, setWeeklyScheduleRaw] = useState<WeeklyScheduleState>(
@@ -265,19 +268,29 @@ export const useScheduleLogic = (
     const rows = schedulesQuery.isError ? [] : (schedulesQuery.data ?? []);
     const weekly = mapApiSchedulesToWeekly(rows, sortedShifts, weekDates);
     setWeeklyScheduleRaw(normalizeWeeklySchedule(weekly, sortedShifts));
-  }, [sortedShifts, schedulesQuery.data, schedulesQuery.isFetched, schedulesQuery.isFetching, hasChanges]);
+  }, [
+    sortedShifts,
+    schedulesQuery.data,
+    schedulesQuery.isFetched,
+    schedulesQuery.isFetching,
+    hasChanges,
+  ]);
 
   const onDragEnd = (result: any) => {
     if (!result.destination) return;
 
     const findUser = (): EmployeListItem | null => {
-      const fromAvailable = availableStaff.find(s => s.user.id.toString() === result.draggableId);
+      const fromAvailable = availableStaff.find(
+        (s) => s.user.id.toString() === result.draggableId,
+      );
       if (fromAvailable) return fromAvailable;
-      
+
       for (const day of DAYS) {
         for (const sk of shiftKeys) {
           const slot = weeklySchedule[day][sk] as DayShiftSlot | undefined;
-          const u = slot?.users.find(u => u.user.id.toString() === result.draggableId);
+          const u = slot?.users.find(
+            (u) => u.user.id.toString() === result.draggableId,
+          );
           if (u) return u as unknown as EmployeListItem;
         }
       }
@@ -293,7 +306,12 @@ export const useScheduleLogic = (
       for (const sk of shiftKeys) {
         const slot = dayData[sk] as DayShiftSlot | undefined;
         if (slot) {
-          dayData[sk] = { ...slot, users: slot.users.filter(u => u.user.id.toString() !== result.draggableId) };
+          dayData[sk] = {
+            ...slot,
+            users: slot.users.filter(
+              (u) => u.user.id.toString() !== result.draggableId,
+            ),
+          };
         }
       }
       nextSchedule[day] = dayData as DayScheduleState;
@@ -307,8 +325,8 @@ export const useScheduleLogic = (
         ...nextSchedule[destDay],
         [activeType]: {
           ...destSlot,
-          users: [...destSlot.users, user as unknown as ScheduleUserRow]
-        }
+          users: [...destSlot.users, user as unknown as ScheduleUserRow],
+        },
       };
     }
 
@@ -323,7 +341,10 @@ export const useScheduleLogic = (
       shiftKeys.forEach((sk) => {
         const slot = newDay[sk] as DayShiftSlot | undefined;
         if (slot) {
-          newDay[sk] = { ...slot, users: slot.users.filter((u) => u.user.id !== userId) };
+          newDay[sk] = {
+            ...slot,
+            users: slot.users.filter((u) => u.user.id !== userId),
+          };
         }
       });
       return { ...prev, [dayKey]: newDay };
@@ -331,7 +352,12 @@ export const useScheduleLogic = (
     setHasChanges(true);
   };
 
-  const updateShiftTime = (day: string, type: string, field: "start" | "end", value: string) => {
+  const updateShiftTime = (
+    day: string,
+    type: string,
+    field: "start" | "end",
+    value: string,
+  ) => {
     const dayKey = day as (typeof DAYS)[number];
     setWeeklySchedule((prev) => {
       const slot = prev[dayKey][type] as DayShiftSlot | undefined;
@@ -344,50 +370,84 @@ export const useScheduleLogic = (
     setHasChanges(true);
   };
 
-const handleFullSave = async () => {
-  toast("info", "Menyimpan", "Mensinkronkan jadwal mingguan...");
+  const handleFullSave = async () => {
+    toast("info", "Menyimpan", "Mensinkronkan jadwal mingguan...");
 
-  const schedulesPayload: any[] = [];
-  const datesPayload: string[] = [];
+    const schedulesPayload: any[] = [];
+    const shiftUpdatesMap = new Map<
+      number,
+      { shift_id: number; start_time: string; end_time: string }
+    >();
 
-  DAYS.forEach((dayName, idx) => {
-    const date = getTargetDate(idx);
-    datesPayload.push(date); // Ini hanya array string ["2026-03-30", ...]
+    sortedShifts.forEach((shift) => {
+      const shiftKey = String(shift.id);
 
-    for (const s of sortedShifts) {
-      const key = String(s.id);
-      const slot = weeklySchedule[dayName][key] as DayShiftSlot | undefined;
+      for (const dayName of DAYS) {
+        const slot = weeklySchedule[dayName][shiftKey] as
+          | DayShiftSlot
+          | undefined;
+        if (!slot) continue;
 
-      if (!slot || !slot.users.length) continue;
+        const isChanged =
+          slot.start !== toHHmm(shift.start_time) ||
+          slot.end !== toHHmm(shift.end_time);
 
-      slot.users.forEach((u) => {
-        schedulesPayload.push({
-          user_id: u.user.id,
-          day_name: dayName,
-          date: date,
-          shift_id: slot.shift_id,
-          note: `Jam: ${slot.start} - ${slot.end}`,
+        shiftUpdatesMap.set(shift.id, {
+          shift_id: shift.id,
+          start_time: slot.start,
+          end_time: slot.end,
         });
+
+        if (isChanged) break;
+      }
+    });
+
+    DAYS.forEach((dayName, idx) => {
+      const date = getTargetDate(idx);
+
+      sortedShifts.forEach((shift) => {
+        const slot = weeklySchedule[dayName][String(shift.id)] as
+          | DayShiftSlot
+          | undefined;
+
+        if (slot?.users?.length) {
+          slot.users.forEach((u) => {
+            schedulesPayload.push({
+              user_id: u.user.id,
+              date: date,
+              shift_id: shift.id,
+              note: `Sync: ${slot.start}-${slot.end}`,
+            });
+          });
+        }
       });
+    });
+
+    try {
+      const payload = {
+        schedules: schedulesPayload,
+        dates: weekDates,
+        shift_updates: Array.from(shiftUpdatesMap.values()),
+      };
+
+      await scheduleService.bulkSaveSchedules(payload);
+
+      setHasChanges(false);
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["schedules"] }),
+        queryClient.invalidateQueries({ queryKey: ["shifts"] }),
+      ]);
+
+      toast("success", "Berhasil", "Jadwal dan Shift berhasil disinkronkan!");
+    } catch (error) {
+      console.error("❌ Save Error:", error);
+      toast(
+        "error",
+        "Gagal",
+        "Gagal menyimpan, periksa koneksi atau validasi.",
+      );
     }
-  });
-
-  try {
-    // PASTIKAN strukturnya begini: { schedules: [...], dates: [...] }
-   await scheduleService.bulkSaveSchedules({
-    schedules: schedulesPayload,
-    dates: datesPayload,
-  });
-
-  setHasChanges(false);
-  await queryClient.invalidateQueries({ queryKey: ["schedules"] });
-  toast("success", "Berhasil", "Jadwal mingguan disimpan!");
-  } catch (error: any) {
-    // Log error untuk debug di console jika masih gagal
-    console.error("Save Error:", error.response?.data);
-    toast("error", "Gagal", "Struktur data tidak valid.");
-  }
-};
+  };
 
   return {
     availableStaff,

@@ -9,35 +9,36 @@ export interface LeaveRequest {
 }
 
 export const leaveService = {
-  getAllLeaves: async () => {
-    const res = await apiClient.get("/leaves");
-    return res.data.data;
-  },
-
-  getMyLeaves: async () => {
-    const res = await apiClient.get("/leaves/me");
-    return res.data.data;
-  },
-
-  createLeave: async (data: LeaveRequest) => {
-    const formData = new FormData();
-    formData.append("type", data.type);
-    formData.append("start_date", data.start_date);
-    formData.append("end_date", data.end_date);
-    formData.append("reason", data.reason);
-    formData.append("proof_file", data.proof_file);
-
-    const res = await apiClient.post("/leaves", formData, {
-      headers: { "Content-Type": "multipart/form-data" },
-    });
+  getAllLeaves: async (params: any) => {
+    const res = await apiClient.get("/leaves", { params });
     return res.data;
   },
 
-  approveLeave: async (id: number, status: "approved" | "rejected", reason?: string) => {
+  getMyLeaves: async (params?: { search?: string; page?: number; status?: string }) => {
+    const response = await apiClient.get("/leaves/my", { params });
+    return response.data;
+  },
+  createLeave: async (data: FormData) => {
+    const response = await apiClient.post("/leaves", data, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+    return response.data;
+  },
+
+  approveLeave: async (
+    id: number,
+    status: "approved" | "rejected",
+    reason?: string,
+  ) => {
     const res = await apiClient.post(`/leaves/${id}/approve`, {
       status,
       rejected_reason: reason,
     });
     return res.data;
+  },
+
+  getLeaveDetail: async (id: number) => {
+    const res = await apiClient.get(`/leaves/${id}`);
+    return res.data.data;
   },
 };

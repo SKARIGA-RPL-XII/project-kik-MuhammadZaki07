@@ -2,22 +2,131 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Controllers\Controller;
 use App\Models\Attendance;
 use App\Models\Schedule;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 
 class AttendanceController extends Controller
 {
-    private $officeLat = -7.929242549769063;
-    private $officeLong = 112.59065530363672;
-    private $maxDistance = 50;
+    private $officeLat = -7.929135494953358;
+    private $officeLong = 112.58941654232895;
+    private $maxDistance = 500;
+
+    public function myAttendance(Request $request)
+    {
+        $user = Auth::user();
+        $query = Attendance::with(['schedule.shift'])
+            ->where('user_id', $user->id);
+
+        if ($request->has('month')) {
+            $date = Carbon::parse($request->month);
+            $query->whereMonth('date', $date->month)
+                ->whereYear('date', $date->year);
+        }
+
+        if ($request->has('status') && $request->status !== 'all') {
+            $query->where('status', $request->status);
+        }
+
+        $attendances = $query->latest('date')
+            ->paginate($request->get('per_page', 10));
+
+        $summary = [
+            'total_present' => (clone $query)->whereIn('status', ['present', 'late'])->count(),
+            'total_alpha' => (clone $query)->where('status', 'alpha')->count(),
+            'total_penalty' => (clone $query)->sum('total_penalty'),
+        ];
+
+        return response()->json([
+            'success' => true,
+            'data' => $attendances->items(),
+            'summary' => $summary,
+            'meta' => [
+                'current_page' => $attendances->currentPage(),
+                'last_page' => $attendances->lastPage(),
+                'total' => $attendances->total(),
+            ]
+        ]);
+    }
+
+    public function index(Request $request)
+    {
+        $query = Attendance::with(['user', 'schedule.shift']);
+
+        if ($request->has('user_id')) {
+            $query->where('user_id', $request->user_id);
+        }
+
+        if ($request->has('status') && $request->status !== 'all') {
+            $query->where('status', $request->status);
+        }
+
+        if ($request->has('date')) {
+            $query->whereDate('date', $request->date);
+        }
+
+        if ($request->has('month')) {
+            $query->whereMonth('date', Carbon::parse($request->month)->month)
+                ->whereYear('date', Carbon::parse($request->month)->year);
+        }
+
+        $attendances = $query->latest('date')
+            ->paginate($request->get('per_page', 10));
+
+        return response()->json([
+            'success' => true,
+            'data' => $attendances->items(),
+            'meta' => [
+                'current_page' => $attendances->currentPage(),
+                'last_page' => $attendances->lastPage(),
+                'total' => $attendances->total(),
+            ]
+        ]);
+    }
+
+    public function show($id)
+    {
+        $attendance = Attendance::with(['user', 'schedule.shift', 'schedule.user'])->find($id);
+
+        if (!$attendance) {
+            return response()->json(['message' => 'Data absensi tidak ditemukan.'], 404);
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => $attendance
+        ]);
+    }
+
+    public function statusToday()
+    {
+        $user = Auth::user();
+        $today = Carbon::now()->toDateString();
+
+        $attendance = Attendance::with('schedule.shift')
+            ->where('user_id', $user->id)
+            ->where('date', $today)
+            ->first();
+
+        return response()->json([
+            'success' => true,
+            'attendance' => $attendance,
+            'has_clock_in' => $attendance && $attendance->clock_in ? true : false,
+            'has_clock_out' => $attendance && $attendance->clock_out ? true : false,
+        ]);
+    }
 
     public function clockIn(Request $request)
     {
         $user = Auth::user();
+
+        if (!$user->is_active) {
+            return response()->json(['message' => 'Akun anda ditangguhkan karena pelanggaran absensi.'], 403);
+        }
+
         $now = Carbon::now();
         $today = $now->toDateString();
 
@@ -26,17 +135,33 @@ class AttendanceController extends Controller
             ->where('date', $today)
             ->first();
 
-        if (!$schedule || $schedule->is_holiday) {
+        if (!$schedule) {
             return response()->json(['message' => 'Tidak ada jadwal kerja hari ini.'], 403);
         }
 
-        $attendance = Attendance::where('user_id', $user->id)
+        $existingAttendance = Attendance::where('user_id', $user->id)
             ->where('date', $today)
-            ->whereNotNull('clock_in')
+            ->where('status', '!=', 'alpha')
             ->first();
 
-        if ($attendance && $attendance->clock_in) {
-            return response()->json(['message' => 'Kamu sudah absen masuk hari ini.'], 400);
+        if ($existingAttendance) {
+            return response()->json(['message' => 'Anda sudah melakukan absensi hari ini.'], 400);
+        }
+
+        $startTime = Carbon::parse($today . ' ' . $schedule->shift->start_time);
+
+        $earliestTime = (clone $startTime)->subMinutes(20);
+        if ($now->lt($earliestTime)) {
+            return response()->json([
+                'message' => 'Sesi absen belum dibuka. Baru bisa absen pada jam ' . $earliestTime->format('H:i')
+            ], 403);
+        }
+
+        $diffInMinutes = $startTime->diffInMinutes($now, false);
+
+        if ($diffInMinutes > 60) {
+            $this->handleAlpha($user, $schedule, $today);
+            return response()->json(['message' => 'Batas waktu absen berakhir. Anda dianggap Alpha.'], 403);
         }
 
         $distance = $this->calculateDistance(
@@ -47,37 +172,56 @@ class AttendanceController extends Controller
         );
 
         if ($distance > $this->maxDistance) {
-            return response()->json(['message' => 'Kamu berada di luar jangkauan kantor (' . round($distance) . 'm).'], 403);
+            return response()->json(['message' => 'Diluar jangkauan kantor.'], 403);
         }
-
-        $startTime = Carbon::createFromFormat('H:i:s', $schedule->shift->start_time);
-        $lateMinutes = $now->diffInMinutes($startTime, false);
 
         $status = 'present';
         $penalty = 0;
 
-        if ($lateMinutes < -$schedule->shift->late_tolerance) {
+        if ($diffInMinutes > 10) {
             $status = 'late';
-            $absLate = abs($lateMinutes);
-            $penalty = $absLate * $schedule->shift->late_penalty;
+            $lateDuration = $diffInMinutes - 10;
+            $penalty = $lateDuration * $schedule->shift->late_penalty;
         }
 
-        $attendance = Attendance::updateOrCreate(
-            ['user_id' => $user->id, 'schedule_id' => $schedule->id, 'date' => $today],
-            [
-                'clock_in' => $now->toTimeString(),
-                'lat_in' => $request->lat,
-                'long_in' => $request->long,
-                'status' => $status,
-                'total_penalty' => $penalty
-            ]
-        );
+        $attendance = Attendance::create([
+            'user_id' => $user->id,
+            'schedule_id' => $schedule->id,
+            'date' => $today,
+            'clock_in' => $now->toTimeString(),
+            'lat_in' => $request->lat,
+            'long_in' => $request->long,
+            'status' => $status,
+            'total_penalty' => $penalty
+        ]);
 
         return response()->json([
             'success' => true,
-            'message' => $status == 'late' ? 'Absen berhasil (Terlambat ' . abs($lateMinutes) . ' menit)' : 'Absen berhasil tepat waktu',
+            'message' => $status == 'late'
+                ? 'Terlambat ' . $diffInMinutes . ' menit (Denda: Rp' . number_format($penalty, 0, ',', '.') . ')'
+                : 'Absen berhasil (Tepat Waktu)',
             'data' => $attendance
         ]);
+    }
+
+    private function handleAlpha($user, $schedule, $today)
+    {
+        Attendance::updateOrCreate(
+            ['user_id' => $user->id, 'date' => $today],
+            [
+                'schedule_id' => $schedule->id,
+                'status' => 'alpha',
+                'total_penalty' => 0
+            ]
+        );
+
+        $alphaCount = Attendance::where('user_id', $user->id)
+            ->where('status', 'alpha')
+            ->count();
+
+        if ($alphaCount >= 3) {
+            User::where('id', $user->id)->update(['is_active' => false]);
+        }
     }
 
     public function clockOut(Request $request)
@@ -88,34 +232,18 @@ class AttendanceController extends Controller
 
         $attendance = Attendance::where('user_id', $user->id)
             ->where('date', $today)
+            ->whereIn('status', ['present', 'late'])
             ->first();
 
-        if (!$attendance || !$attendance->clock_in) {
-            return response()->json(['message' => 'Kamu belum absen masuk.'], 400);
+        if (!$attendance || $attendance->clock_out) {
+            return response()->json(['message' => 'Aksi tidak diizinkan.'], 400);
         }
 
         $attendance->update([
             'clock_out' => $now->toTimeString()
         ]);
 
-        return response()->json(['success' => true, 'message' => 'Berhasil absen pulang. Hati-hati di jalan!']);
-    }
-
-    public function statusToday()
-    {
-        $user = Auth::user();
-        $today = now()->toDateString();
-
-        $attendance = Attendance::where('user_id', $user->id)
-            ->where('date', $today)
-            ->first();
-
-        return response()->json([
-            'success' => true,
-            'attendance' => $attendance,
-            'has_clock_in' => $attendance && $attendance->clock_in ? true : false,
-            'has_clock_out' => $attendance && $attendance->clock_out ? true : false,
-        ]);
+        return response()->json(['success' => true, 'message' => 'Berhasil absen pulang.']);
     }
 
     private function calculateDistance($lat1, $lon1, $lat2, $lon2)

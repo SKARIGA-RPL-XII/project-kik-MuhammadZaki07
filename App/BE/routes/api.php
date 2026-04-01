@@ -145,14 +145,22 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('shifts', ShiftController::class);
     Route::apiResource('schedules', ScheduleController::class);
     Route::post('schedules/bulk', [ScheduleController::class, 'bulkStore']);
-    Route::get('/attendance/status-today', [AttendanceController::class, 'statusToday']);
-    Route::post('/attendance/clock-in', [AttendanceController::class, 'clockIn']);
-    Route::post('/attendance/clock-out', [AttendanceController::class, 'clockOut']);
+    
+    Route::prefix('attendance')->group(function () {
+        Route::get('/my', [AttendanceController::class, 'myAttendance']);
+        Route::get('/status-today', [AttendanceController::class, 'statusToday']);
+        Route::post('/clock-in', [AttendanceController::class, 'clockIn']);
+        Route::post('/clock-out', [AttendanceController::class, 'clockOut']);
 
-    Route::get('/leaves/me', [LeaveController::class, 'myLeaves']);
+        Route::get('/', [AttendanceController::class, 'index']);
+        Route::get('/{id}', [AttendanceController::class, 'show']);
+    });
+
+    Route::get('/leaves/my', [LeaveController::class, 'myLeaves']);
     Route::get('/leaves', [LeaveController::class, 'index']);
     Route::post('/leaves', [LeaveController::class, 'store']);
     Route::post('/leaves/{id}/approve', [LeaveController::class, 'approve']);
+    Route::get('/leaves/{id}', [LeaveController::class, 'show']);
 });
 
 

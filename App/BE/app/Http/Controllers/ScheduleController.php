@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Controllers\Controller;
 use App\Models\Schedule;
 use App\Models\Attendance;
+use App\Models\Shift;
 use App\Models\User;
 use App\Notifications\PicketScheduleNotification;
 use Illuminate\Http\Request;
@@ -15,21 +16,21 @@ use Carbon\Carbon;
 class ScheduleController extends Controller
 {
     public function index(Request $request)
-{
-    $schedules = Schedule::with(['shift', 'user.role', 'user.employe'])
-        ->when($request->start_date && $request->end_date, function ($query) use ($request) {
-            return $query->whereBetween('date', [$request->start_date, $request->end_date]);
-        })
-        ->when($request->month, function ($query) use ($request) {
-            return $query->whereMonth('date', $request->month);
-        })
-        ->get();
+    {
+        $schedules = Schedule::with(['shift', 'user.role', 'user.employe'])
+            ->when($request->start_date && $request->end_date, function ($query) use ($request) {
+                return $query->whereBetween('date', [$request->start_date, $request->end_date]);
+            })
+            ->when($request->month, function ($query) use ($request) {
+                return $query->whereMonth('date', $request->month);
+            })
+            ->get();
 
-    return response()->json([
-        'success' => true,
-        'data' => $schedules
-    ]);
-}
+        return response()->json([
+            'success' => true,
+            'data' => $schedules
+        ]);
+    }
 
     public function store(Request $request)
     {
@@ -84,50 +85,81 @@ class ScheduleController extends Controller
         ]);
     }
 
-public function bulkStore(Request $request)
-    {
-        $validator = Validator::make($request->all(), [
-            'schedules' => 'required|array',
-            'schedules.*.user_id' => 'required|exists:users,id',
-            'schedules.*.day_name' => 'required|string',
-            'schedules.*.shift_id' => 'nullable|exists:shifts,id',
-            'schedules.*.date' => 'required|date',
-        ]);
+ public function bulkStore(Request $request)
+{
+    $validator = Validator::make($request->all(), [
+        'dates'                       => 'required|array',
+        'schedules'                   => 'present|array',
+        'schedules.*.user_id'         => 'required|exists:users,id',
+        'schedules.*.date'            => 'required|date',
+        'schedules.*.shift_id'        => 'nullable|exists:shifts,id',
+        'shift_updates'               => 'nullable|array',
+        'shift_updates.*.shift_id'    => 'required|exists:shifts,id',
+        'shift_updates.*.start_time'  => 'required',
+        'shift_updates.*.end_time'    => 'required',
+    ]);
 
-        if ($validator->fails()) return response()->json($validator->errors(), 422);
-
-        return DB::transaction(function () use ($request) {
-            $dates = collect($request->schedules)->pluck('date')->unique();
-
-            if ($dates->isNotEmpty()) {
-                Schedule::whereIn('date', $dates)->delete();
-            }
-
-            foreach ($request->schedules as $item) {
-                $schedule = Schedule::create([
-                    'user_id'    => $item['user_id'],
-                    'day_name'   => $item['day_name'],
-                    'shift_id'   => $item['shift_id'],
-                    'date'       => $item['date'],
-                    'note'       => $item['note'] ?? null,
-                ]);
-
-                Attendance::updateOrCreate(
-                    [
-                        'user_id' => $item['user_id'],
-                        'date'    => $item['date']
-                    ],
-                    [
-                        'schedule_id' => $schedule->id,
-                        'status'      => 'alpha'
-                    ]
-                );
-            }
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Jadwal Mingguan Berhasil Diperbarui!'
-            ]);
-        });
+    if ($validator->fails()) {
+        return response()->json($validator->errors(), 422);
     }
+
+    return DB::transaction(function () use ($request) {
+        if (!empty($request->shift_updates)) {
+            foreach ($request->shift_updates as $shiftData) {
+                Shift::where('id', $shiftData['shift_id'])->update([
+                    'start_time' => $shiftData['start_time'],
+                    'end_time'   => $shiftData['end_time']
+                ]);
+            }
+        }
+
+        $userIdsInPayload = collect($request->schedules)->pluck('user_id')->unique();
+
+        Schedule::whereIn('date', $request->dates)
+            ->whereNotIn('user_id', $userIdsInPayload)
+            ->delete();
+
+        foreach ($request->schedules as $item) {
+            $dayNameEn = Carbon::parse($item['date'])->format('l');
+            $dayMapping = [
+                'Monday'    => 'Senin',
+                'Tuesday'   => 'Selasa',
+                'Wednesday' => 'Rabu',
+                'Thursday'  => 'Kamis',
+                'Friday'    => 'Jumat',
+                'Saturday'  => 'Sabtu',
+                'Sunday'    => 'Minggu',
+            ];
+            $dayNameId = $dayMapping[$dayNameEn];
+
+            $schedule = Schedule::updateOrCreate(
+                [
+                    'user_id' => $item['user_id'],
+                    'date'    => $item['date']
+                ],
+                [
+                    'shift_id' => $item['shift_id'],
+                    'day_name' => $dayNameId,
+                    'note'     => $item['note'] ?? null
+                ]
+            );
+
+            Attendance::firstOrCreate(
+                [
+                    'user_id' => $item['user_id'],
+                    'date'    => $item['date']
+                ],
+                [
+                    'schedule_id' => $schedule->id,
+                    'status'      => 'alpha'
+                ]
+            );
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Sinkronisasi Jadwal & Shift Berhasil'
+        ]);
+    });
+}
 }

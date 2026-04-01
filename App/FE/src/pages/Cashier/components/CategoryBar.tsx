@@ -15,7 +15,7 @@ export function CategoryBar({
 }: CategoryBarProps) {
   if (loading) {
     return (
-      <div className="border-b px-6 py-2 overflow-x-auto no-scrollbar flex gap-2 sticky top-20 z-10 bg-white dark:bg-neutral-950">
+      <div className="border-b px-6 py-2 overflow-x-auto no-scrollbar flex gap-2 sticky top-20 z-10 bg-white dark:bg-neutral-900">
         {[1, 2, 3, 4, 5, 6].map((i) => (
           <div
             key={i}
@@ -27,7 +27,7 @@ export function CategoryBar({
   }
 
   return (
-    <div className="border-b px-6 py-2 overflow-x-auto no-scrollbar flex gap-2 sticky top-20 z-10 bg-white dark:bg-neutral-950">
+    <div className="border-b px-6 py-2 overflow-x-auto no-scrollbar flex gap-2 sticky top-20 z-10 bg-white dark:bg-neutral-900">
       <div className="flex gap-2 relative">
         <button
           onClick={() => onCategoryChange("All Items")}

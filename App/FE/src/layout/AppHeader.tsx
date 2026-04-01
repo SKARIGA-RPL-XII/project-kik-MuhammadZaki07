@@ -229,7 +229,6 @@ const AppHeader: React.FC = () => {
                 <span> K </span>
               </button>
 
-              {/* SEARCH DROPDOWN */}
               {showDropdown && searchQuery && (
                 <div className="absolute top-full left-0 mt-2 w-full bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-xl shadow-2xl z-[999] overflow-hidden">
                   <div className="p-2">

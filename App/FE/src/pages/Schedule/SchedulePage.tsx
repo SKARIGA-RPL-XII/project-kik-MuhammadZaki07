@@ -143,7 +143,6 @@ const SchedulePage = () => {
     isReady,
   } = useScheduleLogic(employeData);
 
-  // 1. Definisikan blocker dengan logika yang stabil
   const blocker = useBlocker(
     React.useCallback(
       ({ currentLocation, nextLocation }) =>
@@ -152,16 +151,13 @@ const SchedulePage = () => {
     )
   );
 
-  // 2. Fungsi khusus untuk simpan lalu lanjut pindah
   const handleSaveAndExit = async () => {
     await handleFullSave();
-    // Beri jeda sedikit agar state sinkron sebelum navigasi dilanjutkan
     setTimeout(() => {
       blocker.proceed?.();
     }, 100);
   };
 
-  // 3. Cleanup blocker saat pindah halaman
   React.useEffect(() => {
     return () => {
       if (blocker.state === "blocked") {
@@ -170,7 +166,6 @@ const SchedulePage = () => {
     };
   }, [blocker.state]);
 
-  // 4. Handle penutupan tab/refresh browser
   React.useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
       if (hasChanges) {
@@ -219,7 +214,6 @@ const SchedulePage = () => {
         </div>
       </DragDropContext>
 
-      {/* MODAL KONFIRMASI */}
       <AlertDialog open={blocker.state === "blocked"}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -487,7 +481,7 @@ const DayColumn = ({
 
           <div className="grid grid-cols-2 gap-2">
             <div className="space-y-1">
-              <span className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground/70">
+              <span className="text-xs font-normal text-muted-foreground/70">
                 Mulai
               </span>
               <Input
@@ -500,7 +494,7 @@ const DayColumn = ({
               />
             </div>
             <div className="space-y-1">
-              <span className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground/70">
+              <span className="text-xs font-normal text-muted-foreground/70">
                 Selesai
               </span>
               <Input

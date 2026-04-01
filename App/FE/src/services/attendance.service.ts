@@ -16,5 +16,10 @@ export const attendanceService = {
   async getTodayStatus() {
     const response = await apiClient.get(`${API_URL}/status-today`);
     return response.data;
+  },
+
+  async getMyAttendance(params?: { month?: string; status?: string; page?: number }) {
+    const response = await apiClient.get(`${API_URL}/my`, { params });
+    return response.data;
   }
 };
