@@ -26,10 +26,8 @@ export function Header({ tableId = "-" }: HeaderProps) {
       return;
     }
 
-    if (user.role_name === "admin") {
+    if (user.role_name === "admin" || user.role_name === "employe" || user.role_name === "cashier") {
       navigate("/dashboard");
-    } else if (user.role_name === "cashier") {
-      navigate("/cashier");
     } else {
        navigate("/profile-customer");
     }

@@ -43,7 +43,6 @@ export default function WelcomeBanner() {
   const timeString = time.toLocaleTimeString("id-ID", {
     hour: "2-digit",
     minute: "2-digit",
-    second: "2-digit",
   });
 
   const dateString = time.toLocaleDateString("id-ID", {
@@ -60,7 +59,7 @@ export default function WelcomeBanner() {
           color1="#ff9e9e"
           color2="#ff2929"
           color3="#f0a3a3"
-          timeSpeed={0.25}
+          timeSpeed={0.30}
           colorBalance={0}
           warpStrength={1}
           warpFrequency={5}
@@ -130,7 +129,7 @@ export default function WelcomeBanner() {
             <div className="text-4xl md:text-5xl font-black tracking-tighter text-white">
               {timeString}
             </div>
-            <div className="mt-1 text-xs tracking-[0.2em] text-white/70">
+            <div className="mt-1 text-xs tracking-[0.2em] text-white">
               {dateString}
             </div>
           </div>

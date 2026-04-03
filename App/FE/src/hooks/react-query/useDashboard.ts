@@ -6,7 +6,7 @@ export const useDashboard = () => {
     return useQuery({
       queryKey: ["dashboard", "metrics"],
       queryFn: dashboardService.getMetrics,
-      refetchInterval: 3 * 10000,
+      refetchInterval: 6 * 10000,
     });
   };
 
@@ -36,7 +36,23 @@ export const useDashboard = () => {
     return useQuery({
       queryKey: ["dashboard", "latest-transactions"],
       queryFn: dashboardService.getLatestTransactions,
-      refetchInterval: 3 * 10000,
+      refetchInterval: 6 * 10000,
+    });
+  };
+
+  const useCashierDashboard = () => {
+    return useQuery({
+      queryKey: ["dashboard", "cashier"],
+      queryFn: dashboardService.getCashierDashboard,
+      refetchInterval: 6 * 10000,
+    });
+  };
+
+  const useEmployeeDashboard = () => {
+    return useQuery({
+      queryKey: ["dashboard", "employee"],
+      queryFn: dashboardService.getEmployeeDashboard,
+      refetchInterval: 6 * 10000,
     });
   };
 
@@ -46,5 +62,7 @@ export const useDashboard = () => {
     useBestSellers,
     useTransactionStats,
     useLatestTransactions,
+    useCashierDashboard,
+    useEmployeeDashboard,
   };
 };

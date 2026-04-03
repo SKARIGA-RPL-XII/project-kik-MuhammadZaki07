@@ -34,7 +34,7 @@ import AdminAttendancePage from "./pages/Attendance/AdminAttendancePage";
 
 const SignIn = lazy(() => import("./pages/AuthPages/SignIn"));
 const SignUp = lazy(() => import("./pages/AuthPages/SignUp"));
-const Home = lazy(() => import("./pages/Dashboard/Home"));
+const DashboardSwitch = lazy(() => import("./utils/DashboardSwitch"));
 const UserProfiles = lazy(() => import("./pages/UserProfiles"));
 const Calendar = lazy(() => import("./pages/Calendar"));
 const Menu = lazy(() => import("./pages/Menu/Menu"));
@@ -117,7 +117,7 @@ const router = createBrowserRouter([
           </StaffMiddleware>
         ),
         children: [
-          { path: "dashboard", element: <Home /> },
+          { path: "dashboard", element: <DashboardSwitch /> },
           { path: "profile", element: <UserProfiles /> },
           { path: "calendar", element: <Calendar /> },
           {

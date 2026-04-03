@@ -107,23 +107,49 @@ class AttendanceController extends Controller
         ]);
     }
 
-    public function statusToday()
-    {
-        $user = Auth::user();
-        $today = Carbon::now()->toDateString();
+  public function statusToday()
+{
+    $user = Auth::user();
+    $today = Carbon::now()->toDateString();
 
-        $attendance = Attendance::with('schedule.shift')
-            ->where('user_id', $user->id)
-            ->where('date', $today)
-            ->first();
+    $schedule = Schedule::with('shift')
+        ->where('user_id', $user->id)
+        ->where('date', $today)
+        ->first();
 
-        return response()->json([
-            'success' => true,
-            'attendance' => $attendance,
-            'has_clock_in' => $attendance && $attendance->clock_in ? true : false,
-            'has_clock_out' => $attendance && $attendance->clock_out ? true : false,
-        ]);
+    $attendance = Attendance::with('schedule.shift')
+        ->where('user_id', $user->id)
+        ->where('date', $today)
+        ->first();
+
+    return response()->json([
+        'success' => true,
+        'has_schedule' => $schedule ? true : false,
+        'is_holiday' => $schedule ? (bool)$schedule->is_holiday : true,
+        'schedule_data' => $schedule,
+        'attendance' => $attendance,
+        'has_clock_in' => $attendance && $attendance->clock_in ? true : false,
+        'has_clock_out' => $attendance && $attendance->clock_out ? true : false,
+        'message' => $this->generateStatusMessage($schedule, $attendance)
+    ]);
+}
+
+private function generateStatusMessage($schedule, $attendance)
+{
+    if (!$schedule || $schedule->is_holiday) {
+        return "Tidak ada jadwal kerja atau hari libur.";
     }
+
+    if (!$attendance) {
+        return "Silahkan lakukan absen masuk.";
+    }
+
+    if ($attendance->clock_in && !$attendance->clock_out) {
+        return "Sudah absen masuk. Jangan lupa absen pulang nanti.";
+    }
+
+    return "Tugas selesai hari ini.";
+}
 
     public function clockIn(Request $request)
     {

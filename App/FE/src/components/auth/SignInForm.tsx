@@ -44,12 +44,8 @@ export default function SignInForm() {
       }
 
       setTimeout(() => {
-        if (res.user.role_name === "admin") {
+        if (["admin", "cashier", "employee"].includes(res.user.role_name)) {
           window.location.href = "/dashboard";
-        } else if (res.user.role_name === "cashier") {
-          window.location.href = "/cashier";
-        } else if (res.user.role_name === "employe") {
-          window.location.href = "/dashboard-employe";
         } else {
           navigate("/");
         }

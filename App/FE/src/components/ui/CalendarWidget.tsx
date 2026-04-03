@@ -46,7 +46,7 @@ export default function CalendarWidget() {
   return (
     <div className="rounded-2xl border border-neutral-200 bg-white p-5 dark:border-neutral-800 dark:bg-white/[0.03]">
       <div className="flex items-center justify-between mb-5">
-        <h4 className="text-sm font-bold text-neutral-800 dark:text-white">
+        <h4 className="text-lg font-bold text-neutral-800 dark:text-white">
           {monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}
         </h4>
         <div className="flex gap-2">
@@ -61,7 +61,7 @@ export default function CalendarWidget() {
 
       <div className="grid grid-cols-7 gap-1 mb-2">
         {['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'].map((day) => (
-          <div key={day} className="h-8 w-8 flex items-center justify-center text-[10px] font-bold text-neutral-400 uppercase">
+          <div key={day} className="h-8 w-8 flex items-center justify-center text-xs font-semibold text-neutral-400 uppercase">
             {day}
           </div>
         ))}

@@ -19,10 +19,15 @@ class AutoProcessAlphaAttendance extends Command
     {
         $today = Carbon::today()->toDateString();
 
-        $schedules = Schedule::where('date', $today)
+        $schedules = Schedule::with('shift')
+            ->where('date', $today)
             ->where('is_holiday', false)
             ->whereNotNull('shift_id')
-            ->get();
+            ->get()
+            ->filter(function ($schedule) use ($now, $today) {
+                $shiftEndTime = Carbon::parse($today . ' ' . $schedule->shift->end_time);
+                return $now->gt($shiftEndTime);
+            });
 
         foreach ($schedules as $schedule) {
             $isOnLeave = Leave::where('user_id', $schedule->user_id)

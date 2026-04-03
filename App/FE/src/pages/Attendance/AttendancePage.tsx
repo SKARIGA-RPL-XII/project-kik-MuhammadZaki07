@@ -133,68 +133,100 @@ export default function AttendancePage() {
                 Pastikan Anda berada dalam radius 50 meter.
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div
-                className={`p-4 rounded-xl border flex items-center gap-4 ${isOutOfRange ? "bg-red-50 border-red-200" : "bg-green-50 border-green-200"}`}
-              >
-                <MapPin
-                  className={isOutOfRange ? "text-red-500" : "text-green-500"}
-                />
-                <div>
-                  <p className="text-xs text-muted-foreground font-medium">
-                    Jarak Anda
-                  </p>
-                  <p
-                    className={`text-lg font-bold ${isOutOfRange ? "text-red-600" : "text-green-600"}`}
-                  >
-                    {distance !== null
-                      ? `${Math.round(distance)} Meter`
-                      : "Mencari Lokasi..."}
-                  </p>
-                </div>
-              </div>
+          <CardContent className="space-y-4">
+  <div
+    className={`p-4 rounded-xl border flex items-center gap-4 transition-colors ${
+      isOutOfRange ? "bg-red-50 border-red-200" : "bg-green-50 border-green-200"
+    }`}
+  >
+    <MapPin className={isOutOfRange ? "text-red-500" : "text-green-500"} />
+    <div>
+      <p className="text-xs text-muted-foreground font-medium">Jarak Anda</p>
+      <p
+        className={`text-lg font-bold ${
+          isOutOfRange ? "text-red-600" : "text-green-600"
+        }`}
+      >
+        {distance !== null ? `${Math.round(distance)} Meter` : "Mencari Lokasi..."}
+      </p>
+    </div>
+  </div>
 
-              {!attendanceStatus?.has_clock_out ? (
-                <Button
-                  className="w-full h-12 text-lg font-medium shadow-none"
-                  onClick={onConfirmAttendance}
-                  disabled={
-                    loading ||
-                    isOutOfRange ||
-                    (!attendanceStatus?.has_clock_in && isTooLate()) ||
-                    (attendanceStatus?.has_clock_in && isBeforeReturnTime())
-                  }
-                  variant={
-                    attendanceStatus?.has_clock_in ? "outline" : "default"
-                  }
-                >
-                  {loading
-                    ? "Processing..."
-                    : !attendanceStatus?.has_clock_in
-                      ? "Clock In"
-                      : isBeforeReturnTime()
-                        ? `Belum Jam Pulang (${attendanceStatus?.attendance?.schedule?.shift?.end_time})`
-                        : "Clock Out"}
-                </Button>
-              ) : (
-                <div className="bg-primary/10 flex gap-2 items-center justify-center text-primary p-3 rounded-md text-center text-sm font-semibold border border-primary/20">
-                  <MdDone /> Selesai untuk hari ini
-                </div>
-              )}
+  {!attendanceStatus?.has_schedule || attendanceStatus?.is_holiday ? (
+    <div className="space-y-4">
+      <div className="bg-amber-50 border border-amber-200 p-4 rounded-xl text-center">
+        <CalendarDays strokeWidth={1.3} className="w-8 h-8 text-amber-500 mx-auto mb-2" />
+        <p className="text-sm font-bold text-amber-800">Tidak Ada Jadwal</p>
+        <p className="text-[11px] text-amber-700">
+          Hari ini Anda tidak memiliki jadwal kerja atau sedang hari libur.
+        </p>
+      </div>
+      <Link to="/leaves">
+        <Button variant="outline" className="w-full group shadow-none">
+          <FileText className="w-4 h-4 mr-2" />
+          Tetap Ajukan Izin
+        </Button>
+      </Link>
+    </div>
+  ) : (
+    <>
+      {!attendanceStatus?.has_clock_out ? (
+        <div className="space-y-3">
+          <Button
+            className="w-full h-12 text-lg font-medium shadow-none"
+            onClick={onConfirmAttendance}
+            disabled={
+              loading ||
+              isOutOfRange ||
+              (!attendanceStatus?.has_clock_in && isTooLate()) ||
+              (attendanceStatus?.has_clock_in && isBeforeReturnTime())
+            }
+            variant={attendanceStatus?.has_clock_in ? "outline" : "default"}
+          >
+            {loading ? (
+              "Processing..."
+            ) : !attendanceStatus?.has_clock_in ? (
+              "Clock In"
+            ) : isBeforeReturnTime() ? (
+              `Belum Jam Pulang (${attendanceStatus?.schedule_data?.shift?.end_time || attendanceStatus?.attendance?.schedule?.shift?.end_time})`
+            ) : (
+              "Clock Out"
+            )}
+          </Button>
 
-              {isTooLate() && !attendanceStatus?.has_clock_in && (
-                <p className="text-[10px] text-red-500 text-center italic">
-                  * Batas waktu absen masuk (10 menit) telah berakhir.
-                </p>
-              )}
+          {isTooLate() && !attendanceStatus?.has_clock_in && (
+            <p className="text-[10px] text-red-500 text-center italic font-medium">
+              * Batas waktu absen masuk (10 menit) telah berakhir.
+            </p>
+          )}
+        </div>
+      ) : (
+        <div className="bg-primary/10 flex gap-2 items-center justify-center text-primary p-4 rounded-xl text-center text-sm font-bold border border-primary/20">
+          <MdDone className="text-lg" /> Selesai untuk hari ini
+        </div>
+      )}
 
-              <Link to="/leaves">
-                <Button variant="outline" className="w-full mt-2 group">
-                  <FileText className="w-4 h-4 mr-2 group-hover:scale-110 transition-transform" />
-                  Ajukan Izin / Sakit
-                </Button>
-              </Link>
-            </CardContent>
+      <div className="pt-2">
+        <div className="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-100 dark:border-gray-700">
+          <div className="flex items-center gap-2">
+            <Clock className="w-3.5 h-3.5 text-muted-foreground" />
+            <span className="text-[11px] font-medium text-muted-foreground">Shift Hari Ini</span>
+          </div>
+          <span className="text-[11px] font-bold">
+             {attendanceStatus?.schedule_data?.shift?.start_time} - {attendanceStatus?.schedule_data?.shift?.end_time}
+          </span>
+        </div>
+      </div>
+
+      <Link to="/leaves">
+        <Button variant="outline" className="w-full mt-2 group shadow-none">
+          <FileText className="w-4 h-4 mr-2 group-hover:scale-110 transition-transform" />
+          Ajukan Izin / Sakit
+        </Button>
+      </Link>
+    </>
+  )}
+</CardContent>
           </Card>
         </div>
 

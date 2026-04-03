@@ -7,8 +7,20 @@ import PageMeta from "../../components/common/PageMeta";
 import AdminTaskCard from "../../components/ecommerce/AdminTaskCard";
 import CalendarWidget from "@/components/ui/CalendarWidget";
 import WelcomeBanner from "@/components/ui/WelcomeBanner";
+import { useDashboard } from "@/hooks/react-query/useDashboard";
+import { AdminDashboardSkeleton } from "@/components/skeleton/DashboardSkeleton";
 
-export default function Home() {
+export default function AdminDashboard() {
+  const { useMetrics } = useDashboard();
+  const { isLoading } = useMetrics(); 
+
+  if (isLoading) {
+    return (
+      <div className="p-4 md:p-6">
+        <AdminDashboardSkeleton />
+      </div>
+    );
+  }
   return (
     <>
       <PageMeta

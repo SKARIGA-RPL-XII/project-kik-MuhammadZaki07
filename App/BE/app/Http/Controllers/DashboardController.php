@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Attendance;
 use App\Models\Stock;
 use App\Models\Transaction;
 use App\Models\TransactionDetail;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
@@ -151,5 +153,76 @@ class DashboardController extends Controller
             });
 
         return Controller::OKE('success', 'Latest transactions retrieved', $transactions);
+    }
+
+    public function cashierDashboard()
+    {
+        $today = now()->startOfDay();
+
+        $pendingTransactions = Transaction::whereIn('status', ['pending', 'unpaid'])
+            ->latest()
+            ->limit(10)
+            ->get();
+
+        $stats = [
+            'today_transactions' => Transaction::whereDate('created_at', $today)->count(),
+            'today_income' => (int) Transaction::whereIn('status', ['paid', 'completed'])
+                ->whereDate('paid_at', $today)
+                ->sum('total_amount'),
+            'total_pending' => Transaction::whereIn('status', ['pending', 'unpaid'])->count(),
+        ];
+
+        $todayBestSellers = TransactionDetail::select('menu_id', DB::raw('SUM(menu_qty) as total_sold'))
+            ->whereHas('transaction', function ($q) use ($today) {
+                $q->whereDate('created_at', $today);
+            })
+            ->with('menu:id,name,menu_image')
+            ->groupBy('menu_id')
+            ->orderByDesc('total_sold')
+            ->take(3)
+            ->get();
+
+        return Controller::OKE('success', 'Cashier dashboard data retrieved', [
+            'stats' => $stats,
+            'pending_transactions' => $pendingTransactions,
+            'today_best_sellers' => $todayBestSellers
+        ]);
+    }
+
+    public function employeeDashboard()
+    {
+        $user = Auth::user();
+        $today = now()->toDateString();
+
+        $attendanceToday = Attendance::with('schedule.shift')
+            ->where('user_id', $user->id)
+            ->where('date', $today)
+            ->first();
+
+        $monthlySummary = [
+            'present' => Attendance::where('user_id', $user->id)
+                ->whereMonth('date', now()->month)
+                ->whereIn('status', ['present', 'late'])
+                ->count(),
+            'alpha' => Attendance::where('user_id', $user->id)
+                ->whereMonth('date', now()->month)
+                ->where('status', 'alpha')
+                ->count(),
+        ];
+
+        $myRecentTransactions = Transaction::where('user_id', $user->id)
+            ->latest()
+            ->limit(5)
+            ->get();
+
+        return Controller::OKE('success', 'Employee dashboard data retrieved', [
+            'user' => [
+                'name' => $user->username,
+                'role' => $user->role_name
+            ],
+            'attendance' => $attendanceToday,
+            'monthly_summary' => $monthlySummary,
+            'recent_activities' => $myRecentTransactions
+        ]);
     }
 }

@@ -123,18 +123,14 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::delete('/{id}', [BookingController::class, 'destroy']);
     });
 
-    Route::get('/metrics', [DashboardController::class, 'getMetrics']);
-    Route::get('/sales-chart', [DashboardController::class, 'getSalesChart']);
-    Route::get('/best-sellers', [DashboardController::class, 'getBestSellers']);
-    Route::get('/transaction-stats', [DashboardController::class, 'getTransactionStats']);
-
-
     Route::prefix('dashboard')->group(function () {
         Route::get('/metrics', [DashboardController::class, 'getMetrics']);
         Route::get('/sales-chart', [DashboardController::class, 'getSalesChart']);
         Route::get('/best-sellers', [DashboardController::class, 'getBestSellers']);
         Route::get('/transaction-stats', [DashboardController::class, 'getTransactionStats']);
         Route::get('/latest-transactions', [DashboardController::class, 'getLatestTransactions']);
+        Route::get('/cashier', [DashboardController::class, 'cashierDashboard']);
+        Route::get('/employee', [DashboardController::class, 'employeeDashboard']);
     });
 
     Route::patch('tasks/{task}/toggle', [TasksController::class, 'toggleStatus']);
@@ -162,6 +158,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/leaves', [LeaveController::class, 'store']);
     Route::post('/leaves/{id}/approve', [LeaveController::class, 'approve']);
     Route::get('/leaves/{id}', [LeaveController::class, 'show']);
+
+    Route::get('menu-admin', [MenuController::class, 'GetAllAdmin']);
 });
 
 
@@ -173,16 +171,13 @@ Route::middleware('auth:sanctum')->group(function () {
 
 Route::middleware(['auth:sanctum', 'admin'])->group(function () {
 
-    // Category Management
     Route::resource('category', CategoryController::class)
         ->only('store', 'update', 'destroy');
 
-    // Banner Management
     Route::resource('banners', BannerController::class)
         ->only('store', 'update', 'destroy');
     Route::get("banners-admin",  [BannerController::class, 'getBannerAdmin']);
 
-    // Menu Management
     Route::resource('menus', MenuController::class)
         ->only('store', 'update', 'destroy');
 
@@ -199,7 +194,6 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
 
     Route::apiResource('admins', AdminController::class);
 
-    Route::get('menu-admin', [MenuController::class, 'GetAllAdmin']);
 
     // Discount Management
     Route::resource('discounts', DiscountController::class)
