@@ -7,7 +7,7 @@ const OFFICE_LOCATION = {
 };
 const MAX_DISTANCE = 500;
 
-export const useAttendance = (toast: (variant: any, title: string, message: string) => void) => {
+export const useAttendance = (toast: any) => {
   const [attendanceStatus, setAttendanceStatus] = useState<any>(null);
   const [location, setLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [distance, setDistance] = useState<number | null>(null);
@@ -38,7 +38,11 @@ export const useAttendance = (toast: (variant: any, title: string, message: stri
 
   const updateLocation = useCallback(() => {
     if (!navigator.geolocation) {
-      toast("error", "Geolocation Error", "Browser Anda tidak mendukung fitur lokasi.");
+      toast({
+        variant: "destructive",
+        title: "Geolocation Error",
+        description: "Browser Anda tidak mendukung fitur lokasi.",
+      });
       return;
     }
 
@@ -50,12 +54,16 @@ export const useAttendance = (toast: (variant: any, title: string, message: stri
           latitude,
           longitude,
           OFFICE_LOCATION.lat,
-          OFFICE_LOCATION.lng,
+          OFFICE_LOCATION.lng
         );
         setDistance(d);
       },
       () => {
-        toast("error", "Lokasi Gagal", "Gagal mendapatkan lokasi. Pastikan GPS aktif.");
+        toast({
+          variant: "destructive",
+          title: "Lokasi Gagal",
+          description: "Gagal mendapatkan lokasi. Pastikan GPS aktif.",
+        });
       },
       { enableHighAccuracy: true }
     );
@@ -68,24 +76,41 @@ export const useAttendance = (toast: (variant: any, title: string, message: stri
 
   const handleClockIn = async () => {
     if (!location) {
-      toast("warning", "Peringatan", "Lokasi belum terdeteksi. Silakan segarkan halaman.");
+      toast({
+        variant: "default",
+        title: "Peringatan",
+        description: "Lokasi belum terdeteksi. Silakan segarkan halaman.",
+      });
       return;
     }
     
     if (distance && distance > MAX_DISTANCE) {
-      toast("error", "Gagal Absen", `Anda berada di luar jangkauan (${Math.round(distance)}m dari kantor)`);
+      toast({
+        variant: "destructive",
+        title: "Gagal Absen",
+        description: `Anda berada di luar jangkauan (${Math.round(distance)}m dari kantor)`,
+      });
       return;
     }
 
     setLoading(true);
     try {
       const res = await attendanceService.clockIn(location.lat, location.lng);
-      toast("success", "Berhasil", res.message);
+      toast({
+        title: "Berhasil",
+        description: res.message,
+      });
       await fetchStatus();
+      return res;
     } catch (err: any) {
       const errMsg = err.response?.data?.message || "Terjadi kesalahan saat absen masuk.";
-      toast("error", "Gagal", errMsg);
+      toast({
+        variant: "destructive",
+        title: "Gagal",
+        description: errMsg,
+      });
       await fetchStatus();
+      throw err;
     } finally {
       setLoading(false);
     }
@@ -95,11 +120,20 @@ export const useAttendance = (toast: (variant: any, title: string, message: stri
     setLoading(true);
     try {
       const res = await attendanceService.clockOut();
-      toast("success", "Berhasil", res.message);
+      toast({
+        title: "Berhasil",
+        description: res.message,
+      });
       await fetchStatus();
+      return res;
     } catch (err: any) {
       const errMsg = err.response?.data?.message || "Gagal melakukan absen pulang.";
-      toast("error", "Gagal", errMsg);
+      toast({
+        variant: "destructive",
+        title: "Gagal",
+        description: errMsg,
+      });
+      throw err;
     } finally {
       setLoading(false);
     }

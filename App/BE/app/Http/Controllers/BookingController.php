@@ -3,16 +3,15 @@
 namespace App\Http\Controllers;
 
 use App\Models\Booking;
+use App\Models\Event;
 use App\Models\Table;
 use App\Models\Transaction;
-use App\Notifications\GeneralNotification;
 use App\Services\LogService;
 use App\Services\PosService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Exception;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Midtrans\Snap;
 

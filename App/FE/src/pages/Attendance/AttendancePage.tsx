@@ -65,8 +65,10 @@ export default function AttendancePage() {
 
       fetchHistory();
     } catch (err: any) {
-      const errorMsg = err.response?.data?.message || "Terjadi kesalahan saat memproses absensi.";
-      
+      const errorMsg =
+        err.response?.data?.message ||
+        "Terjadi kesalahan saat memproses absensi.";
+
       toast({
         variant: "destructive",
         title: "Gagal Absen",
@@ -94,6 +96,17 @@ export default function AttendancePage() {
     } finally {
       setIsHistoryLoading(false);
     }
+  };
+
+  const isBeforeReturnTime = () => {
+    if (!attendanceStatus?.attendance?.schedule?.shift?.end_time) return false;
+
+    const now = new Date();
+    const endTimeStr = attendanceStatus.attendance.schedule.shift.end_time;
+
+    const endTime = parse(endTimeStr, "HH:mm:ss", new Date());
+
+    return !isAfter(now, endTime);
   };
 
   useEffect(() => {
@@ -148,7 +161,8 @@ export default function AttendancePage() {
                   disabled={
                     loading ||
                     isOutOfRange ||
-                    (!attendanceStatus?.has_clock_in && isTooLate())
+                    (!attendanceStatus?.has_clock_in && isTooLate()) ||
+                    (attendanceStatus?.has_clock_in && isBeforeReturnTime())
                   }
                   variant={
                     attendanceStatus?.has_clock_in ? "outline" : "default"
@@ -158,11 +172,13 @@ export default function AttendancePage() {
                     ? "Processing..."
                     : !attendanceStatus?.has_clock_in
                       ? "Clock In"
-                      : "Clock Out"}
+                      : isBeforeReturnTime()
+                        ? `Belum Jam Pulang (${attendanceStatus?.attendance?.schedule?.shift?.end_time})`
+                        : "Clock Out"}
                 </Button>
               ) : (
                 <div className="bg-primary/10 flex gap-2 items-center justify-center text-primary p-3 rounded-md text-center text-sm font-semibold border border-primary/20">
-                 <MdDone/> Selesai untuk hari ini
+                  <MdDone /> Selesai untuk hari ini
                 </div>
               )}
 

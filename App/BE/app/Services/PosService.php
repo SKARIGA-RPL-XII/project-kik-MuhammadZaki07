@@ -2,8 +2,9 @@
 
 namespace App\Services;
 
-use App\Models\{Transaction, Menu, Stock, Table, AttributeLevel, Badge, User};
+use App\Models\{Transaction, Menu, Stock, Table, AttributeLevel, Badge, Event, User};
 use App\Notifications\GeneralNotification;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\{DB, Auth, Log};
 use Midtrans\Snap;
 use Midtrans\Config;
@@ -112,69 +113,92 @@ class PosService
         });
     }
 
-    public function executeBooking(array $data)
-    {
-        return DB::transaction(function () use ($data) {
-            $taxRate = (float) (DB::table('settings')->where('key', 'tax_percent')->first()->value ?? 0);
-            $serviceRate = (float) (DB::table('settings')->where('key', 'service_percent')->first()->value ?? 0);
+   public function executeBooking(array $data)
+{
+    return DB::transaction(function () use ($data) {
+        $taxRate = (float) (DB::table('settings')->where('key', 'tax_percent')->first()->value ?? 0);
+        $serviceRate = (float) (DB::table('settings')->where('key', 'service_percent')->first()->value ?? 0);
 
-            $transactionCode = "TR-BOK-" . date('ymd') . str_pad(rand(0, 9999), 4, '0', STR_PAD_LEFT);
+        $transactionCode = "TR-BOK-" . date('ymd') . str_pad(rand(0, 9999), 4, '0', STR_PAD_LEFT);
 
-            $subtotal = 0;
-            $tempItems = [];
+        $subtotal = 0;
+        $tempItems = [];
 
-            foreach ($data['items'] as $item) {
-                $menu = Menu::findOrFail($item['menu_id']);
-                $itemSubtotal = $menu->price * $item['quantity'];
-                $subtotal += $itemSubtotal;
+        foreach ($data['items'] as $item) {
+            $menu = Menu::findOrFail($item['menu_id']);
+            $itemSubtotal = $menu->price * $item['quantity'];
+            $subtotal += $itemSubtotal;
 
-                $tempItems[] = [
-                    'menu' => $menu,
-                    'quantity' => $item['quantity'],
-                    'price' => $menu->price,
-                    'subtotal' => $itemSubtotal,
-                    'attributes' => $item['attributes'] ?? [],
-                ];
-            }
-
-            $serviceAmount = round(($subtotal * $serviceRate) / 100);
-            $taxAmount = round((($subtotal + $serviceAmount) * $taxRate) / 100);
-            $grandTotal = $subtotal + $serviceAmount + $taxAmount;
-
-            $transaction = Transaction::create([
-                'table_id' => $data['table_id'],
-                'user_id' => Auth::id(),
-                'customer_name' => Auth::user()->name,
-                'order_source' => 'qr_code',
-                'status' => 'pending_payment',
-                'transaction_code' => $transactionCode,
-                'total_amount' => $grandTotal,
-                'payment_method' => $data['payment_method'],
-                'transaction_date' => now(),
-            ]);
-
-            foreach ($tempItems as $t) {
-                $transaction->details()->create([
-                    'menu_id' => $t['menu']->id,
-                    'menu_qty' => $t['quantity'],
-                    'price' => $t['price'],
-                    'subtotal' => $t['subtotal'],
-                    'attributes' => $t['attributes'],
-                ]);
-            }
-
-            $snapToken = null;
-            if ($data['payment_method'] !== 'cash') {
-                $snapToken = $this->generateMidtransToken($transaction, $tempItems, $data['settings'] ?? []);
-                $transaction->update(['snap_token' => $snapToken]);
-            }
-
-            return [
-                'transaction' => $transaction,
-                'snap_token' => $snapToken
+            $tempItems[] = [
+                'menu' => $menu,
+                'quantity' => $item['quantity'],
+                'price' => $menu->price,
+                'subtotal' => $itemSubtotal,
+                'attributes' => $item['attributes'] ?? [],
             ];
-        });
-    }
+        }
+
+        $serviceAmount = round(($subtotal * $serviceRate) / 100);
+        $taxAmount = round((($subtotal + $serviceAmount) * $taxRate) / 100);
+        $grandTotal = $subtotal + $serviceAmount + $taxAmount;
+
+        $transaction = Transaction::create([
+            'table_id' => $data['table_id'],
+            'user_id' => Auth::id(),
+            'customer_name' => Auth::user()->name,
+            'order_source' => 'qr_code',
+            'status' => 'pending_payment',
+            'transaction_code' => $transactionCode,
+            'total_amount' => $grandTotal,
+            'payment_method' => $data['payment_method'],
+            'transaction_date' => now(),
+        ]);
+
+        foreach ($tempItems as $t) {
+            $transaction->details()->create([
+                'menu_id' => $t['menu']->id,
+                'menu_qty' => $t['quantity'],
+                'price' => $t['price'],
+                'subtotal' => $t['subtotal'],
+                'attributes' => $t['attributes'],
+            ]);
+        }
+
+        $snapToken = null;
+        if ($data['payment_method'] !== 'cash') {
+            $snapToken = $this->generateMidtransToken($transaction, $tempItems, $data['settings'] ?? []);
+            $transaction->update(['snap_token' => $snapToken]);
+        }
+
+        $startTime = Carbon::parse($data['booking_time']);
+        $endTime = $startTime->copy()->addMinutes(120);
+
+        $booking = \App\Models\Booking::create([
+            'user_id'          => Auth::id(),
+            'table_id'         => $data['table_id'],
+            'booking_time'     => $startTime,
+            'end_time'         => $endTime,
+            'number_of_people' => $data['number_of_people'] ?? 1,
+            'transaction_id'   => $transaction->id,
+            'status'           => ($data['payment_method'] === 'cash') ? 'confirmed' : 'pending_payment',
+            'notes'            => $data['notes'] ?? null
+        ]);
+
+        Event::create([
+            'title'      => 'Booking Meja ' . $booking->table->number . ' - ' . Auth::user()->name,
+            'start_date' => $startTime,
+            'end_date'   => $endTime,
+            'level'      => ($data['payment_method'] === 'cash') ? 'success' : 'warning',
+            'all_day'    => false
+        ]);
+
+        return [
+            'transaction' => $transaction,
+            'booking' => $booking,
+            'snap_token' => $snapToken
+        ];
+    });
+}
 
     public function decreaseInventory($transaction)
     {

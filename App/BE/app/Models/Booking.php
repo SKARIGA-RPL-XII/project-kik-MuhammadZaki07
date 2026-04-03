@@ -46,7 +46,7 @@ class Booking extends Model
                 $cashier->notify(new GeneralNotification(
                     $message,
                     'booking',
-                    '/cashier/bookings'
+                    '/bookings'
                 ));
             }
         });

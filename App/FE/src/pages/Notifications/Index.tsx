@@ -48,7 +48,8 @@ const NotificationPage: React.FC = () => {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  
+  const [isMarking, setIsMarking] = useState(false);
+
   const channelRef = useRef<BroadcastChannel | null>(null);
 
   useEffect(() => {
@@ -86,7 +87,7 @@ const NotificationPage: React.FC = () => {
   const toggleSelect = (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
     setSelectedIds((prev) =>
-      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
+      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id],
     );
   };
 
@@ -98,25 +99,25 @@ const NotificationPage: React.FC = () => {
     if (selectedIds.length === 0) return;
     try {
       await Promise.all(
-        selectedIds.map((id) => notificationService.markAsRead(id))
+        selectedIds.map((id) => notificationService.markAsRead(id)),
       );
 
       const newlyReadCount = notifications.filter(
-        (n) => selectedIds.includes(n.id) && !n.read_at
+        (n) => selectedIds.includes(n.id) && !n.read_at,
       ).length;
 
       setNotifications((prev) =>
         prev.map((n) =>
           selectedIds.includes(n.id)
             ? { ...n, read_at: dayjs().toISOString() }
-            : n
-        )
+            : n,
+        ),
       );
 
       setUnreadCount((prev) => Math.max(0, prev - newlyReadCount));
-      
-      channelRef.current?.postMessage({ type: 'REFRESH_NOTIFICATIONS' });
-      
+
+      channelRef.current?.postMessage({ type: "REFRESH_NOTIFICATIONS" });
+
       setSelectedIds([]);
       toast("success", "Success", "Notifications marked as read.");
     } catch (err) {
@@ -129,21 +130,21 @@ const NotificationPage: React.FC = () => {
     setIsDeleting(true);
     try {
       await Promise.all(
-        selectedIds.map((id) => notificationService.delete(id))
+        selectedIds.map((id) => notificationService.delete(id)),
       );
-      
+
       const deletedUnread = notifications.filter(
-        (n) => selectedIds.includes(n.id) && !n.read_at
+        (n) => selectedIds.includes(n.id) && !n.read_at,
       ).length;
 
       setNotifications((prev) =>
-        prev.filter((n) => !selectedIds.includes(n.id))
+        prev.filter((n) => !selectedIds.includes(n.id)),
       );
-      
+
       setUnreadCount((prev) => Math.max(0, prev - deletedUnread));
-      
-      channelRef.current?.postMessage({ type: 'REFRESH_NOTIFICATIONS' });
-      
+
+      channelRef.current?.postMessage({ type: "REFRESH_NOTIFICATIONS" });
+
       setSelectedIds([]);
       toast("success", "Deleted", "Notifications have been removed.");
     } catch (err) {
@@ -176,9 +177,17 @@ const NotificationPage: React.FC = () => {
                 <div className="h-6 w-px bg-stroke dark:bg-strokedark" />
                 <button
                   onClick={handleBulkMarkRead}
-                  className="flex items-center gap-1 text-sm font-semibold text-red-500 hover:opacity-80 transition"
+                  disabled={isMarking || selectedIds.length === 0}
+                  className={`flex items-center gap-1 text-sm font-semibold text-red-500 hover:opacity-80 transition ${
+                    isMarking ? "cursor-not-allowed opacity-60" : ""
+                  }`}
                 >
-                  <CheckCheck size={16} /> Mark as Read
+                  {isMarking ? (
+                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-red-500 border-t-transparent"></div>
+                  ) : (
+                    <CheckCheck size={16} />
+                  )}
+                  {isMarking ? "Processing..." : "Mark as Read"}
                 </button>
 
                 <AlertDialog>
@@ -194,13 +203,17 @@ const NotificationPage: React.FC = () => {
                       </AlertDialogMedia>
                       <AlertDialogTitle>Delete notifications?</AlertDialogTitle>
                       <AlertDialogDescription>
-                        This will permanently delete <strong>{selectedIds.length}</strong> selected notifications. This action cannot be undone.
+                        This will permanently delete{" "}
+                        <strong>{selectedIds.length}</strong> selected
+                        notifications. This action cannot be undone.
                       </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                      <AlertDialogCancel variant="outline">Cancel</AlertDialogCancel>
-                      <AlertDialogAction 
-                        variant="destructive" 
+                      <AlertDialogCancel variant="outline">
+                        Cancel
+                      </AlertDialogCancel>
+                      <AlertDialogAction
+                        variant="destructive"
                         onClick={handleBulkDelete}
                         disabled={isDeleting}
                       >
@@ -214,7 +227,8 @@ const NotificationPage: React.FC = () => {
           </div>
 
           <div className="text-sm font-medium text-body">
-            Unread: <span className="text-red-500 font-bold">{unreadCount}</span>
+            Unread:{" "}
+            <span className="text-red-500 font-bold">{unreadCount}</span>
           </div>
         </div>
 
@@ -242,7 +256,7 @@ const NotificationPage: React.FC = () => {
                 <th className="px-4 py-4 font-medium text-black dark:text-white">
                   Date
                 </th>
-                <th className="px-4 py-4 text-right font-medium text-black dark:text-white xl:pr-11">
+                <th className="px-4 py-4 text-center font-medium text-black dark:text-white xl:pr-11">
                   Actions
                 </th>
               </tr>
@@ -258,55 +272,72 @@ const NotificationPage: React.FC = () => {
                   </td>
                 </tr>
               ) : (
-                notifications.map((notif) => (
-                  <tr
-                    key={notif.id}
-                    onClick={() => openDetail(notif)}
-                    className={`group cursor-pointer border-b border-[#eee] dark:border-strokedark hover:bg-gray-1 dark:hover:bg-white/5 transition-colors ${
-                      !notif.read_at ? "bg-red-500/[0.03]" : ""
-                    }`}
-                  >
-                    <td
-                      className="px-4 py-4 xl:pl-11"
-                      onClick={(e) => e.stopPropagation()}
+                notifications.map((notif) => {
+                  const displayTitle =
+                    notif.title || notif.data?.message || "Sistem";
+                  const isUnread = !notif.read_at;
+
+                  return (
+                    <tr
+                      key={notif.id}
+                      onClick={() => openDetail(notif)}
+                      className={`group cursor-pointer border-b border-[#eee] dark:border-strokedark hover:bg-gray-1 dark:hover:bg-white/5 transition-colors ${
+                        isUnread ? "bg-red-500/[0.03]" : ""
+                      }`}
                     >
-                      <input
-                        type="checkbox"
-                        className="h-4 w-4 rounded border-stroke accent-red-500 cursor-pointer"
-                        checked={selectedIds.includes(notif.id)}
-                        onChange={(e) => toggleSelect(e as any, notif.id)}
-                      />
-                    </td>
-                    <td className="px-4 py-4">
-                      <div className="flex flex-col gap-0.5">
-                        <p className={`text-sm ${!notif.read_at ? "font-bold text-black dark:text-white" : "text-body font-medium"}`}>
-                          {notif.title}
-                        </p>
-                        <p className="text-xs text-body font-normal line-clamp-1">
-                          {notif.message}
-                        </p>
-                      </div>
-                    </td>
-                    <td className="px-4 py-4">
-                      <span className={`inline-flex rounded-full px-3 py-1 text-xs font-medium uppercase ${notif.is_global ? "bg-red-500/10 text-red-500" : "bg-success/10 text-success"}`}>
-                        {notif.is_global ? "Global" : "System"}
-                      </span>
-                    </td>
-                    <td className="px-4 py-4 text-sm text-body">
-                      <div className="flex items-center gap-1.5 whitespace-nowrap">
-                        <Clock size={12} className="opacity-60" />
-                        {dayjs(notif.created_at).fromNow()}
-                      </div>
-                    </td>
-                    <td className="px-4 py-4 xl:pr-11">
-                      <div className="flex items-center justify-end">
-                        <button className="text-body hover:text-red-500 transition p-1">
-                          <ChevronRight size={18} />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
+                      <td
+                        className="px-4 py-4 xl:pl-11"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <input
+                          type="checkbox"
+                          className="h-4 w-4 rounded border-stroke accent-red-500 cursor-pointer"
+                          checked={selectedIds.includes(notif.id)}
+                          onChange={(e) => toggleSelect(e as any, notif.id)}
+                        />
+                      </td>
+                      <td className="px-4 py-4">
+                        <div className="flex flex-col gap-0.5">
+                          <div className="flex items-center gap-2">
+                            {isUnread && (
+                              <span className="flex h-2 w-2 rounded-full bg-red-500"></span>
+                            )}
+                            <p
+                              className={`text-sm ${isUnread ? "font-bold text-black dark:text-white" : "text-body font-medium"}`}
+                            >
+                              {displayTitle}
+                            </p>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-4 py-4">
+                        <span
+                          className={`inline-flex rounded-full px-3 py-1 text-[10px] font-bold uppercase ${
+                            notif.data?.type === "success"
+                              ? "bg-green-500/10 text-green-500"
+                              : "bg-blue-500/10 text-blue-500"
+                          }`}
+                        >
+                          {notif.data?.type || "Info"}
+                        </span>
+                      </td>
+                      <td className="px-4 py-4 text-sm text-body">
+                        <div className="flex items-center gap-1.5 whitespace-nowrap opacity-70">
+                          <Clock size={12} />
+                          <span className="text-[11px]">
+                            {dayjs(notif.created_at).fromNow()}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="px-4 py-4 xl:pr-11 text-right flex justify-center">
+                        <ChevronRight
+                          size={18}
+                          className="text-body group-hover:text-red-500 transition-transform group-hover:translate-x-1"
+                        />
+                      </td>
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>

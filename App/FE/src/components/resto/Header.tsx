@@ -7,6 +7,7 @@ import LanguageSwitcher from "../ui/LanguageSwitcher";
 import { useTranslation } from "react-i18next";
 import { ThemeToggleButton } from "../common/ThemeToggleButton";
 import { useTheme } from "@/context/ThemeContext";
+import { Skeleton } from "../ui/skeleton";
 
 interface HeaderProps {
   tableId?: string;
@@ -26,22 +27,48 @@ export function Header({ tableId = "-" }: HeaderProps) {
     }
 
     if (user.role_name === "admin") {
-      return;
+      navigate("/dashboard");
+    } else if (user.role_name === "cashier") {
+      navigate("/cashier");
+    } else {
+       navigate("/profile-customer");
     }
-
-    navigate("/profile-customer");
   };
 
-  if (loading)
+  if (loading) {
     return (
-      <div className="h-16 md:h-20 bg-white dark:bg-neutral-900 animate-pulse border-b" />
+      <header className="sticky top-0 z-[200] bg-white dark:bg-neutral-900 border-b">
+        <div className="px-4 md:px-8 h-16 md:h-20 flex items-center justify-between">
+          <div className="flex items-center gap-2 md:gap-4">
+            <Skeleton className="w-8 h-8 md:w-10 md:h-10 rounded-md" />
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-24 md:w-32" />
+              <Skeleton className="h-3 w-32 md:w-48" />
+            </div>
+          </div>
+
+          <div className="hidden sm:block">
+            <Skeleton className="h-10 w-24 rounded-lg" />
+          </div>
+
+          <div className="flex items-center gap-2">
+            <div className="flex gap-1">
+              <Skeleton className="h-8 w-8 rounded-md" />
+              <Skeleton className="h-8 w-8 rounded-md" />
+              <Skeleton className="h-8 w-8 rounded-md" />
+            </div>
+            <div className="hidden xs:block w-[1px] h-4 bg-neutral-200 dark:bg-neutral-700 mx-1" />
+            <Skeleton className="h-10 w-10 md:w-28 rounded-lg" />
+          </div>
+        </div>
+      </header>
     );
+  }
 
   return (
     <>
       <header className="sticky top-0 z-[200] bg-white/80 dark:bg-neutral-900 backdrop-blur-md border-b">
         <div className="px-4 md:px-8 h-16 md:h-20 flex items-center justify-between gap-2">
-          
           <Link to={"/"} className="flex-shrink-0">
             <div className="flex items-center gap-2 md:gap-4">
               <div className="w-8 h-8 md:w-10 md:h-10 flex justify-center items-center overflow-hidden">
@@ -89,19 +116,21 @@ export function Header({ tableId = "-" }: HeaderProps) {
             <div className="hidden xs:block w-[1px] h-4 bg-neutral-200 dark:bg-neutral-700 mx-1" />
 
             <button
-              title={!user ? t("header_login_tooltip") : t("header_profile_tooltip")}
+              title={
+                !user ? t("header_login_tooltip") : t("header_profile_tooltip")
+              }
               onClick={handleProfileClick}
-              className={`flex items-center gap-2 p-1 rounded-lg transition-all active:scale-95 ${
-                user?.role_name === "admin"
-                  ? "opacity-50 cursor-not-allowed"
-                  : "bg-neutral-50 dark:bg-neutral-800 hover:bg-neutral-100 dark:hover:bg-neutral-700"
-              }`}
+              className={`flex items-center gap-2 p-1 rounded-lg transition-all active:scale-95 bg-neutral-50 dark:bg-neutral-800 hover:bg-neutral-100 dark:hover:bg-neutral-700"`}
             >
               <div className="w-8 h-8 md:w-9 md:h-9 rounded-lg bg-white border dark:border-neutral-700 dark:bg-neutral-900 flex items-center justify-center text-neutral-600 dark:text-neutral-300">
                 {!user ? <LogIn size={16} /> : <User size={16} />}
               </div>
               <span className="hidden lg:block text-xs font-medium mr-2 dark:text-neutral-300">
-                {!user ? t("header_login_btn") : t("header_profile_btn")}
+                {!user
+                  ? t("header_login_btn")
+                  : user.role_name !== "customer"
+                    ? "Dashboard"
+                    : t("header_profile_btn")}
               </span>
             </button>
           </div>

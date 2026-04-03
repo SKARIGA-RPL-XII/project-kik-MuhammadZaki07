@@ -2,7 +2,7 @@ import { Dropdown } from "../ui/dropdown/Dropdown";
 import { Link } from "react-router";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
-import { Trash2, ChevronLeft, X, Download } from "lucide-react";
+import { Trash2, ChevronLeft, X, Download, ExternalLink } from "lucide-react";
 import { useNotificationLogic } from "@/hooks/useNotificationLogic";
 import { useAuth } from "@/context/AuthContext";
 import { useTranslation } from "react-i18next";
@@ -28,6 +28,7 @@ export default function NotificationDropdown() {
   dayjs.locale(i18n.language);
 
   const getDownloadUrl = (n: any) => n.download_url || n.data?.download_url;
+  const getTargetLink = (n: any) => n.link || n.data?.link;
 
   return (
     <div className="relative z-[9999]" title="Notification">
@@ -101,6 +102,15 @@ export default function NotificationDropdown() {
               <p className="text-sm text-neutral-600 dark:text-neutral-400 leading-relaxed mb-4">
                 {selectedNotif.data?.message || selectedNotif.message}
               </p>
+              {getTargetLink(selectedNotif) && (
+                  <Link
+                    to={getTargetLink(selectedNotif)}
+                    onClick={() => setIsOpen(false)}
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white text-sm hover:bg-opacity-90 transition font-medium w-full text-center justify-center  mb-2.5"
+                  >
+                    <ExternalLink size={16} /> Lihat Detail
+                  </Link>
+                )}
               <div className="flex gap-2">
                 {getDownloadUrl(selectedNotif) && (
                   <a
@@ -117,7 +127,7 @@ export default function NotificationDropdown() {
                     handleDelete(e, selectedNotif.id);
                     setSelectedNotif(null);
                   }}
-                  className="inline-flex items-center gap-2 px-4 py-2 bg-red-50 text-red-600 rounded-lg text-sm hover:bg-red-100 transition dark:bg-red-900/20 dark:text-red-400"
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-red-50 text-red-600 text-sm hover:bg-red-100 transition dark:bg-red-900/20 dark:text-red-400 w-full justify-center"
                 >
                   <Trash2 size={16} /> {t("notif_delete")}
                 </button>

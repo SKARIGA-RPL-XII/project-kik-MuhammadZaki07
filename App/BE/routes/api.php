@@ -145,15 +145,16 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('shifts', ShiftController::class);
     Route::apiResource('schedules', ScheduleController::class);
     Route::post('schedules/bulk', [ScheduleController::class, 'bulkStore']);
-    
-    Route::prefix('attendance')->group(function () {
+
+    Route::middleware('auth:sanctum')->prefix('attendance')->group(function () {
         Route::get('/my', [AttendanceController::class, 'myAttendance']);
+        Route::get('/export/{format}', [AttendanceController::class, 'exportExcel']);
         Route::get('/status-today', [AttendanceController::class, 'statusToday']);
         Route::post('/clock-in', [AttendanceController::class, 'clockIn']);
         Route::post('/clock-out', [AttendanceController::class, 'clockOut']);
-
-        Route::get('/', [AttendanceController::class, 'index']);
+        Route::get('/admin/all', [AttendanceController::class, 'adminIndex']);
         Route::get('/{id}', [AttendanceController::class, 'show']);
+        Route::get('/', [AttendanceController::class, 'index']);
     });
 
     Route::get('/leaves/my', [LeaveController::class, 'myLeaves']);

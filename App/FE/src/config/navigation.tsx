@@ -5,6 +5,7 @@ import {
   Bell,
   CalendarCheck,
   ClipboardList,
+  ClockCheck,
   FileText,
   Fingerprint,
   MonitorSmartphone,
@@ -43,6 +44,12 @@ export const navConfig = {
       name: "Attendance",
       icon: <Fingerprint />,
       path: "/attendance",
+      role: ["admin", "cashier", "employee"],
+    },
+    {
+      name: "Attendance Logs",
+      icon: <ClockCheck size={18} />,
+      path: "/attendance-admin",
       role: ["admin", "cashier", "employee"],
     },
     {

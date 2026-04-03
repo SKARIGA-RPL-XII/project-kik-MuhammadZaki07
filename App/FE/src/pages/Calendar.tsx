@@ -120,9 +120,10 @@ const Calendar: React.FC = () => {
   return (
     <>
       <PageMeta
-        title="React.js Calendar Dashboard | TailAdmin - Next.js Admin Dashboard Template"
-        description="This is React.js Calendar Dashboard page for TailAdmin - React.js Tailwind CSS Admin Dashboard Template"
+        title="Kalender Reservasi | Gagal-Lapar Smart Restaurant"
+        description="Manajemen dan monitoring reservasi meja restoran secara real-time."
       />
+      
       <div className="rounded-2xl border  border-neutral-200 bg-white dark:border-neutral-800 dark:bg-white/[0.03]">
         <div className="custom-calendar">
           <FullCalendar

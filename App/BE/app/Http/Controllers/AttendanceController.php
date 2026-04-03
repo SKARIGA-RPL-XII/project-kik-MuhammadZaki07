@@ -8,6 +8,12 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
+use App\Exports\AttendanceExport;
+use App\Notifications\GeneralNotification;
+use Exception;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Notification;
+use Maatwebsite\Excel\Facades\Excel;
 
 class AttendanceController extends Controller
 {
@@ -195,6 +201,21 @@ class AttendanceController extends Controller
             'total_penalty' => $penalty
         ]);
 
+        try {
+            $admins = User::where('role_name', 'admin')->get();
+            $notifMessage = "{$user->username} baru saja absen ({$status}) pada jam " . $now->format('H:i');
+            $notifType = ($status === 'late') ? 'warning' : 'success';
+            $notifLink = "/admin/attendance";
+
+            Notification::send($admins, new GeneralNotification(
+                $notifMessage,
+                $notifType,
+                $notifLink
+            ));
+        } catch (Exception $e) {
+            Log::error("Gagal mengirim notifikasi absen: " . $e->getMessage());
+        }
+
         return response()->json([
             'success' => true,
             'message' => $status == 'late'
@@ -219,33 +240,68 @@ class AttendanceController extends Controller
             ->where('status', 'alpha')
             ->count();
 
+        try {
+            $message = "Anda dianggap Alpha hari ini karena melewati batas waktu absen (60 menit).";
+            $type = 'danger';
+
+            if ($alphaCount >= 3) {
+                $message .= " Akun Anda telah ditangguhkan otomatis karena sudah 3x Alpha.";
+            } else {
+                $message .= " Total Alpha Anda saat ini: {$alphaCount}. Hati-hati, 3x Alpha akun akan disuspend.";
+            }
+
+            $user->notify(new GeneralNotification(
+                $message,
+                $type,
+                '/attendance'
+            ));
+        } catch (Exception $e) {
+            Log::error("Gagal kirim notif Alpha ke pegawai: " . $e->getMessage());
+        }
         if ($alphaCount >= 3) {
             User::where('id', $user->id)->update(['is_active' => false]);
         }
     }
-
     public function clockOut(Request $request)
     {
         $user = Auth::user();
         $now = Carbon::now();
         $today = $now->toDateString();
 
-        $attendance = Attendance::where('user_id', $user->id)
+        $attendance = Attendance::with('schedule.shift')
+            ->where('user_id', $user->id)
             ->where('date', $today)
             ->whereIn('status', ['present', 'late'])
             ->first();
 
         if (!$attendance || $attendance->clock_out) {
-            return response()->json(['message' => 'Aksi tidak diizinkan.'], 400);
+            return response()->json(['message' => 'Aksi tidak diizinkan atau Anda sudah absen pulang.'], 400);
+        }
+
+        $endTime = Carbon::parse($today . ' ' . $attendance->schedule->shift->end_time);
+        if ($now->lt($endTime)) {
+            return response()->json([
+                'message' => 'Belum waktunya pulang. Jam pulang Anda adalah ' . $endTime->format('H:i')
+            ], 403);
         }
 
         $attendance->update([
             'clock_out' => $now->toTimeString()
         ]);
 
+        try {
+            $admins = User::where('role_name', 'admin')->get();
+            Notification::send($admins, new GeneralNotification(
+                "{$user->username} telah absen pulang tepat waktu.",
+                'info',
+                '/admin/attendance'
+            ));
+        } catch (Exception $e) {
+            Log::error("Gagal kirim notif clockout: " . $e->getMessage());
+        }
+
         return response()->json(['success' => true, 'message' => 'Berhasil absen pulang.']);
     }
-
     private function calculateDistance($lat1, $lon1, $lat2, $lon2)
     {
         $earthRadius = 6371000;
@@ -254,5 +310,73 @@ class AttendanceController extends Controller
         $a = sin($dLat / 2) * sin($dLat / 2) + cos(deg2rad($lat1)) * cos(deg2rad($lat2)) * sin($dLon / 2) * sin($dLon / 2);
         $c = 2 * atan2(sqrt($a), sqrt(1 - $a));
         return $earthRadius * $c;
+    }
+
+    public function adminIndex(Request $request)
+    {
+        $query = Attendance::with(['user', 'schedule.shift']);
+
+        if ($request->filled('search')) {
+            $query->whereHas('user', function ($q) use ($request) {
+                $q->where('username', 'like', '%' . $request->search . '%');
+            });
+        }
+
+        if ($request->filled('role') && $request->role !== 'all') {
+            $query->whereHas('user', function ($q) use ($request) {
+                $q->where('role_name', $request->role);
+            });
+        }
+
+        if ($request->filled('status') && $request->status !== 'all') {
+            $query->where('status', $request->status);
+        }
+
+        if ($request->filled('start_date') && $request->filled('end_date')) {
+            $query->whereBetween('date', [$request->start_date, $request->end_date]);
+        }
+
+        $summary = [
+            'total_penalty' => (clone $query)->sum('total_penalty'),
+            'count_late' => (clone $query)->where('status', 'late')->count(),
+            'count_alpha' => (clone $query)->where('status', 'alpha')->count(),
+        ];
+
+        $attendances = $query->latest('date')->paginate($request->get('per_page', 10));
+
+        return response()->json([
+            'success' => true,
+            'summary' => $summary,
+            'data' => $attendances->items(),
+            'meta' => [
+                'current_page' => $attendances->currentPage(),
+                'last_page' => $attendances->lastPage(),
+                'total' => $attendances->total(),
+                'per_page' => $attendances->perPage(),
+            ]
+        ]);
+    }
+
+    public function exportExcel(Request $request)
+    {
+        $query = Attendance::with(['user', 'schedule.shift']);
+
+        if ($request->filled('role') && $request->role !== 'all') {
+            $query->whereHas('user', function ($q) use ($request) {
+                $q->where('role_name', $request->role);
+            });
+        }
+
+        if ($request->filled('status') && $request->status !== 'all') {
+            $query->where('status', $request->status);
+        }
+
+        if ($request->filled('start_date') && $request->filled('end_date')) {
+            $query->whereBetween('date', [$request->start_date, $request->end_date]);
+        }
+
+        $data = $query->latest('date')->get();
+
+        return Excel::download(new AttendanceExport($data), 'rekap_absen_' . now()->format('Ymd_His') . '.xlsx');
     }
 }

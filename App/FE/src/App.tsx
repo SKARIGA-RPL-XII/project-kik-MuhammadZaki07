@@ -30,6 +30,7 @@ import LeavePage from "./pages/Leave/LeavePage";
 import LeaveApprovalPage from "./pages/Leave/LeaveApprovalPage";
 import NavbarDesktop from "./components/ui/NavbarDesktop";
 import { isDesktop } from "./utils/platform";
+import AdminAttendancePage from "./pages/Attendance/AdminAttendancePage";
 
 const SignIn = lazy(() => import("./pages/AuthPages/SignIn"));
 const SignUp = lazy(() => import("./pages/AuthPages/SignUp"));
@@ -293,6 +294,7 @@ const router = createBrowserRouter([
           { path: "reports/sales", element: <SalesReportPage /> },
           { path: "reports/report-exploler", element: <ReportExplorerPage /> },
           { path: "attendance", element: <AttendancePage /> },
+          { path: "attendance-admin", element: <AdminAttendancePage /> },
           { path: "schedule", element: <SchedulePage /> },
           { path: "leaves", element: <LeavePage /> },
           { path: "leaves-approval", element: <LeaveApprovalPage /> },

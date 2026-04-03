@@ -9,11 +9,12 @@ import {
   User as UserIcon,
   Calendar,
   FileText,
+  ExternalLink,
 } from "lucide-react";
 import dayjs from "dayjs";
 import { notificationService } from "@/services/notification.service";
 import { Notification } from "../../types/notification";
-import { useNavigate, useParams } from "react-router";
+import { useNavigate, useParams, Link } from "react-router";
 import PageMeta from "@/components/common/PageMeta";
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
 import { Button } from "@/components/ui/button";
@@ -70,10 +71,27 @@ const NotificationShow: React.FC = () => {
     }
   };
 
+  // SKELETON COMPONENT
   if (loading) {
     return (
-      <div className="flex h-[60vh] items-center justify-center">
-        <div className="h-10 w-10 animate-spin rounded-full border-4 border-stroke border-t-primary"></div>
+      <div className="mx-auto max-w-screen-2xl p-4 md:p-6 2xl:p-10 animate-pulse">
+        <div className="mb-6 h-6 w-24 rounded bg-gray-3 dark:bg-meta-4" />
+        <div className="rounded-sm border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark">
+          <div className="border-b border-stroke px-6 py-6 dark:border-strokedark">
+            <div className="flex items-center gap-4">
+              <div className="h-12 w-12 rounded-md bg-gray-3 dark:bg-meta-4" />
+              <div className="flex-1 space-y-2">
+                <div className="h-5 w-1/3 rounded bg-gray-3 dark:bg-meta-4" />
+                <div className="h-3 w-1/4 rounded bg-gray-3 dark:bg-meta-4" />
+              </div>
+            </div>
+          </div>
+          <div className="p-6 md:p-9 space-y-4">
+            <div className="h-4 w-full rounded bg-gray-3 dark:bg-meta-4" />
+            <div className="h-4 w-5/6 rounded bg-gray-3 dark:bg-meta-4" />
+            <div className="h-4 w-4/6 rounded bg-gray-3 dark:bg-meta-4" />
+          </div>
+        </div>
       </div>
     );
   }
@@ -81,6 +99,9 @@ const NotificationShow: React.FC = () => {
   if (!notif) return null;
 
   const downloadUrl = (notif.data as any)?.download_url;
+  const targetLink = (notif.data as any)?.link;
+  const displayTitle = notif.title || notif.data?.message || "Notification Detail";
+  const displayMessage = notif.message || notif.data?.message || "No content provided.";
 
   return (
     <div className="mx-auto max-w-screen-2xl p-4 md:p-6 2xl:p-10">
@@ -112,7 +133,7 @@ const NotificationShow: React.FC = () => {
               </div>
               <div>
                 <h3 className="text-xl font-semibold text-black dark:text-white">
-                  {notif.title}
+                  {displayTitle}
                 </h3>
                 <div className="flex items-center gap-4 mt-1">
                   <span className="flex items-center gap-1.5 text-sm font-medium text-body">
@@ -144,8 +165,21 @@ const NotificationShow: React.FC = () => {
         <div className="p-6 md:p-9">
           <div className="max-w-3xl">
             <p className="text-base leading-relaxed text-body dark:text-bodydark whitespace-pre-wrap font-medium">
-              {notif.message}
+              {displayMessage}
             </p>
+
+            {/* TAG LINK - Muncul jika ada link di data JSON */}
+            {targetLink && (
+              <div className="mt-8">
+                <Link
+                  to={targetLink}
+                  className="inline-flex items-center gap-2 rounded bg-primary px-6 py-3 font-medium text-white hover:bg-opacity-90 transition-all"
+                >
+                  <ExternalLink size={18} />
+                  Lihat Detail Booking
+                </Link>
+              </div>
+            )}
 
             {downloadUrl && (
               <div className="mt-8 rounded-sm border border-stroke bg-gray-2 p-4 dark:border-strokedark dark:bg-meta-4">
