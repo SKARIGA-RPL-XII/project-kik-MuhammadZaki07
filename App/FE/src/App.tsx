@@ -12,26 +12,26 @@ import {
   StaffMiddleware,
 } from "./middleware/midleware";
 import { PermissionMiddleware } from "./middleware/PermissionMiddleware";
-import AppLayout from "./layout/AppLayout";
-import CustomerLayout from "./layout/CustomerLayout";
-import BookingLayout from "./pages/Booked/BookingLayout";
-import BookingPage from "./pages/bookings/BookingPage";
-import BookingFormPage from "./pages/bookings/BookingFormPage";
-import TransactionPage from "./pages/transactions/TransactionPage";
-import TransactionDetail from "./pages/transactions/TransactionDetailPage";
-import LogIndex from "./pages/Logs/LogIndex";
-import LogDetailPage from "./pages/Logs/LogDetail";
-import TopSellingPage from "./pages/reports/TopSellingPage";
-import SalesReportPage from "./pages/reports/SalesReportPage";
-import ReportExplorerPage from "./pages/reports/ReportExplorerPage";
-import AttendancePage from "./pages/Attendance/AttendancePage";
-import SchedulePage from "./pages/Schedule/SchedulePage";
-import LeavePage from "./pages/Leave/LeavePage";
-import LeaveApprovalPage from "./pages/Leave/LeaveApprovalPage";
-import NavbarDesktop from "./components/ui/NavbarDesktop";
 import { isDesktop } from "./utils/platform";
-import AdminAttendancePage from "./pages/Attendance/AdminAttendancePage";
 
+const AppLayout = lazy(() => import("./layout/AppLayout"));
+const CustomerLayout = lazy(() => import("./layout/CustomerLayout"));
+const BookingLayout = lazy(() => import("./pages/Booked/BookingLayout"));
+const BookingPage = lazy(() => import("./pages/bookings/BookingPage"));
+const BookingFormPage = lazy(() => import("./pages/bookings/BookingFormPage"));
+const TransactionPage = lazy(() => import("./pages/transactions/TransactionPage"));
+const TransactionDetail = lazy(() => import("./pages/transactions/TransactionDetailPage"));
+const LogIndex = lazy(() => import("./pages/Logs/LogIndex"));
+const LogDetailPage = lazy(() => import("./pages/Logs/LogDetail"));
+const TopSellingPage = lazy(() => import("./pages/reports/TopSellingPage"));
+const SalesReportPage = lazy(() => import("./pages/reports/SalesReportPage"));
+const ReportExplorerPage = lazy(() => import("./pages/reports/ReportExplorerPage"));
+const AttendancePage = lazy(() => import("./pages/Attendance/AttendancePage"));
+const SchedulePage = lazy(() => import("./pages/Schedule/SchedulePage"));
+const LeavePage = lazy(() => import("./pages/Leave/LeavePage"));
+const LeaveApprovalPage = lazy(() => import("./pages/Leave/LeaveApprovalPage"));
+const NavbarDesktop = lazy(() => import("./components/ui/NavbarDesktop"));
+const AdminAttendancePage = lazy(() => import("./pages/Attendance/AdminAttendancePage"));
 const SignIn = lazy(() => import("./pages/AuthPages/SignIn"));
 const SignUp = lazy(() => import("./pages/AuthPages/SignUp"));
 const DashboardSwitch = lazy(() => import("./utils/DashboardSwitch"));
@@ -47,28 +47,16 @@ const Discount = lazy(() => import("./pages/Discount/Discount"));
 const Badge = lazy(() => import("./pages/Badge/Badge"));
 const Employe = lazy(() => import("./pages/Employe/Employe"));
 const Admin = lazy(() => import("./pages/Admin/Admin"));
-const GeneralSettingsPage = lazy(
-  () => import("./pages/Settings/GeneralSettingsPage"),
-);
+const GeneralSettingsPage = lazy(() => import("./pages/Settings/GeneralSettingsPage"));
 const TaxSettingsPage = lazy(() => import("./pages/Settings/TaxSettingsPage"));
-const PaymentSettingsPage = lazy(
-  () => import("./pages/Settings/PaymentSettingsPage"),
-);
+const PaymentSettingsPage = lazy(() => import("./pages/Settings/PaymentSettingsPage"));
 const CustomerPage = lazy(() => import("./pages/Customer/CustomerPage"));
 const NotFound = lazy(() => import("./pages/OtherPage/NotFound"));
-const RestaurantLayoutPage = lazy(
-  () => import("./pages/Restaurant-layout/Index"),
-);
+const RestaurantLayoutPage = lazy(() => import("./pages/Restaurant-layout/Index"));
 const NotificationPage = lazy(() => import("./pages/Notifications/Index"));
-const NotificationShow = lazy(
-  () => import("./pages/Notifications/NotificationShow"),
-);
-const RolesPermissionsPage = lazy(
-  () => import("./pages/Settings/RolesSettingsPage"),
-);
-const SystemConfigPage = lazy(
-  () => import("./pages/Settings/SystemConfigPage"),
-);
+const NotificationShow = lazy(() => import("./pages/Notifications/NotificationShow"));
+const RolesPermissionsPage = lazy(() => import("./pages/Settings/RolesSettingsPage"));
+const SystemConfigPage = lazy(() => import("./pages/Settings/SystemConfigPage"));
 const StockPage = lazy(() => import("./pages/Stock/StockPage"));
 const AdjustmentPage = lazy(() => import("./pages/Stock/AdjustmentPage"));
 const SupplierPage = lazy(() => import("./pages/Stock/SupplierPage"));
@@ -78,9 +66,7 @@ const CashierPage = lazy(() => import("./pages/Cashier/Cashier"));
 const TablePage = lazy(() => import("./pages/Cashier/TablePage"));
 const PaymentPage = lazy(() => import("./pages/Cashier/PaymentPage"));
 const InvoicePage = lazy(() => import("./pages/Cashier/InvoicePage"));
-const InvoiceCashPage = lazy(
-  () => import("./components/resto/InvoiceCashPage"),
-);
+const InvoiceCashPage = lazy(() => import("./components/resto/InvoiceCashPage"));
 const CustomerProfilePage = lazy(() => import("./pages/Customer/ProfilePage"));
 
 const PageLoader = () => (
@@ -93,10 +79,10 @@ const RootLayout = () => {
   return (
     <div className="flex flex-col h-screen overflow-hidden bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100">
       <ScrollToTop />
-      <NavbarDesktop />
-      <main
-        className={`flex-1 ${isDesktop() && "mt-2"} min-h-0 overflow-auto custom-scrollbar`}
-      >
+      <Suspense fallback={null}>
+        <NavbarDesktop />
+      </Suspense>
+      <main className={`flex-1 ${isDesktop() && "mt-2"} min-h-0 overflow-auto custom-scrollbar`}>
         <Suspense fallback={<PageLoader />}>
           <Outlet />
         </Suspense>
@@ -117,9 +103,30 @@ const router = createBrowserRouter([
           </StaffMiddleware>
         ),
         children: [
-          { path: "dashboard", element: <DashboardSwitch /> },
-          { path: "profile", element: <UserProfiles /> },
-          { path: "calendar", element: <Calendar /> },
+          { 
+            path: "dashboard", 
+            element: (
+              <PermissionMiddleware module="dashboard">
+                <DashboardSwitch />
+              </PermissionMiddleware>
+            ) 
+          },
+          { 
+            path: "profile", 
+            element: (
+              <PermissionMiddleware module="user profile">
+                <UserProfiles />
+              </PermissionMiddleware>
+            ) 
+          },
+          { 
+            path: "calendar", 
+            element: (
+              <PermissionMiddleware module="calendar">
+                <Calendar />
+              </PermissionMiddleware>
+            ) 
+          },
           {
             path: "cashier",
             element: (
@@ -201,13 +208,48 @@ const router = createBrowserRouter([
           {
             path: "inventory",
             children: [
-              { path: "stock", element: <StockPage /> },
-              { path: "adjustment", element: <AdjustmentPage /> },
-              { path: "suppliers", element: <SupplierPage /> },
+              { 
+                path: "stock", 
+                element: (
+                  <PermissionMiddleware module="stock list">
+                    <StockPage />
+                  </PermissionMiddleware>
+                ) 
+              },
+              { 
+                path: "adjustment", 
+                element: (
+                  <PermissionMiddleware module="stock adjustment">
+                    <AdjustmentPage />
+                  </PermissionMiddleware>
+                ) 
+              },
+              { 
+                path: "suppliers", 
+                element: (
+                  <PermissionMiddleware module="suppliers">
+                    <SupplierPage />
+                  </PermissionMiddleware>
+                ) 
+              },
             ],
           },
-          { path: "operations/orders", element: <OrderQueuePage /> },
-          { path: "tables", element: <TablePage /> },
+          { 
+            path: "operations/orders", 
+            element: (
+              <PermissionMiddleware module="order queue">
+                <OrderQueuePage />
+              </PermissionMiddleware>
+            ) 
+          },
+          { 
+            path: "tables", 
+            element: (
+              <PermissionMiddleware module="table list">
+                <TablePage />
+              </PermissionMiddleware>
+            ) 
+          },
           { path: "payment", element: <PaymentPage /> },
           {
             path: "staf",
@@ -228,7 +270,14 @@ const router = createBrowserRouter([
           {
             path: "notifications",
             children: [
-              { index: true, element: <NotificationPage /> },
+              { 
+                index: true, 
+                element: (
+                  <PermissionMiddleware module="notifications">
+                    <NotificationPage />
+                  </PermissionMiddleware>
+                ) 
+              },
               { path: ":id", element: <NotificationShow /> },
             ],
           },
@@ -277,27 +326,112 @@ const router = createBrowserRouter([
               },
             ],
           },
-          { path: "operations/reservation", element: <BookingPage /> },
+          { 
+            path: "operations/reservation", 
+            element: (
+              <PermissionMiddleware module="reservation">
+                <BookingPage />
+              </PermissionMiddleware>
+            ) 
+          },
           {
             path: "operations/reservation/create",
-            element: <BookingFormPage />,
+            element: (
+              <PermissionMiddleware module="reservation" action="write">
+                <BookingFormPage />
+              </PermissionMiddleware>
+            ),
           },
           {
             path: "operations/reservation/edit/:id",
-            element: <BookingFormPage />,
+            element: (
+              <PermissionMiddleware module="reservation" action="write">
+                <BookingFormPage />
+              </PermissionMiddleware>
+            ),
           },
-          { path: "reports/transactions", element: <TransactionPage /> },
+          { 
+            path: "reports/transactions", 
+            element: (
+              <PermissionMiddleware module="transaction history">
+                <TransactionPage />
+              </PermissionMiddleware>
+            ) 
+          },
           { path: "reports/transactions/:id", element: <TransactionDetail /> },
-          { path: "system/logs", element: <LogIndex /> },
+          { 
+            path: "system/logs", 
+            element: (
+              <PermissionMiddleware module="system logs">
+                <LogIndex />
+              </PermissionMiddleware>
+            ) 
+          },
           { path: "system/logs/:id", element: <LogDetailPage /> },
-          { path: "reports/top-menu", element: <TopSellingPage /> },
-          { path: "reports/sales", element: <SalesReportPage /> },
-          { path: "reports/report-exploler", element: <ReportExplorerPage /> },
-          { path: "attendance", element: <AttendancePage /> },
-          { path: "attendance-admin", element: <AdminAttendancePage /> },
-          { path: "schedule", element: <SchedulePage /> },
-          { path: "leaves", element: <LeavePage /> },
-          { path: "leaves-approval", element: <LeaveApprovalPage /> },
+          { 
+            path: "reports/top-menu", 
+            element: (
+              <PermissionMiddleware module="top selling menu">
+                <TopSellingPage />
+              </PermissionMiddleware>
+            ) 
+          },
+          { 
+            path: "reports/sales", 
+            element: (
+              <PermissionMiddleware module="sales report">
+                <SalesReportPage />
+              </PermissionMiddleware>
+            ) 
+          },
+          { 
+            path: "reports/report-exploler", 
+            element: (
+              <PermissionMiddleware module="report explorer">
+                <ReportExplorerPage />
+              </PermissionMiddleware>
+            ) 
+          },
+          { 
+            path: "attendance", 
+            element: (
+              <PermissionMiddleware module="attendance">
+                <AttendancePage />
+              </PermissionMiddleware>
+            ) 
+          },
+          { 
+            path: "attendance-admin", 
+            element: (
+              <PermissionMiddleware module="attendance logs">
+                <AdminAttendancePage />
+              </PermissionMiddleware>
+            ) 
+          },
+          { 
+            path: "schedule", 
+            element: (
+              <PermissionMiddleware module="duty schedule">
+                <SchedulePage />
+              </PermissionMiddleware>
+            ) 
+          },
+          { 
+            path: "leaves", 
+            element: (
+              <PermissionMiddleware module="leave">
+                <LeavePage />
+              </PermissionMiddleware>
+            ) 
+          },
+          { 
+            path: "leaves-approval", 
+            element: (
+              <PermissionMiddleware module="leaves approval">
+                <LeaveApprovalPage />
+              </PermissionMiddleware>
+            ) 
+          },
         ],
       },
       {

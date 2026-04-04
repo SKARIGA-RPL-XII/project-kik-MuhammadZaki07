@@ -21,7 +21,7 @@ export default function EcommerceMetrics() {
     );
   }
 
-  if (isError) return <div className="p-4 text-red-500 text-center">Gagal memuat statistik dashboard.</div>;
+  if (isError) return <div className="p-4 text-red-500 text-center">Failed to load dashboard statistics.</div>;
 
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:gap-6">
@@ -31,12 +31,12 @@ export default function EcommerceMetrics() {
         </div>
         <div className="flex items-end justify-between mt-5">
           <div>
-            <span className="text-sm text-neutral-500 dark:text-neutral-400">Pemasukan Hari Ini</span>
+            <span className="text-sm text-neutral-500 dark:text-neutral-400">Today's Income</span>
             <h4 className="mt-2 font-bold text-neutral-800 text-title-sm dark:text-white/90">
               {formatCurrency(data?.income_today || 0)}
             </h4>
           </div>
-          <Badge color="success">Harian</Badge>
+          <Badge color="success">Daily</Badge>
         </div>
       </div>
 
@@ -46,12 +46,12 @@ export default function EcommerceMetrics() {
         </div>
         <div className="flex items-end justify-between mt-5">
           <div>
-            <span className="text-sm text-neutral-500 dark:text-neutral-400">Pesanan Hari Ini</span>
+            <span className="text-sm text-neutral-500 dark:text-neutral-400">Today's Orders</span>
             <h4 className="mt-2 font-bold text-neutral-800 text-title-sm dark:text-white/90">
               {data?.total_transactions_today || 0}
             </h4>
           </div>
-          <Badge color="success">Update</Badge>
+          <Badge color="success">Updated</Badge>
         </div>
       </div>
 
@@ -61,7 +61,7 @@ export default function EcommerceMetrics() {
         </div>
         <div className="flex items-end justify-between mt-5">
           <div>
-            <span className="text-sm text-neutral-500 dark:text-neutral-400">Omzet Bulan Ini</span>
+            <span className="text-sm text-neutral-500 dark:text-neutral-400">Monthly Revenue</span>
             <h4 className="mt-2 font-bold text-neutral-800 text-title-sm dark:text-white/90">
               {formatCurrency(data?.income_month || 0)}
             </h4>
@@ -75,13 +75,13 @@ export default function EcommerceMetrics() {
         </div>
         <div className="flex items-end justify-between mt-5">
           <div>
-            <span className="text-sm text-neutral-500 dark:text-neutral-400">Stok Menipis</span>
+            <span className="text-sm text-neutral-500 dark:text-neutral-400">Low Stock</span>
             <h4 className="mt-2 font-bold text-neutral-800 text-title-sm dark:text-white/90">
-              {data?.low_stock_count || 0} <span className="text-xs font-normal">Item</span>
+              {data?.low_stock_count || 0} <span className="text-xs font-normal">Items</span>
             </h4>
           </div>
           {(data?.low_stock_count ?? 0) > 0 && (
-            <Badge color="error">Cek Stok</Badge>
+            <Badge color="error">Check Stock</Badge>
           )}
         </div>
       </div>

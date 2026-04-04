@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useNavigate, useLocation } from "react-router";
 import { useTables, useTableMutations } from "@/hooks/react-query/useTable";
 import { Button } from "@/components/ui/button";
@@ -9,6 +9,7 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { useToast } from "@/context/ToastContext";
 import { useTranslation } from "react-i18next";
 import { Badge } from "@/components/ui/badge";
+import PageMeta from "@/components/common/PageMeta";
 
 const TableSkeleton = () => (
   <div className="flex flex-col items-center">
@@ -97,16 +98,19 @@ export default function TablePage() {
     );
   };
 
-  const rooms = Array.from(
-    new Map(
-      tables?.data?.tables
-        ?.filter((t: any) => t.room)
-        ?.map((t: any) => [t.room.id, t.room]),
-    ).values(),
-  );
+  const rooms = useMemo(() => {
+    return Array.from(
+      new Map(
+        tables?.data?.tables
+          ?.filter((t: any) => t.room)
+          ?.map((t: any) => [t.room.id, t.room]),
+      ).values(),
+    );
+  }, [tables?.data?.tables]);
 
-  const tableList = (tables?.data?.tables || tables?.data || []).filter(
-    (t: any) => {
+  const tableList = useMemo(() => {
+    const rawData = tables?.data?.tables || tables?.data || [];
+    return rawData.filter((t: any) => {
       const matchesSearch = (t?.table_number?.toString() || "")
         .toLowerCase()
         .includes(searchQuery.toLowerCase());
@@ -114,8 +118,8 @@ export default function TablePage() {
         selectedRoomId === "all" ||
         t.room_id?.toString() === selectedRoomId.toString();
       return matchesSearch && matchesRoom;
-    },
-  );
+    });
+  }, [tables, searchQuery, selectedRoomId]);
 
   const getStatusStyles = (status: string, isSelected: boolean) => {
     const base = "border-2 transition-all duration-300";
@@ -123,7 +127,6 @@ export default function TablePage() {
       case "occupied":
         return `${base} bg-red-50 dark:bg-red-950/20 hover:border-red-500 ${isSelected ? "ring-4 ring-red-300 scale-105" : ""}`;
       case "reserved":
-        return `${base} bg-yellow-50 dark:bg-yellow-950/20 hover:border-yellow-500 ${isSelected ? "ring-4 ring-yellow-300 scale-105" : ""}`;
       case "booked":
         return `${base} bg-yellow-50 dark:bg-yellow-950/20 hover:border-yellow-500 ${isSelected ? "ring-4 ring-yellow-300 scale-105" : ""}`;
       default:
@@ -136,7 +139,6 @@ export default function TablePage() {
       case "occupied":
         return "hover:bg-red-50 bg-neutral-200 dark:bg-neutral-800";
       case "reserved":
-        return "hover:bg-yellow-50 bg-neutral-200 dark:bg-neutral-800";
       case "booked":
         return "hover:bg-yellow-50 bg-neutral-200 dark:bg-neutral-800";
       default:
@@ -146,6 +148,10 @@ export default function TablePage() {
 
   return (
     <div className="flex flex-col h-screen overflow-hidden relative max-w-7xl mx-auto">
+      <PageMeta
+        title={t("tp_header_floor") || "Table Management"}
+        description="Real-time restaurant floor plan management, table status tracking, and reservation scheduling."
+      />
       <header
         className={`sticky ${isCustomerSide ? "pb-4 pt-5" : "pb-4"} top-0 z-30 border-b`}
       >

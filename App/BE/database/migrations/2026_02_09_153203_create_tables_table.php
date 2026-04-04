@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('tables', function (Blueprint $table) {
             $table->id();
             $table->string('table_number')->unique();
-            $table->enum('status', ['available', 'occupied','booked'])
+            $table->enum('status', ['available', 'occupied','booked','reserved'])
                 ->default('available');
             $table->string('qr_code')->nullable();
             $table->foreignId('room_id')
@@ -28,9 +28,10 @@ return new class extends Migration
             $table->integer('height')->default(80);
             $table->enum('shape', ['square', 'round', 'rectangle'])
                 ->default('square');
-            $table->timestamp('reserved_until')->nullable()->after('status');
-            $table->timestamp('last_service_at')->nullable()->after('reserved_until');
-            $table->text('notes')->nullable()->after('rotation');
+            $table->timestamp('reserved_until')->nullable();
+            $table->timestamp('last_service_at')->nullable();
+            $table->text('notes')->nullable();
+            $table->text('rotation')->nullable();
             $table->timestamps();
         });
     }

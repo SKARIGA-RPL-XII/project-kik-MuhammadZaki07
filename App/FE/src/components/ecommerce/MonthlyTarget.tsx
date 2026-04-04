@@ -16,7 +16,7 @@ export default function MonthlyTarget() {
 
   const total = stats?.reduce((acc, curr) => acc + curr.count, 0) || 0;
   const success = stats?.filter(s => s.status === 'paid' || s.status === 'completed')
-                       .reduce((acc, curr) => acc + curr.count, 0) || 0;
+                        .reduce((acc, curr) => acc + curr.count, 0) || 0;
   
   const progressPercentage = total > 0 ? Math.round((success / total) * 100) : 0;
 
@@ -66,7 +66,7 @@ export default function MonthlyTarget() {
               Transaction Success Rate
             </h3>
             <p className="mt-1 text-neutral-500 text-theme-sm dark:text-neutral-400">
-              Persentase transaksi berhasil bulan ini
+              Monthly successful transaction percentage
             </p>
           </div>
           <div className="relative inline-block">
@@ -74,7 +74,7 @@ export default function MonthlyTarget() {
               <MoreDotIcon className="text-neutral-400 size-6" />
             </button>
             <Dropdown isOpen={isOpen} onClose={() => setIsOpen(false)} className="w-40 p-2">
-              <DropdownItem onItemClick={() => setIsOpen(false)}>Detail Laporan</DropdownItem>
+              <DropdownItem onItemClick={() => setIsOpen(false)}>Report Details</DropdownItem>
             </Dropdown>
           </div>
         </div>
@@ -88,8 +88,8 @@ export default function MonthlyTarget() {
           </span>
         </div>
 
-        <p className="mx-auto mt-10 w-full max-w-[380px] text-center text-sm text-neutral-500 sm:text-base">
-          Hari ini kamu dapet {formatCurrency(metrics?.income_today || 0)}. Semangat terus kelola Gagal-Lapar!
+        <p className="mx-auto mt-10 w-full max-w-[380px] text-center text-sm text-neutral-500 sm:text-base leading-relaxed">
+          Today you've earned {formatCurrency(metrics?.income_today || 0)}. Keep up the great work managing Gagal-Lapar!
         </p>
       </div>
 

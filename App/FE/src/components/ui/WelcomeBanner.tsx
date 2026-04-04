@@ -1,21 +1,21 @@
 import { useState, useEffect, useMemo } from "react";
 import Grainient from "./Grainient";
-import { useAuth } from "@/context/AuthContext"; // Pastikan path import sesuai
+import { useAuth } from "@/context/AuthContext";
 
 export default function WelcomeBanner() {
-  const { user } = useAuth(); // Ambil data user dari context
+  const { user } = useAuth();
   const [time, setTime] = useState(new Date());
 
   const quotes = useMemo(
     () => [
-      "Pelayanan cepat, rasa tetap mantap. Mari berikan yang terbaik hari ini!",
-      "Dapur panas itu biasa, yang penting hati tetap dingin melayani pelanggan.",
-      "Stok aman, hati tenang. Jangan lupa cek bahan baku sebelum jam sibuk!",
-      "Kepuasan pelanggan Gagal-Lapar adalah prioritas utama kita semua.",
-      "Satu pesanan, satu senyuman. Mari buat mereka ingin kembali lagi!",
-      "Kerja tim adalah bumbu rahasia di balik kesuksesan restoran kita.",
-      "Pastikan laporan hari ini sebersih piring yang baru dicuci. Semangat, Admin!",
-      "Shift hari ini harus lebih lancar dari kemarin. Mari kita gas!",
+      "Fast service, great taste. Let's give our best today!",
+      "A hot kitchen is normal, keep a cool heart for our customers.",
+      "Inventory's safe, mind's at ease. Double-check stock before the rush!",
+      "Customer satisfaction is Gagal-Lapar's top priority.",
+      "One order, one smile. Make them want to come back!",
+      "Teamwork is the secret ingredient behind our success.",
+      "Keep today's reports as clean as a freshly washed plate. Let's go, Admin!",
+      "Let's make today's shift smoother than yesterday. Step on it!",
     ],
     []
   );
@@ -34,26 +34,28 @@ export default function WelcomeBanner() {
   }, []);
 
   const hours = time.getHours();
-  let greeting = "Selamat Malam";
+  let greeting = "Good Evening";
 
-  if (hours >= 5 && hours < 11) greeting = "Selamat Pagi";
-  else if (hours >= 11 && hours < 15) greeting = "Selamat Siang";
-  else if (hours >= 15 && hours < 18) greeting = "Selamat Sore";
+  if (hours >= 5 && hours < 11) greeting = "Good Morning";
+  else if (hours >= 11 && hours < 15) greeting = "Good Afternoon";
+  else if (hours >= 15 && hours < 18) greeting = "Good Evening";
 
-  const timeString = time.toLocaleTimeString("id-ID", {
+  const timeString = time.toLocaleTimeString("en-US", {
     hour: "2-digit",
     minute: "2-digit",
+    hour12: false,
   });
 
-  const dateString = time.toLocaleDateString("id-ID", {
-    weekday: "long",
+  const dateString = time.toLocaleDateString("en-US", {
+    weekday: "short", // Changed to short for better mobile fit
     year: "numeric",
-    month: "long",
+    month: "short",
     day: "numeric",
   });
 
   return (
-    <div className="relative h-[180px] w-full overflow-hidden rounded-3xl">
+    <div className="relative min-h-[220px] md:h-[200px] w-full overflow-hidden rounded-3xl shadow-lg border border-white/10">
+      {/* Background Layer */}
       <div className="absolute inset-0 z-0">
         <Grainient
           color1="#ff9e9e"
@@ -63,7 +65,7 @@ export default function WelcomeBanner() {
           colorBalance={0}
           warpStrength={1}
           warpFrequency={5}
-          warpSpeed={2}
+          warpSpeed={20}
           warpAmplitude={50}
           blendAngle={0}
           blendSoftness={0.05}
@@ -81,62 +83,65 @@ export default function WelcomeBanner() {
         />
       </div>
 
-      <div className="relative z-10 flex h-full w-full flex-col justify-between bg-black/10 p-8">
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+      <div className="relative z-10 flex h-full w-full flex-col justify-center bg-black/10 p-6 md:p-8">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="flex items-center gap-4">
             {user?.profile_image && (
               <img 
                 src={user.profile_image} 
                 alt="Profile"
                 draggable={false}
-                className="w-20 h-20 rounded-lg object-cover border-2 border-white/30  hidden md:block"
+                className="w-16 h-16 md:w-20 md:h-20 rounded-2xl object-cover border-2 border-white/30 hidden sm:block shadow-xl"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).src = "/image-dumy.png";
+                }}
               />
             )}
             
             <div className="space-y-1">
-              <div className="flex items-center gap-2">
-                <div className="inline-flex items-center gap-2 rounded-full bg-white/20 px-3 py-1 border border-white/30">
+              <div className="flex flex-wrap items-center gap-2">
+                <div className="inline-flex items-center gap-2 rounded-full bg-white/20 px-3 py-1 border border-white/30 backdrop-blur-sm">
                   <span className="relative flex h-2 w-2">
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-green-400"></span>
                   </span>
-                  <span className="text-[10px] font-bold text-white capitalize">{user?.role_name || "Guest"}</span>
+                  <span className="text-[10px] font-normal text-white uppercase tracking-wider">{user?.role_name || "Guest"}</span>
                 </div>
                 
                 {user?.badge && (
-                  <div className="inline-flex items-center gap-1 rounded-full bg-yellow-400/20 px-3 py-1 border border-yellow-400/30">
-                    <span className="text-[10px] font-bold text-yellow-200">
+                  <div className="inline-flex items-center gap-1 rounded-full bg-yellow-400/20 px-3 py-1 border border-yellow-400/30 backdrop-blur-sm">
+                    <span className="text-[10px] font-normal text-yellow-200">
                       {user.badge.name} Member
                     </span>
                   </div>
                 )}
               </div>
 
-              <h2 className="text-3xl md:text-4xl font-bold text-white">
+              <h2 className="text-2xl md:text-4xl font-bold text-white leading-tight">
                 {greeting},{" "}
                 <span className="underline decoration-white/30 underline-offset-4">
-                  {user?.username || "Zaki"}!
+                  {user?.username || "Zaki"}
                 </span>{" "}
                 👋
               </h2>
-              <p className="max-w-md text-sm font-normal text-white/80 italic">
+              <p className="max-w-sm md:max-w-md text-xs md:text-sm font-medium text-white/80 italic leading-relaxed">
                 "{dailyQuote}"
               </p>
             </div>
           </div>
 
-          <div className="flex flex-col items-start md:items-end">
-            <div className="text-4xl md:text-5xl font-black tracking-tighter text-white">
+          <div className="flex flex-row md:flex-col items-center md:items-end justify-between md:justify-center border-t border-white/10 pt-4 md:pt-0 md:border-none">
+            <div className="text-3xl md:text-6xl font-bold text-white drop-shadow-md">
               {timeString}
             </div>
-            <div className="mt-1 text-xs tracking-[0.2em] text-white">
+            <div className="text-[10px] md:text-sm text-white/90 font-medium">
               {dateString}
             </div>
           </div>
         </div>
       </div>
 
-      <div className="absolute hidden dark:block inset-0 z-0 bg-gradient-to-t from-black/20 to-transparent"></div>
+      <div className="absolute hidden dark:block inset-0 z-0 bg-gradient-to-t from-black/30 to-transparent pointer-events-none"></div>
     </div>
   );
 }

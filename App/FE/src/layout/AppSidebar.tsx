@@ -125,6 +125,9 @@ const AppSidebar: React.FC = () => {
             loading="lazy"
             style={{ width: showFull ? 50 : 32, height: "auto" }}
             className="dark:hidden object-contain"
+            onError={(e) => {
+              (e.target as HTMLImageElement).src = "/image-dumy.png";
+            }}
           />
 
           <img
@@ -133,12 +136,15 @@ const AppSidebar: React.FC = () => {
             loading="lazy"
             style={{ width: showFull ? 50 : 32, height: "auto" }}
             className="hidden dark:block object-contain"
+            onError={(e) => {
+              (e.target as HTMLImageElement).src = "/image-dumy.png";
+            }}
           />
 
           {showFull && (
             <div className="flex flex-col">
               <span className="dark:text-white font-bold text-sm">
-                {config.store_name || "Restoran"}
+                {config.store_name || "Restaurant"}
               </span>
               <span className="text-neutral-500 text-xs">
                 {user?.email || "admin@mail.com"}

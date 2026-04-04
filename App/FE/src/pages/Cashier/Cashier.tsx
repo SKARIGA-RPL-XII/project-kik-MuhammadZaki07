@@ -27,10 +27,11 @@ import ScanOrderDialog from "@/components/dialog/ScanOrderDialog";
 import useDebounce from "@/hooks/useDebounce";
 import { MenuListSkeleton } from "@/components/skeleton/MenuCardSkeleton";
 import { MenuCard } from "@/components/resto";
+import { ActionGuard } from "@/components/guard/ActionGuard";
 
 export default function CashierPage() {
   const navigate = useNavigate();
-  const { data: categories , isLoading : loadingCategory } = useCategories();
+  const { data: categories, isLoading: loadingCategory } = useCategories();
   const { cartItems, addToCart, updateQuantity, clearCart, removeFromCart } =
     useCashierCart();
 
@@ -68,22 +69,25 @@ export default function CashierPage() {
   }, [selectedProduct]);
 
   const handleProductClick = (product: any) => {
-  if (product.attributes && Array.isArray(product.attributes) && product.attributes.length > 0) {
-    setSelectedProduct(product);
-    const initialAttrs: Record<string, number> = {};
-    
-    product.attributes.forEach((attr: any) => {
-      if (attr.levels && attr.levels.length > 0) {
-        initialAttrs[attr.id] = attr.levels[0].id;
-      }
-    });
-    
-    setTempAttributes(initialAttrs);
-  } else {
-    addToCart(product, 1, {}); 
-  }
-};
+    if (
+      product.attributes &&
+      Array.isArray(product.attributes) &&
+      product.attributes.length > 0
+    ) {
+      setSelectedProduct(product);
+      const initialAttrs: Record<string, number> = {};
 
+      product.attributes.forEach((attr: any) => {
+        if (attr.levels && attr.levels.length > 0) {
+          initialAttrs[attr.id] = attr.levels[0].id;
+        }
+      });
+
+      setTempAttributes(initialAttrs);
+    } else {
+      addToCart(product, 1, {});
+    }
+  };
 
   const handleConfirmAttributes = () => {
     if (selectedProduct) {
@@ -149,7 +153,10 @@ export default function CashierPage() {
                 </div>
               )}
             </div>
-            <ScanOrderDialog />
+
+            <ActionGuard module="cashier" action="write">
+              <ScanOrderDialog />
+            </ActionGuard>
           </div>
         </header>
 
@@ -166,7 +173,7 @@ export default function CashierPage() {
           ) : (
             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
               {menuList.map((item: any) => (
-               <MenuCard
+                <MenuCard
                   key={item.id}
                   item={item}
                   onOpenDetail={handleProductClick}
@@ -178,6 +185,7 @@ export default function CashierPage() {
         </ScrollArea>
       </div>
 
+  <ActionGuard module="cashier" action="write">
       <CartSidebar
         isOpen={isCartOpen}
         onClose={() => setIsCartOpen(!isCartOpen)}
@@ -188,6 +196,7 @@ export default function CashierPage() {
         handleCheckout={handleNavigation}
         isPending={false}
       />
+  </ActionGuard>
 
       <Dialog
         open={!!selectedProduct}
@@ -231,12 +240,14 @@ export default function CashierPage() {
             ))}
           </div>
           <DialogFooter>
-            <Button
-              className="w-full bg-red-600 hover:bg-red-700 text-white py-5"
-              onClick={handleConfirmAttributes}
-            >
-              Add to order
-            </Button>
+            <ActionGuard module="cashier" action="write">
+              <Button
+                className="w-full bg-red-600 hover:bg-red-700 text-white py-5"
+                onClick={handleConfirmAttributes}
+              >
+                Add to order
+              </Button>
+            </ActionGuard>
           </DialogFooter>
         </DialogContent>
       </Dialog>

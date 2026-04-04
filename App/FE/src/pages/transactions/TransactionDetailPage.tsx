@@ -185,7 +185,7 @@ export default function TransactionDetail() {
                   Name
                 </span>
                 <span className="text-sm font-bold text-neutral-800 dark:text-neutral-300 text-right">
-                  {transaction.customer_name}
+                  {transaction.customer_name ?? "-"}
                 </span>
               </div>
               <div className="flex justify-between items-start gap-4">

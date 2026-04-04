@@ -29,6 +29,7 @@ class DatabaseSeeder extends Seeder
             AttributeLevelSeeder::class,
             StockSeeder::class,
             MenuSeeder::class,
+            UserSeeder::class,
             EmployeSeeder::class,
             StockAdjustmentSeeder::class,
             CustomerSimulatedSeeder::class,

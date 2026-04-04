@@ -24,7 +24,7 @@ export default function AdminDashboard() {
   return (
     <>
       <PageMeta
-        title="Dashboard Utama | Gagal-Lapar"
+        title="My Dashboard"
         description="Sistem manajemen restoran terintegrasi."
       />
       <div className="grid grid-cols-12 gap-4 md:gap-6">

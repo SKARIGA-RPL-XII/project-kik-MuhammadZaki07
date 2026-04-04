@@ -13,8 +13,6 @@ import {
   Search,
   Loader2,
   Filter,
-  ChevronLeft,
-  ChevronRight,
 } from "lucide-react";
 import flatpickr from "flatpickr";
 import "flatpickr/dist/flatpickr.min.css";
@@ -150,18 +148,18 @@ export default function ReportExplorerPage() {
   return (
     <div className="p-6 bg-white dark:bg-neutral-900 min-h-screen">
       <PageMeta
-        title="Audit Transaksi | Gagal-Lapar"
-        description="Filter dan audit data transaksi."
+        title="Transaction Audit"
+        description="Filter and audit transaction history with precision."
       />
       <PageBreadcrumb pageTitle="Transaction Explorer" />
 
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mt-6 mb-8 gap-4">
         <div>
           <h1 className="text-2xl font-bold text-neutral-800 dark:text-white">
-            Audit Transaksi
+            Transaction Audit
           </h1>
           <p className="text-sm text-neutral-500 mt-1">
-            Pantau setiap rupiah yang masuk dengan filter presisi.
+            Monitor every revenue stream with precision filtering.
           </p>
         </div>
         <div className="flex gap-2">
@@ -185,26 +183,26 @@ export default function ReportExplorerPage() {
       <div className="bg-neutral-50 dark:bg-neutral-800/40 border border-neutral-100 dark:border-white/[0.05] rounded-xl p-6 mb-8">
         <div className="flex items-center gap-2 mb-4 text-neutral-800 dark:text-neutral-200 font-semibold">
           <Filter size={18} className="text-red-500" />
-          <span>Filter Pencarian</span>
+          <span>Search Filters</span>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-5">
           <div className="space-y-1.5">
             <label className="text-xs font-medium text-neutral-400">
-              Rentang Waktu
+              Date Range
             </label>
             <div className="relative flex items-center">
               <CalendarIcon className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-neutral-400 pointer-events-none z-10" />
               <input
                 ref={datePickerRef}
                 className="w-full h-10 pl-10 pr-3 py-2 rounded-lg border border-neutral-200 bg-white text-sm font-medium text-neutral-700 outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300 cursor-pointer"
-                placeholder="Pilih Tanggal"
+                placeholder="Select Date"
               />
             </div>
           </div>
 
           <div className="space-y-1.5">
             <label className="text-xs font-medium text-neutral-400">
-              Metode Bayar
+              Payment Method
             </label>
             <select
               name="payment_method"
@@ -212,16 +210,16 @@ export default function ReportExplorerPage() {
               onChange={handleFilterChange}
               className="w-full h-10 px-3 rounded-lg border border-neutral-200 bg-white text-sm font-medium text-neutral-700 outline-none focus:ring-2 focus:ring-red-500/20 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
             >
-              <option value="">Semua Metode</option>
-              <option value="cash">Tunai (Cash)</option>
+              <option value="">All Methods</option>
+              <option value="cash">Cash</option>
               <option value="qris">QRIS</option>
-              <option value="va">Transfer Bank</option>
+              <option value="va">Bank Transfer</option>
             </select>
           </div>
 
           <div className="space-y-1.5">
             <label className="text-xs font-medium text-neutral-400">
-              Pilih Kasir
+              Select Cashier
             </label>
             <select
               name="cashier_id"
@@ -229,7 +227,7 @@ export default function ReportExplorerPage() {
               onChange={handleFilterChange}
               className="w-full h-10 px-3 rounded-lg border border-neutral-200 bg-white text-sm font-medium text-neutral-700 outline-none focus:ring-2 focus:ring-red-500/20 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300 cursor-pointer"
             >
-              <option value="">Semua Kasir</option>
+              <option value="">All Cashiers</option>
               {cashierOptions.map((emp: any) => (
                 <option key={emp.id} value={emp.user.id}>
                   {emp.user.username || emp.no_induk}
@@ -240,7 +238,7 @@ export default function ReportExplorerPage() {
 
           <div className="space-y-1.5">
             <label className="text-xs font-medium text-neutral-400">
-              Min. Nominal
+              Min. Amount
             </label>
             <Input
               name="min_amount"
@@ -265,16 +263,16 @@ export default function ReportExplorerPage() {
       <div className="flex gap-6 items-center mb-6 px-2">
         <div className="flex flex-col">
           <span className="text-[12px] text-neutral-400 font-medium">
-            TOTAL TRANSAKSI
+            TOTAL TRANSACTIONS
           </span>
           <span className="text-sm font-bold dark:text-white">
-            {summary?.total_count || 0} Nota
+            {summary?.total_count || 0} Invoices
           </span>
         </div>
         <div className="w-px h-8 bg-neutral-200 dark:bg-neutral-700"></div>
         <div className="flex flex-col">
           <span className="text-[12px] text-neutral-400 font-medium">
-            TOTAL NILAI
+            TOTAL REVENUE
           </span>
           <span className="text-sm font-bold text-emerald-600">
             {settings?.currency_symbol}{" "}
@@ -289,19 +287,19 @@ export default function ReportExplorerPage() {
             <thead>
               <tr className="bg-neutral-50 dark:bg-neutral-900/50 text-[13px] text-neutral-400">
                 <th className="p-4 border-b border-neutral-100 dark:border-neutral-700 font-medium">
-                  Waktu Transaksi
+                  Transaction Date
                 </th>
                 <th className="p-4 border-b border-neutral-100 dark:border-neutral-700 font-medium">
-                  ID Nota
+                  Invoice ID
                 </th>
                 <th className="p-4 border-b border-neutral-100 dark:border-neutral-700 font-medium">
-                  Kasir
+                  Cashier
                 </th>
                 <th className="p-4 border-b border-neutral-100 dark:border-neutral-700 font-medium text-center">
-                  Metode
+                  Method
                 </th>
                 <th className="p-4 border-b border-neutral-100 dark:border-neutral-700 font-medium text-right">
-                  Total Bayar
+                  Total Paid
                 </th>
               </tr>
             </thead>
@@ -315,7 +313,7 @@ export default function ReportExplorerPage() {
                         size={32}
                       />
                       <span className="text-neutral-400 font-medium italic">
-                        Mengambil data transaksi...
+                        Fetching transaction data...
                       </span>
                     </div>
                   </td>
@@ -329,36 +327,21 @@ export default function ReportExplorerPage() {
                     <td className="p-4 border-b border-neutral-100 dark:border-neutral-700 text-neutral-500 tabular-nums">
                       {new Date(
                         trx.transaction_date || trx.created_at,
-                      ).toLocaleString("id-ID")}
+                      ).toLocaleString("en-US")}
                     </td>
                     <td className="p-4 border-b border-neutral-100 dark:border-neutral-700 font-bold text-neutral-800 dark:text-neutral-200">
                       #{trx.id}
                     </td>
-                    <td className="p-4 border-b border-neutral-100 dark:border-neutral-700">
-                      <div className="flex flex-col">
-                        <span className="font-medium text-neutral-700 dark:text-neutral-300">
-                          {trx.user?.username || "Sistem"}
-                        </span>
-                        <span className="text-[10px] text-neutral-400">
-                          ID: {trx.user_id}
-                        </span>
-                      </div>
+                    <td className="p-4 border-b border-neutral-100 dark:border-neutral-700 text-neutral-700 dark:text-neutral-300 font-medium">
+                      {trx.user?.username || "System"}
                     </td>
                     <td className="p-4 border-b border-neutral-100 dark:border-neutral-700 text-center">
-                      <span
-                        className={`px-3 py-1 rounded-lg text-[10px] font-blacker ${
-                          trx.payment_method === "cash"
-                            ? "bg-orange-50 text-orange-600 dark:bg-orange-500/10"
-                            : trx.payment_method === "qris"
-                              ? "bg-blue-50 text-blue-600 dark:bg-blue-500/10"
-                              : "bg-purple-50 text-purple-600 dark:bg-purple-500/10"
-                        }`}
-                      >
+                      <span className="px-3 py-1 rounded-lg text-[10px] font-black uppercase bg-neutral-100 dark:bg-neutral-700">
                         {trx.payment_method}
                       </span>
                     </td>
                     <td className="p-4 border-b border-neutral-100 dark:border-neutral-700 text-right font-bold text-neutral-900 dark:text-white tabular-nums">
-                      {settings?.currency_symbol}{" "}
+                      {settings?.currency_symbol}
                       {Number(trx.total_amount).toLocaleString()}
                     </td>
                   </tr>
@@ -369,7 +352,7 @@ export default function ReportExplorerPage() {
                     <div className="flex flex-col items-center gap-2 opacity-30">
                       <Search size={48} />
                       <span className="text-sm font-medium">
-                        Tidak ada transaksi yang cocok dengan filter.
+                        No transactions found matching the filters.
                       </span>
                     </div>
                   </td>
@@ -377,31 +360,6 @@ export default function ReportExplorerPage() {
               )}
             </tbody>
           </table>
-        </div>
-      </div>
-
-      <div className="flex items-center justify-between mt-6 px-1">
-        <p className="text-sm text-neutral-500 font-medium">
-          Showing {transactions.length} of {meta?.total || 0} items (Page{" "}
-          {meta?.current_page || 1} of {meta?.last_page || 1})
-        </p>
-
-        <div className="flex gap-2">
-          <button
-            disabled={page === 1 || isLoading}
-            onClick={() => setPage((p) => p - 1)}
-            className="px-4 py-2 text-sm font-medium border border-neutral-200 dark:border-neutral-700 rounded-lg disabled:opacity-30 hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-all bg-white dark:bg-neutral-900 text-neutral-700 dark:text-neutral-300"
-          >
-            Prev
-          </button>
-
-          <button
-            disabled={page === meta?.last_page || isLoading}
-            onClick={() => setPage((p) => p + 1)}
-            className="px-4 py-2 text-sm font-medium border border-neutral-200 dark:border-neutral-700 rounded-lg disabled:opacity-30 hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-all bg-white dark:bg-neutral-900 text-neutral-700 dark:text-neutral-300"
-          >
-            Next
-          </button>
         </div>
       </div>
     </div>

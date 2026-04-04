@@ -19,9 +19,9 @@ return new class extends Migration
             $table->integer('number_of_people');
             $table->enum('status', ['pending', 'confirmed', 'cancelled', 'completed','pending_confirmation'])->default('pending');
             $table->text('notes')->nullable();
-            $table->integer('duration_minutes')->default(120)->after('booking_time');
-            $table->dateTime('end_time')->nullable()->after('duration_minutes');
-            $table->decimal('deposit_amount', 15, 2)->default(0)->after('status');
+            $table->integer('duration_minutes')->default(120);
+            $table->dateTime('end_time')->nullable();
+            $table->decimal('deposit_amount', 15, 2)->default(0);
             $table->foreignId('transaction_id')->nullable()->constrained('transactions');
             $table->timestamps();
         });

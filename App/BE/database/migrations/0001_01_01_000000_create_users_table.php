@@ -13,6 +13,7 @@ return new class extends Migration
     {
         Schema::create('users', function (Blueprint $table) {
             $table->id();
+            $table->string('google_id')->nullable()->unique();
             $table->string('username')->nullable();
             $table->string('email')->unique();
             $table->enum('gender', ['LK', 'PR'])->nullable();
@@ -21,9 +22,9 @@ return new class extends Migration
             $table->string('no_tlp')->nullable()->unique();
             $table->timestamp('email_verified_at')->nullable();
             $table->text('address')->nullable();
-            $table->string('google_id')->nullable()->after('id')->unique();
             $table->foreignId('role_id')->constrained('roles', 'id')->cascadeOnUpdate()->cascadeOnDelete();
-            $table->foreignId('badge_id')->nullable()->constrained('badges')->nullOnDelete();
+            // $table->foreignId('badge_id')->nullable()->constrained('badges')->nullOnDelete();
+            $table->unsignedBigInteger('badge_id')->nullable();
             $table->integer('strike_count')->default(0);
             $table->decimal('base_salary', 15, 2)->default(0);
             $table->boolean('is_active')->default(true);

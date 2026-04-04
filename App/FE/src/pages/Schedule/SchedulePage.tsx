@@ -33,25 +33,26 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useBlocker } from "react-router";
+import { ActionGuard } from "@/components/guard/ActionGuard";
 
 const DAY_ACCENTS: Record<string, string> = {
-  Senin: "border-t-sky-400/45",
-  Selasa: "border-t-violet-400/45",
-  Rabu: "border-t-emerald-400/45",
-  Kamis: "border-t-orange-400/45",
-  Jumat: "border-t-pink-400/45",
-  Sabtu: "border-t-indigo-400/45",
-  Minggu: "border-t-rose-400/45",
+  Monday: "border-t-sky-400/45",
+  Tuesday: "border-t-violet-400/45",
+  Wednesday: "border-t-emerald-400/45",
+  Thursday: "border-t-orange-400/45",
+  Friday: "border-t-pink-400/45",
+  Saturday: "border-t-indigo-400/45",
+  Sunday: "border-t-rose-400/45",
 };
 
 const DAY_TINT: Record<string, string> = {
-  Senin: "bg-sky-500/[0.03]",
-  Selasa: "bg-violet-500/[0.03]",
-  Rabu: "bg-emerald-500/[0.03]",
-  Kamis: "bg-orange-500/[0.03]",
-  Jumat: "bg-pink-500/[0.03]",
-  Sabtu: "bg-indigo-500/[0.03]",
-  Minggu: "bg-rose-500/[0.03]",
+  Monday: "bg-sky-500/[0.03]",
+  Tuesday: "bg-violet-500/[0.03]",
+  Wednesday: "bg-emerald-500/[0.03]",
+  Thursday: "bg-orange-500/[0.03]",
+  Friday: "bg-pink-500/[0.03]",
+  Saturday: "bg-indigo-500/[0.03]",
+  Sunday: "bg-rose-500/[0.03]",
 };
 
 function ScheduleDroppablePanel({
@@ -154,17 +155,17 @@ const SchedulePage = () => {
   const handleSaveAndExit = async () => {
     await handleFullSave();
     setTimeout(() => {
-      blocker.proceed?.();
+      blocker?.proceed?.();
     }, 100);
   };
 
   React.useEffect(() => {
     return () => {
-      if (blocker.state === "blocked") {
-        blocker.reset?.();
+      if (blocker?.state === "blocked") {
+        blocker?.reset?.();
       }
     };
-  }, [blocker.state]);
+  }, [blocker?.state]);
 
   React.useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
@@ -178,9 +179,9 @@ const SchedulePage = () => {
   }, [hasChanges]);
 
   const filteredStaff = React.useMemo(() => {
-    if (!searchQuery.trim()) return availableStaff;
-    return availableStaff.filter((emp: any) =>
-      emp.user.username.toLowerCase().includes(searchQuery.toLowerCase())
+    if (!searchQuery?.trim()) return availableStaff;
+    return availableStaff?.filter((emp: any) =>
+      emp?.user?.username?.toLowerCase()?.includes(searchQuery?.toLowerCase())
     );
   }, [availableStaff, searchQuery]);
 
@@ -200,13 +201,13 @@ const SchedulePage = () => {
       <DragDropContext onDragEnd={onDragEnd}>
         <div className="flex min-h-0 flex-1 gap-0 overflow-hidden">
           <Sidebar
-            availableStaff={filteredStaff}
+            availableStaff={filteredStaff ?? []}
             searchQuery={searchQuery}
             setSearchQuery={setSearchQuery}
           />
           <Board
-            weeklySchedule={weeklySchedule}
-            shifts={shifts}
+            weeklySchedule={weeklySchedule ?? {}}
+            shifts={shifts ?? []}
             setWeeklySchedule={setWeeklySchedule}
             removeUser={removeUser}
             updateShiftTime={updateShiftTime}
@@ -214,36 +215,38 @@ const SchedulePage = () => {
         </div>
       </DragDropContext>
 
-      <AlertDialog open={blocker.state === "blocked"}>
+      <AlertDialog open={blocker?.state === "blocked"}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2">
               <AlertCircle className="size-5 text-destructive" />
-              Perubahan Belum Disimpan
+              Unsaved Changes
             </AlertDialogTitle>
             <AlertDialogDescription>
-              Zaki, ada perubahan jadwal yang belum disimpan. Jika kamu pergi sekarang, data yang kamu atur akan hilang.
+              There are schedule changes that haven't been saved. If you leave now, the data you've organized will be lost.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="gap-2">
-            <AlertDialogCancel onClick={() => blocker.reset?.()}>
-              Tetap di Sini
+            <AlertDialogCancel onClick={() => blocker?.reset?.()}>
+              Stay Here
             </AlertDialogCancel>
 
             <Button
               variant="ghost"
               className="text-destructive hover:bg-destructive/10 hover:text-destructive"
-              onClick={() => blocker.proceed?.()}
+              onClick={() => blocker?.proceed?.()}
             >
-              Buang Perubahan
+              Discard Changes
             </Button>
 
-            <AlertDialogAction
-              onClick={handleSaveAndExit}
-              className="bg-red-500 hover:bg-red-500/80 text-white"
-            >
-              Simpan & Keluar
-            </AlertDialogAction>
+            <ActionGuard module="duty schedule" action="write">
+              <AlertDialogAction
+                onClick={handleSaveAndExit}
+                className="bg-red-500 hover:bg-red-500/80 text-white"
+              >
+                Save & Exit
+              </AlertDialogAction>
+            </ActionGuard>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
@@ -260,27 +263,29 @@ const Header = ({
 }) => (
   <header className="flex shrink-0 items-center justify-between gap-4 border-b border-border pb-3">
     <div className="min-w-0 space-y-1">
-      <h1 className="text-lg font-semibold text-foreground">Jadwal</h1>
+      <h1 className="text-lg font-semibold text-foreground">Schedule</h1>
       <p className="text-sm text-muted-foreground">
-        Kelola penempatan shift mingguan pegawai.
+        Manage weekly employee shift placements.
       </p>
     </div>
 
     <div className="flex items-center gap-3">
       {hasChanges && (
         <span className="text-xs font-medium text-orange-500 flex gap-2 items-center">
-         <Info size={15} className="animate-ping"/> Ada perubahan yang belum disimpan
+         <Info size={15} className="animate-ping"/> There are unsaved changes
         </span>
       )}
-      <Button
-        size="default"
-        disabled={!hasChanges}
-        onClick={onSave}
-        className="shrink-0 gap-2 transition-all duration-150 bg-red-500 hover:bg-red-500/80 text-white"
-      >
-        <Save className="size-4" />
-        Simpan
-      </Button>
+      <ActionGuard module="duty schedule" action="write">
+        <Button
+          size="default"
+          disabled={!hasChanges}
+          onClick={onSave}
+          className="shrink-0 gap-2 transition-all duration-150 bg-red-500 hover:bg-red-500/80 text-white"
+        >
+          <Save className="size-4" />
+          Save
+        </Button>
+      </ActionGuard>
     </div>
   </header>
 );
@@ -297,16 +302,16 @@ const Sidebar = ({
   <aside className="flex w-72 min-w-0 shrink-0 flex-col overflow-hidden border-r border-border bg-muted/5">
     <div className="shrink-0 space-y-4 border-b border-border p-4">
       <div className="space-y-1">
-        <p className="text-sm font-medium text-foreground">Pegawai Tersedia</p>
+        <p className="text-sm font-medium text-foreground">Available Staff</p>
         <p className="text-xs text-muted-foreground">
-          {availableStaff.length} orang ditemukan
+          {availableStaff?.length ?? 0} people found
         </p>
       </div>
 
       <div className="relative">
         <Search className="absolute left-2.5 top-2.5 size-4 text-muted-foreground" />
         <Input
-          placeholder="Cari nama..."
+          placeholder="Search name..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           className="h-9 pl-9 text-xs focus-visible:ring-sky-500/30"
@@ -314,7 +319,7 @@ const Sidebar = ({
       </div>
     </div>
 
-    <Droppable droppableId="pool">
+    <Droppable droppableId="pool" isDropDisabled={false}>
       {(provided, snapshot) => (
         <ScheduleDroppablePanel
           droppableProvided={provided}
@@ -322,16 +327,16 @@ const Sidebar = ({
           dragOverClassName="bg-muted/50"
           className="min-h-0 flex-1"
         >
-          {availableStaff.length === 0 ? (
+          {availableStaff?.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-10 text-center">
               <Search className="mb-2 size-8 text-muted-foreground/30" />
-              <p className="text-xs text-muted-foreground">Tidak ada pegawai</p>
+              <p className="text-xs text-muted-foreground">No staff available</p>
             </div>
           ) : (
-            availableStaff.map((emp: any, index: number) => (
+            availableStaff?.map((emp: any, index: number) => (
               <DraggableItem
-                key={emp.user.id}
-                draggableId={emp.user.id.toString()}
+                key={emp?.user?.id}
+                draggableId={emp?.user?.id?.toString() ?? `staff-${index}`}
                 index={index}
               >
                 {({ snapshot: s }) => (
@@ -364,19 +369,19 @@ const Board = ({
     value: string,
   ) => void;
 }) => {
-  const days = Object.keys(weeklySchedule);
+  const days = Object.keys(weeklySchedule ?? {});
 
   return (
     <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden p-4 bg-muted/10">
       <div className="custom-scrollbar min-h-0 flex-1 overflow-x-auto overflow-y-hidden overscroll-x-contain">
         <div className="flex h-full min-h-0 w-max items-stretch gap-3 pr-1">
-          {days.map((day, i) => (
+          {days?.map((day, i) => (
             <DayColumn
               key={day}
               day={day}
               dayIndex={i}
               data={weeklySchedule[day]}
-              shifts={shifts}
+              shifts={shifts ?? []}
               setWeeklySchedule={setWeeklySchedule}
               removeUser={removeUser}
               updateShiftTime={updateShiftTime}
@@ -412,27 +417,25 @@ const DayColumn = ({
 }) => {
   const shiftTimeToInput = (t: string | undefined) => {
     if (!t) return "08:00";
-    const part = t.includes("T")
-      ? t.split("T")[1]?.slice(0, 5)
-      : String(t).slice(0, 5);
+    const part = t?.includes("T")
+      ? t?.split("T")[1]?.slice(0, 5)
+      : String(t)?.slice(0, 5);
     return /^\d{2}:\d{2}$/.test(part) ? part : "08:00";
   };
 
-  const firstShiftId = String(shifts[0]?.id ?? "");
+  const firstShiftId = String(shifts?.[0]?.id ?? "");
   const rawTab = String(data?.activeType ?? "");
-  const currentType = shifts.some((s) => String(s.id) === rawTab)
+  const currentType = shifts?.some((s) => String(s?.id) === rawTab)
     ? rawTab
     : firstShiftId;
-  const activeSlot = data?.[currentType] as
-    | { users?: any[]; start?: string; end?: string }
-    | undefined;
-  const masterShift = shifts.find((s) => String(s.id) === currentType);
+  const activeSlot = data?.[currentType];
+  const masterShift = shifts?.find((s) => String(s?.id) === currentType);
   const users = activeSlot?.users ?? [];
   const timeStart =
     activeSlot?.start ?? shiftTimeToInput(masterShift?.start_time);
   const timeEnd = activeSlot?.end ?? shiftTimeToInput(masterShift?.end_time);
-  const accent = DAY_ACCENTS[day] ?? DAY_ACCENTS.Senin;
-  const tint = DAY_TINT[day] ?? DAY_TINT.Senin;
+  const accent = DAY_ACCENTS[day] ?? DAY_ACCENTS.Monday;
+  const tint = DAY_TINT[day] ?? DAY_TINT.Monday;
 
   return (
     <motion.div
@@ -453,7 +456,7 @@ const DayColumn = ({
           <div className="flex items-center justify-between">
             <CardTitle className="text-sm font-semibold">{day}</CardTitle>
             <div className="flex h-5 items-center rounded-full bg-background/50 px-2 text-[10px] font-medium text-muted-foreground border">
-              {users.length} Pegawai
+              {users?.length ?? 0} Staff
             </div>
           </div>
 
@@ -462,18 +465,18 @@ const DayColumn = ({
             onValueChange={(v) =>
               setWeeklySchedule((prev: any) => ({
                 ...prev,
-                [day]: { ...prev[day], activeType: v },
+                [day]: { ...prev?.[day], activeType: v },
               }))
             }
           >
             <TabsList className="grid h-8 w-full grid-cols-4 rounded-lg bg-muted/60 p-0.5">
-              {shifts.map((shift) => (
+              {shifts?.map((shift) => (
                 <TabsTrigger
-                  key={shift.id}
-                  value={String(shift.id)}
+                  key={shift?.id}
+                  value={String(shift?.id)}
                   className="rounded-md capitalize text-[10px] font-medium transition-colors duration-150 data-[state=active]:shadow-sm"
                 >
-                  {shift.name}
+                  {shift?.name ?? "N/A"}
                 </TabsTrigger>
               ))}
             </TabsList>
@@ -482,7 +485,7 @@ const DayColumn = ({
           <div className="grid grid-cols-2 gap-2">
             <div className="space-y-1">
               <span className="text-xs font-normal text-muted-foreground/70">
-                Mulai
+                Start
               </span>
               <Input
                 type="time"
@@ -495,7 +498,7 @@ const DayColumn = ({
             </div>
             <div className="space-y-1">
               <span className="text-xs font-normal text-muted-foreground/70">
-                Selesai
+                End
               </span>
               <Input
                 type="time"
@@ -518,28 +521,30 @@ const DayColumn = ({
                 dragOverClassName="bg-sky-500/[0.05]"
                 className="min-h-[200px] flex-1"
               >
-                {users.length === 0 ? (
+                {users?.length === 0 ? (
                   <EmptyState />
                 ) : (
-                  users.map((u: any, idx: number) => (
+                  users?.map((u: any, idx: number) => (
                     <DraggableItem
-                      key={`${day}-${currentType}-${u.user.id}`}
-                      draggableId={u.user.id.toString()}
+                      key={`${day}-${currentType}-${u?.user?.id}`}
+                      draggableId={u?.user?.id?.toString() ?? `${day}-${idx}`}
                       index={idx}
                     >
                       {({ snapshot: s }) => (
                         <div className="group relative w-full min-w-0">
                           <StaffCard emp={u} isDragging={s.isDragging} />
-                          <Button
-                            type="button"
-                            variant="destructive"
-                            size="icon"
-                            className="absolute -right-1 -top-1 size-6 scale-0 rounded-full opacity-0 transition-all duration-150 group-hover:scale-100 group-hover:opacity-100"
-                            onPointerDown={(e) => e.stopPropagation()}
-                            onClick={() => removeUser(day, u.user.id)}
-                          >
-                            <Trash2 className="size-3" />
-                          </Button>
+                          <ActionGuard module="duty schedule" action="write">
+                            <Button
+                              type="button"
+                              variant="destructive"
+                              size="icon"
+                              className="absolute -right-1 -top-1 size-6 scale-0 rounded-full opacity-0 transition-all duration-150 group-hover:scale-100 group-hover:opacity-100"
+                              onPointerDown={(e) => e.stopPropagation()}
+                              onClick={() => removeUser(day, u?.user?.id)}
+                            >
+                              <Trash2 className="size-3" />
+                            </Button>
+                          </ActionGuard>
                         </div>
                       )}
                     </DraggableItem>
@@ -563,7 +568,7 @@ const EmptyState = () => (
   >
     <Clock className="size-5 text-muted-foreground/40" />
     <span className="text-center text-[11px] text-muted-foreground/60 font-medium">
-      Belum ada penempatan
+      No placements yet
     </span>
   </motion.div>
 );

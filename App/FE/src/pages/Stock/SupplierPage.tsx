@@ -1,11 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
-import {
-  Plus,
-  Search,
-  ChevronLeft,
-  ChevronRight,
-  Check,
-} from "lucide-react";
+import { Plus, Search, ChevronLeft, ChevronRight, Check } from "lucide-react";
 import Button from "@/components/ui/button/Button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -135,13 +129,16 @@ const SupplierPage: React.FC = () => {
 
   return (
     <div className="p-6 space-y-6">
-      <PageMeta title="Suppliers | Inventory" description="Manage vendors" />
+      <PageMeta
+        title="Suppliers & Vendors"
+        description="Manage third-party suppliers, contact details, and vendor status for stock procurement."
+      />
 
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Suppliers</h1>
           <p className="text-sm text-muted-foreground">
-            Kelola vendor dan kontak pemasok.
+            Manage vendors and supplier contact information.
           </p>
         </div>
         <ActionGuard module="suppliers" action="write">

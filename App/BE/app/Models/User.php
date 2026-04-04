@@ -84,4 +84,6 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+
+    protected $appends = ['total_spend'];
 }

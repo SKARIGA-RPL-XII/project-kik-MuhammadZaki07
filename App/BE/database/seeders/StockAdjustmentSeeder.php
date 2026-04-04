@@ -13,9 +13,13 @@ class StockAdjustmentSeeder extends Seeder
     public function run(): void
     {
         $stocks = Stock::all();
-        $admin = User::where('role', 'admin')->first() ?? User::first();
 
-        if ($stocks->isEmpty()) return;
+        // Perbaikan Logic: Mencari user dengan role 'admin' melalui relasi
+        $admin = User::whereHas('role', function($q) {
+            $q->where('name', 'admin');
+        })->first() ?? User::first();
+
+        if ($stocks->isEmpty() || !$admin) return;
 
         $adjustments = [
             ['stock_id' => $stocks[0]->id, 'type' => 'in', 'amount' => 20, 'reason' => 'Restock dari Supplier A'],
@@ -31,10 +35,12 @@ class StockAdjustmentSeeder extends Seeder
         ];
 
         foreach ($adjustments as $adj) {
-            StockAdjustment::create(array_merge($adj, [
-                'user_id' => $admin->id,
-                'created_at' => now()->subHours(rand(1, 72)),
-            ]));
+            if (isset($adj['stock_id'])) {
+                StockAdjustment::create(array_merge($adj, [
+                    'user_id' => $admin->id,
+                    'created_at' => now()->subHours(rand(1, 72)),
+                ]));
+            }
         }
     }
 }

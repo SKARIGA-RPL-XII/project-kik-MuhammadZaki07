@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { useToast } from "@/context/ToastContext";
-import { MoreDotIcon } from "../../icons";
 import { useTasks } from "@/hooks/react-query/useTasks";
 
 export default function AdminTaskCard() {
@@ -59,7 +58,7 @@ export default function AdminTaskCard() {
             Admin To-Do List
           </h3>
           <p className="mt-1 text-neutral-500 text-theme-sm dark:text-neutral-400">
-            Kelola tugas harian operasional
+            Manage daily operational tasks
           </p>
         </div>
       </div>
@@ -76,7 +75,7 @@ export default function AdminTaskCard() {
           </div>
         ) : tasks?.length === 0 ? (
           <div className="text-center py-6 text-neutral-500 text-sm italic">
-            Belum ada tugas hari ini.
+            No tasks for today.
           </div>
         ) : (
           tasks?.map((item) => (
@@ -132,7 +131,7 @@ export default function AdminTaskCard() {
             <input
               autoFocus
               type="text"
-              placeholder="Apa yang perlu dilakukan?"
+              placeholder="What needs to be done?"
               value={formData.title}
               onChange={(e) =>
                 setFormData({ ...formData, title: e.target.value })
@@ -141,7 +140,7 @@ export default function AdminTaskCard() {
             />
 
             <textarea
-              placeholder="Tambah deskripsi singkat..."
+              placeholder="Add a brief description..."
               value={formData.description}
               onChange={(e) =>
                 setFormData({ ...formData, description: e.target.value })
@@ -169,13 +168,13 @@ export default function AdminTaskCard() {
                   onClick={() => setIsAdding(false)}
                   className="px-3 py-1 text-xs text-neutral-400 hover:text-neutral-600 transition-colors"
                 >
-                  Batal
+                  Cancel
                 </button>
                 <button
                   type="submit"
                   className="px-4 py-1.5 text-xs bg-red-500 text-white font-bold rounded-lg hover:bg-red-600 transition-colors"
                 >
-                  Simpan
+                  Save
                 </button>
               </div>
             </div>
@@ -185,7 +184,7 @@ export default function AdminTaskCard() {
             onClick={() => setIsAdding(true)}
             className="w-full py-2.5 px-4 border border-dashed rounded-md text-sm text-neutral-500 hover:bg-neutral-50 hover:text-neutral-700 hover:border-red-400 dark:border-neutral-700 dark:hover:bg-white/5 transition-all"
           >
-            + Tambah Tugas Baru
+            + Add New Task
           </button>
         )}
       </div>

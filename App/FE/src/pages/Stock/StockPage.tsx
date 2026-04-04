@@ -109,7 +109,7 @@ const StockPage: React.FC = () => {
 
   return (
     <div className="p-6 space-y-6">
-      <PageMeta title="Stock List | Inventory" description="Manage stocks" />
+      <PageMeta title="Stock List" description="Manage stocks" />
 
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>

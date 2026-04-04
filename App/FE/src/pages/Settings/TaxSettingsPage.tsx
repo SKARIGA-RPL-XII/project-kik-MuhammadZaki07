@@ -107,7 +107,7 @@ export default function TaxSettingsPage() {
 
     <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 border-b border-neutral-200 dark:border-neutral-800 pb-8">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight text-neutral-900 dark:text-white">
+        <h1 className="text-2xl font-medium tracking-tight text-neutral-900 dark:text-white">
           Tax & Billing
         </h1>
         <p className="text-neutral-500 dark:text-neutral-400 text-sm mt-1">
@@ -175,7 +175,7 @@ export default function TaxSettingsPage() {
 
             <div className="p-6 space-y-5">
               <div className="space-y-2">
-                <Label className="text-xs uppercase font-bold text-neutral-500 tracking-wide">
+                <Label className="text-xs font-medium text-neutral-500">
                   Tax Amount
                 </Label>
 
@@ -189,7 +189,7 @@ export default function TaxSettingsPage() {
                   <input
                     type="text"
                     inputMode="numeric"
-                    className="w-full bg-transparent px-4 py-3 text-lg font-bold outline-none"
+                    className="w-full bg-transparent px-4 py-3 text-lg font-medium outline-none"
                     value={form.tax_percent}
                     disabled={!form.is_tax_active}
                     onChange={(e) => {
@@ -200,7 +200,7 @@ export default function TaxSettingsPage() {
                     }}
                   />
 
-                  <div className="px-5 text-base font-black text-neutral-400 border-l border-neutral-100 dark:border-neutral-800 bg-neutral-50/30 dark:bg-neutral-900/30">
+                  <div className="px-5 py-3.5 text-base font-black text-neutral-400 border-l border-neutral-100 dark:border-neutral-800 bg-neutral-100 dark:bg-neutral-900/30">
                     %
                   </div>
                 </div>
@@ -242,7 +242,7 @@ export default function TaxSettingsPage() {
             </div>
 
             <div className="p-6 space-y-5">
-              <Label className="text-xs uppercase font-bold text-neutral-500 tracking-wide">
+              <Label className="text-xs font-medium text-neutral-500">
                 Service Fee
               </Label>
 
@@ -256,7 +256,7 @@ export default function TaxSettingsPage() {
                 <input
                   type="text"
                   inputMode="numeric"
-                  className="w-full bg-transparent px-4 py-3 text-lg font-bold outline-none"
+                  className="w-full bg-transparent px-4 py-3 text-lg font-medium outline-none"
                   value={form.service_percent}
                   disabled={!form.is_service_active}
                   onChange={(e) => {
@@ -267,7 +267,7 @@ export default function TaxSettingsPage() {
                   }}
                 />
 
-                <div className="px-5 text-base font-black text-neutral-400 border-l border-neutral-100 dark:border-neutral-800 bg-neutral-50/30 dark:bg-neutral-900/30">
+                <div className="px-5 py-3.5 text-base font-black text-neutral-400 border-l border-neutral-100 dark:border-neutral-800 bg-neutral-100 dark:bg-neutral-900/30">
                   %
                 </div>
               </div>
@@ -311,10 +311,10 @@ export default function TaxSettingsPage() {
                   }`}
                 >
                   <div className="space-y-1">
-                    <p className="text-sm font-bold text-neutral-900 dark:text-neutral-100">
+                    <p className="text-sm font-medium text-neutral-900 dark:text-neutral-100">
                       {item.title}
                     </p>
-                    <p className="text-[11px] font-mono text-neutral-500 uppercase tracking-tight">
+                    <p className="text-[11px] font-mono text-neutral-500 tracking-tight">
                       {item.formula}
                     </p>
                   </div>
@@ -331,7 +331,7 @@ export default function TaxSettingsPage() {
 
       <div className="xl:col-span-1 sticky top-8">
         <Card className="border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900/40 p-6 shadow-none space-y-6">
-          <h3 className="text-xs font-bold uppercase tracking-[0.15em] text-neutral-400 border-b border-neutral-200 dark:border-neutral-800 pb-3">
+          <h3 className="text-xs font-medium text-neutral-400 border-b border-neutral-200 dark:border-neutral-800 pb-3">
             Calculation Preview
           </h3>
           <div className="space-y-4">
@@ -356,7 +356,7 @@ export default function TaxSettingsPage() {
               </span>
             </div>
             <div className="pt-5 border-t border-neutral-200 dark:border-neutral-800 flex justify-between items-baseline">
-              <span className="text-xs font-bold uppercase text-neutral-400 tracking-wider">
+              <span className="text-xs font-medium text-neutral-400r">
                 Total
               </span>
               <span className="text-3xl font-bold text-neutral-900 dark:text-white tracking-tighter italic">

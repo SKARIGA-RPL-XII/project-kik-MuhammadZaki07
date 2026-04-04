@@ -12,16 +12,26 @@ import { formatDate } from "@/utils/dateHelper";
 interface AttendanceTableProps {
   data: any[];
   isLoading: boolean;
+  isAdminView?: boolean;
 }
 
-export function AttendanceTable({ data, isLoading }: AttendanceTableProps) {
+export function AttendanceTable({ data, isLoading, isAdminView = false }: AttendanceTableProps) {
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case "present": return <Badge className="bg-green-500">Hadir</Badge>;
-      case "late": return <Badge variant="destructive">Terlambat</Badge>;
-      case "alpha": return <Badge variant="outline" className="text-red-500 border-red-500">Alpha</Badge>;
-      case "leave": return <Badge className="bg-purple-500">Izin</Badge>;
-      default: return <Badge variant="secondary">{status}</Badge>;
+      case "present":
+        return <Badge className="bg-green-500 hover:bg-green-600">Present</Badge>;
+      case "late":
+        return <Badge variant="destructive">Late</Badge>;
+      case "alpha":
+        return (
+          <Badge variant="outline" className="text-red-500 border-red-500">
+            Alpha
+          </Badge>
+        );
+      case "leave":
+        return <Badge className="bg-purple-500 hover:bg-purple-600">Leave</Badge>;
+      default:
+        return <Badge variant="secondary">{status}</Badge>;
     }
   };
 
@@ -30,33 +40,45 @@ export function AttendanceTable({ data, isLoading }: AttendanceTableProps) {
       <Table className="shadow-none">
         <TableHeader>
           <TableRow>
-            <TableHead>Tanggal</TableHead>
-            <TableHead>Masuk</TableHead>
-            <TableHead>Pulang</TableHead>
+            {isAdminView && <TableHead>Employee</TableHead>}
+            <TableHead>Date</TableHead>
+            <TableHead>Clock In</TableHead>
+            <TableHead>Clock Out</TableHead>
             <TableHead>Status</TableHead>
-            <TableHead className="text-right">Denda</TableHead>
+            <TableHead className="text-right">Penalty</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {isLoading ? (
             <TableRow>
-              <TableCell colSpan={5} className="text-center py-10">Loading data...</TableCell>
+              <TableCell colSpan={isAdminView ? 6 : 5} className="text-center py-10">
+                Loading data...
+              </TableCell>
             </TableRow>
           ) : data.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={5} className="text-center py-10 text-muted-foreground">Belum ada riwayat absensi.</TableCell>
+              <TableCell colSpan={isAdminView ? 6 : 5} className="text-center py-10 text-muted-foreground">
+                No attendance history found.
+              </TableCell>
             </TableRow>
           ) : (
             data.map((item) => (
               <TableRow key={item.id}>
-                <TableCell className="font-medium">
+                {isAdminView && (
+                  <TableCell className="font-medium">
+                    {item.user?.name || item.username || "Unknown"}
+                  </TableCell>
+                )}
+                <TableCell className={!isAdminView ? "font-medium" : ""}>
                   {formatDate(item.date)}
                 </TableCell>
                 <TableCell>{item.clock_in || "--:--"}</TableCell>
                 <TableCell>{item.clock_out || "--:--"}</TableCell>
                 <TableCell>{getStatusBadge(item.status)}</TableCell>
                 <TableCell className="text-right text-red-600 font-semibold">
-                  {item.total_penalty > 0 ? `Rp ${Number(item.total_penalty).toLocaleString()}` : "-"}
+                  {item.total_penalty > 0
+                    ? `Rp ${Number(item.total_penalty).toLocaleString("id-ID")}`
+                    : "-"}
                 </TableCell>
               </TableRow>
             ))

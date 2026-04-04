@@ -21,6 +21,7 @@ import { useTranslation } from "react-i18next";
 import { LiquidGlassCard } from "../ui/liquid-glass";
 import { calculateOrder } from "@/utils/calculator";
 import { formatCurrency } from "@/lib/currency";
+import { EmptyState } from "./EmptyState";
 
 interface CartSummaryProps {
   isOpen?: boolean;
@@ -42,7 +43,7 @@ export function CartSummary({
   const location = useLocation();
   const { settings } = useSettings();
   const itemCount = items.reduce((acc, item) => acc + (item.quantity || 0), 0);
-  
+
   const { total } = calculateOrder(items, settings);
 
   const hideCartPaths = [
@@ -258,107 +259,125 @@ CartSummary.SidebarContent = function SidebarContent({
 
       <ScrollArea className="flex-1 bg-zinc-50/50 dark:bg-zinc-950">
         <div className="p-3 space-y-2">
-          {items.map((item) => {
-            const activePrice = item.discount_price ?? item.price;
-            const hasDiscount = activePrice < item.price;
+          {items.length === 0 ? (
+            <EmptyState />
+          ) : (
+            items.map((item) => {
+              const activePrice = item.discount_price ?? item.price;
+              const hasDiscount = activePrice < item.price;
 
-            return (
-              <div
-                key={item.key}
-                className={`group relative p-3 rounded-sm border transition-all flex gap-3 bg-white dark:bg-zinc-900 ${
-                  selectedItems.includes(item.key)
-                    ? "border-red-500 shadow-sm"
-                    : "border-zinc-200 dark:border-zinc-800"
-                }`}
-              >
-                <div className="pt-0.5">
-                  <Checkbox
-                    checked={selectedItems.includes(item.key)}
-                    onCheckedChange={() => toggleItem(item.key)}
-                    className="border-zinc-300 dark:border-zinc-600 data-[state=checked]:bg-red-500"
-                  />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex justify-between items-start">
-                    <div className="flex gap-3 min-w-0">
-                      <div className="h-14 w-14 rounded-lg bg-zinc-100 overflow-hidden shrink-0 border border-zinc-200">
-                        <img
-                          src={`${import.meta.env.VITE_STORAGE_URL}/${item.image}`}
-                          className="h-full w-full object-cover"
-                          alt={item.name}
-                        />
-                      </div>
-                      <div className="truncate">
-                        <h4 className="font-bold text-zinc-900 dark:text-zinc-100 text-xs truncate uppercase tracking-tight">
-                          {item.name}
-                        </h4>
-                 
-                        {item.selectedAttributes && item.selectedAttributes.length > 0 && (
-                          <div className="grid grid-cols-3 lg:grid-cols-2 gap-1 mt-1">
-                            {item.selectedAttributes.map((attr: any, idx: number) => (
-                              <span key={idx} className="text-[9px] bg-zinc-100 dark:bg-zinc-800 px-1.5 py-0.5 rounded text-zinc-500">
-                                {attr.name}: {attr.level}
-                              </span>
-                            ))}
-                          </div>
-                        )}
+              return (
+                <div
+                  key={item.key}
+                  className={`group relative p-3 rounded-sm border transition-all flex gap-3 bg-white dark:bg-zinc-900 ${
+                    selectedItems.includes(item.key)
+                      ? "border-red-500 shadow-sm"
+                      : "border-zinc-200 dark:border-zinc-800"
+                  }`}
+                >
+                  <div className="pt-0.5">
+                    <Checkbox
+                      checked={selectedItems.includes(item.key)}
+                      onCheckedChange={() => toggleItem(item.key)}
+                      className="border-zinc-300 dark:border-zinc-600 data-[state=checked]:bg-red-500"
+                    />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex justify-between items-start">
+                      <div className="flex gap-3 min-w-0">
+                        <div className="h-14 w-14 rounded-lg bg-zinc-100 dark:bg-zinc-800 overflow-hidden shrink-0 border border-zinc-200 dark:border-zinc-800">
+                          <img
+                            src={
+                              item.image
+                                ? `${import.meta.env.VITE_STORAGE_URL}/${item.image}`
+                                : "/image-dumy.png"
+                            }
+                            className="h-full w-full object-cover"
+                            alt={item.name}
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).src =
+                                "/image-dumy.png";
+                            }}
+                          />
+                        </div>
+                        <div className="truncate">
+                          <h4 className="font-bold text-zinc-900 dark:text-zinc-100 text-xs truncate uppercase tracking-tight">
+                            {item.name || "Menu Tidak Diketahui"}
+                          </h4>
 
-                        <div className="flex items-center gap-2 mt-1">
-                          <p className="font-black text-red-600 text-[10px]">
-                            {formatCurrency(activePrice)}
-                          </p>
-                          {hasDiscount && (
-                            <p className="text-[9px] text-zinc-400 line-through decoration-zinc-400">
-                              {formatCurrency(item.price)}
+                          {item.selectedAttributes &&
+                            item.selectedAttributes.length > 0 && (
+                              <div className="grid grid-cols-3 lg:grid-cols-2 gap-1 mt-1">
+                                {item.selectedAttributes.map(
+                                  (attr: any, idx: number) => (
+                                    <span
+                                      key={idx}
+                                      className="text-[9px] bg-zinc-100 dark:bg-zinc-800 px-1.5 py-0.5 rounded text-zinc-500"
+                                    >
+                                      {attr.name}: {attr.level}
+                                    </span>
+                                  ),
+                                )}
+                              </div>
+                            )}
+
+                          <div className="flex items-center gap-2 mt-1">
+                            <p className="font-black text-red-600 text-[10px]">
+                              {formatCurrency(activePrice)}
                             </p>
-                          )}
+                            {hasDiscount && (
+                              <p className="text-[9px] text-zinc-400 line-through decoration-zinc-400">
+                                {formatCurrency(item.price)}
+                              </p>
+                            )}
+                          </div>
                         </div>
                       </div>
+                      <p className="font-black text-zinc-900 dark:text-zinc-100 text-xs whitespace-nowrap ml-2">
+                        {formatCurrency(activePrice * item.quantity)}
+                      </p>
                     </div>
-                    <p className="font-black text-zinc-900 dark:text-zinc-100 text-xs whitespace-nowrap ml-2">
-                      {formatCurrency(activePrice * item.quantity)}
-                    </p>
-                  </div>
-                  <div className="flex items-center justify-between mt-3">
-                    <div className="flex items-center gap-1 bg-zinc-50 dark:bg-zinc-800 border rounded-lg p-0.5">
+                    <div className="flex items-center justify-between mt-3">
+                      <div className="flex items-center gap-1 bg-zinc-50 dark:bg-zinc-800 border rounded-lg p-0.5">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6"
+                          disabled={item.quantity <= 1}
+                          onClick={() =>
+                            onUpdateQuantity?.(item.key, item.quantity - 1)
+                          }
+                        >
+                          <Minus className="h-3 w-3" />
+                        </Button>
+                        <span className="w-6 text-center font-black text-[10px]">
+                          {item.quantity}
+                        </span>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6"
+                          onClick={() =>
+                            onUpdateQuantity?.(item.key, item.quantity + 1)
+                          }
+                        >
+                          <Plus className="h-3 w-3" />
+                        </Button>
+                      </div>
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-6 w-6"
-                        disabled={item.quantity <= 1}
-                        onClick={() =>
-                          onUpdateQuantity?.(item.key, item.quantity - 1)
-                        }
+                        className="h-7 w-7 text-zinc-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                        onClick={() => onRemoveItem?.(item.key)}
                       >
-                        <Minus className="h-3 w-3" />
-                      </Button>
-                      <span className="w-6 text-center font-black text-[10px]">
-                        {item.quantity}
-                      </span>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-6 w-6"
-                        onClick={() =>
-                          onUpdateQuantity?.(item.key, item.quantity + 1)
-                        }
-                      >
-                        <Plus className="h-3 w-3" />
+                        <Trash2 className="h-3.5 w-3.5" />
                       </Button>
                     </div>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-7 w-7 text-zinc-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
-                      onClick={() => onRemoveItem?.(item.key)}
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </Button>
                   </div>
                 </div>
-              </div>
-            );
-          })}
+              );
+            })
+          )}
         </div>
       </ScrollArea>
 

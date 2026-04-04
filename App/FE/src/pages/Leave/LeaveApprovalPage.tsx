@@ -56,7 +56,7 @@ export default function LeaveApprovalPage() {
             setIsRejectOpen(false);
             setRejectId(null);
           },
-        }
+        },
       );
     }
   };
@@ -68,14 +68,18 @@ export default function LeaveApprovalPage() {
 
   return (
     <div className="p-6 space-y-6 bg-background min-h-screen">
-      <PageMeta description="Persetujuan Izin Pegawai" title="Leave Approval" />
+      <PageMeta
+        description="Employee leave approval and synchronization"
+        title="Leave Approval"
+      />
       <PageBreadcrumb pageTitle="Leave Approval" />
 
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div className="space-y-1">
-          <h1 className="text-2xl font-bold tracking-tight">Persetujuan Izin</h1>
+          <h1 className="text-2xl font-bold tracking-tight">Leave Approval</h1>
           <p className="text-sm text-muted-foreground">
-            Tinjau pengajuan izin pegawai dan sinkronisasi otomatis dengan absensi.
+            Review employee leave requests and sync automatically with
+            attendance records.
           </p>
         </div>
 
@@ -83,7 +87,7 @@ export default function LeaveApprovalPage() {
           <div className="relative w-full md:w-[280px]">
             <Search className="absolute left-2.5 top-2.5 size-4 text-muted-foreground" />
             <Input
-              placeholder="Cari nama pegawai..."
+              placeholder="Search employee name..."
               className="pl-9 bg-card"
               value={search}
               onChange={(e) => {
@@ -92,25 +96,28 @@ export default function LeaveApprovalPage() {
               }}
             />
           </div>
-          
+
           <div className="flex items-center gap-2">
-            <Filter size={16} className="text-muted-foreground hidden sm:block" />
-            <Select 
-              value={type} 
+            <Filter
+              size={16}
+              className="text-muted-foreground hidden sm:block"
+            />
+            <Select
+              value={type}
               onValueChange={(val) => {
                 setType(val);
                 setPage(1);
               }}
             >
               <SelectTrigger className="w-[140px] bg-card">
-                <SelectValue placeholder="Tipe Izin" />
+                <SelectValue placeholder="Leave Type" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Semua Tipe</SelectItem>
-                <SelectItem value="sick">Sakit</SelectItem>
-                <SelectItem value="leave">Izin</SelectItem>
-                <SelectItem value="permit">Keperluan</SelectItem>
-                <SelectItem value="vacation">Cuti</SelectItem>
+                <SelectItem value="all">All Types</SelectItem>
+                <SelectItem value="sick">Sick</SelectItem>
+                <SelectItem value="leave">Leave</SelectItem>
+                <SelectItem value="permit">Permission</SelectItem>
+                <SelectItem value="vacation">Vacation</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -119,7 +126,7 @@ export default function LeaveApprovalPage() {
 
       <div className="rounded-xl">
         <LeaveTable
-          data={data?.data || []}
+          data={data?.data ?? []}
           isLoading={isLoading}
           onDetail={openDetail}
           onAction={handleAction}
@@ -128,8 +135,10 @@ export default function LeaveApprovalPage() {
 
       <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-2">
         <p className="text-xs text-muted-foreground font-medium order-2 sm:order-1">
-          Menampilkan <span className="text-foreground">{data?.data?.length || 0}</span> dari{" "}
-          <span className="text-foreground">{data?.meta?.total || 0}</span> data
+          Showing{" "}
+          <span className="text-foreground">{data?.data?.length ?? 0}</span> of{" "}
+          <span className="text-foreground">{data?.meta?.total ?? 0}</span>{" "}
+          entries
         </p>
 
         <div className="flex items-center gap-2 order-1 sm:order-2">
@@ -142,16 +151,16 @@ export default function LeaveApprovalPage() {
           >
             Previous
           </Button>
-          
+
           <div className="flex items-center justify-center min-w-20 px-2 py-1 rounded-md border bg-muted/50 text-[11px] font-medium text-neutral-600">
-            Hal {data?.meta?.current_page || 1} / {data?.meta?.last_page || 1}
+            Page {data?.meta?.current_page ?? 1} / {data?.meta?.last_page ?? 1}
           </div>
 
           <Button
             size="sm"
             variant="outline"
             className="h-8 px-3"
-            disabled={page >= (data?.meta?.last_page || 1) || isLoading}
+            disabled={page >= (data?.meta?.last_page ?? 1) || isLoading}
             onClick={() => setPage((p) => p + 1)}
           >
             Next
@@ -169,7 +178,7 @@ export default function LeaveApprovalPage() {
         open={isRejectOpen}
         onOpenChange={setIsRejectOpen}
         onConfirm={handleConfirmReject}
-        isPending={approveMutation.isPending}
+        isPending={approveMutation?.isPending ?? false}
       />
     </div>
   );

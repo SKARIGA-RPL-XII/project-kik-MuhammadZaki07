@@ -70,7 +70,9 @@ export default function NotificationDropdown() {
               </button>
             )}
             <h5 className="text-lg font-semibold text-neutral-800 dark:text-neutral-200">
-              {selectedNotif ? t("notif_title_detail") : t("notif_title_count", { count: unreadCount })}
+              {selectedNotif
+                ? t("notif_title_detail")
+                : t("notif_title_count", { count: unreadCount })}
             </h5>
           </div>
           <button
@@ -86,9 +88,16 @@ export default function NotificationDropdown() {
             <div className="p-2 animate-in fade-in slide-in-from-right-2 duration-200">
               <div className="flex items-center gap-3 mb-4">
                 <img
-                  src={selectedNotif.user_avatar || "/notification.png"}
+                  src={
+                    selectedNotif?.user_avatar
+                      ? selectedNotif.user_avatar
+                      : "/image-dumy.png"
+                  }
                   className="w-12 h-12 rounded-full object-cover"
-                  alt=""
+                  alt="User Avatar"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src = "/image-dumy.png";
+                  }}
                 />
                 <div>
                   <p className="font-bold text-neutral-800 dark:text-white">
@@ -103,14 +112,14 @@ export default function NotificationDropdown() {
                 {selectedNotif.data?.message || selectedNotif.message}
               </p>
               {getTargetLink(selectedNotif) && (
-                  <Link
-                    to={getTargetLink(selectedNotif)}
-                    onClick={() => setIsOpen(false)}
-                    className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white text-sm hover:bg-opacity-90 transition font-medium w-full text-center justify-center  mb-2.5"
-                  >
-                    <ExternalLink size={16} /> Lihat Detail
-                  </Link>
-                )}
+                <Link
+                  to={getTargetLink(selectedNotif)}
+                  onClick={() => setIsOpen(false)}
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white text-sm hover:bg-opacity-90 transition font-medium w-full text-center justify-center  mb-2.5"
+                >
+                  <ExternalLink size={16} /> Lihat Detail
+                </Link>
+              )}
               <div className="flex gap-2">
                 {getDownloadUrl(selectedNotif) && (
                   <a
@@ -144,9 +153,13 @@ export default function NotificationDropdown() {
                       ${!n.read_at ? "bg-red-500/[0.04]" : "hover:bg-neutral-50 dark:hover:bg-white/5"}`}
                     >
                       <img
-                        src={n.user_avatar || "/notification.png"}
+                        src={n?.user_avatar ? n.user_avatar : "/notification.png"}
                         className="w-10 h-10 rounded-full object-cover"
-                        alt=""
+                        alt="User Avatar"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src =
+                            "/notification.png";
+                        }}
                       />
                       <div className="flex-grow pr-10">
                         <p
@@ -158,8 +171,8 @@ export default function NotificationDropdown() {
                           {n.data?.message || n.message}
                         </p>
                         <p className="text-xs text-neutral-500 mt-1 italic">
-                          {dayjs(n.created_at).format("HH:mm [WIB]")}{" "}
-                          — {dayjs(n.created_at).fromNow()}
+                          {dayjs(n.created_at).format("HH:mm [WIB]")} —{" "}
+                          {dayjs(n.created_at).fromNow()}
                         </p>
                       </div>
                       <button
@@ -173,6 +186,7 @@ export default function NotificationDropdown() {
                 ))
               ) : (
                 <div className="flex flex-col items-center justify-center h-32 text-neutral-400 italic">
+                  <img className="w-10" src="/notification.png" alt="" />
                   <p className="text-sm">{t("notif_empty")}</p>
                 </div>
               )}

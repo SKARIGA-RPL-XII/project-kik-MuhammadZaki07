@@ -42,34 +42,34 @@ export function RejectLeaveDialog({
         <AlertDialogHeader>
           <AlertDialogTitle className="flex items-center gap-2 text-red-600">
             <AlertCircle size={20} />
-            Tolak Pengajuan Izin
+            Reject Leave Request
           </AlertDialogTitle>
           <AlertDialogDescription>
-            Harap berikan alasan penolakan yang jelas. Alasan ini akan dapat dilihat oleh pegawai yang bersangkutan.
+            Please provide a clear reason for rejection. This reason will be visible to the employee.
           </AlertDialogDescription>
         </AlertDialogHeader>
 
         <div className="py-4">
           <Textarea
-            placeholder="Contoh: Bukti lampiran tidak jelas atau periode izin bertabrakan dengan event penting..."
+            placeholder="Example: Unclear proof attachment or period overlaps with critical events..."
             className="min-h-[100px] focus-visible:ring-red-500"
             value={reason}
             onChange={(e) => setReason(e.target.value)}
             required
           />
           {!reason.trim() && (
-            <p className="text-[10px] text-red-500 mt-2">* Alasan penolakan wajib diisi</p>
+            <p className="text-[10px] text-red-500 mt-2">* Rejection reason is required</p>
           )}
         </div>
 
         <AlertDialogFooter>
-          <AlertDialogCancel onClick={() => setReason("")}>Batal</AlertDialogCancel>
+          <AlertDialogCancel onClick={() => setReason("")}>Cancel</AlertDialogCancel>
           <AlertDialogAction
             className="bg-red-600 hover:bg-red-700"
             onClick={handleConfirm}
             disabled={!reason.trim() || isPending}
           >
-            {isPending ? "Memproses..." : "Ya, Tolak Izin"}
+            {isPending ? "Processing..." : "Yes, Reject Leave"}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

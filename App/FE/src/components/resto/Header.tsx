@@ -26,10 +26,14 @@ export function Header({ tableId = "-" }: HeaderProps) {
       return;
     }
 
-    if (user.role_name === "admin" || user.role_name === "employe" || user.role_name === "cashier") {
+    if (
+      user.role_name === "admin" ||
+      user.role_name === "employe" ||
+      user.role_name === "cashier"
+    ) {
       navigate("/dashboard");
     } else {
-       navigate("/profile-customer");
+      navigate("/profile-customer");
     }
   };
 
@@ -71,19 +75,30 @@ export function Header({ tableId = "-" }: HeaderProps) {
             <div className="flex items-center gap-2 md:gap-4">
               <div className="w-8 h-8 md:w-10 md:h-10 flex justify-center items-center overflow-hidden">
                 <img
-                  src={`${import.meta.env.VITE_STORAGE_URL}/${theme === "dark" ? settings?.logo_dark : settings?.logo_light}`}
+                  src={
+                    (
+                      theme === "dark"
+                        ? settings?.logo_dark
+                        : settings?.logo_light
+                    )
+                      ? `${import.meta.env.VITE_STORAGE_URL}/${theme === "dark" ? settings?.logo_dark : settings?.logo_light}`
+                      : "/image-dumy.png"
+                  }
                   alt="Logo"
                   className="w-full h-full object-contain"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src = "/image-dumy.png";
+                  }}
                 />
               </div>
               <div className="flex flex-col min-w-0">
                 <h1 className="font-semibold text-red-600 text-sm md:text-base leading-none mb-0.5 md:mb-1 truncate max-w-[120px] md:max-w-none">
-                  {settings?.store_name}
+                  {settings?.store_name ?? "store name"}
                 </h1>
                 <div className="flex items-center gap-1 text-neutral-400">
                   <MapPin size={10} className="text-red-500 flex-shrink-0" />
                   <span className="text-[10px] md:text-xs font-normal truncate max-w-[100px] md:max-w-[200px] dark:text-neutral-300">
-                    {settings?.address}
+                    {settings?.address ?? "addres"}
                   </span>
                 </div>
               </div>
@@ -98,7 +113,7 @@ export function Header({ tableId = "-" }: HeaderProps) {
                   <span className="relative h-full w-full rounded-full bg-red-600"></span>
                 </div>
                 <span className="text-[10px] md:text-sm font-medium text-red-600 dark:text-neutral-300 whitespace-nowrap">
-                  {t("header_table_label")} {tableId}
+                  {t("header_table_label")} {tableId ?? "ID"}
                 </span>
               </div>
             </div>

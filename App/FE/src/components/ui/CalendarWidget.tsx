@@ -1,15 +1,19 @@
 import { useState } from "react";
 import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
+import { useStocks } from "@/hooks/react-query/useStocks";
 
 export default function CalendarWidget() {
   const [currentDate, setCurrentDate] = useState(new Date());
+  const { data: stocks } = useStocks(1, 10, "");
+
+  const nextStockCheck = stocks?.data?.find((s: any) => s.status === 'low') || stocks?.data?.[0];
 
   const daysInMonth = (year: number, month: number) => new Date(year, month + 1, 0).getDate();
   const firstDayOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1).getDay();
   
   const monthNames = [
-    "Januari", "Februari", "Maret", "April", "Mei", "Juni",
-    "Juli", "Agustus", "September", "Oktober", "November", "Desember"
+    "January", "February", "March", "April", "May", "June",
+    "July", "August", "September", "October", "November", "December"
   ];
 
   const prevMonth = () => {
@@ -60,7 +64,7 @@ export default function CalendarWidget() {
       </div>
 
       <div className="grid grid-cols-7 gap-1 mb-2">
-        {['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'].map((day) => (
+        {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
           <div key={day} className="h-8 w-8 flex items-center justify-center text-xs font-semibold text-neutral-400 uppercase">
             {day}
           </div>
@@ -75,7 +79,9 @@ export default function CalendarWidget() {
         <div className="flex items-center gap-3">
           <div className="h-2 w-2 rounded-full bg-red-500"></div>
           <span className="text-[11px] text-neutral-500 dark:text-neutral-400">
-            Jadwal Stok Terdekat: <span className="font-bold text-neutral-700 dark:text-neutral-200">28 Mar</span>
+            Next Stock Check: <span className="font-bold text-neutral-700 dark:text-neutral-200">
+              {nextStockCheck ? new Date(nextStockCheck.updated_at).toLocaleDateString('en-US', { day: '2-digit', month: 'short' }) : 'No Schedule'}
+            </span>
           </span>
         </div>
       </div>

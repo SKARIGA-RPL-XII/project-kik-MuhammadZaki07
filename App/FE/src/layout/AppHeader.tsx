@@ -170,31 +170,9 @@ const AppHeader: React.FC = () => {
             )}
           </button>
 
-          <Link to="/" className="lg:hidden">
-            {/* Logo markup tetap sama */}
-          </Link>
+          <Link to="/" className="lg:hidden"></Link>
 
-          <button
-            onClick={() => setApplicationMenuOpen(!isApplicationMenuOpen)}
-            className="flex items-center justify-center w-10 h-10 text-neutral-700 rounded-lg z-99999 lg:hidden hover:bg-neutral-100 dark:text-neutral-400 dark:hover:bg-neutral-800"
-          >
-            <svg
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                fillRule="evenodd"
-                clipRule="evenodd"
-                d="M5.99902 10.4951C6.82745 10.4951 7.49902 11.1667 7.49902 11.9951V12.0051C7.49902 12.8335 6.82745 13.5051 5.99902 13.5051C5.1706 13.5051 4.49902 12.8335 4.49902 12.0051V11.9951C4.49902 11.1667 5.1706 10.4951 5.99902 10.4951ZM17.999 10.4951C18.8275 10.4951 19.499 11.1667 19.499 11.9951V12.0051C19.499 12.8335 18.8275 13.5051 17.999 13.5051C17.1706 13.5051 16.499 12.8335 16.499 12.0051V11.9951C16.499 11.1667 17.1706 10.4951 17.999 10.4951ZM13.499 11.9951C13.499 11.1667 12.8275 10.4951 11.999 10.4951C11.1706 10.4951 10.499 11.1667 10.499 11.9951V12.0051C10.499 12.8335 11.1706 13.5051 11.999 13.5051C12.8275 13.5051 13.499 12.8335 13.499 12.0051V11.9951Z"
-                fill="currentColor"
-              />
-            </svg>
-          </button>
-
-          <div className="hidden lg:block">
+          <div className="flex justify-between w-full items-center">
             <div className="relative">
               <span className="absolute -translate-y-1/2 pointer-events-none left-4 top-1/2">
                 <svg
@@ -237,10 +215,11 @@ const AppHeader: React.FC = () => {
                         <Link
                           key={index}
                           to={item.path}
-                          className={`flex items-center justify-between px-3 py-2.5 rounded-lg transition-all ${selectedIndex === index
+                          className={`flex items-center justify-between px-3 py-2.5 rounded-lg transition-all ${
+                            selectedIndex === index
                               ? "bg-red-50 dark:bg-red-500/10 text-red-600"
                               : "text-neutral-700 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-white/5"
-                            }`}
+                          }`}
                         >
                           <div className="flex items-center gap-3">
                             <span className="opacity-70">{item.icon}</span>
@@ -271,6 +250,25 @@ const AppHeader: React.FC = () => {
                 </div>
               )}
             </div>
+            <button
+              onClick={() => setApplicationMenuOpen(!isApplicationMenuOpen)}
+              className="flex items-center justify-center w-10 h-10 text-neutral-700 rounded-lg z-99999 lg:hidden hover:bg-neutral-100 dark:text-neutral-400 dark:hover:bg-neutral-800"
+            >
+              <svg
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  fillRule="evenodd"
+                  clipRule="evenodd"
+                  d="M5.99902 10.4951C6.82745 10.4951 7.49902 11.1667 7.49902 11.9951V12.0051C7.49902 12.8335 6.82745 13.5051 5.99902 13.5051C5.1706 13.5051 4.49902 12.8335 4.49902 12.0051V11.9951C4.49902 11.1667 5.1706 10.4951 5.99902 10.4951ZM17.999 10.4951C18.8275 10.4951 19.499 11.1667 19.499 11.9951V12.0051C19.499 12.8335 18.8275 13.5051 17.999 13.5051C17.1706 13.5051 16.499 12.8335 16.499 12.0051V11.9951C16.499 11.1667 17.1706 10.4951 17.999 10.4951ZM13.499 11.9951C13.499 11.1667 12.8275 10.4951 11.999 10.4951C11.1706 10.4951 10.499 11.1667 10.499 11.9951V12.0051C10.499 12.8335 11.1706 13.5051 11.999 13.5051C12.8275 13.5051 13.499 12.8335 13.499 12.0051V11.9951Z"
+                  fill="currentColor"
+                />
+              </svg>
+            </button>
           </div>
         </div>
 

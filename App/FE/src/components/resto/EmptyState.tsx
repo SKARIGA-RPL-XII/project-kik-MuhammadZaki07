@@ -11,8 +11,15 @@ export function EmptyState() {
 
   return (
     <div className="flex flex-col items-center justify-center py-20 px-4">
-      <div className="w-20 h-20 mb-6 flex items-center justify-center rounded-2xl bg-neutral-50 dark:bg-neutral-900 border border-neutral-100 dark:border-neutral-800">
-        <SearchX size={37} className="text-neutral-400" />
+      <div className="w-50 lg:w-60 h-50 lg:h-60 mb-6 flex items-center justify-center p-4">
+        <img
+          src="/no-menu.svg"
+          alt="No Menu Found"
+          className="w-full h-full object-contain grayscale hover:grayscale-0 opacity-60"
+          onError={(e) => {
+            (e.target as HTMLImageElement).src = "/image-dumy.png";
+          }}
+        />
       </div>
 
       <div className="text-center space-y-2 mb-8">

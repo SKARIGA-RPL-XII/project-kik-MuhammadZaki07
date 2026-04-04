@@ -25,7 +25,8 @@ import {
   CalendarIcon,
 } from "lucide-react";
 import flatpickr from "flatpickr";
-import dayjs from "dayjs"; // Pastikan import dayjs
+import dayjs from "dayjs";
+import { ActionGuard } from "@/components/guard/ActionGuard";
 
 export default function AdminAttendancePage() {
   const { toast } = useToast();
@@ -59,7 +60,7 @@ export default function AdminAttendancePage() {
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Gagal memuat data monitoring.",
+        description: "Failed to load attendance monitoring data.",
       });
     } finally {
       setLoading(false);
@@ -108,13 +109,13 @@ export default function AdminAttendancePage() {
 
       toast({
         title: "Export Success",
-        description: "Data has been successfully exported to Excel.",
+        description: "Attendance data has been successfully exported to Excel.",
       });
     } catch (err) {
       toast({
         variant: "destructive",
         title: "Export Failed",
-        description: "Something went wrong while generating the file.",
+        description: "Something went wrong while exporting data.",
       });
     } finally {
       setExporting(false);
@@ -132,8 +133,8 @@ export default function AdminAttendancePage() {
   return (
     <div className="p-6 space-y-6 bg-background min-h-screen">
       <PageMeta
-        title="Monitoring Attendance | Gagal-Lapar"
-        description="Pantau kehadiran seluruh karyawan secara real-time."
+        title="Attendance Monitoring"
+        description="Monitor all employee attendance in real-time."
       />
 
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
@@ -142,7 +143,7 @@ export default function AdminAttendancePage() {
             Attendance Tracking
           </h1>
           <p className="text-muted-foreground text-sm">
-            Kelola dan audit data kehadiran tim.
+            Manage and audit team attendance data.
           </p>
         </div>
         <div className="flex gap-2 w-full md:w-auto">
@@ -153,26 +154,29 @@ export default function AdminAttendancePage() {
           >
             <RefreshCw
               className={`w-4 h-4 mr-2 ${loading ? "animate-spin" : ""}`}
-            />{" "}
+            />
             Refresh
           </Button>
-          <Button
-            onClick={handleExport}
-            disabled={exporting}
-            className="bg-green-600 hover:bg-green-700 transition-all min-w-[140px]"
-          >
-            {exporting ? (
-              <>
-                <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                Generating...
-              </>
-            ) : (
-              <>
-                <FileDown className="w-4 h-4 mr-2" />
-                Export Excel
-              </>
-            )}
-          </Button>
+
+          <ActionGuard module="attendance logs" action="view">
+            <Button
+              onClick={handleExport}
+              disabled={exporting || !data?.data?.length}
+              className="bg-green-600 hover:bg-green-700 transition-all min-w-[140px]"
+            >
+              {exporting ? (
+                <>
+                  <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                  Processing...
+                </>
+              ) : (
+                <>
+                  <FileDown className="w-4 h-4 mr-2" />
+                  Export Excel
+                </>
+              )}
+            </Button>
+          </ActionGuard>
         </div>
       </div>
 
@@ -184,19 +188,19 @@ export default function AdminAttendancePage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {data?.summary?.count_late || 0}
+              {data?.summary?.count_late ?? 0}
             </div>
           </CardContent>
         </Card>
 
         <Card className="shadow-none">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Total Alpha</CardTitle>
+            <CardTitle className="text-sm font-medium">Total Absent</CardTitle>
             <UserX className="h-4 w-4 text-red-500" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {data?.summary?.count_alpha || 0}
+              {data?.summary?.count_alpha ?? 0}
             </div>
           </CardContent>
         </Card>
@@ -208,9 +212,9 @@ export default function AdminAttendancePage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              Rp
+              Rp{" "}
               {new Intl.NumberFormat("id-ID").format(
-                data?.summary?.total_penalty || 0,
+                data?.summary?.total_penalty ?? 0
               )}
             </div>
           </CardContent>
@@ -222,7 +226,7 @@ export default function AdminAttendancePage() {
             <Users className="h-4 w-4 text-primary" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{data?.meta?.total || 0}</div>
+            <div className="text-2xl font-bold">{data?.meta?.total ?? 0}</div>
           </CardContent>
         </Card>
       </div>
@@ -256,7 +260,7 @@ export default function AdminAttendancePage() {
                 <SelectItem value="all">All Status</SelectItem>
                 <SelectItem value="present">Present</SelectItem>
                 <SelectItem value="late">Late</SelectItem>
-                <SelectItem value="alpha">Alpha</SelectItem>
+                <SelectItem value="alpha">Absent</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -279,17 +283,17 @@ export default function AdminAttendancePage() {
           <Button
             variant="ghost"
             onClick={resetFilters}
-            className="text-xs text-red-500 hover:text-red-600 h-10"
+            className="text-xs text-red-500 hover:text-red-600 h-10 underline"
           >
-            Reset Filter
+            Reset Filters
           </Button>
         </CardContent>
       </Card>
 
-      <Card className="shadow-none">
+      <Card className="shadow-none border-none bg-transparent">
         <CardContent className="p-0">
           <AttendanceTable
-            data={data?.data || []}
+            data={data?.data ?? []}
             isLoading={loading}
             isAdminView={true}
           />
@@ -298,7 +302,7 @@ export default function AdminAttendancePage() {
 
       <div className="flex items-center justify-between pb-10">
         <p className="text-sm text-muted-foreground">
-          Showing {data?.data?.length || 0} of {data?.meta?.total || 0} entries
+          Showing {data?.data?.length ?? 0} of {data?.meta?.total ?? 0} entries
         </p>
         <div className="flex gap-2">
           <Button
@@ -312,7 +316,7 @@ export default function AdminAttendancePage() {
           <Button
             variant="outline"
             size="sm"
-            disabled={page >= (data?.meta?.last_page || 1) || loading}
+            disabled={page >= (data?.meta?.last_page ?? 1) || loading}
             onClick={() => setPage((p) => p + 1)}
           >
             Next

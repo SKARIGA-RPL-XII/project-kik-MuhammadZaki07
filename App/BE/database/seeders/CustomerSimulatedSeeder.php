@@ -25,8 +25,9 @@ class CustomerSimulatedSeeder extends Seeder
 
         for ($i = 1; $i <= 10; $i++) {
             $user = User::factory()->create([
-                'name' => "Customer " . $i,
+                'username' => "Customer " . $i,
                 'email' => "customer$i@gmail.com",
+                'role_id' => 4
             ]);
 
             // flow:
@@ -82,23 +83,28 @@ class CustomerSimulatedSeeder extends Seeder
         $totalSpend = $user->total_spend;
         $assignedBadge = $badges->where('min_spend', '<=', $totalSpend)->last();
 
-        if ($assignedBadge) {
-            $user->update(['badge_id' => $assignedBadge->id]);
-            Notification::create([
-                'user_id' => $user->id,
-                'title' => 'Level Up! 🎉',
-                'message' => "Selamat! Kamu sekarang adalah member {$assignedBadge->name}.",
-                'type' => 'achievement',
-                'is_global' => false,
-            ]);
-        }
+       if ($assignedBadge) {
+    $user->update(['badge_id' => $assignedBadge->id]);
 
-        Notification::create([
-            'user_id' => $user->id,
-            'title' => 'Riwayat Transaksi',
-            'message' => "Pesanan kamu senilai Rp " . number_format($totalSpend) . " telah terekam.",
-            'type' => 'info',
-            'is_global' => false,
-        ]);
+    Notification::create([
+        'id' => Str::uuid(),
+        'notifiable_id' => $user->id,
+        'notifiable_type' => User::class,
+        'title' => 'Level Up! 🎉',
+        'message' => "Selamat! Kamu sekarang adalah member {$assignedBadge->name}.",
+        'type' => 'achievement',
+        'is_global' => false,
+    ]);
+}
+
+Notification::create([
+    'id' => Str::uuid(),
+    'notifiable_id' => $user->id,
+    'notifiable_type' => User::class,
+    'title' => 'Riwayat Transaksi',
+    'message' => "Pesanan kamu senilai Rp " . number_format($totalSpend) . " telah terekam.",
+    'type' => 'info',
+    'is_global' => false,
+]);
     }
 }

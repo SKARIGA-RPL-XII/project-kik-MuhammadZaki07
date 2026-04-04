@@ -168,10 +168,6 @@ const NotificationPage: React.FC = () => {
       >
         <div className="flex flex-wrap items-center justify-between border-b border-stroke px-4 pb-4 dark:border-strokedark sm:px-6 xl:px-7.5">
           <div className="flex items-center gap-4">
-            <button className="flex items-center gap-2 rounded border border-stroke px-3 py-1.5 text-sm font-medium text-black hover:shadow-1 dark:border-strokedark dark:text-white transition">
-              <Filter size={16} /> Filter
-            </button>
-
             {selectedIds.length > 0 && (
               <div className="flex items-center gap-4 animate-in fade-in slide-in-from-left-2">
                 <div className="h-6 w-px bg-stroke dark:bg-strokedark" />
