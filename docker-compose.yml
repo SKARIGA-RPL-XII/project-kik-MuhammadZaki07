@@ -1,0 +1,36 @@
+services:
+  db:
+    image: mysql:8.0
+    container_name: gagallapar_db
+    restart: always
+    environment:
+      MYSQL_DATABASE: db_tugas_akhir_2026
+      MYSQL_ROOT_PASSWORD: zaki-kik-gtg-123
+    volumes:
+      - db_data:/var/lib/mysql
+
+  backend:
+    build: 
+      context: ./App/BE
+      dockerfile: ../../Dockerfile.be
+    container_name: gagallapar_be
+    restart: always
+    depends_on:
+      - db
+    ports:
+      - "8000:80"
+    volumes:
+      - ./App/BE:/var/www/html
+
+  frontend:
+    image: node:20-alpine
+    container_name: gagallapar_fe
+    working_dir: /app
+    volumes:
+      - ./App/FE:/app
+    ports:
+      - "3000:3000"
+    command: sh -c "npm install && npm run dev -- --host"
+
+volumes:
+  db_data:
