@@ -1,5 +1,6 @@
 import type React from "react";
 import { useEffect, useRef } from "react";
+import { cn } from "@/lib/utils";
 
 interface DropdownProps {
   isOpen: boolean;
@@ -12,7 +13,7 @@ export const Dropdown: React.FC<DropdownProps> = ({
   isOpen,
   onClose,
   children,
-  className = "",
+  className,
 }) => {
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -27,18 +28,24 @@ export const Dropdown: React.FC<DropdownProps> = ({
       }
     };
 
-    document.addEventListener("mousedown", handleClickOutside);
+    if (isOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [onClose]);
+  }, [isOpen, onClose]);
 
   if (!isOpen) return null;
 
   return (
     <div
       ref={dropdownRef}
-      className={`absolute z-50 right-0 mt-2  rounded-xl border border-neutral-200 bg-white  shadow-theme-lg dark:border-neutral-800 dark:bg-neutral-dark ${className}`}
+      className={cn(
+        "absolute z-50 right-0 mt-2 rounded-xl border border-neutral-200 bg-white shadow-theme-lg dark:border-neutral-800 dark:bg-neutral-dark",
+        className
+      )}
     >
       {children}
     </div>

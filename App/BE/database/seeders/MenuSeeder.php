@@ -53,7 +53,7 @@ class MenuSeeder extends Seeder
 
         foreach ($menuData as $data) {
             $menu = Menu::create([
-                'menu_image' => 'menus/image-dumy.png',
+                // 'menu_image' => '/image-dumy.png',
                 'name' => $data['name'],
                 'description' => $data['description'],
                 'price' => $data['price'],

@@ -78,18 +78,27 @@ export default function MenuTable({
             {!loading &&
               menus.map((menu) => {
                 const hasDiscount = menu.discount && menu.discount.is_active;
-                const discountValue = hasDiscount ? menu.discount.value_discount : 0;
-                
+                const discountValue = hasDiscount
+                  ? menu.discount.value_discount
+                  : 0;
+
                 const finalPrice = hasDiscount
                   ? menu.price * (1 - discountValue / 100)
                   : menu.price;
 
                 return (
-                  <TableRow key={menu.id} className="hover:bg-neutral-50/50 dark:hover:bg-white/[0.02] transition-colors">
+                  <TableRow
+                    key={menu.id}
+                    className="hover:bg-neutral-50/50 dark:hover:bg-white/[0.02] transition-colors"
+                  >
                     <TableCell className="px-5 py-4 text-start">
                       <div className="flex items-center gap-3">
                         <img
-                          src={`${import.meta.env.VITE_STORAGE_URL}/${menu.menu_image}`}
+                          src={
+                            menu.image
+                              ? `${import.meta.env.VITE_STORAGE_URL}/${menu.image}`
+                              : "/image-dumy.png"
+                          }
                           alt={menu.name}
                           className="w-12 h-12 rounded-lg object-center border border-neutral-100 dark:border-white/10"
                         />
@@ -123,7 +132,9 @@ export default function MenuTable({
                           -{discountValue}%
                         </Badge>
                       ) : (
-                        <span className="text-neutral-400 text-xs italic">No Discount</span>
+                        <span className="text-neutral-400 text-xs italic">
+                          No Discount
+                        </span>
                       )}
                     </TableCell>
 
@@ -131,21 +142,29 @@ export default function MenuTable({
                       <div className="flex flex-wrap gap-1.5 max-w-[250px] max-h-[80px] overflow-y-auto scrollbar-thin scrollbar-thumb-neutral-200 pr-2">
                         {menu.stocks && menu.stocks.length > 0 ? (
                           menu.stocks.map((s: any) => (
-                            <div 
-                              key={s.id} 
+                            <div
+                              key={s.id}
                               className="inline-flex items-center px-2 py-0.5 rounded-md bg-neutral-100 dark:bg-white/5 border border-neutral-200 dark:border-white/10 text-[10px] font-medium text-neutral-600 dark:text-neutral-300 whitespace-nowrap"
                             >
-                              {s.name} <span className="ml-1 text-blue-500 font-bold">{s.pivot.amount}</span>
+                              {s.name}{" "}
+                              <span className="ml-1 text-blue-500 font-bold">
+                                {s.pivot.amount}
+                              </span>
                             </div>
                           ))
                         ) : (
-                          <span className="text-neutral-400 text-xs">No Ingredients</span>
+                          <span className="text-neutral-400 text-xs">
+                            No Ingredients
+                          </span>
                         )}
                       </div>
                     </TableCell>
 
                     <TableCell>
-                      <Badge color={menu.is_active ? "success" : "error"} variant="light">
+                      <Badge
+                        color={menu.is_active ? "success" : "error"}
+                        variant="light"
+                      >
                         {menu.is_active ? "Active" : "Inactive"}
                       </Badge>
                     </TableCell>

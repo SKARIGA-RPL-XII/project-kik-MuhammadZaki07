@@ -7,7 +7,6 @@ import { MenuService } from "../../services/menu.service";
 import {
   ArrowLeft,
   Package,
-  Tag,
   Calendar,
   Clock,
   Layers,
@@ -84,13 +83,17 @@ function Show() {
     <>
       <PageMeta title={menu.name} description={menu.description} />
       <div className="max-w-6xl mx-auto">
-          <PageBreadcrumb pageTitle="Menu Detail" />
+        <PageBreadcrumb pageTitle="Menu Detail" />
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           <div className="lg:col-span-5 space-y-6">
             <div className="relative rounded-3xl overflow-hidden bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 ">
               <img
-                src={`${import.meta.env.VITE_STORAGE_URL}/${menu.menu_image}`}
+                src={
+                  menu.image
+                    ? `${import.meta.env.VITE_STORAGE_URL}/${menu.image}`
+                    : "/image-dumy.png"
+                }
                 alt={menu.name}
                 className="w-full h-auto object-cover aspect-square"
               />
@@ -105,7 +108,7 @@ function Show() {
             <ComponentCard title="Status & Category">
               <div className="space-y-4">
                 <div className="flex justify-between items-center p-3 rounded-xl bg-neutral-50 dark:bg-white/[0.02]">
-                  <span className="text-neutral-500 text-xs font-medium uppercase tracking-wider">
+                  <span className="text-neutral-500 text-xs font-medium">
                     Availability
                   </span>
                   <Badge color={menu.is_active ? "success" : "error"}>
@@ -113,7 +116,7 @@ function Show() {
                   </Badge>
                 </div>
                 <div className="flex justify-between items-center p-3 rounded-xl bg-neutral-50 dark:bg-white/[0.02]">
-                  <span className="text-neutral-500 text-xs font-medium uppercase tracking-wider">
+                  <span className="text-neutral-500 text-xs font-medium">
                     Category
                   </span>
                   <span className="text-sm font-bold flex items-center gap-1 text-neutral-700 dark:text-neutral-300">
@@ -127,31 +130,23 @@ function Show() {
 
           <div className="lg:col-span-7 space-y-6">
             <div className="bg-white dark:bg-neutral-900 rounded-3xl p-8 border border-neutral-200 dark:border-neutral-800  relative overflow-hidden">
-              <div className="absolute top-0 right-0 p-8 opacity-5">
-                <ShoppingBag
-                  size={120}
-                  strokeWidth={0.5}
-                  className="animate-pulse"
-                />
-              </div>
-
               <div className="relative z-10">
-                <h1 className="text-4xl font-black text-neutral-900 dark:text-white mb-4 tracking-tight">
+                <h1 className="text-4xl font-black text-neutral-900 dark:text-white mb-4">
                   {menu.name}
                 </h1>
 
                 <div className="flex items-center gap-4 mb-8">
                   <div className="flex flex-col">
-                    <span className="text-[10px] text-neutral-400 uppercase font-bold mb-1">
+                    <span className="text-xs text-neutral-400 font-medium mb-1">
                       Final Price
                     </span>
-                    <span className="text-4xl font-black text-neutral-900 dark:text-white tracking-tighter">
+                    <span className="text-4xl font-black text-neutral-900 dark:text-white">
                       {formatCurrency(finalPrice)}
                     </span>
                   </div>
                   {menu.discount && (
                     <div className="flex flex-col border-l border-neutral-200 dark:border-neutral-800 pl-4">
-                      <span className="text-[10px] text-neutral-400 uppercase font-bold mb-1">
+                      <span className="text-xs text-neutral-400 font-medium mb-1">
                         Normal
                       </span>
                       <span className="text-lg line-through text-neutral-400 font-medium">
@@ -163,7 +158,7 @@ function Show() {
 
                 <div className="space-y-6">
                   <div>
-                    <h3 className="text-sm font-bold text-neutral-800 dark:text-white mb-2 flex items-center gap-2">
+                    <h3 className="text-sm font-medium text-neutral-800 dark:text-white mb-2 flex items-center gap-2">
                       <Info size={16} className="text-red-500" />
                       About this menu
                     </h3>
@@ -175,7 +170,7 @@ function Show() {
 
                   {menu.stocks && menu.stocks.length > 0 && (
                     <div className="pt-6 border-t border-neutral-100 dark:border-neutral-800">
-                      <h3 className="text-sm font-bold text-neutral-800 dark:text-white mb-4 flex items-center gap-2">
+                      <h3 className="text-sm font-medium text-neutral-800 dark:text-white mb-4 flex items-center gap-2">
                         <Package size={16} className="text-red-500" />
                         Ingredient Usage
                       </h3>
@@ -188,7 +183,7 @@ function Show() {
                             <span className="text-xs font-medium text-neutral-600 dark:text-neutral-300">
                               {stock.name}
                             </span>
-                            <span className="text-[10px] bg-neutral-200 dark:bg-neutral-700 px-1.5 py-0.5 rounded text-neutral-500">
+                            <span className="text-xs bg-neutral-200 dark:bg-neutral-700 px-1.5 py-0.5 rounded text-neutral-500">
                               {stock.pivot.amount} {stock.unit}
                             </span>
                           </div>
@@ -199,7 +194,7 @@ function Show() {
 
                   {menu.attributes && menu.attributes.length > 0 && (
                     <div className="pt-6 border-t border-neutral-100 dark:border-neutral-800">
-                      <h3 className="text-sm font-bold text-neutral-800 dark:text-white mb-4 flex items-center gap-2">
+                      <h3 className="text-sm font-medium text-neutral-800 dark:text-white mb-4 flex items-center gap-2">
                         <Layers size={16} className="text-red-500" />
                         Available Variations
                       </h3>
@@ -222,7 +217,7 @@ function Show() {
                               key={attrName}
                               className="p-3 rounded-2xl bg-red-50/50 dark:bg-red-500/5 border border-red-100/50 dark:border-red-500/10"
                             >
-                              <p className="text-[10px] uppercase text-red-600 dark:text-red-400 font-bold mb-1">
+                              <p className="text-xs text-red-600 dark:text-red-400 font-medium mb-1">
                                 {attrName}
                               </p>
                               <div className="flex flex-wrap gap-1">
@@ -250,10 +245,10 @@ function Show() {
                       <Calendar size={18} />
                     </div>
                     <div>
-                      <p className="text-[10px] text-neutral-400 uppercase font-bold tracking-tight">
+                      <p className="text-xs text-neutral-400 font-medium">
                         Launched on
                       </p>
-                      <p className="text-xs font-bold text-neutral-700 dark:text-neutral-300">
+                      <p className="text-xs font-medium text-neutral-700 dark:text-neutral-300">
                         {new Date(menu.created_at).toLocaleDateString("id-ID", {
                           day: "numeric",
                           month: "short",
@@ -267,10 +262,10 @@ function Show() {
                       <Clock size={18} />
                     </div>
                     <div>
-                      <p className="text-[10px] text-neutral-400 uppercase font-bold tracking-tight">
+                      <p className="text-xs text-neutral-400 font-medium">
                         Last Activity
                       </p>
-                      <p className="text-xs font-bold text-neutral-700 dark:text-neutral-300">
+                      <p className="text-xs font-medium text-neutral-700 dark:text-neutral-300">
                         {new Date(menu.updated_at).toLocaleDateString("id-ID", {
                           day: "numeric",
                           month: "short",

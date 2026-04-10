@@ -55,7 +55,7 @@ export const navConfig = {
     {
       name: "Leave & Permits",
       icon: <FileText />,
-      path: "/leaves",
+      path: "/leave-permits",
       role: ["admin", "cashier", "employee"],
     },
     {

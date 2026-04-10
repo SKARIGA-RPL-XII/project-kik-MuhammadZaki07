@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-import GridShape from "../../components/common/GridShape";
 import { Link } from "react-router";
 import ThemeTogglerTwo from "../../components/common/ThemeTogglerTwo";
 import { useSettings } from "@/context/SettingsContext";
@@ -37,7 +36,7 @@ export default function AuthLayout({
                   src={
                     settings?.logo_light
                       ? `${import.meta.env.VITE_STORAGE_URL}/${settings.logo_light}`
-                      : "/GAGALLAPAR-Logo-1.png"
+                      : "/image-dumy.png"
                   }
                   alt="Logo"
                   className="h-8 w-auto brightness-0 invert opacity-90"
@@ -46,7 +45,7 @@ export default function AuthLayout({
               <div className="h-6 w-[1px] bg-white/20" />
               <div className="space-y-0.5">
                 <h1 className="text-lg font-semibold text-white leading-none">
-                  {settings?.store_name || "Gagal Lapar"}
+                  {settings?.store_name || "store_name"}
                 </h1>
                 <p className="text-[10px] text-white/70 font-medium">
                   {settings?.company_name || "Authentic Food & Drinks"}
@@ -120,7 +119,7 @@ export default function AuthLayout({
           <div className="relative z-20 flex justify-center items-center text-[11px] text-white font-medium pt-6">
             <span>
               © {new Date().getFullYear()}{" "}
-              {settings?.store_name || "Gagal Lapar"}
+              {settings?.store_name || "-"}
             </span>
           </div>
         </div>

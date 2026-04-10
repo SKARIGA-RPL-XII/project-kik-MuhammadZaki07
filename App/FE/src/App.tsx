@@ -417,9 +417,9 @@ const router = createBrowserRouter([
             ) 
           },
           { 
-            path: "leaves", 
+            path: "leave-permits", 
             element: (
-              <PermissionMiddleware module="leave">
+              <PermissionMiddleware module="leave & permits">
                 <LeavePage />
               </PermissionMiddleware>
             ) 

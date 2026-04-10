@@ -120,7 +120,7 @@ const AppSidebar: React.FC = () => {
       >
         <Link to="/" className="flex items-center gap-3">
           <img
-            src={getLogoUrl(config.logo_light, "/black-logo.png")}
+            src={getLogoUrl(config.logo_light, "/image-dumy.png")}
             alt="Logo"
             loading="lazy"
             style={{ width: showFull ? 50 : 32, height: "auto" }}
@@ -131,7 +131,7 @@ const AppSidebar: React.FC = () => {
           />
 
           <img
-            src={getLogoUrl(config.logo_dark, "/white-logo.png")}
+            src={getLogoUrl(config.logo_dark, "/image-dumy.png")}
             alt="Logo"
             loading="lazy"
             style={{ width: showFull ? 50 : 32, height: "auto" }}

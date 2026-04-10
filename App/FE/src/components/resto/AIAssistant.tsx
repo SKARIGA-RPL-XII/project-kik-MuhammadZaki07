@@ -1,132 +1,103 @@
+import { apiClient } from '@/lib/apiClient'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Send, X, MessageCircle, Flame, TicketCheck, Pin, LeafyGreen, Bot } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { Send, X, MessageCircle, Flame, TicketCheck, Pin, LeafyGreen, Bot, ShoppingCart } from 'lucide-react'
+import { useEffect, useState, useRef } from 'react'
 
 interface Message {
   id: string
   role: 'user' | 'assistant'
   content: string
   timestamp: Date
+  menuData?: any[] // Untuk menyimpan daftar menu dari AI
 }
 
 const quickActions = [
-  { emoji: <Flame color='red'/>, text: 'Rekomendasi Menu Pedas', id: 'spicy' },
-  { emoji: <LeafyGreen color='green' fill='green'/>, text: 'Menu Sehat', id: 'healthy' },
-  { emoji: <TicketCheck color='gray' fill='white'/>, text: 'Cek Promo', id: 'promo' },
-  { emoji: <Pin color='red' fill='red'/>, text: 'Menu Signature', id: 'signature' },
+  { emoji: <Flame size={18} color='red'/>, text: 'Menu Pedas', id: 'spicy' },
+  { emoji: <LeafyGreen size={18} color='green' fill='green'/>, text: 'Menu Sehat', id: 'healthy' },
+  { emoji: <TicketCheck size={18} color='gray'/>, text: 'Cek Promo', id: 'promo' },
+  { emoji: <Pin size={18} color='red' fill='red'/>, text: 'Signature', id: 'signature' },
 ]
 
-const assistantResponses: Record<string, string> = {
-  spicy: 'Kami merekomendasikan Sambal Goreng Telur, Ayam Penyet, dan Lumpia Goreng Pedas! 🌶️ Semuanya punya level kepedasan yang bisa disesuaikan.',
-  healthy: 'Menu sehat kami termasuk: Salad Sayuran Segar, Ikan Bakar dengan Rempah, dan Sup Ayam Rendah Garam. Semua lezat dan bergizi!',
-  promo: 'Sedang ada promo SPESIAL JUMAT: Diskon 30% untuk menu pilihan. Plus, setiap pembelian minuman gratis dessert! 🎉',
-  signature: 'Signature kami yang paling dicinta: Rendang Daging Premium, Nasi Kuning Istimewa, dan Martabak Manis Kejutan. Wajib dicoba!',
-}
-
-interface AIAssistantProps {
-  onDisappear?: () => void
-  isCartOpen?: boolean
-}
-
-export function AIAssistant({ onDisappear , isCartOpen }: AIAssistantProps) {
+export function AIAssistant({ isCartOpen }: { isCartOpen?: boolean }) {
   const [isOpen, setIsOpen] = useState(false)
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
       role: 'assistant',
-      content: 'Halo! 👋 Saya siap membantu Anda memilih menu terbaik. Ada yang bisa saya bantu?',
+      content: 'Halo! 👋 Gue GagalBot. Laper? Mau gue cariin menu yang gokil?',
       timestamp: new Date(),
     },
   ])
   const [inputValue, setInputValue] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [hasAppeared, setHasAppeared] = useState(false)
+  const scrollRef = useRef<HTMLDivElement>(null)
+
+  // Auto Scroll ke bawah tiap ada pesan baru
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight
+    }
+  }, [messages, isLoading])
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setHasAppeared(true)
-    }, 5000)
+    const timer = setTimeout(() => setHasAppeared(true), 5000)
     return () => clearTimeout(timer)
   }, [])
 
-  const handleQuickAction = (actionId: string) => {
-    const userMessage = quickActions.find((a) => a.id === actionId)?.text || ''
-    addMessage(userMessage, 'user')
-    window.navigator?.vibrate?.(50)
-
-    setTimeout(() => {
-      const response = assistantResponses[actionId] || 'Maaf, saya tidak memahami pertanyaan Anda.'
-      addMessage(response, 'assistant')
-    }, 1000)
+  const addMessage = (content: string, role: 'user' | 'assistant', menuData?: any[]) => {
+    setMessages((prev) => [
+      ...prev, 
+      { id: Date.now().toString(), role, content, timestamp: new Date(), menuData }
+    ])
   }
 
-  const handleSendMessage = () => {
-    if (!inputValue.trim()) return
-    addMessage(inputValue, 'user')
+  const fetchAiResponse = async (userText: string) => {
+    setIsLoading(true)
+    try {
+      const response = await apiClient.post('/ai/chat', { message: userText })
+      const aiData = response.data
+      
+      // Simpan pesan beserta data menu jika action-nya show_menu
+      addMessage(
+        aiData.message, 
+        'assistant', 
+        aiData.action === 'show_menu' ? aiData.data : undefined
+      )
+    } catch (error) {
+      addMessage("Duh, server gue lagi pusing. Coba lagi ya!", 'assistant')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleSendMessage = (text?: string) => {
+    const messageToSend = text || inputValue
+    if (!messageToSend.trim()) return
+    
+    addMessage(messageToSend, 'user')
     setInputValue('')
     window.navigator?.vibrate?.(50)
-
-    setIsLoading(true)
-    setTimeout(() => {
-      const response = 'Terima kasih atas pertanyaan Anda! Silakan pesan menu favorit Anda atau hubungi staff kami untuk bantuan lebih lanjut.'
-      addMessage(response, 'assistant')
-      setIsLoading(false)
-    }, 1500)
+    fetchAiResponse(messageToSend)
   }
 
-  const addMessage = (content: string, role: 'user' | 'assistant') => {
-    const newMessage: Message = {
-      id: Date.now().toString(),
-      role,
-      content,
-      timestamp: new Date(),
-    }
-    setMessages((prev) => [...prev, newMessage])
-  }
-
-  const hideCartPaths = ["/profile-customer", "/transaction", "/menu/","/tables-customer","/booking",'payment-customer'];
-
-   const shouldHide = hideCartPaths.some((path) =>
-    location.pathname.includes(path),
-  );
-
-  if (shouldHide) return null;
+  if (["/transaction", "/admin", "/login"].some(path => location.pathname.includes(path))) return null
 
   return (
     <>
       <AnimatePresence>
         {hasAppeared && !isOpen && (
           <motion.div
-            initial={{ scale: 0, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0, opacity: 0 }}
-            transition={{ type: 'spring', damping: 15 }}
-            className={isCartOpen ? "fixed bottom-10 lg:block hidden right-110 z-20" : "fixed lg:bottom-10 bottom-30 right-9 z-20"}
+            initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 0 }}
+            className={`fixed z-50 ${isCartOpen ? "bottom-10 right-110 hidden lg:block" : "bottom-10 right-6"}`}
           >
-            <motion.div
-              animate={{ y: [0, -5, 0] }}
-              transition={{ repeat: Infinity, duration: 2 }}
-              className="absolute -top-15 right-0 px-3 py-2 bg-red-600 text-white text-xs rounded-full flex items-center gap-2 shadow-lg"
-            >
-              <h1 className='font-bold text-white text-xl'>AI</h1>
-              <span className="font-semibold">Thinking...</span>
-            </motion.div>
-
             <motion.button
-              whileHover={{ scale: 1.15 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => {
-                setIsOpen(true)
-                window.navigator?.vibrate?.(50)
-              }}
-              className="relative w-16 h-16 rounded-full bg-gradient-to-br from-red-600 to-red-700 text-white shadow-xl flex items-center justify-center"
+              whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}
+              onClick={() => setIsOpen(true)}
+              className="w-16 h-16 rounded-full bg-red-600 text-white shadow-2xl flex items-center justify-center relative"
             >
-              <motion.div
-                animate={{ scale: [1, 1.2, 1] }}
-                transition={{ repeat: Infinity, duration: 2 }}
-                className="absolute inset-0 rounded-full border-2 border-red-400 opacity-50"
-              />
-              <MessageCircle className="w-7 h-7" />
+              <motion.div animate={{ scale: [1, 1.2, 1] }} transition={{ repeat: Infinity, duration: 2 }} className="absolute inset-0 rounded-full border-2 border-red-400 opacity-50" />
+              <MessageCircle size={28} />
             </motion.button>
           </motion.div>
         )}
@@ -135,136 +106,85 @@ export function AIAssistant({ onDisappear , isCartOpen }: AIAssistantProps) {
       <AnimatePresence>
         {isOpen && (
           <>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setIsOpen(false)} className="fixed inset-0 z-40 bg-black/20 backdrop-blur-sm" />
             <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setIsOpen(false)}
-              className="fixed inset-0 z-40 bg-black/30 backdrop-blur-sm"
-            />
-
-            <motion.div
-              initial={{ opacity: 0, scale: 0.8, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.8, y: 20 }}
-              transition={{ type: 'spring', damping: 20 }}
-              className={`fixed ${isCartOpen ? "fixed bottom-10 right-110 z-20" : "fixed bottom-10 right-9 z-20"} z-50 w-96 max-w-full h-[600px] bg-white rounded-3xl shadow-2xl flex flex-col overflow-hidden`}
+              initial={{ y: 100, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 100, opacity: 0 }}
+              className={`fixed z-50 w-[380px] max-w-[95vw] h-[600px] bg-white rounded-3xl shadow-2xl overflow-hidden flex flex-col ${isCartOpen ? "bottom-10 right-110" : "bottom-10 right-6"}`}
             >
-              <div className="bg-gradient-to-r from-red-600 to-red-700 text-white p-4 flex items-center justify-between">
+              {/* Header */}
+              <div className="p-4 bg-red-600 text-white flex justify-between items-center shadow-lg">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
-                    <Bot className="w-6 h-6" />
-                  </div>
-                  <div>
-                    <h3 className="font-bold">Restaurant Assistant</h3>
-                    <p className="text-xs text-white/80">Always here to help</p>
-                  </div>
+                  <div className="p-2 bg-white/20 rounded-full"><Bot size={20}/></div>
+                  <div><h4 className="font-bold text-sm">GagalBot AI</h4><p className="text-[10px] opacity-80 font-medium">Asisten GAGAL-LAPAR</p></div>
                 </div>
-                <motion.button
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => setIsOpen(false)}
-                  className="p-2 hover:bg-white/20 rounded-full transition-colors"
-                >
-                  <X className="w-5 h-5" />
-                </motion.button>
+                <button onClick={() => setIsOpen(false)} className="p-2 hover:bg-white/10 rounded-full transition-colors"><X size={20}/></button>
               </div>
 
-              <div className="flex-1 overflow-y-auto p-4 space-y-4">
-                {messages.map((message) => (
-                  <motion.div
-                    key={message.id}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
-                  >
-                    <div
-                      className={`max-w-xs px-4 py-3 rounded-2xl ${
-                        message.role === 'user'
-                          ? 'bg-gradient-to-br from-red-600 to-red-700 text-white'
-                          : 'bg-slate-100 text-slate-900'
-                      }`}
-                    >
-                      <p className="text-sm leading-relaxed">{message.content}</p>
+              {/* Chat Area */}
+              <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-50 scroll-smooth">
+                {messages.map((m) => (
+                  <div key={m.id} className="flex flex-col gap-2">
+                    <div className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                      <div className={`p-3 rounded-2xl max-w-[85%] text-sm shadow-sm ${m.role === 'user' ? 'bg-red-600 text-white font-medium' : 'bg-white border border-slate-100 text-slate-800'}`}>
+                        {m.content}
+                      </div>
                     </div>
-                  </motion.div>
-                ))}
 
+                    {/* Rendering Daftar Menu (Jika AI kirim data) */}
+                    {m.menuData && (
+                      <div className="flex flex-col gap-2 ml-2 mt-1">
+                        {m.menuData.map((item, idx) => (
+                          <motion.div 
+                            key={idx}
+                            initial={{ opacity: 0, x: -20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: idx * 0.1 }}
+                            className="bg-white p-3 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between gap-3 max-w-[90%]"
+                          >
+                            <div className="flex-1">
+                              <h5 className="text-[11px] font-bold text-slate-800 line-clamp-1">{item.name}</h5>
+                              <p className="text-[10px] text-red-600 font-bold">Rp {item.price.toLocaleString()}</p>
+                            </div>
+                            <button 
+                              disabled={!item.is_available}
+                              className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all ${item.is_available ? 'bg-red-600 text-white active:scale-95' : 'bg-slate-100 text-slate-400 cursor-not-allowed'}`}
+                            >
+                              <ShoppingCart size={12}/>
+                              {item.is_available ? 'Pesan' : 'Habis'}
+                            </button>
+                          </motion.div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ))}
                 {isLoading && (
-                  <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    className="flex gap-2"
-                  >
-                    <motion.div
-                      animate={{ y: [0, -4, 0] }}
-                      transition={{ repeat: Infinity, duration: 0.6, delay: 0 }}
-                      className="w-2 h-2 rounded-full bg-slate-400"
-                    />
-                    <motion.div
-                      animate={{ y: [0, -4, 0] }}
-                      transition={{ repeat: Infinity, duration: 0.6, delay: 0.2 }}
-                      className="w-2 h-2 rounded-full bg-slate-400"
-                    />
-                    <motion.div
-                      animate={{ y: [0, -4, 0] }}
-                      transition={{ repeat: Infinity, duration: 0.6, delay: 0.4 }}
-                      className="w-2 h-2 rounded-full bg-slate-400"
-                    />
-                  </motion.div>
+                  <div className="flex items-center gap-2 text-[11px] text-slate-400 font-medium italic">
+                    <Bot size={14} className="animate-bounce" /> GagalBot lagi ngetik...
+                  </div>
                 )}
               </div>
 
-              {messages.length === 1 && !isLoading && (
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="px-4 py-3 bg-slate-50 border-t border-slate-200"
-                >
-                  <p className="text-xs text-slate-600 font-semibold mb-2">Coba pertanyaan ini:</p>
-                  <div className="grid grid-cols-2 gap-2">
-                    {quickActions.map((action) => (
-                      <motion.button
-                        key={action.id}
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                        onClick={() => handleQuickAction(action.id)}
-                        className="p-2 rounded-lg bg-white border border-slate-200 hover:bg-red-50 hover:border-red-300 transition-all text-left"
-                      >
-                        <span className="text-lg block mb-1">{action.emoji}</span>
-                        <span className="text-xs font-semibold text-slate-900 line-clamp-2">
-                          {action.text}
-                        </span>
-                      </motion.button>
+              {/* Input Area */}
+              <div className="p-4 bg-white border-t border-slate-100">
+                {messages.length === 1 && (
+                  <div className="grid grid-cols-2 gap-2 mb-4">
+                    {quickActions.map(a => (
+                      <button key={a.id} onClick={() => handleSendMessage(a.text)} className="flex items-center gap-2 p-2.5 border border-slate-100 rounded-xl hover:bg-red-50 hover:border-red-200 transition-all text-[11px] font-bold text-slate-700">
+                        {a.emoji} {a.text}
+                      </button>
                     ))}
                   </div>
-                </motion.div>
-              )}
-
-              {/* Input */}
-              <div className="p-4 border-t border-slate-200 bg-white">
-                <div className="flex gap-2">
+                )}
+                <div className="flex gap-2 bg-slate-100 p-1.5 rounded-full px-4 border border-slate-200 shadow-inner focus-within:border-red-300 transition-colors">
                   <input
-                    type="text"
-                    placeholder="Tanya sesuatu..."
-                    value={inputValue}
-                    onChange={(e) => setInputValue(e.target.value)}
-                    onKeyPress={(e) => {
-                      if (e.key === 'Enter') {
-                        handleSendMessage()
-                      }
-                    }}
-                    className="flex-1 px-4 py-2 rounded-full border border-slate-200 focus:border-red-600 focus:outline-none text-sm"
+                    value={inputValue} onChange={(e) => setInputValue(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
+                    placeholder="Tanya menu atau budget..." className="flex-1 bg-transparent py-1.5 text-sm outline-none font-medium"
                   />
-                  <motion.button
-                    whileHover={{ scale: 1.1 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={handleSendMessage}
-                    disabled={!inputValue.trim()}
-                    className="p-2 rounded-full bg-red-600 text-white hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    <Send className="w-5 h-5" />
-                  </motion.button>
+                  <button onClick={() => handleSendMessage()} className="p-2 bg-red-600 text-white rounded-full hover:bg-red-700 transition-colors">
+                    <Send size={16}/>
+                  </button>
                 </div>
               </div>
             </motion.div>

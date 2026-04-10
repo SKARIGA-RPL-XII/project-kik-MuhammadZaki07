@@ -93,10 +93,14 @@ export function CartSummary({
                             stiffness: 300,
                             damping: 20,
                           }}
-                          src={`${import.meta.env.VITE_STORAGE_URL}/${item.image}`}
+                          src={
+                            item.image
+                              ? `${import.meta.env.VITE_STORAGE_URL}/${item.image}`
+                              : "/image-dumy.png"
+                          }
                           className="w-10 h-10 rounded-full border-2 border-white dark:border-zinc-800 object-cover bg-white shadow-sm"
                           style={{ zIndex: 10 - idx }}
-                          alt="item"
+                          alt={item.name}
                         />
                       ))
                     ) : (

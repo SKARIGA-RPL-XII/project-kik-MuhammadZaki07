@@ -30,6 +30,28 @@ const queryClient = new QueryClient({
   },
 });
 
+const verifyIntegrity = async () => {
+  const secret = import.meta.env.VITE_PROJECT_KEY || "";
+  const signature = "92559c0bbb06677e277ae3e13fe4b4466e56e1278aaf183771c5c3f20fecf4ff";
+
+  const msgBuffer = new TextEncoder().encode(secret);
+  const hashBuffer = await crypto.subtle.digest("SHA-256", msgBuffer);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  const hashHex = hashArray.map(b => b.toString(16).padStart(2, "0")).join("");
+
+  if (hashHex !== signature) {
+    document.body.innerHTML = `
+      <div style="display:flex;justify-content:center;align-items:center;height:100vh;flex-direction:column;font-family:sans-serif;background:#000;color:#fff;">
+        <h1 style="color:red;">SYSTEM INTEGRITY ERROR</h1>
+        <p>Akses ditolak: Project ini memerlukan Lisensi Resmi dari pemilik</p>
+      </div>
+    `;
+    throw new Error("Unauthorized access");
+  }
+};
+
+verifyIntegrity();
+
 createRoot(document.getElementById("root")!).render(
   <QueryClientProvider client={queryClient}>
     <AuthProvider>

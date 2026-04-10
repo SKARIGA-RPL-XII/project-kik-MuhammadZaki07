@@ -25,10 +25,10 @@ export default function LanguageSwitcher() {
     <div className="relative" title={selectedLanguage.key}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2.5 px-3 py-2"
+        className="flex items-center lg:gap-2.5 gap-1 px-3 py-2"
       >
         <FlagIcon countryCode={selectedLanguage.key} />
-        <span className="text-sm font-semibold text-neutral-700 dark:text-neutral-300 uppercase">
+        <span className="text-sm font-semibold hidden lg:block text-neutral-700 dark:text-neutral-300 uppercase">
           {selectedLanguage.key}
         </span>
         <ChevronDown
