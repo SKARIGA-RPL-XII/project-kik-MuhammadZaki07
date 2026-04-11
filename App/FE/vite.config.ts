@@ -10,13 +10,9 @@ const __dirname = path.dirname(__filename);
 
 export default defineConfig({
   plugins: [
-    react(),
-    // visualizer({
-    //   open: true,
-    //   filename: "stats.html",
-    //   gzipSize: true,
-    //   brotliSize: true,
-    // }),
+    react({
+      fastRefresh: true,
+    }),
     svgr({
       svgrOptions: {
         icon: true,
@@ -24,56 +20,65 @@ export default defineConfig({
         namedExport: "ReactComponent",
       },
     }),
+    visualizer({
+      open: false,
+      filename: "stats.html",
+      gzipSize: true,
+      brotliSize: true,
+    }),
   ],
-  optimizeDeps: {
-    exclude: ["exceljs"],
-    esbuildOptions: {
-      target: "es2022",
-    },
-  },
+
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
     },
   },
+
+  optimizeDeps: {
+    include: ["react", "react-dom"],
+    exclude: ["exceljs", "jspdf", "jspdf-autotable"],
+  },
+
   build: {
-    minify: "terser",
-    target: "es2022",
-    terserOptions: {
-      compress: {
-        drop_console: true,
-        drop_debugger: true,
-      },
-    },
+    target: "esnext",
+    minify: "esbuild",
+    sourcemap: false,
+    cssCodeSplit: true,
+    reportCompressedSize: false,
+    chunkSizeWarningLimit: 1500,
+
     rollupOptions: {
       output: {
         manualChunks(id) {
           if (id.includes("node_modules")) {
-            if (id.includes("react") || id.includes("react-dom"))
-              return "react-core";
+            if (id.includes("react")) return "react-vendor";
             if (id.includes("react-router")) return "router";
-            if (id.includes("apexcharts")) return "charts";
-            if (id.includes("framer-motion")) return "animations";
             if (id.includes("lucide-react")) return "icons";
+            if (id.includes("@tanstack")) return "query";
+            if (id.includes("axios")) return "http";
+            if (id.includes("apexcharts")) return "charts";
 
             if (
               id.includes("jspdf") ||
-              id.includes("xlsx") ||
-              id.includes("exceljs")
-            )
-              return "export";
+              id.includes("exceljs") ||
+              id.includes("xlsx")
+            ) {
+              return "export-heavy";
+            }
 
-            if (id.includes("@tanstack")) return "query";
-            if (id.includes("axios")) return "http";
             if (id.includes("@radix-ui")) return "ui";
 
             return "vendor";
           }
+
+          if (id.includes("/pages/")) {
+            return "pages";
+          }
         },
       },
     },
-    chunkSizeWarningLimit: 1000,
   },
+
   server: {
     proxy: {
       "/api": {
