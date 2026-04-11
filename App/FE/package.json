@@ -6,7 +6,7 @@
   "main": "main.cjs",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
     "electron:start": "electron .",
@@ -95,6 +95,7 @@
     "laravel-echo": "^2.3.0",
     "postcss": "^8.5.2",
     "pusher-js": "^8.4.0",
+    "rollup-plugin-visualizer": "^7.0.1",
     "shadcn": "^3.8.4",
     "tailwindcss": "^4.0.8",
     "terser": "^5.46.0",

@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { Html5QrcodeScanner } from "html5-qrcode";
 import { Search, Loader2, Camera } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -51,37 +50,65 @@ export default function OrderScanner() {
 
   useEffect(() => {
     let scanner: any = null;
+    let isMounted = true;
+
+    const initScanner = async () => {
+      if (typeof window === "undefined") return;
+      const module = await import("html5-qrcode");
+      const Html5QrcodeScanner = module.Html5QrcodeScanner;
+
+      if (!isMounted) return;
+
+      scanner = new Html5QrcodeScanner(
+        "reader",
+        {
+          fps: 10,
+          qrbox: { width: 250, height: 120 },
+          aspectRatio: 1.777,
+        },
+        false,
+      );
+
+      scanner.render(
+        async (decodedText: string) => {
+          if (!isMounted) return;
+
+          try {
+            await scanner.clear();
+          } catch (err) {
+            console.error("Scanner clear error:", err);
+          }
+
+          setIsScanning(false);
+          setTransactionCode(decodedText);
+          fetchOrder(decodedText);
+        },
+        () => {},
+      );
+    };
 
     if (isScanning) {
       const timer = setTimeout(() => {
-        scanner = new Html5QrcodeScanner(
-          "reader",
-          {
-            fps: 20,
-            qrbox: { width: 380, height: 160 },
-            aspectRatio: 1.777778,
-          },
-          false,
-        );
-
-        scanner.render(
-          async (decodedText: string) => {
-            await scanner.clear();
-            setIsScanning(false);
-            setTransactionCode(decodedText);
-            fetchOrder(decodedText);
-          },
-          () => {},
-        );
-      }, 300);
+        initScanner();
+      }, 200);
 
       return () => {
         clearTimeout(timer);
+        isMounted = false;
+
         if (scanner) {
-          scanner.clear().catch((err: any) => console.error(err));
+          scanner.clear().catch(() => {});
         }
       };
     }
+
+    return () => {
+      isMounted = false;
+
+      if (scanner) {
+        scanner.clear().catch(() => {});
+      }
+    };
   }, [isScanning]);
 
   const fetchOrder = async (code: string) => {

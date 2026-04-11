@@ -1,8 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useSettings } from "@/context/SettingsContext";
-import ExcelJS from "exceljs";
-import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
 import { saveAs } from "file-saver";
 import { useTransactionExplorer } from "@/hooks/react-query/useReports";
 import {
@@ -14,7 +11,6 @@ import {
   Loader2,
   Filter,
 } from "lucide-react";
-import flatpickr from "flatpickr";
 import "flatpickr/dist/flatpickr.min.css";
 import PageMeta from "@/components/common/PageMeta";
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
@@ -24,6 +20,7 @@ import { Input } from "@/components/ui/input";
 export default function ReportExplorerPage() {
   const { settings } = useSettings();
   const datePickerRef = useRef<HTMLInputElement>(null);
+
   const [page, setPage] = useState(1);
 
   const [filters, setFilters] = useState({
@@ -37,9 +34,10 @@ export default function ReportExplorerPage() {
 
   const { data: employeeRes } = useEmployes();
 
-  const employees = employeeRes?.employes || [];
+  const employees = employeeRes?.employes ?? [];
+
   const cashierOptions = employees.filter(
-    (emp: any) => emp.user !== null && emp.user.role?.name === "cashier",
+    (emp: any) => emp?.user?.role?.name === "cashier",
   );
 
   const { data: response, isLoading } = useTransactionExplorer({
@@ -48,39 +46,48 @@ export default function ReportExplorerPage() {
     per_page: 10,
   });
 
-  const transactions = response?.data || [];
-  const meta = response?.meta;
+  const transactions = response?.data ?? [];
   const summary = response?.summary;
 
   useEffect(() => {
-    if (!datePickerRef.current) return;
+    let fp: any;
 
-    const fp = flatpickr(datePickerRef.current, {
-      mode: "range",
-      static: true,
-      monthSelectorType: "static",
-      dateFormat: "Y-m-d",
-      defaultDate: [filters.start_date, filters.end_date],
-      onClose: (selectedDates) => {
-        if (selectedDates.length === 2) {
-          const start = selectedDates[0].toISOString().split("T")[0];
-          const end = selectedDates[1].toISOString().split("T")[0];
-          setPage(1);
-          setFilters((prev) => ({ ...prev, start_date: start, end_date: end }));
-        }
-      },
-    });
+    const init = async () => {
+      if (!datePickerRef.current) return;
 
-    return () => {
-      if (fp && typeof fp.destroy === "function") fp.destroy();
+      const flatpickr = (await import("flatpickr")).default;
+
+      fp = flatpickr(datePickerRef.current, {
+        mode: "range",
+        dateFormat: "Y-m-d",
+        defaultDate: [filters.start_date, filters.end_date],
+        onClose: (dates: any[]) => {
+          if (dates.length === 2) {
+            setPage(1);
+            setFilters((prev) => ({
+              ...prev,
+              start_date: dates[0].toISOString().split("T")[0],
+              end_date: dates[1].toISOString().split("T")[0],
+            }));
+          }
+        },
+      });
     };
-  }, []);
+
+    init();
+
+    return () => fp?.destroy?.();
+  }, [filters.start_date, filters.end_date]);
 
   const handleFilterChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
   ) => {
+    const { name, value } = e.target;
     setPage(1);
-    setFilters({ ...filters, [e.target.name]: e.target.value });
+    setFilters((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
   };
 
   const resetFilters = () => {
@@ -96,8 +103,11 @@ export default function ReportExplorerPage() {
   };
 
   const exportToExcel = async () => {
+    const ExcelJS = (await import("exceljs")).default;
+
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet("Transaction Report");
+
     worksheet.columns = [
       { header: "Waktu", key: "time", width: 25 },
       { header: "No. Nota", key: "id", width: 15 },
@@ -105,44 +115,47 @@ export default function ReportExplorerPage() {
       { header: "Metode", key: "method", width: 15 },
       { header: "Total", key: "total", width: 20 },
     ];
+
     transactions.forEach((trx: any) => {
       worksheet.addRow({
         time: new Date(trx.transaction_date || trx.created_at).toLocaleString(),
         id: `#${trx.id}`,
-        cashier: trx.user?.username || "Sistem",
+        cashier: trx.user?.username ?? "System",
         method: trx.payment_method?.toUpperCase(),
         total: Number(trx.total_amount),
       });
     });
+
     const buffer = await workbook.xlsx.writeBuffer();
-    saveAs(new Blob([buffer]), `Audit_GagalLapar_${filters.start_date}.xlsx`);
+    saveAs(new Blob([buffer]), `Audit_${filters.start_date}.xlsx`);
   };
 
-  const exportToPDF = () => {
+  const exportToPDF = async () => {
+    const jsPDF = (await import("jspdf")).default;
+    const autoTable = (await import("jspdf-autotable")).default;
+
     const doc = new jsPDF();
-    const tableColumn = ["Waktu", "No. Nota", "Kasir", "Metode", "Total"];
-    const tableRows = transactions.map((trx: any) => [
+
+    const head = [["Waktu", "No. Nota", "Kasir", "Metode", "Total"]];
+
+    const body = transactions.map((trx: any) => [
       new Date(trx.transaction_date || trx.created_at).toLocaleString("id-ID"),
       `#${trx.id}`,
-      trx.user?.username || "Sistem",
+      trx.user?.username ?? "System",
       trx.payment_method?.toUpperCase(),
-      `${settings?.currency_symbol || "Rp"} ${Number(trx.total_amount).toLocaleString()}`,
+      `${settings?.currency_symbol ?? "Rp"} ${Number(trx.total_amount).toLocaleString()}`,
     ]);
 
-    doc.setFontSize(18);
-    doc.text("Laporan Audit Transaksi", 14, 15);
-    doc.setFontSize(10);
-    doc.text(`Periode: ${filters.start_date} s/d ${filters.end_date}`, 14, 22);
+    doc.text("Transaction Report", 14, 15);
+    doc.text(`Period: ${filters.start_date} - ${filters.end_date}`, 14, 22);
 
     autoTable(doc, {
       startY: 30,
-      head: [tableColumn],
-      body: tableRows,
-      theme: "grid",
-      headStyles: { fillColor: [220, 38, 38] },
+      head,
+      body,
     });
 
-    doc.save(`Audit_Sales_${filters.start_date}.pdf`);
+    doc.save(`Audit_${filters.start_date}.pdf`);
   };
 
   return (

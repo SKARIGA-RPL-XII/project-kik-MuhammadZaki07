@@ -6,7 +6,10 @@ import Button from "../../components/ui/button/Button";
 import Input from "../../components/form/input/InputField";
 import { Plus, Download, FileSpreadsheet, Loader2 } from "lucide-react";
 import { EmployeService } from "../../services/employe.service";
-import * as XLSX from "xlsx";
+const loadXLSX = async () => {
+  const mod = await import("xlsx");
+  return mod;
+};
 import {
   AlertDialog,
   AlertDialogCancel,
@@ -22,7 +25,10 @@ import { useToast } from "@/context/ToastContext";
 import Label from "@/components/form/Label";
 import LoadingSpinner from "@/components/skeleton/LoadingSpinner";
 import { ActionGuard } from "@/components/guard/ActionGuard";
-import { useEmployes, useEmployeMutations } from "@/hooks/react-query/useEmploye";
+import {
+  useEmployes,
+  useEmployeMutations,
+} from "@/hooks/react-query/useEmploye";
 
 function Employe() {
   const [search, setSearch] = useState("");
@@ -90,7 +96,10 @@ function Employe() {
   const total = data?.metadata?.total || 0;
   const totalPage = Math.ceil(total / size);
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>, type: "profile" | "identity") => {
+  const handleImageChange = (
+    e: React.ChangeEvent<HTMLInputElement>,
+    type: "profile" | "identity",
+  ) => {
     const file = e.target.files?.[0];
     if (file) {
       const reader = new FileReader();
@@ -107,24 +116,31 @@ function Employe() {
     }
   };
 
-  const handleFileImportChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileImportChange = async (e) => {
     const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (evt) => {
-        const bstr = evt.target?.result;
-        const wb = XLSX.read(bstr, { type: "binary" });
-        const wsname = wb.SheetNames[0];
-        const ws = wb.Sheets[wsname];
-        const dataJson = XLSX.utils.sheet_to_json(ws);
-        if (dataJson.length > 0) {
-          setExcelData(dataJson);
-          setExcelHeaders(Object.keys(dataJson[0] as object));
-          setOpenImport(true);
-        }
-      };
-      reader.readAsBinaryString(file);
-    }
+    if (!file) return;
+
+    const reader = new FileReader();
+
+    reader.onload = async (evt) => {
+      const XLSX = await loadXLSX();
+
+      const bstr = evt.target?.result;
+      const wb = XLSX.read(bstr, { type: "binary" });
+
+      const wsname = wb.SheetNames[0];
+      const ws = wb.Sheets[wsname];
+
+      const dataJson = XLSX.utils.sheet_to_json(ws);
+
+      if (dataJson.length > 0) {
+        setExcelData(dataJson);
+        setExcelHeaders(Object.keys(dataJson[0]));
+        setOpenImport(true);
+      }
+    };
+
+    reader.readAsBinaryString(file);
     e.target.value = "";
   };
 
@@ -139,25 +155,32 @@ function Employe() {
       addres: row[mapping.addres],
     }));
 
-    importEmploye.mutate({ data: formattedData }, {
-      onSuccess: () => {
-        toast("success", "Berhasil", "Data employee berhasil diimport.");
-        setOpenImport(false);
-        setExcelData([]);
-        setExcelHeaders([]);
+    importEmploye.mutate(
+      { data: formattedData },
+      {
+        onSuccess: () => {
+          toast("success", "Berhasil", "Data employee berhasil diimport.");
+          setOpenImport(false);
+          setExcelData([]);
+          setExcelHeaders([]);
+        },
+        onError: (err: any) => {
+          toast("error", "Import Gagal", "Periksa kembali mapping kolom Anda.");
+          setErrors(err);
+        },
       },
-      onError: (err: any) => {
-        toast("error", "Import Gagal", "Periksa kembali mapping kolom Anda.");
-        setErrors(err);
-      }
-    });
+    );
   };
 
   const handleExport = async () => {
     setExporting(true);
     const res = await EmployeService.exportEmploye();
     if (res.data) {
-      toast("success", "Export Diproses", "Silakan cek menu notifikasi untuk mendownload file.");
+      toast(
+        "success",
+        "Export Diproses",
+        "Silakan cek menu notifikasi untuk mendownload file.",
+      );
     } else if (res.error) {
       toast("error", "Export Gagal", res.error);
     }
@@ -193,14 +216,17 @@ function Employe() {
     if (identityCard) formData.append("identity_card", identityCard);
 
     if (editingData) {
-      updateEmploye.mutate({ id: editingData.id, formData }, {
-        onSuccess: () => {
-          setOpenDialog(false);
-          resetForm();
-          toast("success", "Success", "Data berhasil diperbarui");
+      updateEmploye.mutate(
+        { id: editingData.id, formData },
+        {
+          onSuccess: () => {
+            setOpenDialog(false);
+            resetForm();
+            toast("success", "Success", "Data berhasil diperbarui");
+          },
+          onError: (err: any) => setErrors(err),
         },
-        onError: (err: any) => setErrors(err)
-      });
+      );
     } else {
       createEmploye.mutate(formData, {
         onSuccess: () => {
@@ -208,12 +234,15 @@ function Employe() {
           resetForm();
           toast("success", "Success", "Data berhasil disimpan");
         },
-        onError: (err: any) => setErrors(err)
+        onError: (err: any) => setErrors(err),
       });
     }
   };
 
-  const isSubmitting = createEmploye.isPending || updateEmploye.isPending || importEmploye.isPending;
+  const isSubmitting =
+    createEmploye.isPending ||
+    updateEmploye.isPending ||
+    importEmploye.isPending;
 
   return (
     <>
@@ -250,19 +279,36 @@ function Employe() {
             />
 
             <ActionGuard module="staff" action="write">
-              <Button variant="outline" onClick={() => fileInputRef.current?.click()}>
+              <Button
+                variant="outline"
+                onClick={() => fileInputRef.current?.click()}
+              >
                 Import <FileSpreadsheet className="ml-2" size={18} />
               </Button>
             </ActionGuard>
 
             <ActionGuard module="staff" action="view">
-              <Button variant="outline" onClick={handleExport} disabled={exporting}>
-                {exporting ? <Loader2 className="animate-spin mr-2" size={18} /> : <Download className="mr-2" size={18} />} Export
+              <Button
+                variant="outline"
+                onClick={handleExport}
+                disabled={exporting}
+              >
+                {exporting ? (
+                  <Loader2 className="animate-spin mr-2" size={18} />
+                ) : (
+                  <Download className="mr-2" size={18} />
+                )}{" "}
+                Export
               </Button>
             </ActionGuard>
 
             <ActionGuard module="staff" action="write">
-              <Button onClick={() => { resetForm(); setOpenDialog(true); }}>
+              <Button
+                onClick={() => {
+                  resetForm();
+                  setOpenDialog(true);
+                }}
+              >
                 <Plus className="mr-2" size={18} /> Create
               </Button>
             </ActionGuard>
@@ -291,9 +337,16 @@ function Employe() {
 
         <div className="flex flex-col sm:flex-row items-center justify-between mt-6 gap-4 border-t border-gray-100 pt-6">
           <div className="text-sm text-neutral-500">
-            Showing <span className="font-semibold text-neutral-700">{Math.min((page - 1) * size + 1, total)}</span> to{" "}
-            <span className="font-semibold text-neutral-700">{Math.min(page * size, total)}</span> of{" "}
-            <span className="font-semibold text-neutral-700">{total}</span> entries
+            Showing{" "}
+            <span className="font-semibold text-neutral-700">
+              {Math.min((page - 1) * size + 1, total)}
+            </span>{" "}
+            to{" "}
+            <span className="font-semibold text-neutral-700">
+              {Math.min(page * size, total)}
+            </span>{" "}
+            of <span className="font-semibold text-neutral-700">{total}</span>{" "}
+            entries
           </div>
 
           <div className="flex items-center gap-2">
@@ -339,7 +392,9 @@ function Employe() {
       <AlertDialog open={openDialog} onOpenChange={setOpenDialog}>
         <AlertDialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
           <AlertDialogHeader>
-            <AlertDialogTitle>{editingData ? "Edit Employe" : "Create Employe"}</AlertDialogTitle>
+            <AlertDialogTitle>
+              {editingData ? "Edit Employe" : "Create Employe"}
+            </AlertDialogTitle>
           </AlertDialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4 pt-4">
             <div className="grid grid-cols-2 gap-4">
@@ -349,9 +404,15 @@ function Employe() {
                   id="username"
                   placeholder="Enter username"
                   value={form.username}
-                  onChange={(e) => setForm({ ...form, username: e.target.value })}
+                  onChange={(e) =>
+                    setForm({ ...form, username: e.target.value })
+                  }
                 />
-                {errors?.username?.[0] && <p className="text-xs text-red-500 mt-1">{errors.username[0]}</p>}
+                {errors?.username?.[0] && (
+                  <p className="text-xs text-red-500 mt-1">
+                    {errors.username[0]}
+                  </p>
+                )}
               </div>
 
               <div className="space-y-2">
@@ -363,7 +424,9 @@ function Employe() {
                   value={form.email}
                   onChange={(e) => setForm({ ...form, email: e.target.value })}
                 />
-                {errors?.email?.[0] && <p className="text-xs text-red-500 mt-1">{errors.email[0]}</p>}
+                {errors?.email?.[0] && (
+                  <p className="text-xs text-red-500 mt-1">{errors.email[0]}</p>
+                )}
               </div>
             </div>
 
@@ -375,9 +438,15 @@ function Employe() {
                   type="password"
                   placeholder="••••••••"
                   value={form.password}
-                  onChange={(e) => setForm({ ...form, password: e.target.value })}
+                  onChange={(e) =>
+                    setForm({ ...form, password: e.target.value })
+                  }
                 />
-                {errors?.password?.[0] && <p className="text-xs text-red-500 mt-1">{errors.password[0]}</p>}
+                {errors?.password?.[0] && (
+                  <p className="text-xs text-red-500 mt-1">
+                    {errors.password[0]}
+                  </p>
+                )}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="password_confirmation">Confirm Password</Label>
@@ -386,7 +455,9 @@ function Employe() {
                   type="password"
                   placeholder="••••••••"
                   value={form.password_confirmation}
-                  onChange={(e) => setForm({ ...form, password_confirmation: e.target.value })}
+                  onChange={(e) =>
+                    setForm({ ...form, password_confirmation: e.target.value })
+                  }
                 />
               </div>
             </div>
@@ -400,7 +471,11 @@ function Employe() {
                   value={form.no_tlp}
                   onChange={(e) => setForm({ ...form, no_tlp: e.target.value })}
                 />
-                {errors?.no_tlp?.[0] && <p className="text-xs text-red-500 mt-1">{errors.no_tlp[0]}</p>}
+                {errors?.no_tlp?.[0] && (
+                  <p className="text-xs text-red-500 mt-1">
+                    {errors.no_tlp[0]}
+                  </p>
+                )}
               </div>
 
               <div className="space-y-2">
@@ -414,7 +489,11 @@ function Employe() {
                     { label: "Cashier", value: "5" },
                   ]}
                 />
-                {errors?.role_id?.[0] && <p className="text-xs text-red-500 mt-1">{errors.role_id[0]}</p>}
+                {errors?.role_id?.[0] && (
+                  <p className="text-xs text-red-500 mt-1">
+                    {errors.role_id[0]}
+                  </p>
+                )}
               </div>
             </div>
 
@@ -430,7 +509,11 @@ function Employe() {
                     { label: "Perempuan", value: "PR" },
                   ]}
                 />
-                {errors?.gender?.[0] && <p className="text-xs text-red-500 mt-1">{errors.gender[0]}</p>}
+                {errors?.gender?.[0] && (
+                  <p className="text-xs text-red-500 mt-1">
+                    {errors.gender[0]}
+                  </p>
+                )}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="addres">Address</Label>
@@ -439,7 +522,11 @@ function Employe() {
                   value={form.addres}
                   onChange={(val) => setForm({ ...form, addres: val })}
                 />
-                {errors?.addres?.[0] && <p className="text-xs text-red-500 mt-1">{errors.addres[0]}</p>}
+                {errors?.addres?.[0] && (
+                  <p className="text-xs text-red-500 mt-1">
+                    {errors.addres[0]}
+                  </p>
+                )}
               </div>
             </div>
 
@@ -447,24 +534,56 @@ function Employe() {
               <div className="space-y-2">
                 <Label>Profile Image</Label>
                 <div className="flex items-center gap-4">
-                  {profilePreview && <img src={profilePreview} className="w-16 h-16 rounded-full object-cover border" alt="Profile" />}
-                  <input type="file" accept="image/*" className="text-xs" onChange={(e) => handleImageChange(e, "profile")} />
+                  {profilePreview && (
+                    <img
+                      src={profilePreview}
+                      className="w-16 h-16 rounded-full object-cover border"
+                      alt="Profile"
+                    />
+                  )}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="text-xs"
+                    onChange={(e) => handleImageChange(e, "profile")}
+                  />
                 </div>
-                {errors?.profile_image?.[0] && <p className="text-xs text-red-500 mt-1">{errors.profile_image[0]}</p>}
+                {errors?.profile_image?.[0] && (
+                  <p className="text-xs text-red-500 mt-1">
+                    {errors.profile_image[0]}
+                  </p>
+                )}
               </div>
 
               <div className="space-y-2">
                 <Label>Identity Card (KTP)</Label>
                 <div className="flex items-center gap-4">
-                  {identityPreview && <img src={identityPreview} className="w-16 h-10 rounded object-cover border" alt="KTP" />}
-                  <input type="file" accept="image/*" className="text-xs" onChange={(e) => handleImageChange(e, "identity")} />
+                  {identityPreview && (
+                    <img
+                      src={identityPreview}
+                      className="w-16 h-10 rounded object-cover border"
+                      alt="KTP"
+                    />
+                  )}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="text-xs"
+                    onChange={(e) => handleImageChange(e, "identity")}
+                  />
                 </div>
-                {errors?.identity_card?.[0] && <p className="text-xs text-red-500 mt-1">{errors.identity_card[0]}</p>}
+                {errors?.identity_card?.[0] && (
+                  <p className="text-xs text-red-500 mt-1">
+                    {errors.identity_card[0]}
+                  </p>
+                )}
               </div>
             </div>
 
             <AlertDialogFooter>
-              <AlertDialogCancel onClick={() => setOpenDialog(false)}>Cancel</AlertDialogCancel>
+              <AlertDialogCancel onClick={() => setOpenDialog(false)}>
+                Cancel
+              </AlertDialogCancel>
               <Button className="h-10" type="submit" disabled={isSubmitting}>
                 {isSubmitting ? <LoadingSpinner /> : "Submit"}
               </Button>
@@ -481,23 +600,34 @@ function Employe() {
           <div className="grid grid-cols-2 gap-4 py-4">
             {Object.keys(mapping).map((key) => (
               <div key={key} className="space-y-1">
-                <label className="text-sm font-bold uppercase text-neutral-500">{key.replace("_", " ")}</label>
+                <label className="text-sm font-bold uppercase text-neutral-500">
+                  {key.replace("_", " ")}
+                </label>
                 <select
                   className="w-full h-10 border rounded-md px-3 text-sm"
                   value={(mapping as any)[key]}
-                  onChange={(e) => setMapping({ ...mapping, [key]: e.target.value })}
+                  onChange={(e) =>
+                    setMapping({ ...mapping, [key]: e.target.value })
+                  }
                 >
                   <option value="">-- Pilih Kolom Excel --</option>
                   {excelHeaders.map((head, idx) => (
-                    <option key={idx} value={head}>{head}</option>
+                    <option key={idx} value={head}>
+                      {head}
+                    </option>
                   ))}
                 </select>
               </div>
             ))}
           </div>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setOpenImport(false)}>Batal</AlertDialogCancel>
-            <Button onClick={handleProcessImport} disabled={isSubmitting || !mapping.username || !mapping.email}>
+            <AlertDialogCancel onClick={() => setOpenImport(false)}>
+              Batal
+            </AlertDialogCancel>
+            <Button
+              onClick={handleProcessImport}
+              disabled={isSubmitting || !mapping.username || !mapping.email}
+            >
               {isSubmitting ? "Processing..." : "Mulai Import"}
             </Button>
           </AlertDialogFooter>

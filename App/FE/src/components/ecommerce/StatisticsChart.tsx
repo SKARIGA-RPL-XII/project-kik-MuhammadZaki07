@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState, useMemo } from "react";
-import Chart from "react-apexcharts";
+import { useEffect, useRef, useState, useMemo, lazy } from "react";
+const Chart = lazy(() => import("react-apexcharts"));
 import { ApexOptions } from "apexcharts";
 import flatpickr from "flatpickr";
 import ChartTab from "../common/ChartTab";

@@ -1,4 +1,4 @@
-import { jsPDF } from "jspdf";
+const jsPDF = await import("jspdf");
 import { TableInterface } from "@/types/layout-table";
 
 const loadImage = (url: string): Promise<string> => {

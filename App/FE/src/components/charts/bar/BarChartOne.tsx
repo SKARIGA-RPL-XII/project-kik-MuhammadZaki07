@@ -1,5 +1,6 @@
-import Chart from "react-apexcharts";
 import { ApexOptions } from "apexcharts";
+import { lazy } from "react";
+const Chart = lazy(() => import("react-apexcharts"));
 
 export default function BarChartOne() {
   const options: ApexOptions = {
