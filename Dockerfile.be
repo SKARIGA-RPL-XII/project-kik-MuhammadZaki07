@@ -1,11 +1,9 @@
-FROM shinsenter/laravel:php8.3
+FROM php:8.2-apache
 
-ENV WEBROOT /var/www/html/public
+WORKDIR /var/www/html
 
-COPY . /var/www/html
+COPY . .
 
-ENV COMPOSER_IGNORE_PLATFORM_REQS=1
-
-RUN chmod -R 777 /var/www/html/storage /var/www/html/bootstrap/cache
+RUN docker-php-ext-install pdo pdo_mysql
 
 EXPOSE 80
