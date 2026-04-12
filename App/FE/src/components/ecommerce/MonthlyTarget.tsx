@@ -1,6 +1,6 @@
-const Chart = lazy(() => import("react-apexcharts"));
 import { ApexOptions } from "apexcharts";
 import { lazy, useState } from "react";
+const Chart = lazy(() => import("react-apexcharts"));
 import { Dropdown } from "../ui/dropdown/Dropdown";
 import { DropdownItem } from "../ui/dropdown/DropdownItem";
 import { MoreDotIcon } from "../../icons";
