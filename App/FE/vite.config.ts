@@ -47,36 +47,8 @@ export default defineConfig({
     reportCompressedSize: false,
     chunkSizeWarningLimit: 1500,
 
-    rollupOptions: {
-      output: {
-        manualChunks(id) {
-          if (id.includes("node_modules")) {
-            if (id.includes("react")) return "react-vendor";
-            if (id.includes("react-router")) return "router";
-            if (id.includes("lucide-react")) return "icons";
-            if (id.includes("@tanstack")) return "query";
-            if (id.includes("axios")) return "http";
-            if (id.includes("apexcharts")) return "charts";
-
-            if (
-              id.includes("jspdf") ||
-              id.includes("exceljs") ||
-              id.includes("xlsx")
-            ) {
-              return "export-heavy";
-            }
-
-            if (id.includes("@radix-ui")) return "ui";
-
-            return "vendor";
-          }
-
-          if (id.includes("/pages/")) {
-            return "pages";
-          }
-        },
-      },
-    },
+    // ❌ manualChunks DIHAPUS TOTAL
+    rollupOptions: {},
   },
 
   server: {

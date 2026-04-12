@@ -1,3 +1,4 @@
+import { lazy } from "react";
 const Chart = lazy(() => import("react-apexcharts"));
 import { useSettings } from "@/context/SettingsContext";
 import { ApexOptions } from "apexcharts";
@@ -6,7 +7,6 @@ import { ReceiptText, DollarSign, Loader2, Calendar } from "lucide-react";
 import PageMeta from "@/components/common/PageMeta";
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
 import { Card } from "@/components/ui/card";
-import { lazy } from "react";
 
 export default function SalesReportPage() {
   const { settings } = useSettings();
