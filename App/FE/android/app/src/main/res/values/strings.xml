@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Gagal Lapar</string>
+    <string name="title_activity_main">Gagal Lapar</string>
+    <string name="package_name">com.gagallapar.app</string>
+    <string name="custom_url_scheme">com.gagallapar.app</string>
+</resources>

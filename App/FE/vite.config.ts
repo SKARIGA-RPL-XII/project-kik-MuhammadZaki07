@@ -63,7 +63,7 @@ export default defineConfig({
         changeOrigin: true,
         secure: false,
       },
-      "/storage": {
+      "/storage": { 
         target: "http://localhost:8000",
         changeOrigin: true,
         secure: false,
