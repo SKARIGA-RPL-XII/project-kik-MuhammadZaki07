@@ -99,11 +99,5 @@ npm install
 npm run dev
 ```
 
-### Kontak dan Dukungan
-### Nama Toko: Gagal Lapar
-### Pengembang: Zaki (Tugas Akhir 2026)
-### Alamat: Jl Mega Permai VI 138, Ngaliyan, Semarang
-### Telepon: 083846871126
-
 #### Copyright 2026 PT Nero Coffee & Roastery APP - Gagal Lapar Project.
 
