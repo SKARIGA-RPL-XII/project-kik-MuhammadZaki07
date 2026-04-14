@@ -183,7 +183,6 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
         ->only('store', 'update', 'destroy');
 
 
-
     Route::apiResource('stocks', StockController::class);
     Route::apiResource('suppliers', SupplierController::class);
 

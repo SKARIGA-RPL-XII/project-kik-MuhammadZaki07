@@ -123,7 +123,8 @@ class MenuController extends Controller
             foreach ($validated['stocks'] as $stockItem) {
                 $menu->stocks()->attach($stockItem['stock_id'], [
                     'amount' => $stockItem['amount'],
-                    'created_at' => now(), 'updated_at' => now()
+                    'created_at' => now(),
+                    'updated_at' => now()
                 ]);
             }
 
@@ -216,7 +217,7 @@ class MenuController extends Controller
 
         $img = Image::read($file)
             ->cover(600, 400)
-            ->encodeByExtension('jpg', 80);
+            ->encodeByExtension('webp', 90);
 
         Storage::disk('public')->put($path, (string) $img);
         return $path;
@@ -232,8 +233,11 @@ class MenuController extends Controller
             if (!is_array($levelIds)) continue;
             foreach (array_unique($levelIds) as $levelId) {
                 $syncData[] = [
-                    'menu_id' => $menu->id, 'attribute_id' => $attrId,
-                    'attribute_level_id' => $levelId, 'created_at' => now(), 'updated_at' => now()
+                    'menu_id' => $menu->id,
+                    'attribute_id' => $attrId,
+                    'attribute_level_id' => $levelId,
+                    'created_at' => now(),
+                    'updated_at' => now()
                 ];
             }
         }
@@ -254,9 +258,15 @@ class MenuController extends Controller
             case 'stock_highest':
                 $query->withSum('stocks as total_stock', 'quantity')->orderByDesc('total_stock');
                 break;
-            case 'price_lowest': $query->orderBy('price', 'asc'); break;
-            case 'price_highest': $query->orderBy('price', 'desc'); break;
-            default: $query->latest(); break;
+            case 'price_lowest':
+                $query->orderBy('price', 'asc');
+                break;
+            case 'price_highest':
+                $query->orderBy('price', 'desc');
+                break;
+            default:
+                $query->latest();
+                break;
         }
     }
 
@@ -265,7 +275,13 @@ class MenuController extends Controller
      */
     private function notifyDiscount($menu, $event)
     {
-        $customers = User::where('role', 'customer')->get();
-        Notification::send($customers, new GeneralNotification($event->message, 'promotion', "/menus/{$menu->id}"));
+        $customers = User::whereHas('role', function ($q) {
+            $q->where('name', 'customer');
+        })->get();
+
+        Notification::send(
+            $customers,
+            new GeneralNotification($event->message, 'promotion', "/menus/{$menu->id}")
+        );
     }
 }

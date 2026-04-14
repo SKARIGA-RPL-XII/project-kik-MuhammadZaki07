@@ -10,6 +10,8 @@ import Badge from "../../components/ui/badge/Badge";
 import { CategoryService } from "../../services/category.service";
 import { Loader2, Pencil, Trash2 } from "lucide-react";
 import { ActionGuard } from "../guard/ActionGuard";
+import DeleteAlertDialog from "../dialog/DeleteAlertDialog";
+import { useToast } from "@/context/ToastContext";
 
 interface CategoryTableProps {
   categories: any[];
@@ -24,12 +26,7 @@ export default function CategoryTable({
   onRefresh,
   onEdit,
 }: CategoryTableProps) {
-  const handleDelete = async (id: number) => {
-    if (!confirm("Are you sure want to delete this category?")) return;
-    await CategoryService.deleteCategory(id);
-    onRefresh();
-  };
-
+  const {toast} = useToast();
   return (
     <div className="overflow-hidden rounded-xl border border-neutral-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
       <div className="max-w-full overflow-x-auto">
@@ -106,13 +103,31 @@ export default function CategoryTable({
                       </ActionGuard>
 
                       <ActionGuard module="category" action="delete">
-                        <button
-                          title="Delete"
-                          onClick={() => handleDelete(cat.id)}
-                          className="p-2 rounded text-red-500 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-500/10"
+                        <DeleteAlertDialog
+                          title="Delete category?"
+                          description={`This will permanently delete "${cat.name}".`}
+                          onConfirm={async () => {
+                            try {
+                              await CategoryService.deleteCategory(cat.id);
+                              onRefresh();
+                            } catch (err: any) {
+                              const message =
+                                err?.response?.data?.message ||
+                                "Failed to delete category";
+
+                              console.log(err);
+
+                              toast("error", "Delete Failed", message);
+                            }
+                          }}
                         >
-                          <Trash2 size={18} />
-                        </button>
+                          <button
+                            title="Delete"
+                            className="p-2 rounded text-red-500 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-500/10"
+                          >
+                            <Trash2 size={18} />
+                          </button>
+                        </DeleteAlertDialog>
                       </ActionGuard>
                     </div>
                   </TableCell>

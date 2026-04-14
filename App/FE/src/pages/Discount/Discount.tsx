@@ -22,7 +22,10 @@ import DatePicker from "../../components/form/date-picker";
 import useDebounce from "../../hooks/useDebounce";
 import { useToast } from "@/context/ToastContext";
 import { ActionGuard } from "@/components/guard/ActionGuard";
-import { useDiscounts, useDiscountMutations } from "@/hooks/react-query/useDiscount";
+import {
+  useDiscounts,
+  useDiscountMutations,
+} from "@/hooks/react-query/useDiscount";
 
 function Discount() {
   const [openDialog, setOpenDialog] = useState(false);
@@ -45,7 +48,11 @@ function Discount() {
   const debouncedSearch = useDebounce(search, 500);
   const { toast } = useToast();
 
-  const { data: discountRes, isLoading: loading, refetch } = useDiscounts({
+  const {
+    data: discountRes,
+    isLoading: loading,
+    refetch,
+  } = useDiscounts({
     search: debouncedSearch,
     status: statusFilter ?? undefined,
     start_date: dateFilter.start ?? undefined,
@@ -80,28 +87,31 @@ function Discount() {
 
     const mutation = editingId ? updateDiscount : createDiscount;
 
-    mutation.mutate(
-      editingId ? { id: editingId, formData } : formData,
-      {
-        onSuccess: () => {
-          toast("success", "Success", editingId ? "Discount updated" : "Discount created");
-          setOpenDialog(false);
-          resetForm();
-        },
-        onError: (err: any) => {
-          if (typeof err === "object") {
-            const validationErrors: Record<string, string> = {};
-            Object.entries(err).forEach(([key, messages]) => {
-              validationErrors[key] = Array.isArray(messages) ? messages[0] : (messages as string);
-            });
-            setErrors(validationErrors);
-            toast("error", "Validation Error", "Please check your inputs");
-          } else {
-            toast("error", "Failed", err || "Something went wrong");
-          }
+    mutation.mutate(editingId ? { id: editingId, formData } : formData, {
+      onSuccess: () => {
+        toast(
+          "success",
+          "Success",
+          editingId ? "Discount updated" : "Discount created",
+        );
+        setOpenDialog(false);
+        resetForm();
+      },
+      onError: (err: any) => {
+        if (typeof err === "object") {
+          const validationErrors: Record<string, string> = {};
+          Object.entries(err).forEach(([key, messages]) => {
+            validationErrors[key] = Array.isArray(messages)
+              ? messages[0]
+              : (messages as string);
+          });
+          setErrors(validationErrors);
+          toast("error", "Validation Error", "Please check your inputs");
+        } else {
+          toast("error", "Failed", err || "Something went wrong");
         }
-      }
-    );
+      },
+    });
   };
 
   const handleEdit = (discount: any) => {
@@ -123,14 +133,19 @@ function Discount() {
       <PageMeta title="Discount Management" description="Manage discounts" />
       <PageBreadcrumb pageTitle="Discounts" />
 
-      <ComponentCard title="Discount Management" desc="Create, edit, delete discounts">
+      <ComponentCard
+        title="Discount Management"
+        desc="Create, edit, delete discounts"
+      >
         <div className="flex flex-wrap justify-between items-center gap-4 mb-6">
           <div className="flex flex-wrap gap-3">
             <div className="w-64">
               <Input
                 placeholder="Search by title..."
                 value={search}
-                onChange={(e: ChangeEvent<HTMLInputElement>) => setSearch(e.target.value)}
+                onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                  setSearch(e.target.value)
+                }
               />
             </div>
 
@@ -152,7 +167,9 @@ function Discount() {
                 id="filter-start"
                 placeholder="Start Date"
                 value={dateFilter.start ?? ""}
-                onChange={(_, dateStr) => setDateFilter((p) => ({ ...p, start: dateStr }))}
+                onChange={(_, dateStr) =>
+                  setDateFilter((p) => ({ ...p, start: dateStr }))
+                }
               />
             </div>
 
@@ -162,7 +179,9 @@ function Discount() {
                 placeholder="End Date"
                 value={dateFilter.end ?? ""}
                 minDate={dateFilter.start ?? undefined}
-                onChange={(_, dateStr) => setDateFilter((p) => ({ ...p, end: dateStr }))}
+                onChange={(_, dateStr) =>
+                  setDateFilter((p) => ({ ...p, end: dateStr }))
+                }
               />
             </div>
           </div>
@@ -176,7 +195,10 @@ function Discount() {
               }}
             >
               <AlertDialogTrigger asChild>
-                <Button onClick={resetForm} className="bg-red-500 hover:bg-red-600">
+                <Button
+                  onClick={resetForm}
+                  className="bg-red-500 hover:bg-red-600"
+                >
                   Create Discount
                 </Button>
               </AlertDialogTrigger>
@@ -196,9 +218,15 @@ function Discount() {
                       placeholder="Promo Summer"
                       value={title}
                       error={!!errors.title}
-                      onChange={(e: ChangeEvent<HTMLInputElement>) => setTitle(e.target.value)}
+                      onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                        setTitle(e.target.value)
+                      }
                     />
-                    {errors.title && <p className="text-xs text-red-500 mt-1">{errors.title}</p>}
+                    {errors.title && (
+                      <p className="text-xs text-red-500 mt-1">
+                        {errors.title}
+                      </p>
+                    )}
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">
@@ -222,16 +250,25 @@ function Discount() {
                   <div>
                     <Label htmlFor="form-value">Discount Value (%)</Label>
                     <Input
-                      id="form-value"
-                      type="number"
+                      type="text"
                       placeholder="0"
                       value={valueDiscount}
                       error={!!errors.value_discount}
-                      onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                        setValueDiscount(Math.max(0, parseInt(e.target.value, 10) || 0))
-                      }
+                      onChange={(e) => {
+                        let val = e.target.value;
+
+                        if (!/^\d*$/.test(val)) return;
+
+                        val = val.replace(/^0+(?=\d)/, "");
+
+                        setValueDiscount(val);
+                      }}
                     />
-                    {errors.value_discount && <p className="text-xs text-red-500 mt-1">{errors.value_discount}</p>}
+                    {errors.value_discount && (
+                      <p className="text-xs text-red-500 mt-1">
+                        {errors.value_discount}
+                      </p>
+                    )}
                   </div>
 
                   <div>
@@ -241,10 +278,16 @@ function Discount() {
                       placeholder="Short description..."
                       value={description}
                       onChange={(val: any) =>
-                        setDescription(typeof val === "string" ? val : val.target.value)
+                        setDescription(
+                          typeof val === "string" ? val : val.target.value,
+                        )
                       }
                     />
-                    {errors.description && <p className="text-xs text-red-500 mt-1">{errors.description}</p>}
+                    {errors.description && (
+                      <p className="text-xs text-red-500 mt-1">
+                        {errors.description}
+                      </p>
+                    )}
                   </div>
 
                   <div className="p-3 bg-gray-50 dark:bg-white/5 rounded-lg">
@@ -256,11 +299,22 @@ function Discount() {
                   </div>
 
                   <AlertDialogFooter className="gap-3 mt-4">
-                    <AlertDialogCancel onClick={resetForm} disabled={submitting}>
+                    <AlertDialogCancel
+                      onClick={resetForm}
+                      disabled={submitting}
+                    >
                       Cancel
                     </AlertDialogCancel>
-                    <Button onClick={handleSubmit} disabled={submitting} className="min-w-[120px]">
-                      {submitting ? "Saving..." : editingId ? "Update" : "Create"}
+                    <Button
+                      onClick={handleSubmit}
+                      disabled={submitting}
+                      className="min-w-[120px]"
+                    >
+                      {submitting
+                        ? "Saving..."
+                        : editingId
+                        ? "Update"
+                        : "Create"}
                     </Button>
                   </AlertDialogFooter>
                 </div>

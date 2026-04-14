@@ -13,6 +13,7 @@ import { Link } from "react-router";
 import { formatCurrency } from "@/lib/currency";
 import DeleteAlertDialog from "@/components/dialog/DeleteAlertDialog";
 import { ActionGuard } from "../guard/ActionGuard";
+import { useToast } from "@/context/ToastContext";
 
 interface MenuTableProps {
   menus: any[];
@@ -25,6 +26,7 @@ export default function MenuTable({
   loading,
   onRefresh,
 }: MenuTableProps) {
+  const { toast } = useToast();
   return (
     <div className="overflow-hidden rounded-xl border border-neutral-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
       <div className="max-w-full overflow-x-auto">
@@ -77,7 +79,8 @@ export default function MenuTable({
 
             {!loading &&
               menus.map((menu) => {
-                const hasDiscount = menu.discount && menu.discount.is_active;
+                const hasDiscount = menu.discount?.is_active === 1;
+
                 const discountValue = hasDiscount
                   ? menu.discount.value_discount
                   : 0;
@@ -95,8 +98,10 @@ export default function MenuTable({
                       <div className="flex items-center gap-3">
                         <img
                           src={
-                            menu.image
-                              ? `${import.meta.env.VITE_STORAGE_URL}/${menu.image}`
+                            menu.menu_image
+                              ? `${import.meta.env.VITE_STORAGE_URL}/${
+                                  menu.menu_image
+                                }`
                               : "/image-dumy.png"
                           }
                           alt={menu.name}
@@ -194,6 +199,11 @@ export default function MenuTable({
                             onConfirm={async () => {
                               await MenuService.deleteMenu(menu.id);
                               onRefresh();
+                              toast(
+                                "success",
+                                "Success Delete Menu",
+                                `Menu ${menu.name} Delete successfully!`,
+                              );
                             }}
                           >
                             <button className="p-2 rounded-lg text-neutral-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors">

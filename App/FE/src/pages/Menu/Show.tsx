@@ -12,7 +12,6 @@ import {
   Layers,
   Info,
   ChevronRight,
-  ShoppingBag,
   Flame,
 } from "lucide-react";
 import Badge from "../../components/ui/badge/Badge";
@@ -90,8 +89,8 @@ function Show() {
             <div className="relative rounded-3xl overflow-hidden bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 ">
               <img
                 src={
-                  menu.image
-                    ? `${import.meta.env.VITE_STORAGE_URL}/${menu.image}`
+                  menu.menu_image
+                    ? `${import.meta.env.VITE_STORAGE_URL}/${menu.menu_image}`
                     : "/image-dumy.png"
                 }
                 alt={menu.name}
@@ -100,7 +99,7 @@ function Show() {
               {menu.discount && (
                 <div className="absolute top-5 left-5 bg-red-500 text-white text-xs font-bold px-4 py-2 rounded-full flex items-center gap-1">
                   <Flame size={14} />
-                  SAVE {menu.discount.value_discount}%
+                  Save {menu.discount.value_discount}%
                 </div>
               )}
             </div>
@@ -131,7 +130,7 @@ function Show() {
           <div className="lg:col-span-7 space-y-6">
             <div className="bg-white dark:bg-neutral-900 rounded-3xl p-8 border border-neutral-200 dark:border-neutral-800  relative overflow-hidden">
               <div className="relative z-10">
-                <h1 className="text-4xl font-black text-neutral-900 dark:text-white mb-4">
+                <h1 className="text-4xl font-bold text-neutral-900 dark:text-white mb-4">
                   {menu.name}
                 </h1>
 
@@ -140,7 +139,7 @@ function Show() {
                     <span className="text-xs text-neutral-400 font-medium mb-1">
                       Final Price
                     </span>
-                    <span className="text-4xl font-black text-neutral-900 dark:text-white">
+                    <span className="text-4xl font-bold text-neutral-900 dark:text-white">
                       {formatCurrency(finalPrice)}
                     </span>
                   </div>

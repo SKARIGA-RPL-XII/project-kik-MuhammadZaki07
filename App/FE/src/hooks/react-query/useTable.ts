@@ -7,6 +7,7 @@ export const useTables = (query?: TableQuery) => {
     queryFn: () => TableService.getTables(query),
     refetchInterval: 10000,
     refetchIntervalInBackground: true,
+    staleTime: 5000,
   });
 };
 
@@ -16,26 +17,56 @@ export const useTableMutations = () => {
   const createTable = useMutation({
     mutationFn: (payload: { table_number: string }) =>
       TableService.createTable(payload),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["tables"] });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: ["tables"],
+        exact: false,
+      });
+      await queryClient.refetchQueries({
+        queryKey: ["tables"],
+      });
     },
   });
 
   const updateTable = useMutation({
     mutationFn: ({ id, payload }: { id: number; payload: any }) =>
       TableService.updateTable(id, payload),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["tables"] });
-      queryClient.invalidateQueries({ queryKey: ["rooms"] });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: ["tables"],
+        exact: false,
+      });
+      await queryClient.invalidateQueries({
+        queryKey: ["rooms"],
+        exact: false,
+      });
+
+      await queryClient.refetchQueries({
+        queryKey: ["tables"],
+      });
+      await queryClient.refetchQueries({
+        queryKey: ["rooms"],
+      });
     },
   });
 
   const deleteTable = useMutation({
     mutationFn: (id: number) => TableService.deleteTable(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["tables"] });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: ["tables"],
+        exact: false,
+      });
+
+      await queryClient.refetchQueries({
+        queryKey: ["tables"],
+      });
     },
   });
 
-  return { createTable, updateTable, deleteTable };
+  return {
+    createTable,
+    updateTable,
+    deleteTable,
+  };
 };

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Services\MidtransService;
+use Exception;
 use Illuminate\Http\Request;
 
 class MidtransWebhookController extends Controller
@@ -20,7 +21,7 @@ class MidtransWebhookController extends Controller
         try {
             $this->midtransService->handleNotification($request->all());
             return response()->json(['message' => 'Webhook processed']);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return response()->json(['message' => $e->getMessage()], 500);
         }
     }

@@ -15,7 +15,8 @@ return new class extends Migration
         $table->id();
         $table->foreignId('menu_id')->constrained()->cascadeOnDelete();
         $table->foreignId('stock_id')->constrained()->cascadeOnDelete();
-        $table->integer('amount')->default(1);
+        // $table->integer('amount')->default(1);
+        $table->decimal('amount', 10, 2);
         $table->timestamps();
     });
 }

@@ -13,6 +13,7 @@ import {
 } from "./middleware/midleware";
 import { PermissionMiddleware } from "./middleware/PermissionMiddleware";
 import { isDesktop } from "./utils/platform";
+import AttributePage from "./pages/Attributes/AttributePage";
 
 const AppLayout = lazy(() => import("./layout/AppLayout"));
 const CustomerLayout = lazy(() => import("./layout/CustomerLayout"));
@@ -264,6 +265,14 @@ const router = createBrowserRouter([
             element: (
               <PermissionMiddleware module="admin">
                 <Admin />
+              </PermissionMiddleware>
+            ),
+          },
+          {
+            path: "attributes",
+            element: (
+              <PermissionMiddleware module="atribute">
+                <AttributePage/>
               </PermissionMiddleware>
             ),
           },

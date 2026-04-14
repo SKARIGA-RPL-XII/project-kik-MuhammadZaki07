@@ -16,6 +16,7 @@ import { stockService } from "../../services/stock.service";
 import { useToast } from "@/context/ToastContext";
 import { useNavigate } from "react-router";
 import LoadingSpinner from "@/components/skeleton/LoadingSpinner";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface AttributeLevel {
   id: number;
@@ -35,7 +36,7 @@ interface Stock {
 }
 
 interface SelectedStock extends Stock {
-  amount: number;
+  amount: string;
 }
 
 function CreateMenu() {
@@ -93,14 +94,30 @@ function CreateMenu() {
   }, []);
 
   const handleNumberInput = (field: string, value: string) => {
+    if (!/^\d*$/.test(value)) return;
+
     if (value === "") {
-      setForm((prev) => ({ ...prev, [field]: 0 }));
+      setForm((p) => ({ ...p, [field]: 0 }));
       return;
     }
-    const numValue = Math.max(0, parseInt(value, 10));
-    setForm((prev) => ({ ...prev, [field]: numValue }));
-    if (numValue >= 0) setErrors((prev) => ({ ...prev, [field]: "" }));
+
+    const cleaned = value.replace(/^0+(?=\d)/, "");
+
+    const numValue = parseInt(cleaned, 10);
+
+    setForm((p) => ({ ...p, [field]: numValue }));
+    setErrors((prev) => ({ ...prev, [field]: "" }));
   };
+
+  // const handleNumberInput = (field: string, value: string) => {
+  //   if (value === "") {
+  //     setForm((prev) => ({ ...prev, [field]: 0 }));
+  //     return;
+  //   }
+  //   const numValue = Math.max(0, parseInt(value, 10));
+  //   setForm((prev) => ({ ...prev, [field]: numValue }));
+  //   if (numValue >= 0) setErrors((prev) => ({ ...prev, [field]: "" }));
+  // };
 
   const toggleAttribute = (attributeId: number) => {
     if (activeAttributes.includes(attributeId)) {
@@ -141,13 +158,13 @@ function CreateMenu() {
     setSelectedIngredients((prev) => prev.filter((item) => item.id !== id));
   };
 
-  const updateIngredientAmount = (id: number, amount: number) => {
-    setSelectedIngredients((prev) =>
-      prev.map((item) =>
-        item.id === id ? { ...item, amount: Math.max(1, amount) } : item,
-      ),
-    );
-  };
+const updateIngredientAmount = (id: number, amount: string) => {
+  setSelectedIngredients((prev) =>
+    prev.map((item) =>
+      item.id === id ? { ...item, amount } : item
+    )
+  );
+};
 
   const onDrop = (files: File[]) => {
     if (files.length) {
@@ -161,14 +178,15 @@ function CreateMenu() {
     accept: { "image/*": [".jpeg", ".jpg", ".png", ".webp"] },
     multiple: false,
   });
+  const queryClient = useQueryClient();
 
-const handleSubmit = async () => {
+  const handleSubmit = async () => {
     setErrors({});
     setLoading(true);
 
     try {
       const fd = new FormData();
-      
+
       Object.entries(form).forEach(([k, v]) => {
         if (k === "discount_id") {
           if (v && v !== "" && v !== "null") fd.append(k, v as string);
@@ -197,19 +215,26 @@ const handleSubmit = async () => {
         if (typeof response.error === "object") {
           const validationErrors: Record<string, string> = {};
           Object.entries(response.error).forEach(([key, messages]) => {
-            validationErrors[key] = Array.isArray(messages) ? messages[0] : (messages as string);
-          });          
-          setErrors(validationErrors.errors);
+            validationErrors[key] = Array.isArray(messages)
+              ? messages[0]
+              : (messages as string);
+          });
+          setErrors(validationErrors?.errors);
           toast("error", "Validation Error", "Please check the form again.");
         } else {
           toast("error", "Failed", response.error);
         }
       } else {
         toast("success", "Success", "Menu created successfully!");
+        queryClient.invalidateQueries({ queryKey: ["menus-admin"] });
         navigate("/menu");
       }
     } catch (err: any) {
-      toast("error", "Error", err?.response?.data?.message || "An unexpected error occurred");
+      toast(
+        "error",
+        "Error",
+        err?.response?.data?.message || "An unexpected error occurred",
+      );
     } finally {
       setLoading(false);
     }
@@ -239,14 +264,18 @@ const handleSubmit = async () => {
             <Label>Menu Image</Label>
             <div
               {...getRootProps()}
-              className={`border-2 ${errors.menu_image ? "border-red-500 bg-red-50/50" : "border-gray-300 dark:border-gray-700"} border-dashed rounded-2xl p-8 text-center hover:border-red-500 transition-all cursor-pointer bg-gray-50 dark:bg-gray-800/50`}
+              className={`border-2 ${
+                errors.menu_image
+                  ? "border-red-500 bg-red-50/50"
+                  : "border-gray-300 dark:border-gray-700"
+              } border-dashed rounded-2xl p-8 text-center hover:border-red-500 transition-all cursor-pointer bg-gray-50 dark:bg-gray-800/50`}
             >
               <input {...getInputProps()} />
-              {form.menu_image ? (
+              {form?.menu_image ? (
                 <div className="space-y-4">
                   <div className="relative group">
                     <img
-                      src={URL.createObjectURL(form.menu_image)}
+                      src={URL.createObjectURL(form?.menu_image)}
                       className="w-full max-h-[400px] object-cover mx-auto rounded-xl shadow-md"
                       alt="Preview"
                     />
@@ -283,7 +312,7 @@ const handleSubmit = async () => {
                 </div>
               )}
             </div>
-            {form.menu_image !== null && (
+            {form?.menu_image !== null && (
               <div className="flex items-center justify-between px-4 py-3 bg-white dark:bg-gray-900 rounded-md border border-gray-200 dark:border-gray-700">
                 <div className="flex items-center gap-3 overflow-hidden">
                   <div className="p-2 bg-red-50 dark:bg-red-500/10 rounded">
@@ -303,10 +332,10 @@ const handleSubmit = async () => {
                   </div>
                   <div className="text-left overflow-hidden">
                     <p className="text-sm font-semibold text-gray-700 dark:text-gray-200 truncate">
-                      {form.menu_image.name}
+                      {form?.menu_image.name}
                     </p>
                     <p className="text-xs text-gray-400 font-medium">
-                      {formatFileSize(form.menu_image.size)}
+                      {formatFileSize(form?.menu_image.size)}
                     </p>
                   </div>
                 </div>
@@ -325,9 +354,9 @@ const handleSubmit = async () => {
                 </div>
               </div>
             )}
-            {errors.menu_image && (
+            {errors?.menu_image && (
               <p className="text-xs text-red-500 mt-1 font-medium italic">
-                *{errors.menu_image}
+                *{errors?.menu_image}
               </p>
             )}
           </div>
@@ -412,7 +441,7 @@ const handleSubmit = async () => {
               <div>
                 <Label>Price (IDR)</Label>
                 <Input
-                  type="number"
+                  type="text"
                   placeholder="0"
                   value={form.price === 0 ? "" : form.price}
                   onChange={(e) => handleNumberInput("price", e.target.value)}
@@ -451,11 +480,11 @@ const handleSubmit = async () => {
                 value=""
                 onChange={(val) => val && addIngredient(val as string)}
               />
-                  {errors.stocks && (
-                  <p className="text-xs text-red-500 mt-1 font-medium">
-                    {errors.stocks}
-                  </p>
-                )}
+              {errors.stocks && (
+                <p className="text-xs text-red-500 mt-1 font-medium">
+                  {errors.stocks}
+                </p>
+              )}
 
               <div className="space-y-2 mt-3">
                 {selectedIngredients.map((ing) => (
@@ -474,11 +503,9 @@ const handleSubmit = async () => {
                         type="number"
                         className="w-20 px-2 py-1 text-sm border rounded-lg dark:bg-gray-800 dark:border-gray-700"
                         value={ing.amount}
+                        step="0.01"
                         onChange={(e) =>
-                          updateIngredientAmount(
-                            ing.id,
-                            parseInt(e.target.value),
-                          )
+                          updateIngredientAmount(ing.id, e.target.value)
                         }
                       />
                       <button
@@ -526,7 +553,11 @@ const handleSubmit = async () => {
                       onChange={() => toggleAttribute(attr.id)}
                     />
                     <span
-                      className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${activeAttributes.includes(attr.id) ? "border-red-500 bg-red-500" : "border-gray-300"}`}
+                      className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
+                        activeAttributes.includes(attr.id)
+                          ? "border-red-500 bg-red-500"
+                          : "border-gray-300"
+                      }`}
                     >
                       {activeAttributes.includes(attr.id) && (
                         <div className="w-1.5 h-1.5 bg-white rounded-full" />

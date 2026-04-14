@@ -113,7 +113,15 @@ class CategoryController extends Controller
      */
     public function destroy(Category $category)
     {
+        if ($category->menus()->exists()) {
+            return Controller::ERROR(
+                'error','Category is used by menus and cannot be deleted',
+                400
+            );
+        }
+
         $category->delete();
-        return Controller::OKE('success', 'success delete', 200);
+
+        return Controller::OKE('success delete', 200);
     }
 }

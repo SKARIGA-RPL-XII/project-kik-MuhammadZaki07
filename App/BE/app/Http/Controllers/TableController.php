@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Booking;
+use App\Models\Room;
 use App\Models\Table;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -68,6 +69,7 @@ class TableController extends Controller
         ]);
     }
 
+
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -76,14 +78,35 @@ class TableController extends Controller
             'room_id' => 'nullable|exists:rooms,id'
         ]);
 
+        $room = isset($validated['room_id'])
+            ? Room::find($validated['room_id'])
+            : Room::withCount('tables')
+            ->orderBy('tables_count', 'asc')
+            ->latest()
+            ->first();
+
+        if (!$room) {
+            return response()->json([
+                "message" => "No room available"
+            ], 400);
+        }
+
+        $spacing = 120;
+        $maxPerRow = 5;
+
+        $count = Table::where('room_id', $room->id)->count();
+
+        $x = ($count % $maxPerRow) * $spacing;
+        $y = floor($count / $maxPerRow) * $spacing;
+
         $table = Table::create([
             'table_number' => $validated['table_number'],
             'status' => 'available',
-            'room_id' => $validated['room_id'] ?? null,
+            'room_id' => $room->id,
             'capacity' => $validated['capacity'] ?? 4,
             'qr_code' => null,
-            'x_position' => null,
-            'y_position' => null,
+            'x_position' => $x,
+            'y_position' => $y,
             'width' => 100,
             'height' => 100,
             'rotation' => 0,
@@ -94,10 +117,16 @@ class TableController extends Controller
 
         $qrUrl = env('FRONTEND_URL') . "/?table={$table->id}";
         $fileName = "qrcodes/table_{$table->id}.svg";
-        $qr = QrCode::format('svg')->size(300)->generate($qrUrl);
+
+        $qr = QrCode::format('svg')
+            ->size(300)
+            ->generate($qrUrl);
 
         Storage::disk('public')->put($fileName, $qr);
-        $table->update(['qr_code' => $fileName]);
+
+        $table->update([
+            'qr_code' => $fileName
+        ]);
 
         return response()->json([
             "message" => "success create table",

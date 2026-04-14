@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/pagination";
 import { ActionGuard } from "@/components/guard/ActionGuard";
 import { useMenusAdmin } from "@/hooks/react-query/useMenu";
+import { useToast } from "@/context/ToastContext";
 
 export interface Menu {
   id: number;
@@ -61,10 +62,10 @@ function Menu() {
     },
   });
 
-  const { 
-    data: menuRes, 
-    isLoading: loading, 
-    refetch 
+  const {
+    data: menuRes,
+    isLoading: loading,
+    refetch,
   } = useMenusAdmin({
     page: currentPage - 1,
     size: 10,
@@ -121,7 +122,11 @@ function Menu() {
           </ActionGuard>
         </div>
 
-        <MenuTable menus={menus} loading={loading} onRefresh={refetch} />
+        <MenuTable
+          menus={menus}
+          loading={loading}
+          onRefresh={refetch}
+        />
 
         <div className="mt-6">
           <Pagination>

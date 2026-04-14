@@ -103,6 +103,7 @@ export const navConfig = {
         { name: "Discount", path: "/discount" },
         { name: "Badge", path: "/badge" },
         { name: "Table & Room", path: "/table" },
+        { name: "Atribute", path: "/attributes" },
       ],
     },
     {

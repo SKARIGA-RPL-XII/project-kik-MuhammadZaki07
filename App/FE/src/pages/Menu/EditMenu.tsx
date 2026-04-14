@@ -17,6 +17,7 @@ import { stockService } from "../../services/stock.service";
 import MenuEditSkeleton from "@/components/skeleton/menu/MenuEditSkeleton";
 import { useToast } from "@/context/ToastContext";
 import LoadingSpinner from "@/components/skeleton/LoadingSpinner";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface AttributeLevel {
   id: number;
@@ -156,11 +157,17 @@ function EditMenu() {
   }, [id]);
 
   const handleNumberInput = (field: string, value: string) => {
+    if (!/^\d*$/.test(value)) return;
+
     if (value === "") {
       setForm((p) => ({ ...p, [field]: 0 }));
       return;
     }
-    const numValue = Math.max(0, parseInt(value, 10));
+
+    const cleaned = value.replace(/^0+(?=\d)/, "");
+
+    const numValue = parseInt(cleaned, 10);
+
     setForm((p) => ({ ...p, [field]: numValue }));
     setErrors((prev) => ({ ...prev, [field]: "" }));
   };
@@ -176,11 +183,9 @@ function EditMenu() {
     setSelectedIngredients((prev) => prev.filter((item) => item.id !== id));
   };
 
-  const updateIngredientAmount = (id: number, amount: number) => {
+  const updateIngredientAmount = (id: number, amount: string) => {
     setSelectedIngredients((prev) =>
-      prev.map((item) =>
-        item.id === id ? { ...item, amount: Math.max(1, amount) } : item,
-      ),
+      prev.map((item) => (item.id === id ? { ...item, amount } : item)),
     );
   };
 
@@ -223,7 +228,9 @@ function EditMenu() {
     multiple: false,
   });
 
-const handleSubmit = async () => {
+  const queryClient = useQueryClient();
+
+  const handleSubmit = async () => {
     setLoading(true);
     setErrors({});
 
@@ -234,7 +241,10 @@ const handleSubmit = async () => {
       if (k === "menu_image") {
         if (v instanceof File) fd.append(k, v);
       } else if (k === "discount_id") {
-       fd.append(k, (v === null || v === "null" || v === "") ? "" : v.toString());
+        fd.append(
+          k,
+          v === null || v === "null" || v === "" ? "" : v.toString(),
+        );
       } else if (k === "is_active") {
         fd.append(k, v ? "1" : "0");
       } else {
@@ -276,6 +286,7 @@ const handleSubmit = async () => {
           "Success Update Menu",
           `Menu ${form.name} updated successfully!`,
         );
+        queryClient.invalidateQueries({ queryKey: ["menus-admin"] });
         navigate("/menu");
       }
     } catch (err) {
@@ -384,7 +395,7 @@ const handleSubmit = async () => {
               <div>
                 <Label>Price (IDR)</Label>
                 <Input
-                  type="number"
+                  type="text"
                   value={form.price === 0 ? "" : form.price}
                   onChange={(e) => handleNumberInput("price", e.target.value)}
                 />
@@ -415,11 +426,11 @@ const handleSubmit = async () => {
                 onChange={(val) => val && addIngredient(val as string)}
               />
 
-                 {errors.stocks && (
-                  <p className="text-xs text-red-500 mt-1 font-medium">
-                    {errors.stocks}
-                  </p>
-                )}
+              {errors.stocks && (
+                <p className="text-xs text-red-500 mt-1 font-medium">
+                  {errors.stocks}
+                </p>
+              )}
 
               <div className="space-y-2 mt-3">
                 {selectedIngredients.map((ing) => (
@@ -436,13 +447,12 @@ const handleSubmit = async () => {
                     <div className="flex items-center gap-3">
                       <input
                         type="number"
+                        step="0.01"
                         className="w-20 px-2 py-1 text-sm border rounded-lg dark:bg-gray-800 dark:border-gray-700"
+                        min="0"
                         value={ing.amount}
                         onChange={(e) =>
-                          updateIngredientAmount(
-                            ing.id,
-                            parseInt(e.target.value),
-                          )
+                          updateIngredientAmount(ing.id, e.target.value)
                         }
                       />
                       <button
@@ -490,7 +500,11 @@ const handleSubmit = async () => {
                       onChange={() => toggleAttribute(attr.id)}
                     />
                     <span
-                      className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${activeAttributes.includes(attr.id) ? "border-red-500 bg-red-500" : "border-gray-300"}`}
+                      className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
+                        activeAttributes.includes(attr.id)
+                          ? "border-red-500 bg-red-500"
+                          : "border-gray-300"
+                      }`}
                     >
                       {activeAttributes.includes(attr.id) && (
                         <div className="w-1.5 h-1.5 bg-white rounded-full" />
@@ -503,7 +517,7 @@ const handleSubmit = async () => {
                 ))}
               </div>
 
-                <div className="grid grid-cols-1 gap-4 mt-4">
+              <div className="grid grid-cols-1 gap-4 mt-4">
                 {attributes
                   .filter((attr) => activeAttributes.includes(attr.id))
                   .map((attr) => (
@@ -544,7 +558,7 @@ const handleSubmit = async () => {
                 disabled={loading}
                 className="w-full font-semibold"
               >
-                {loading ? <LoadingSpinner/> : "Update Menu Data"}
+                {loading ? <LoadingSpinner /> : "Update Menu Data"}
               </Button>
             </div>
           </div>

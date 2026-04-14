@@ -43,17 +43,21 @@ class AttributeController extends Controller
             'name' => 'sometimes|string|max:255',
             'levels' => 'array',
             'levels.*.id' => 'sometimes|exists:attribute_levels,id',
-            'levels.*.name' => 'string|max:255'
+            'levels.*.name' => 'required|string|max:255'
         ]);
 
         if ($request->filled('name')) {
             $attribute->update(['name' => $request->name]);
         }
 
-        if ($request->levels) {
+        if ($request->has('levels')) {
+            $incomingIds = collect($request->levels)->pluck('id')->filter()->toArray();
+
+            $attribute->levels()->whereNotIn('id', $incomingIds)->delete();
+
             foreach ($request->levels as $lvl) {
                 if (isset($lvl['id'])) {
-                    $attribute->levels()->find($lvl['id'])?->update(['name' => $lvl['name']]);
+                    $attribute->levels()->where('id', $lvl['id'])->update(['name' => $lvl['name']]);
                 } else {
                     $attribute->levels()->create(['name' => $lvl['name']]);
                 }
