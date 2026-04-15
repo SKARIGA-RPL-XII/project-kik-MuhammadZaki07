@@ -86,49 +86,53 @@ class ReportController extends Controller
         ]);
     }
 
-public function getTransactionExplorer(Request $request)
-{
-    $perPage = $request->get('per_page', 10);
+    public function getTransactionExplorer(Request $request)
+    {
+        $perPage = $request->get('per_page', 10);
 
-    $query = Transaction::with(['user:id,username', 'details.menu'])
-        ->whereIn('status', ['paid', 'completed']);
+        $query = Transaction::with([
+            'user:id,username',
+            'cashier:id,username',
+            'details.menu'
+        ])
+            ->whereIn('status', ['paid', 'completed']);
 
-    if ($request->filled('start_date') && $request->filled('end_date')) {
-        $query->whereBetween('transaction_date', [$request->start_date . ' 00:00:00', $request->end_date . ' 23:59:59']);
-    }
-    if ($request->filled('cashier_id')) {
-        $query->where('user_id', $request->cashier_id);
-    }
-    if ($request->filled('payment_method')) {
-        $query->where('payment_method', $request->payment_method);
-    }
-    if ($request->filled('min_amount')) {
-        $query->where('total_amount', '>=', $request->min_amount);
-    }
-    if ($request->filled('max_amount')) {
-        $query->where('total_amount', '<=', $request->max_amount);
-    }
+        if ($request->filled('start_date') && $request->filled('end_date')) {
+            $query->whereBetween('transaction_date', [$request->start_date . ' 00:00:00', $request->end_date . ' 23:59:59']);
+        }
+        if ($request->filled('cashier_id')) {
+            $query->where('user_id', $request->cashier_id);
+        }
+        if ($request->filled('payment_method')) {
+            $query->where('payment_method', $request->payment_method);
+        }
+        if ($request->filled('min_amount')) {
+            $query->where('total_amount', '>=', $request->min_amount);
+        }
+        if ($request->filled('max_amount')) {
+            $query->where('total_amount', '<=', $request->max_amount);
+        }
 
-    $summaryQuery = clone $query;
-    $totalCount = $summaryQuery->count();
-    $totalAmount = (int) $summaryQuery->sum('total_amount');
+        $summaryQuery = clone $query;
+        $totalCount = $summaryQuery->count();
+        $totalAmount = (int) $summaryQuery->sum('total_amount');
 
-    $transactions = $query->orderBy('transaction_date', 'desc')->paginate($perPage);
+        $transactions = $query->orderBy('transaction_date', 'desc')->paginate($perPage);
 
-    return response()->json([
-        'status' => 'success',
-        'message' => 'Success fetch transactions',
-        'data' => $transactions->items(),
-        'meta' => [
-            'current_page' => $transactions->currentPage(),
-            'last_page' => $transactions->lastPage(),
-            'per_page' => $transactions->perPage(),
-            'total' => $transactions->total(),
-        ],
-        'summary' => [
-            'total_count' => $totalCount,
-            'total_amount' => $totalAmount
-        ]
-    ]);
-}
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Success fetch transactions',
+            'data' => $transactions->items(),
+            'meta' => [
+                'current_page' => $transactions->currentPage(),
+                'last_page' => $transactions->lastPage(),
+                'per_page' => $transactions->perPage(),
+                'total' => $transactions->total(),
+            ],
+            'summary' => [
+                'total_count' => $totalCount,
+                'total_amount' => $totalAmount
+            ]
+        ]);
+    }
 }

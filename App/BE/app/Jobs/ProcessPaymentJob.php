@@ -10,10 +10,11 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Bus\Queueable as BusQueueable;
+use Illuminate\Foundation\Bus\Dispatchable;
 
 class ProcessPaymentJob implements ShouldQueue
 {
-    use BusQueueable, SerializesModels, InteractsWithQueue;
+    use BusQueueable, SerializesModels, InteractsWithQueue, Dispatchable;
 
     public int $transactionId;
 

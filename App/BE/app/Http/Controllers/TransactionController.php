@@ -169,7 +169,14 @@ class TransactionController extends Controller
 
             if ($request->status === 'completed') {
                 $updateData['completed_at'] = now();
+                $updateData['status'] = 'completed';
                 $updateData['total_duration'] = $transaction->created_at->diffInMinutes(now());
+
+                foreach ($transaction->details as $detail) {
+                    $detail->update([
+                        'status' => 'served'
+                    ]);
+                }
             }
 
             $transaction->update($updateData);
@@ -284,12 +291,18 @@ class TransactionController extends Controller
                 }
 
                 $transaction->update([
-                    'status' => 'paid',
+                    'status' => 'cooking',
                     'amount_paid' => $amountPaid,
                     'change_amount' => $amountPaid - $totalAmount,
                     'paid_at' => now(),
                     'cashier_id' => Auth::id(),
                 ]);
+
+                foreach ($transaction->details as $detail) {
+                    $detail->update([
+                        'status' => 'cooking'
+                    ]);
+                }
 
                 Log::info("Payment confirmed, dispatching job...");
 

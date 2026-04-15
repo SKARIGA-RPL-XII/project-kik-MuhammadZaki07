@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\Employe;
 use App\Models\User;
 use App\Models\Role;
 use Illuminate\Database\Seeder;
@@ -23,7 +24,8 @@ class UserSeeder extends Seeder
             }
 
             for ($i = 1; $i <= 5; $i++) {
-                User::updateOrCreate(
+
+                $user = User::updateOrCreate(
                     [
                         'email' => "{$roleName}{$i}@gmail.com"
                     ],
@@ -35,6 +37,18 @@ class UserSeeder extends Seeder
                         'remember_token' => Str::random(10),
                     ]
                 );
+
+                if (in_array($roleName, ['cashier', 'employe'])) {
+                    Employe::updateOrCreate(
+                        ['user_id' => $user->id],
+                        [
+                            'no_induk' => 'EMP-' . now()->format('Ymd') . '-' . str_pad($user->id, 4, '0', STR_PAD_LEFT),
+                            'gender' => 'LK',
+                            'no_tlp' => '08xxxxxxxxxx',
+                            'addres' => 'Auto generated',
+                        ]
+                    );
+                }
             }
         }
     }
