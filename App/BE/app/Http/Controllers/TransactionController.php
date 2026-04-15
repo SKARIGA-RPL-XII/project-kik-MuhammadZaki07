@@ -6,6 +6,7 @@ use App\Events\NewOrderReceived;
 use App\Events\PaymentConfirmed;
 use App\Exports\TransactionsExport;
 use App\Http\Controllers\Controller;
+use App\Jobs\ProcessPaymentJob;
 use App\Models\Setting;
 use App\Services\PosService;
 use App\Models\Transaction;
@@ -199,6 +200,62 @@ class TransactionController extends Controller
         }
     }
 
+    // public function confirmPayment(Request $request, $id)
+    // {
+    //     $validator = Validator::make($request->all(), [
+    //         'amount_paid' => 'required|numeric|min:0',
+    //     ]);
+
+    //     if ($validator->fails()) {
+    //         return response()->json(['errors' => $validator->errors()], 422);
+    //     }
+
+    //     try {
+    //         Log::info("=== [CONFIRMING PAYMENT] ===");
+    //         return DB::transaction(function () use ($request, $id) {
+    //             $transaction = Transaction::where('status', 'pending_payment')
+    //                 ->lockForUpdate()
+    //                 ->findOrFail($id);
+    //             Log::info("Found Pending Transaction: " . $transaction->transaction_code);
+
+    //             $amountPaid = (float) $request->amount_paid;
+    //             $totalAmount = (float) $transaction->total_amount;
+
+    //             if ($amountPaid < $totalAmount) {
+    //                 throw new Exception("Pembayaran kurang! Total: " . number_format($totalAmount));
+    //             }
+
+    //             $transaction->update([
+    //                 'status' => 'cooking',
+    //                 'amount_paid' => $amountPaid,
+    //                 'change_amount' => $amountPaid - $totalAmount,
+    //                 'paid_at' => now(),
+    //                 'cashier_id' => Auth::id(),
+    //             ]);
+
+    //             Log::info("Status Updated to COOKING. Now calling Inventory Service.");
+
+    //             $this->posService->decreaseInventory($transaction);
+
+    //             Log::info("=== [PAYMENT CONFIRMED & STOCK UPDATED] ===");
+
+    //             event(new PaymentConfirmed($transaction));
+    //             event(new NewOrderReceived($transaction));
+
+    //             return response()->json([
+    //                 'status' => 'success',
+    //                 'message' => 'Pembayaran Berhasil. Pesanan diteruskan ke Dapur.',
+    //                 'data' => $transaction->load(['details.menu', 'table'])
+    //             ]);
+    //         });
+    //     } catch (Exception $e) {
+    //         Log::error("!!! [PAYMENT ERROR] !!! : " . $e->getMessage());
+    //         return response()->json(['status' => 'error', 'message' => $e->getMessage()], 400);
+    //     }
+    // }
+
+
+
     public function confirmPayment(Request $request, $id)
     {
         $validator = Validator::make($request->all(), [
@@ -211,11 +268,13 @@ class TransactionController extends Controller
 
         try {
             Log::info("=== [CONFIRMING PAYMENT] ===");
+
             return DB::transaction(function () use ($request, $id) {
+
                 $transaction = Transaction::where('status', 'pending_payment')
                     ->lockForUpdate()
+                    ->with('details')
                     ->findOrFail($id);
-                Log::info("Found Pending Transaction: " . $transaction->transaction_code);
 
                 $amountPaid = (float) $request->amount_paid;
                 $totalAmount = (float) $transaction->total_amount;
@@ -225,31 +284,30 @@ class TransactionController extends Controller
                 }
 
                 $transaction->update([
-                    'status' => 'cooking',
+                    'status' => 'paid',
                     'amount_paid' => $amountPaid,
                     'change_amount' => $amountPaid - $totalAmount,
                     'paid_at' => now(),
                     'cashier_id' => Auth::id(),
                 ]);
 
-                Log::info("Status Updated to COOKING. Now calling Inventory Service.");
+                Log::info("Payment confirmed, dispatching job...");
 
-                $this->posService->decreaseInventory($transaction);
-
-                Log::info("=== [PAYMENT CONFIRMED & STOCK UPDATED] ===");
-
-                event(new PaymentConfirmed($transaction));
-                event(new NewOrderReceived($transaction));
+                ProcessPaymentJob::dispatch($transaction->id);
 
                 return response()->json([
                     'status' => 'success',
-                    'message' => 'Pembayaran Berhasil. Pesanan diteruskan ke Dapur.',
+                    'message' => 'Pembayaran berhasil diproses',
                     'data' => $transaction->load(['details.menu', 'table'])
                 ]);
             });
         } catch (Exception $e) {
-            Log::error("!!! [PAYMENT ERROR] !!! : " . $e->getMessage());
-            return response()->json(['status' => 'error', 'message' => $e->getMessage()], 400);
+            Log::error("PAYMENT ERROR: " . $e->getMessage());
+
+            return response()->json([
+                'status' => 'error',
+                'message' => $e->getMessage()
+            ], 400);
         }
     }
 
