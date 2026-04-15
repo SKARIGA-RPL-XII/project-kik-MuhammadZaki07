@@ -2,13 +2,15 @@ import { apiClient } from '@/lib/apiClient'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Send, X, MessageCircle, Flame, TicketCheck, Pin, LeafyGreen, Bot, ShoppingCart } from 'lucide-react'
 import { useEffect, useState, useRef } from 'react'
+import { Button } from '../ui/button'
+import { Card } from '../ui/card'
 
 interface Message {
   id: string
   role: 'user' | 'assistant'
   content: string
   timestamp: Date
-  menuData?: any[] // Untuk menyimpan daftar menu dari AI
+  menuData?: any[]
 }
 
 const quickActions = [
@@ -33,7 +35,6 @@ export function AIAssistant({ isCartOpen }: { isCartOpen?: boolean }) {
   const [hasAppeared, setHasAppeared] = useState(false)
   const scrollRef = useRef<HTMLDivElement>(null)
 
-  // Auto Scroll ke bawah tiap ada pesan baru
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight
@@ -58,7 +59,6 @@ export function AIAssistant({ isCartOpen }: { isCartOpen?: boolean }) {
       const response = await apiClient.post('/ai/chat', { message: userText })
       const aiData = response.data
       
-      // Simpan pesan beserta data menu jika action-nya show_menu
       addMessage(
         aiData.message, 
         'assistant', 
@@ -89,7 +89,7 @@ export function AIAssistant({ isCartOpen }: { isCartOpen?: boolean }) {
         {hasAppeared && !isOpen && (
           <motion.div
             initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 0 }}
-            className={`fixed z-50 ${isCartOpen ? "bottom-10 right-110 hidden lg:block" : "bottom-10 right-6"}`}
+            className={`fixed z-50 ${isCartOpen ? "bottom-30 lg:bottom-10 right-110 hidden lg:block" : "bottom-30 lg:bottom-10 right-6"}`}
           >
             <motion.button
               whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}
@@ -111,7 +111,6 @@ export function AIAssistant({ isCartOpen }: { isCartOpen?: boolean }) {
               initial={{ y: 100, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 100, opacity: 0 }}
               className={`fixed z-50 w-[380px] max-w-[95vw] h-[600px] bg-white rounded-3xl shadow-2xl overflow-hidden flex flex-col ${isCartOpen ? "bottom-10 right-110" : "bottom-10 right-6"}`}
             >
-              {/* Header */}
               <div className="p-4 bg-red-600 text-white flex justify-between items-center shadow-lg">
                 <div className="flex items-center gap-3">
                   <div className="p-2 bg-white/20 rounded-full"><Bot size={20}/></div>
@@ -120,17 +119,15 @@ export function AIAssistant({ isCartOpen }: { isCartOpen?: boolean }) {
                 <button onClick={() => setIsOpen(false)} className="p-2 hover:bg-white/10 rounded-full transition-colors"><X size={20}/></button>
               </div>
 
-              {/* Chat Area */}
-              <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-50 scroll-smooth">
+              <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-4 dark:bg-neutral-900 bg-slate-50 scroll-smooth">
                 {messages.map((m) => (
                   <div key={m.id} className="flex flex-col gap-2">
                     <div className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                      <div className={`p-3 rounded-2xl max-w-[85%] text-sm shadow-sm ${m.role === 'user' ? 'bg-red-600 text-white font-medium' : 'bg-white border border-slate-100 text-slate-800'}`}>
+                      <div className={`p-3 rounded-2xl max-w-[85%] text-sm shadow-sm ${m.role === 'user' ? 'bg-red-600 text-white font-medium' : 'bg-white dark:bg-neutral-800 border text-slate-800 dark:text-white'}`}>
                         {m.content}
                       </div>
                     </div>
 
-                    {/* Rendering Daftar Menu (Jika AI kirim data) */}
                     {m.menuData && (
                       <div className="flex flex-col gap-2 ml-2 mt-1">
                         {m.menuData.map((item, idx) => (
@@ -165,18 +162,17 @@ export function AIAssistant({ isCartOpen }: { isCartOpen?: boolean }) {
                 )}
               </div>
 
-              {/* Input Area */}
-              <div className="p-4 bg-white border-t border-slate-100">
+              <div className="p-4 bg-white dark:bg-neutral-800 border-t">
                 {messages.length === 1 && (
                   <div className="grid grid-cols-2 gap-2 mb-4">
                     {quickActions.map(a => (
-                      <button key={a.id} onClick={() => handleSendMessage(a.text)} className="flex items-center gap-2 p-2.5 border border-slate-100 rounded-xl hover:bg-red-50 hover:border-red-200 transition-all text-[11px] font-bold text-slate-700">
+                      <Button key={a.id} onClick={() => handleSendMessage(a.text)} className="flex items-center dark:bg-neutral-900 bg-white gap-2 p-2.5 border transition-all text-[11px] font-semibold text-slate-700 dark:text-neutral-300">
                         {a.emoji} {a.text}
-                      </button>
+                      </Button>
                     ))}
                   </div>
                 )}
-                <div className="flex gap-2 bg-slate-100 p-1.5 rounded-full px-4 border border-slate-200 shadow-inner focus-within:border-red-300 transition-colors">
+                <Card className="flex gap-2 bg-slate-100 dark:bg-neutral-900 p-1.5 rounded-full px-4 shadow-inner focus-within:border-red-300 transition-colors">
                   <input
                     value={inputValue} onChange={(e) => setInputValue(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
@@ -185,7 +181,7 @@ export function AIAssistant({ isCartOpen }: { isCartOpen?: boolean }) {
                   <button onClick={() => handleSendMessage()} className="p-2 bg-red-600 text-white rounded-full hover:bg-red-700 transition-colors">
                     <Send size={16}/>
                   </button>
-                </div>
+                </Card>
               </div>
             </motion.div>
           </>

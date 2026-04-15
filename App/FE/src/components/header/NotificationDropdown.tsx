@@ -57,7 +57,7 @@ export default function NotificationDropdown() {
       <Dropdown
         isOpen={isOpen}
         onClick={() => setIsOpen(false)}
-        className="absolute -right-[240px] mt-[17px] flex h-[480px] w-[350px] flex-col rounded-xl border border-neutral-200 bg-white p-3 shadow-theme-lg dark:border-neutral-800 dark:bg-neutral-900 sm:w-[361px] lg:right-0"
+        className="absolute -right-[35px] mt-[17px] flex h-[480px] w-[350px] flex-col rounded-xl border border-neutral-200 bg-white p-3 shadow-theme-lg dark:border-neutral-800 dark:bg-neutral-900 sm:w-[361px] lg:right-0"
       >
         <div className="flex items-center justify-between pb-3 mb-3 border-b border-neutral-100 dark:border-neutral-700">
           <div className="flex items-center gap-2">
@@ -115,7 +115,7 @@ export default function NotificationDropdown() {
                 <Link
                   to={getTargetLink(selectedNotif)}
                   onClick={() => setIsOpen(false)}
-                  className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white text-sm hover:bg-opacity-90 transition font-medium w-full text-center justify-center  mb-2.5"
+                  className="inline-flex items-center gap-2 px-4 py-2 dark:bg-neutral-800 bg-red-500 text-white text-sm hover:bg-opacity-90 transition font-medium w-full text-center justify-center  mb-2.5"
                 >
                   <ExternalLink size={16} /> Lihat Detail
                 </Link>
