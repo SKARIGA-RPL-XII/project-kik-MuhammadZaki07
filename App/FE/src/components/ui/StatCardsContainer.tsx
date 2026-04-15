@@ -1,6 +1,7 @@
 import { BarChart3, Package, Users, Wallet } from "lucide-react";
 import { StatCard } from "./StatCard";
 import { Skeleton } from "@/components/ui/skeleton"; // Sesuaikan path-nya
+import { getProfileImage } from "@/utils/imageHelper";
 
 export function StatCardsContainer({ stats, loading }: { stats: any; loading: boolean }) {
   const ValueSkeleton = () => <Skeleton className="h-7 w-32 rounded-md bg-neutral-100" />;
@@ -26,7 +27,7 @@ export function StatCardsContainer({ stats, loading }: { stats: any; loading: bo
           <div className="flex items-center gap-2">
             {stats?.top_customer?.image && (
               <img
-                src={`http://127.0.0.1:8000/storage/${stats.top_customer.image}`}
+                src={getProfileImage(stats.top_customer.image)}
                 className="w-8 h-8 rounded-full border border-neutral-200 object-cover"
                 alt="top-user"
               />

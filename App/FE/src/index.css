@@ -1024,6 +1024,22 @@ span.flatpickr-weekday,
   60%,100%{background-position: 0 50%, 0 100%,50% 100%,100% 100%,100% 50%,100% 0,50% 0,0 0,  50% 50% }
 }
 
+@keyframes scan-horizontal {
+  0% {
+    left: 0;
+  }
+  50% {
+    left: calc(100% - 2px);
+  }
+  100% {
+    left: 0;
+  }
+}
+
+.animate-scan-horizontal {
+  animation: scan-horizontal 3.5s ease-in-out infinite;
+}
+
 /* #invoice-area {
   color: #000;
   background: #fff;

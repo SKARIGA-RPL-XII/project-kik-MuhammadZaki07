@@ -16,16 +16,17 @@ import {
 } from "../ui/alert-dialog";
 import { calculateOrder } from "@/utils/calculator";
 import { useNavigate } from "react-router";
+import { formatCurrency } from "@/lib/currency";
 
-export function formatCurrency(amount: number): string {
-  const roundedAmount = Math.round(amount);
+// export function formatCurrency(amount: number): string {
+//   const roundedAmount = Math.round(amount);
 
-  return new Intl.NumberFormat("id-ID", {
-    style: "currency",
-    currency: "IDR",
-    minimumFractionDigits: 0,
-  }).format(roundedAmount);
-}
+//   return new Intl.NumberFormat("id-ID", {
+//     style: "currency",
+//     currency: "IDR",
+//     minimumFractionDigits: 0,
+//   }).format(roundedAmount);
+// }
 
 export default function OrderScanner() {
   const [transactionCode, setTransactionCode] = useState("");
@@ -49,65 +50,49 @@ export default function OrderScanner() {
     : { subtotal: 0, taxAmount: 0, serviceAmount: 0, total: 0 };
 
   useEffect(() => {
-    let scanner: any = null;
-    let isMounted = true;
+    if (!isScanning) return;
 
-    const initScanner = async () => {
-      if (typeof window === "undefined") return;
-      const module = await import("html5-qrcode");
-      const Html5QrcodeScanner = module.Html5QrcodeScanner;
+    let html5QrCode: any;
+    let scanned = false;
 
-      if (!isMounted) return;
+    const startScanner = async () => {
+      const { Html5Qrcode } = await import("html5-qrcode");
 
-      scanner = new Html5QrcodeScanner(
-        "reader",
-        {
-          fps: 20,
-          qrbox: { width: 350, height: 150 },
-          aspectRatio: 1.777,
-        },
-        false,
-      );
+      html5QrCode = new Html5Qrcode("reader");
 
-      scanner.render(
-        async (decodedText: string) => {
-          if (!isMounted) return;
+      try {
+        await html5QrCode.start(
+          { facingMode: "environment" },
+          {
+            fps: 10,
+            qrbox: { width: 250, height: 350 },
+          },
+          async (decodedText: string) => {
+            if (scanned) return;
+            scanned = true;
 
-          try {
-            await scanner.clear();
-          } catch (err) {
-            console.error("Scanner clear error:", err);
-          }
+            try {
+              await html5QrCode.stop();
+            } catch {}
 
-          setIsScanning(false);
-          setTransactionCode(decodedText);
-          fetchOrder(decodedText);
-        },
-        () => {},
-      );
+            setIsScanning(false);
+            setTransactionCode(decodedText);
+            fetchOrder(decodedText);
+          },
+          () => {},
+        );
+      } catch (err) {
+        console.error("Camera error:", err);
+      }
     };
 
-    if (isScanning) {
-      const timer = setTimeout(() => {
-        initScanner();
-      }, 200);
-
-      return () => {
-        clearTimeout(timer);
-        isMounted = false;
-
-        if (scanner) {
-          scanner.clear().catch(() => {});
-        }
-      };
-    }
+    startScanner();
 
     return () => {
-      isMounted = false;
-
-      if (scanner) {
-        scanner.clear().catch(() => {});
-      }
+      scanned = true;
+      try {
+        html5QrCode?.stop();
+      } catch {}
     };
   }, [isScanning]);
 
@@ -215,14 +200,20 @@ export default function OrderScanner() {
       <Dialog open={isScanning} onOpenChange={setIsScanning}>
         <DialogContent className="sm:max-w-[500px] p-0 overflow-hidden rounded-[2.5rem] border-none shadow-2xl">
           <div className="relative bg-neutral-950/50 aspect-video flex items-center justify-center overflow-hidden">
-            <div id="reader" className="w-full h-full scale-110"></div>
-            <div className="absolute inset-0 pointer-events-none flex items-center justify-center p-6">
-              <div className="relative w-full h-40 max-w-[380px]">
-                <div className="absolute top-1/2 left-0 w-full h-[2px] bg-red-500 shadow-[0_0_15px_rgba(239,68,68,0.8)] z-10 animate-scan-line"></div>
+            <div id="reader" className="w-full h-full"></div>
+
+            <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
+              <div className="relative w-64 h-64 overflow-hidden">
+                {/* scan line */}
+                <div className="absolute left-0 w-full h-[2px] bg-red-500 shadow-[0_0_15px_rgba(239,68,68,0.8)] animate-scan-vertical"></div>
+
+                {/* corner */}
                 <div className="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-red-500 rounded-tl-2xl"></div>
                 <div className="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-red-500 rounded-tr-2xl"></div>
                 <div className="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-red-500 rounded-bl-2xl"></div>
                 <div className="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-red-500 rounded-br-2xl"></div>
+
+                {/* overlay */}
                 <div className="absolute inset-0 bg-red-500/5 rounded-2xl animate-pulse"></div>
               </div>
             </div>
@@ -242,7 +233,7 @@ export default function OrderScanner() {
         open={!!transaction}
         onOpenChange={(open) => !open && setTransaction(null)}
       >
-        <AlertDialogContent className="max-w-xl p-0 overflow-hidden border border-zinc-100 shadow-xl rounded-xl bg-white dark:bg-neutral-900">
+        <AlertDialogContent className="max-w-xl p-0 overflow-hidden shadow-xl rounded-xl bg-white dark:bg-neutral-900">
           <div className="p-8 space-y-6">
             <div className="flex justify-between items-start">
               <div className="space-y-1">
@@ -272,7 +263,9 @@ export default function OrderScanner() {
                   <div className="flex items-center gap-3 flex-1 min-w-0">
                     <div className="h-10 w-10 rounded-lg bg-zinc-50 dark:bg-neutral-800 border border-zinc-100 dark:border-neutral-700 overflow-hidden flex-shrink-0">
                       <img
-                        src={`${import.meta.env.VITE_STORAGE_URL}/${item.menu.menu_image}`}
+                        src={`${import.meta.env.VITE_STORAGE_URL}/${
+                          item.menu.menu_image
+                        }`}
                         className="h-full w-full object-cover"
                         alt={item.menu?.name}
                       />
@@ -321,7 +314,7 @@ export default function OrderScanner() {
               </div>
 
               <div className="grid grid-cols-2 gap-4 pt-2">
-                <div className="space-y-1.5">
+                <div className="space-y-2">
                   <label className="text-sm text-zinc-400 font-medium">
                     Uang Tunai
                   </label>
@@ -330,11 +323,11 @@ export default function OrderScanner() {
                     autoFocus
                     value={amountPaid}
                     onChange={(e) => setAmountPaid(e.target.value)}
-                    className="h-11 bg-white dark:bg-neutral-800 border-zinc-200 rounded-lg focus-visible:ring-1 focus-visible:ring-red-500 font-medium text-lg"
+                    className="h-11 bg-white dark:bg-neutral-800 rounded-lg focus-visible:ring-1 focus-visible:ring-red-500 font-medium text-lg"
                     placeholder="0"
                   />
                 </div>
-                <div className="space-y-1.5">
+                <div className="space-y-2">
                   <label className="text-sm text-zinc-400 font-medium">
                     Kembalian
                   </label>
@@ -342,7 +335,7 @@ export default function OrderScanner() {
                     className={`h-11 flex items-center px-3 rounded-lg text-lg font-medium ${
                       change < 0
                         ? "text-red-500 bg-red-50/50"
-                        : "text-emerald-600 bg-emerald-50/50"
+                        : "text-emerald-600 bg-emerald-50/50 dark:bg-transparent dark:border"
                     }`}
                   >
                     {formatCurrency(change > 0 ? change : 0)}

@@ -55,6 +55,7 @@ export default function TransactionHistoryPage() {
     if (key !== "page") newParams.set("page", "1");
     setSearchParams(newParams);
   };
+  
 
   return (
     <div className="p-6 space-y-6 max-w-[1600px] mx-auto font-sans min-h-screen">

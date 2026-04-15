@@ -1,6 +1,6 @@
-import { Globe, Loader2, CalendarDays, User, Printer } from "lucide-react";
+import { Globe, CalendarDays, User, Printer } from "lucide-react";
 import Badge from "@/components/ui/badge/Badge";
-import { Link, useNavigate, useParams } from "react-router";
+import { useNavigate, useParams } from "react-router";
 import { useTransactionDetail } from "@/hooks/react-query/useTransactionDetail";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -107,7 +107,7 @@ export default function TransactionDetail() {
                       <div className="flex items-start gap-3">
                         <div className="w-13 h-13 bg-neutral-100 rounded-md flex-shrink-0 flex items-center justify-center overflow-hidden border">
                           <img
-                            src={`${import.meta.env.VITE_STORAGE_URL}/${detail.menu.menu_image}`}
+                            src={detail.menu_image ? `${import.meta.env.VITE_STORAGE_URL}/${detail.menu.menu_image}` : "/image-dumy.png"}
                             alt={detail.menu?.name}
                             className="w-full h-full object-cover"
                           />

@@ -40,12 +40,12 @@ export function TransactionHistoryTable({
 
   const getStatusColor = (status: string) => {
     switch (status?.toLowerCase()) {
-      case "paid":
+      case "pending_payment":
         return "secondary";
-      case "pending":
+      case "completed":
         return "outline";
       default:
-        return "primary";
+        return "default";
     }
   };
 
@@ -172,10 +172,10 @@ export function TransactionHistoryTable({
 
                     <TableCell className="px-5 py-4 text-end">
                       <Badge
-                        variant={getStatusColor(item.status)}
-                        color={getStatusColor(item.status)}
+                        variant={getStatusColor(item.transaction.status)}
+                        color={getStatusColor(item.transaction.status)}
                       >
-                        {item.status}
+                        {item.transaction.status}
                       </Badge>
                     </TableCell>
 

@@ -128,7 +128,7 @@ export default function OrderQueuePage() {
         description="Monitor real-time customer orders"
       />
 
-      <header className="px-6 py-4 bg-white dark:bg-zinc-900 border-b flex items-center justify-between sticky top-0 z-10">
+      <header className="px-6 py-4 border-b flex items-center justify-between sticky top-0 z-10">
         <div>
           <h1 className="text-xl font-bold text-zinc-900 dark:text-zinc-100">
             Order Management
@@ -140,7 +140,7 @@ export default function OrderQueuePage() {
 
         <div className="flex items-center gap-3">
           <Tabs value={filter} onValueChange={setFilter} className="w-[280px]">
-            <TabsList className="grid w-full grid-cols-3 h-10 bg-zinc-100 p-1">
+            <TabsList className="grid w-full grid-cols-3 h-10 p-1">
               <TabsTrigger value="ALL" className="text-xs">
                 All
               </TabsTrigger>
@@ -155,7 +155,7 @@ export default function OrderQueuePage() {
           <Button
             onClick={() => navigate("/cashier")}
             size="sm"
-            className="bg-red-600 hover:bg-red-700 h-10 px-4 font-bold"
+            className="bg-red-600 hover:bg-red-700 h-10 px-4 font-semibold"
           >
             <ArrowLeft className="mr-2 h-4 w-4" /> Back to Cashier
           </Button>

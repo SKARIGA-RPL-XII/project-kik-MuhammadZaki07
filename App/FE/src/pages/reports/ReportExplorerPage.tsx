@@ -32,7 +32,7 @@ export default function ReportExplorerPage() {
     max_amount: "",
   });
 
-  const { data: employeeRes } = useEmployes();
+  const { data: employeeRes } = useEmployes({role_id : 5});
 
   const employees = employeeRes?.employes ?? [];
 
@@ -157,6 +157,9 @@ export default function ReportExplorerPage() {
 
     doc.save(`Audit_${filters.start_date}.pdf`);
   };
+
+  console.log(employees);
+  
 
   return (
     <div className="p-6 bg-white dark:bg-neutral-900 min-h-screen">
@@ -308,6 +311,9 @@ export default function ReportExplorerPage() {
                 <th className="p-4 border-b border-neutral-100 dark:border-neutral-700 font-medium">
                   Cashier
                 </th>
+                <th className="p-4 border-b border-neutral-100 dark:border-neutral-700 font-medium">
+                  Customer Name
+                </th>
                 <th className="p-4 border-b border-neutral-100 dark:border-neutral-700 font-medium text-center">
                   Method
                 </th>
@@ -344,6 +350,9 @@ export default function ReportExplorerPage() {
                     </td>
                     <td className="p-4 border-b border-neutral-100 dark:border-neutral-700 font-bold text-neutral-800 dark:text-neutral-200">
                       #{trx.id}
+                    </td>
+                    <td className="p-4 border-b border-neutral-100 dark:border-neutral-700 text-neutral-700 dark:text-neutral-300 font-medium">
+                      {trx.cashier?.username || "System"}
                     </td>
                     <td className="p-4 border-b border-neutral-100 dark:border-neutral-700 text-neutral-700 dark:text-neutral-300 font-medium">
                       {trx.user?.username || "System"}

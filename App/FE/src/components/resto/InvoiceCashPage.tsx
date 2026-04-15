@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
-import Barcode from "react-barcode";
 import { useLocation, useNavigate } from "react-router";
 import { Home, Printer, Clock, Info, Phone } from "lucide-react";
 import { useSettings } from "@/context/SettingsContext";
 import { calculateOrder } from "@/utils/calculator";
 import { formatCurrency } from "@/lib/currency";
+import QRCode from "react-qr-code";
 
 const InvoiceCashPage = () => {
   const location = useLocation();
@@ -32,7 +32,11 @@ const InvoiceCashPage = () => {
         return;
       }
 
-     if (payload.status === "cooking" || payload.status === "paid" || payload.status === "completed") {
+      if (
+        payload.status === "cooking" ||
+        payload.status === "paid" ||
+        payload.status === "completed"
+      ) {
         setIsPaid(true);
         setTimeout(() => {
           navigate(`/invoice/${order.id}`);
@@ -92,7 +96,9 @@ const InvoiceCashPage = () => {
             <div className="flex items-center gap-3">
               {settings.logo_light && (
                 <img
-                  src={`${import.meta.env.VITE_STORAGE_URL}/${settings.logo_light}`}
+                  src={`${import.meta.env.VITE_STORAGE_URL}/${
+                    settings.logo_light
+                  }`}
                   className="w-10 h-10 object-contain"
                 />
               )}
@@ -179,16 +185,24 @@ const InvoiceCashPage = () => {
           </div>
 
           <div className="py-8 flex flex-col items-center">
-            <div className="w-full flex flex-col items-center border-y py-10">
+            <div className="w-full flex flex-col items-center border-y py-3">
               <div className="w-full [&>svg]:w-full [&>svg]:h-auto px-10">
-                <Barcode
+                {/* <Barcode
                   value={order.transaction_code}
                   width={1}
-                  height={60}
-                  format="CODE128"
+                  height={50}
+                  // format="CODE128"
                   displayValue={false}
                   margin={0}
-                />
+                /> */}
+
+                <div className="w-52 h-52 mx-auto">
+                  <QRCode
+                    value={order.transaction_code}
+                    size={200}
+                    style={{ width: "100%", height: "100%" }}
+                  />
+                </div>
               </div>
 
               <p className="mt-4 font-mono text-xs font-normal text-zinc-400 dark:text-neutral-200 tracking-[1.2em]">

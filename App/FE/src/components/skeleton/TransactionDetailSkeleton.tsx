@@ -12,7 +12,7 @@ export const TransactionDetailSkeleton = () => (
       <Skeleton className="h-4 w-32" />
     </div>
 
-    <Card className="p-5 flex flex-col lg:flex-row lg:items-center justify-between gap-6 shadow-none border bg-white">
+    <Card className="p-5 flex flex-col lg:flex-row lg:items-center justify-between gap-6 shadow-none border">
       <div className="flex flex-col sm:flex-row sm:items-center gap-4">
         <div className="space-y-2">
           <div className="flex items-center gap-3">
