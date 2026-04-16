@@ -340,9 +340,31 @@ class TransactionController extends Controller
             ], 404);
         }
 
+        $subtotal = collect($transaction->details)
+            ->whereNull('notes')
+            ->sum('subtotal');
+
+        $service = collect($transaction->details)
+            ->where('notes', 'Service Charge')
+            ->sum('subtotal');
+
+        $tax = collect($transaction->details)
+            ->where('notes', 'Tax')
+            ->sum('subtotal');
+
+        $pricing = [
+            'subtotal' => (int) $subtotal,
+            'service'  => (int) $service,
+            'tax'      => (int) $tax,
+            'total'    => (int) $transaction->total_amount,
+        ];
+
         return response()->json([
             'status' => 'success',
-            'data' => $transaction
+            'data' => [
+                ...$transaction->toArray(),
+                'pricing' => $pricing
+            ]
         ]);
     }
 

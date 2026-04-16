@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('transaction_details', function (Blueprint $table) {
             $table->id();
             $table->foreignId('transaction_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('menu_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('menu_id')->nullable()->constrained()->cascadeOnDelete();
 
             $table->integer('menu_qty');
             $table->integer('price');
@@ -28,7 +28,7 @@ return new class extends Migration
                 'ready',
                 'served'
             ])->default('pending');
-
+            $table->string('notes')->nullable();
             $table->timestamps();
         });
     }

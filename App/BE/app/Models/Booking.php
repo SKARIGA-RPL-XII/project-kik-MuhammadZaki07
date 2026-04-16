@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Notifications\Notifiable;
 use Carbon\Carbon;
 
+
 class Booking extends Model
 {
     use HasFactory, Notifiable, LogsActivity;

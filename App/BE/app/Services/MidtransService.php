@@ -20,73 +20,77 @@ class MidtransService
     public function handleNotification($notification)
     {
         $serverKey = config('midtrans.server_key');
+
         $orderId = $notification['order_id'];
         $statusCode = $notification['status_code'];
-        $grossAmount = $notification['gross_amount'];
+        $grossAmount = (string) $notification['gross_amount'];
         $signatureKey = $notification['signature_key'];
 
         $validSignature = hash("sha512", $orderId . $statusCode . $grossAmount . $serverKey);
+
         if ($signatureKey !== $validSignature) {
-            Log::error("Midtrans: Invalid Signature untuk Order " . $orderId);
+            Log::error("Midtrans: Invalid Signature", [
+                'order_id' => $orderId
+            ]);
             return null;
         }
 
-        $transaction = Transaction::where('transaction_code', $orderId)->first();
+        $baseOrderId = preg_replace('/-\d+$/', '', $orderId);
+
+        $transaction = Transaction::where('transaction_code', $baseOrderId)->first();
 
         if (!$transaction) {
-            $parts = explode('-', $orderId);
-            $originalCode = $parts[0] . '-' . $parts[1] . '-' . $parts[2];
-            $transaction = Transaction::where('transaction_code', $originalCode)->first();
+            Log::error("Transaction not found", [
+                'order_id' => $orderId,
+                'base' => $baseOrderId
+            ]);
+            return null;
         }
 
-        if ($transaction) {
-            $status = $notification['transaction_status'];
+        $status = $notification['transaction_status'];
 
-            if (in_array($status, ['settlement', 'capture'])) {
-                $booking = Booking::where('transaction_id', $transaction->id)->first();
+        if (in_array($status, ['settlement', 'capture'])) {
 
-                if ($booking) {
-                    $transaction->update([
-                        'status'         => 'paid',
-                        'payment_method' => $notification['payment_type'] ?? 'midtrans',
-                        'amount_paid'    => (int) $notification['gross_amount'],
-                        'paid_at'        => now(),
-                    ]);
+            $updateData = [
+                'status' => 'paid',
+                'payment_method' => $notification['payment_type'] ?? 'midtrans',
+                'amount_paid' => (int) $grossAmount,
+                'paid_at' => now(),
+            ];
 
-                    $booking->update(['status' => 'confirmed']);
+            $booking = Booking::where('transaction_id', $transaction->id)->first();
 
-                    if ($booking->table_id) {
-                        Table::where('id', $booking->table_id)->update(['status' => 'booked']);
-                    }
+            if ($booking) {
+                $transaction->update($updateData);
+                $booking->update(['status' => 'confirmed']);
 
-                    try {
-                        $this->posService->completePaymentProcess($transaction);
-                    } catch (Exception $e) {
-                        Log::error("Gagal potong stok Booking: " . $e->getMessage());
-                    }
-                } else {
-                    $transaction->update([
-                        'status'         => 'to_cook',
-                        'payment_method' => $notification['payment_type'] ?? 'midtrans',
-                        'amount_paid'    => (int) $notification['gross_amount'],
-                        'paid_at'        => now(),
-                    ]);
-
-                    try {
-                        $this->posService->completePaymentProcess($transaction);
-                    } catch (Exception $e) {
-                        Log::error("Gagal potong stok Order: " . $e->getMessage());
-                    }
+                if ($booking->table_id) {
+                    Table::where('id', $booking->table_id)->update(['status' => 'booked']);
                 }
-            } elseif (in_array($status, ['deny', 'expire', 'cancel'])) {
-                $transaction->update(['status' => 'failed']);
+            } else {
+                $transaction->update(array_merge($updateData, [
+                    'status' => 'to_cook'
+                ]));
+            }
 
-                $booking = Booking::where('transaction_id', $transaction->id)->first();
-                if ($booking) {
-                    $booking->update(['status' => 'cancelled']);
-                    if ($booking->table_id) {
-                        Table::where('id', $booking->table_id)->update(['status' => 'available']);
-                    }
+            try {
+                $this->posService->completePaymentProcess($transaction);
+            } catch (Exception $e) {
+                Log::error("Stock deduction failed", [
+                    'msg' => $e->getMessage()
+                ]);
+            }
+        } elseif (in_array($status, ['deny', 'expire', 'cancel'])) {
+
+            $transaction->update(['status' => 'failed']);
+
+            $booking = Booking::where('transaction_id', $transaction->id)->first();
+
+            if ($booking) {
+                $booking->update(['status' => 'cancelled']);
+
+                if ($booking->table_id) {
+                    Table::where('id', $booking->table_id)->update(['status' => 'available']);
                 }
             }
         }

@@ -86,6 +86,7 @@ class Menu extends Model
 
         return $this->price - ($this->price * $this->discount->value_discount / 100);
     }
+    
 
     public $hidden = ['category_id', 'discount_id'];
 }

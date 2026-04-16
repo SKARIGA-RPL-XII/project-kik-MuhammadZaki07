@@ -2,7 +2,7 @@
 
 namespace App\Services;
 
-use App\Models\{Transaction, Menu, Stock, Table, AttributeLevel, Badge, Event, User};
+use App\Models\{Transaction, Menu, Stock, Table, AttributeLevel, Badge, Booking, Event, User};
 use App\Notifications\GeneralNotification;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\{DB, Auth, Log};
@@ -27,8 +27,14 @@ class PosService
             }
 
             if ($data['order_type'] === 'dine_in' && !empty($data['table_id'])) {
+                // $table = Table::lockForUpdate()->findOrFail($data['table_id']);
+                // if ($table->status === 'occupied') throw new Exception("Table occupied.");
+
                 $table = Table::lockForUpdate()->findOrFail($data['table_id']);
-                if ($table->status === 'occupied') throw new Exception("Table occupied.");
+
+                if (in_array($table->status, ['occupied', 'booked'])) {
+                    throw new Exception("Table is not available.");
+                }
                 $table->update(['status' => 'occupied']);
             }
 
@@ -54,8 +60,17 @@ class PosService
             $taxAmount = round((($subtotal + $serviceAmount) * $taxRate) / 100);
             $grandTotal = $subtotal + $serviceAmount + $taxAmount;
 
-            if (isset($data['total_amount']) && abs($data['total_amount'] - $grandTotal) < 500) {
-                $grandTotal = $data['total_amount'];
+            // if (isset($data['total_amount']) && abs($data['total_amount'] - $grandTotal) < 500) {
+            //     $grandTotal = $data['total_amount'];
+            // }
+
+            if (isset($data['total_amount'])) {
+                if ((int)$data['total_amount'] !== (int)$grandTotal) {
+                    Log::warning('PRICE MISMATCH DETECTED', [
+                        'client' => $data['total_amount'],
+                        'server' => $grandTotal,
+                    ]);
+                }
             }
 
             $status = ($data['order_source'] === 'cashier_direct' && $data['payment_method'] === 'cash')
@@ -119,7 +134,7 @@ class PosService
             $taxRate = (float) (DB::table('settings')->where('key', 'tax_percent')->first()->value ?? 0);
             $serviceRate = (float) (DB::table('settings')->where('key', 'service_percent')->first()->value ?? 0);
 
-            $transactionCode = "TR-BOK-" . date('ymd') . str_pad(rand(0, 9999), 4, '0', STR_PAD_LEFT);
+            $transactionCode = 'TR-MLG-' . now()->format('ymdHis') . random_int(1000, 9999);
 
             $subtotal = 0;
             $tempItems = [];
@@ -173,14 +188,14 @@ class PosService
             $startTime = Carbon::parse($data['booking_time']);
             $endTime = $startTime->copy()->addMinutes(120);
 
-            $booking = \App\Models\Booking::create([
+            $booking = Booking::create([
                 'user_id'          => Auth::id(),
                 'table_id'         => $data['table_id'],
                 'booking_time'     => $startTime,
                 'end_time'         => $endTime,
                 'number_of_people' => $data['number_of_people'] ?? 1,
                 'transaction_id'   => $transaction->id,
-                'status'           => ($data['payment_method'] === 'cash') ? 'confirmed' : 'pending_payment',
+                'status'           => ($data['payment_method'] === 'cash') ? 'confirmed' : 'pending_confirmation',
                 'notes'            => $data['notes'] ?? null
             ]);
 
@@ -319,7 +334,98 @@ class PosService
     //     return Snap::getSnapToken($params);
     // }
 
-    public function generateMidtransToken($transaction, $items, $settings)
+    // public function generateMidtransToken($transaction, $items, $settings)
+    // {
+    //     try {
+    //         Config::$serverKey = config('midtrans.server_key');
+    //         Config::$isProduction = (bool) config('midtrans.is_production');
+    //         Config::$isSanitized = true;
+    //         Config::$is3ds = true;
+
+    //         $itemDetails = [];
+
+    //         if (empty($items)) {
+    //             $taxPercent = $settings['tax_percent'] ?? 0;
+    //             $servicePercent = $settings['service_percent'] ?? 0;
+
+    //             $baseFee = 50000;
+    //             $serviceAmount = round(($baseFee * $servicePercent) / 100);
+    //             $taxAmount = round((($baseFee + $serviceAmount) * $taxPercent) / 100);
+
+    //             $itemDetails[] = [
+    //                 'id'       => 'BOK-' . $transaction->id,
+    //                 'price'    => (int) $baseFee,
+    //                 'quantity' => 1,
+    //                 'name'     => 'Booking Fee (Meja)'
+    //             ];
+
+    //             if ($serviceAmount > 0) {
+    //                 $itemDetails[] = ['id' => 'SVC-BOK', 'price' => (int)$serviceAmount, 'quantity' => 1, 'name' => 'Service Charge'];
+    //             }
+    //             if ($taxAmount > 0) {
+    //                 $itemDetails[] = ['id' => 'TAX-BOK', 'price' => (int)$taxAmount, 'quantity' => 1, 'name' => 'Pajak (Tax)'];
+    //             }
+    //         } else {
+    //             $itemDetails = collect($items)->map(function ($t) {
+    //                 return [
+    //                     'id'       => 'MN-' . $t['menu']->id,
+    //                     'price'    => (int) $t['price'],
+    //                     'quantity' => $t['quantity'],
+    //                     'name'     => substr($t['menu']->name, 0, 50)
+    //                 ];
+    //             })->toArray();
+
+    //             $taxPercent = $settings['tax_percent']['value'] ?? ($settings['tax_percent'] ?? 0);
+    //             $servicePercent = $settings['service_percent']['value'] ?? ($settings['service_percent'] ?? 0);
+
+    //             $subtotal = collect($items)->sum(fn($i) => $i['price'] * $i['quantity']);
+
+    //             $serviceAmount = round(($subtotal * $servicePercent) / 100);
+    //             $taxAmount = round((($subtotal + $serviceAmount) * $taxPercent) / 100);
+
+    //             if ($serviceAmount > 0) {
+    //                 $itemDetails[] = ['id' => 'SVC-CHG', 'price' => (int)$serviceAmount, 'quantity' => 1, 'name' => 'Service Charge'];
+    //             }
+    //             if ($taxAmount > 0) {
+    //                 $itemDetails[] = ['id' => 'TAX-CHG', 'price' => (int)$taxAmount, 'quantity' => 1, 'name' => 'Pajak (Tax)'];
+    //             }
+    //         }
+
+    //         $finalGrossAmount = collect($itemDetails)->sum(fn($item) => $item['price'] * $item['quantity']);
+
+    //         $params = [
+    //             'transaction_details' => [
+    //                 'order_id'     => $transaction->transaction_code . '-' . time(),
+    //                 'gross_amount' => (int) $finalGrossAmount,
+    //             ],
+    //             'item_details' => $itemDetails,
+    //             'customer_details' => [
+    //                 'first_name' => Auth::user()->name ?? 'Pelanggan',
+    //                 'email'      => Auth::user()->email,
+    //             ],
+    //         ];
+
+    //         $methods = $settings['available_methods']['value'] ?? ($settings['available_methods'] ?? []);
+    //         if (is_array($methods)) {
+    //             $enabledPayments = collect($methods)
+    //                 ->filter(fn($method) => (isset($method['active']) && $method['active'] == 1))
+    //                 ->pluck('id')
+    //                 ->toArray();
+
+    //             if (!empty($enabledPayments)) {
+    //                 $params['enabled_payments'] = $enabledPayments;
+    //             }
+    //         }
+
+    //         return Snap::getSnapToken($params);
+    //     } catch (Exception $e) {
+    //         Log::error("Midtrans Error: " . $e->getMessage());
+    //         return null;
+    //     }
+    // }
+
+
+    public function generateMidtransToken($transaction, $pricing, $items, $settings)
     {
         try {
             Config::$serverKey = config('midtrans.server_key');
@@ -327,82 +433,92 @@ class PosService
             Config::$isSanitized = true;
             Config::$is3ds = true;
 
+            // Log::info('MIDTRANS INPUT', [
+            //     'transaction' => $transaction->id,
+            //     'pricing' => $pricing,
+            //     'items' => $items,
+            // ]);
+
             $itemDetails = [];
 
             if (empty($items)) {
-                $taxPercent = $settings['tax_percent'] ?? 0;
-                $servicePercent = $settings['service_percent'] ?? 0;
-
-                $baseFee = 50000;
-                $serviceAmount = round(($baseFee * $servicePercent) / 100);
-                $taxAmount = round((($baseFee + $serviceAmount) * $taxPercent) / 100);
-
                 $itemDetails[] = [
                     'id'       => 'BOK-' . $transaction->id,
-                    'price'    => (int) $baseFee,
+                    'price'    => (int) $pricing['subtotal'],
                     'quantity' => 1,
-                    'name'     => 'Booking Fee (Meja)'
+                    'name'     => 'Booking Fee'
                 ];
-
-                if ($serviceAmount > 0) {
-                    $itemDetails[] = ['id' => 'SVC-BOK', 'price' => (int)$serviceAmount, 'quantity' => 1, 'name' => 'Service Charge'];
-                }
-                if ($taxAmount > 0) {
-                    $itemDetails[] = ['id' => 'TAX-BOK', 'price' => (int)$taxAmount, 'quantity' => 1, 'name' => 'Pajak (Tax)'];
-                }
             } else {
-                $itemDetails = collect($items)->map(function ($t) {
+                $itemDetails = collect($items)->map(function ($item) {
+
+                    $menu = Menu::with('discount')->find($item['menu_id']);
+
+                    if (!$menu) {
+                        Log::warning('MIDTRANS MENU NOT FOUND', $item);
+                        return null;
+                    }
+
+                    if ($menu->discount && $menu->discount->is_active) {
+                        $price = $menu->price * (1 - $menu->discount->value_discount / 100);
+                    } else {
+                        $price = $menu->price;
+                    }
+
                     return [
-                        'id'       => 'MN-' . $t['menu']->id,
-                        'price'    => (int) $t['price'],
-                        'quantity' => $t['quantity'],
-                        'name'     => substr($t['menu']->name, 0, 50)
+                        'id'       => 'MN-' . $menu->id,
+                        'price'    => (int) round($price),
+                        'quantity' => (int) ($item['quantity'] ?? 1),
+                        'name'     => substr($menu->name, 0, 50),
                     ];
-                })->toArray();
-
-                $taxPercent = $settings['tax_percent']['value'] ?? ($settings['tax_percent'] ?? 0);
-                $servicePercent = $settings['service_percent']['value'] ?? ($settings['service_percent'] ?? 0);
-
-                $subtotal = collect($items)->sum(fn($i) => $i['price'] * $i['quantity']);
-
-                $serviceAmount = round(($subtotal * $servicePercent) / 100);
-                $taxAmount = round((($subtotal + $serviceAmount) * $taxPercent) / 100);
-
-                if ($serviceAmount > 0) {
-                    $itemDetails[] = ['id' => 'SVC-CHG', 'price' => (int)$serviceAmount, 'quantity' => 1, 'name' => 'Service Charge'];
-                }
-                if ($taxAmount > 0) {
-                    $itemDetails[] = ['id' => 'TAX-CHG', 'price' => (int)$taxAmount, 'quantity' => 1, 'name' => 'Pajak (Tax)'];
-                }
+                })
+                    ->filter()
+                    ->values()
+                    ->toArray();
             }
 
-            $finalGrossAmount = collect($itemDetails)->sum(fn($item) => $item['price'] * $item['quantity']);
+            if ($pricing['service'] > 0) {
+                $itemDetails[] = [
+                    'id' => 'SVC',
+                    'price' => (int) $pricing['service'],
+                    'quantity' => 1,
+                    'name' => 'Service Charge'
+                ];
+            }
+
+            if ($pricing['tax'] > 0) {
+                $itemDetails[] = [
+                    'id' => 'TAX',
+                    'price' => (int) $pricing['tax'],
+                    'quantity' => 1,
+                    'name' => 'Tax'
+                ];
+            }
 
             $params = [
                 'transaction_details' => [
                     'order_id'     => $transaction->transaction_code . '-' . time(),
-                    'gross_amount' => (int) $finalGrossAmount,
+                    'gross_amount' => (int) $pricing['total'],
                 ],
                 'item_details' => $itemDetails,
                 'customer_details' => [
-                    'first_name' => Auth::user()->name ?? 'Pelanggan',
-                    'email'      => Auth::user()->email,
+                    'first_name' => Auth::user()->username ?? 'Pelanggan',
+                    'email'      => Auth::user()->email ?? 'guest@mail.com',
                 ],
             ];
 
-            $methods = $settings['available_methods']['value'] ?? ($settings['available_methods'] ?? []);
-            if (is_array($methods)) {
-                $enabledPayments = collect($methods)
-                    ->filter(fn($method) => (isset($method['active']) && $method['active'] == 1))
-                    ->pluck('id')
-                    ->toArray();
+            // Log::info('MIDTRANS PARAMS', $params);
 
-                if (!empty($enabledPayments)) {
-                    $params['enabled_payments'] = $enabledPayments;
-                }
+            $token = Snap::getSnapToken($params);
+
+            // Log::info('MIDTRANS TOKEN RESULT', [
+            //     'token' => $token
+            // ]);
+
+            if (!$token) {
+                throw new Exception('Failed generate Midtrans token');
             }
 
-            return Snap::getSnapToken($params);
+            return $token;
         } catch (Exception $e) {
             Log::error("Midtrans Error: " . $e->getMessage());
             return null;

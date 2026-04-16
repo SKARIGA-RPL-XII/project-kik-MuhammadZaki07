@@ -27,7 +27,8 @@ return new class extends Migration
                 'to_cook',
                 'cooking',
                 'completed',
-                'cancelled'
+                'cancelled',
+                'failed'
             ])->default('pending_payment');
 
             $table->integer('total_amount');

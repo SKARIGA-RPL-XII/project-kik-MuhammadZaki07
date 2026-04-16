@@ -74,7 +74,7 @@ class SettingController extends Controller
                 }
 
                 Image::read($file)
-                    ->cover(600, 400)
+                    ->cover(600, 600)
                     ->encodeByExtension('webp', 80)
                     ->save($fullPath);
 

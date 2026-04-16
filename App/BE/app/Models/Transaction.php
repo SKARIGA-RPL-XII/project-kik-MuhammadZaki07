@@ -28,6 +28,7 @@ class Transaction extends Model
         'pending_confirmation'
     ];
 
+
     public function details()
     {
         return $this->hasMany(TransactionDetail::class);
@@ -51,7 +52,7 @@ class Transaction extends Model
 
     public function booking()
     {
-        return $this->hasOne(Booking::class);
+        return $this->hasOne(Booking::class, 'transaction_id');
     }
 
     public function cashier()
