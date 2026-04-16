@@ -26,7 +26,6 @@ export function NotificationsView() {
     handleDelete
   } = useNotificationsViewLogic();
 
-  // Fungsi Alert ala Bootstrap
   const showAlert = (msg: string, type: 'success' | 'error') => {
     setAlert({ show: true, msg, type });
     setTimeout(() => setAlert({ show: false, msg: '', type: 'success' }), 3000);
@@ -161,9 +160,9 @@ export function NotificationsView() {
                   <div
                     key={n.id}
                     onClick={() => handleShowDetail(n)}
-                    className={`group relative max-w-[630px] flex items-center gap-4 p-4 rounded-xl border transition-all cursor-pointer ${
+                    className={`group relative lg:max-w-[630px] min-w-[130px] flex items-center gap-4 p-4 rounded-xl border transition-all cursor-pointer ${
                       isSelected ? "border-red-200 bg-red-50/30 dark:bg-neutral-800" : 
-                      isUnread ? "bg-white dark:bg-neutral-800 border-red-100 shadow-sm ring-1 ring-red-50" : "bg-neutral-50/50 dark:bg-neutral-900"
+                      isUnread ? "bg-white dark:bg-neutral-500/50 border-red-100 dark:border-neutral-100 shadow-sm ring-1 ring-red-50" : "bg-neutral-50/50 dark:bg-neutral-900"
                     }`}
                   >
                     <div onClick={(e) => toggleSelect(e, n.id)} className={`shrink-0 transition-colors ${isSelected ? 'text-red-600' : 'text-neutral-300 group-hover:text-neutral-400'}`}>
@@ -176,14 +175,14 @@ export function NotificationsView() {
 
                     <div className="flex-1 min-w-0">
                       <div className="flex justify-between items-start">
-                        <p className={`text-sm truncate capitalize ${isUnread ? 'font-bold text-neutral-800' : 'text-neutral-500'}`}>
+                        <p className={`text-sm truncate capitalize ${isUnread ? 'font-bold text-neutral-' : 'text-neutral-500'}`}>
                           {n.data?.type?.replace('_', ' ') || "System"}
                         </p>
                         <span className="text-[10px] text-neutral-400 italic shrink-0">
                           {dayjs(n.created_at).fromNow()}
                         </span>
                       </div>
-                      <p className="text-xs text-neutral-500 truncate mt-0.5">
+                      <p className={`text-xs ${isUnread ? "dark:text-neutral-300 text-neutral-600" : "text-neutral-600"} truncate mt-0.5`}>
                         {getMessage(n)}
                       </p>
                     </div>

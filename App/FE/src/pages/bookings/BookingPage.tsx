@@ -53,7 +53,6 @@ const BookingPage = () => {
   };
 
   const handleConfirm = async (id: number) => {
-    if (window.confirm("Konfirmasi pesanan ini?")) {
       approveBooking.mutate(id, {
         onSuccess: () => {
           refetch();
@@ -72,7 +71,6 @@ const BookingPage = () => {
           );
         },
       });
-    }
   };
 
   return (
@@ -136,7 +134,7 @@ const BookingPage = () => {
             <input
               type="text"
               placeholder="Search guest or table..."
-              className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-neutral-100 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900 focus:outline-none focus:ring-2 focus:ring-red-500/20 text-sm transition-all"
+              className="w-full pl-10 pr-4 py-2.5 rounded-lg border-2 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900 focus:outline-none focus:ring-2 focus:ring-red-500/20 text-sm transition-all"
               onChange={(e) => {
                 setSearchTerm(e.target.value);
                 setPage(0);

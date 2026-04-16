@@ -146,10 +146,10 @@ export default function CustomerProfilePage() {
           onValueChange={(value) => {
             setActiveTab(value);
             logic.setActiveTab(value);
-          }}
+          }} 
           className="w-full"
         >
-          <TabsList className="flex p-1 mb-8 h-auto">
+          <TabsList className="flex p-1 mb-8 h-auto overflow-x-auto dan flex-nowrap">
             <TabsTrigger
               value="profile"
               className="flex-1 flex items-center justify-center gap-2 py-2 px-3 text-sm font-medium transition-all dark:data-[state=active]:bg-neutral-900 dark:data-[state=active]:text-neutral-300 data-[state=active]:bg-white data-[state=active]:text-red-600 data-[state=active]:shadow-sm text-neutral-500"

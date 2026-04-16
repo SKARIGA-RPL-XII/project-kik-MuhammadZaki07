@@ -8,7 +8,6 @@ import { useTranslation } from "react-i18next";
 import { BookingService } from "@/services/booking.service";
 import { useToast } from "@/context/ToastContext";
 import { openSnapPopup } from "@/utils/midtransHandler";
-import { useSettings } from "@/context/SettingsContext";
 
 export default function BookingLayout() {
   const { t } = useTranslation();
@@ -19,7 +18,6 @@ export default function BookingLayout() {
     return savedStep ? parseInt(savedStep) : 1;
   });
   const { toast } = useToast();
-  const { settings } = useSettings();
 
   const [bookingData, setBookingData] = useState(() => {
     const savedData = localStorage.getItem("booking_data");
@@ -47,51 +45,66 @@ export default function BookingLayout() {
     setBookingData((prev: any) => ({ ...prev, ...newData }));
   };
 
-const handleFinalFinish = async (finalData: any) => {
-  try {    
-    const res = await BookingService.createBooking(finalData);
+  const handleFinalFinish = async (finalData: any) => {
+    try {
+      const res = await BookingService.createBooking(finalData);
 
-    if (res.error) throw new Error(res.error);
+      if (res.error) throw new Error(res.error);
 
-    const bookingInfo = res.data?.data?.booking;
-    const snapToken = res.data?.data?.snap_token;
+      const bookingInfo = res.data?.data?.booking;
+      // console.dir(bookingInfo);
+      // console.log(bookingInfo);
+      
+      const snapToken = res.data?.data?.snap_token;
 
-    if (snapToken) {
-      await openSnapPopup(snapToken, {
-        onSuccess: (result) => {
-          console.log("Midtrans Success:", result);
-          clearBookingSession();
-          toast("success", "Pembayaran Berhasil", "Pesanan & Meja telah dikonfirmasi.");
-          navigate(`/invoice/${bookingInfo.transaction_id}`, {
-            state: { transactionData: bookingInfo },
-          });
-        },
-        onPending: (result) => {
-          console.log("Midtrans Pending:", result);
-          clearBookingSession();
-          toast("warning", "Pending", "Segera bayar agar pesanan diproses.");
-          navigate("/profile-customer?tab=orders");
-        },
-        onError: (result) => {
-          console.error("Midtrans Error:", result);
-          toast("error", "Gagal", "Pembayaran bermasalah, silakan coba lagi.");
-        },
-        onClose: () => {
-          clearBookingSession();
-          toast("info", "Pembayaran Ditunda", "Selesaikan pembayaran nanti di menu Order.");
-          navigate("/profile-customer?tab=orders");
-        },
-      });
-    } else {
-      clearBookingSession();
-      toast("success", "Booking Berhasil", "Meja Anda sudah dipesan.");
-      navigate("/profile-customer?tab=orders");
+      if (snapToken) {
+        await openSnapPopup(snapToken, {
+          onSuccess: (result) => {
+            console.log("Midtrans Success:", result);
+            clearBookingSession();
+            toast(
+              "success",
+              "Pembayaran Berhasil",
+              "Pesanan & Meja telah dikonfirmasi.",
+            );
+            navigate(`/invoice/${bookingInfo.transaction_id}`, {
+              state: { transactionData: bookingInfo },
+            });
+          },
+          onPending: (result) => {
+            console.log("Midtrans Pending:", result);
+            clearBookingSession();
+            toast("warning", "Pending", "Segera bayar agar pesanan diproses.");
+            navigate("/profile-customer?tab=orders");
+          },
+          onError: (result) => {
+            console.error("Midtrans Error:", result);
+            toast(
+              "error",
+              "Gagal",
+              "Pembayaran bermasalah, silakan coba lagi.",
+            );
+          },
+          onClose: () => {
+            clearBookingSession();
+            toast(
+              "info",
+              "Pembayaran Ditunda",
+              "Selesaikan pembayaran nanti di menu Order.",
+            );
+            navigate("/profile-customer?tab=orders");
+          },
+        });
+      } else {
+        clearBookingSession();
+        toast("success", "Booking Berhasil", "Meja Anda sudah dipesan.");
+        navigate("/profile-customer?tab=orders");
+      }
+    } catch (err: any) {
+      console.error("Booking Error:", err);
+      toast("error", "Gagal Booking", err.message || "Sistem sedang sibuk.");
     }
-  } catch (err: any) {
-    console.error("Booking Error:", err);
-    toast("error", "Gagal Booking", err.message || "Sistem sedang sibuk.");
-  }
-};
+  };
 
   const clearBookingSession = () => {
     localStorage.removeItem("booking_step");
@@ -101,7 +114,7 @@ const handleFinalFinish = async (finalData: any) => {
   return (
     <div className="min-h-screen dark:bg-neutral-900 pb-20">
       <div className="py-4 top-0 z-50 dark:bg-neutral-900 border-b">
-        <div className="max-w-md mx-auto">
+        <div className="lg:max-w-md md:max-w-md max-w-xs mx-auto">
           <div className="relative flex items-center justify-between w-full">
             <div className="absolute top-1/2 left-0 w-full h-0.5 bg-neutral-100 dark:bg-neutral-800 -translate-y-1/2 z-0" />
             <div

@@ -28,7 +28,7 @@ export function OrdersView() {
   const { toast } = useToast();
   const location = useLocation();
   const navigate = useNavigate();
-  const {clearCart} = useCart();
+  const { clearCart } = useCart();
 
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
   const { settings } = useSettings();
@@ -51,35 +51,35 @@ export function OrdersView() {
     return () => observer.disconnect();
   }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
-const handleRetryPayment = async (orderId: number) => {
-  setIsRetrying(true);
-  try {
-    const res = await TransactionService.getSnapToken(orderId);
-    const snapToken = res.data.snap_token;
+  const handleRetryPayment = async (orderId: number) => {
+    setIsRetrying(true);
+    try {
+      const res = await TransactionService.getSnapToken(orderId);
+      const snapToken = res.data.snap_token;
 
-    await openSnapPopup(snapToken, {
-      onSuccess: () => {
-        toast(
-          "success",
-          "Pembayaran Berhasil",
-          "Pesanan Anda sedang diproses.",
-        );
-        
-        clearCart();
-        navigate(`/invoice/${selectedOrder?.id}`, {
-          state: { transactionData: selectedOrder },
-        });
-      },
-      onPending: () =>
-        toast("warning", "Pending", "Selesaikan pembayaran Anda."),
-      onClose: () => toast("info", "Batal", "Segera selesaikan pembayaran."),
-    });
-  } catch (err: any) {
-    toast("error", "Gagal", err.message || "Gagal memuat pembayaran.");
-  } finally {
-    setIsRetrying(false);
-  }
-};
+      await openSnapPopup(snapToken, {
+        onSuccess: () => {
+          toast(
+            "success",
+            "Pembayaran Berhasil",
+            "Pesanan Anda sedang diproses.",
+          );
+
+          clearCart();
+          navigate(`/invoice/${selectedOrder?.id}`, {
+            state: { transactionData: selectedOrder },
+          });
+        },
+        onPending: () =>
+          toast("warning", "Pending", "Selesaikan pembayaran Anda."),
+        onClose: () => toast("info", "Batal", "Segera selesaikan pembayaran."),
+      });
+    } catch (err: any) {
+      toast("error", "Gagal", err.message || "Gagal memuat pembayaran.");
+    } finally {
+      setIsRetrying(false);
+    }
+  };
 
   useEffect(() => {
     if (location.state?.selectedOrder) {
@@ -106,17 +106,23 @@ const handleRetryPayment = async (orderId: number) => {
     const isPaid = ["paid", "completed"].includes(selectedOrder.status);
     const taxPercent = settings?.tax_percent || 0;
     const servicePercent = settings?.service_percent || 0;
+
     const isTaxActive = settings?.is_tax_active;
     const isServiceActive = settings?.is_service_active;
 
-    const subtotal = selectedOrder.total_amount;
-    const taxAmount = isTaxActive
-      ? Math.round((subtotal * taxPercent) / 100)
-      : 0;
-    const serviceAmount = isServiceActive
-      ? Math.round((subtotal * servicePercent) / 100)
-      : 0;
-    const grandTotal = subtotal + taxAmount + serviceAmount;
+    const items = selectedOrder?.items ?? [];
+    const subtotal =
+      selectedOrder.details?.reduce((acc, item) => {
+        return acc + item.subtotal;
+      }, 0) || 0;
+    const taxAmount = Math.round((subtotal * taxPercent) / 100);
+    const serviceAmount = Math.round((subtotal * servicePercent) / 100);
+
+    const isDpOnly = selectedOrder?.details?.length === 0;
+
+    const grandTotal = isDpOnly
+      ? selectedOrder.amount_paid
+      : subtotal + taxAmount + serviceAmount;
 
     return (
       <div className="space-y-6 pb-10 animate-in fade-in slide-in-from-right-4 duration-300">
@@ -141,13 +147,13 @@ const handleRetryPayment = async (orderId: number) => {
         </div>
 
         <Card
-          className={`p-5 border-none shadow-none dark:bg-neutral-950 ${isPaid ? "bg-green-500 text-white" : "bg-yellow-400 text-white"}`}
+          className={`p-5 border-none shadow-none dark:bg-neutral-950 ${
+            isPaid ? "bg-green-500 text-white" : "bg-yellow-400 text-white"
+          }`}
         >
           <div className="flex justify-between items-center">
             <div className="space-y-1">
-              <p className="text-sm font-medium">
-                {t("ov_status_label")}
-              </p>
+              <p className="text-sm font-medium">{t("ov_status_label")}</p>
               <h2 className="text-2xl font-bold capitalize tracking-tight">
                 {selectedOrder.status.replace("_", " ")}
               </h2>
@@ -210,7 +216,9 @@ const handleRetryPayment = async (orderId: number) => {
                   <div className="flex gap-3 items-center">
                     <div className="w-10 h-10 bg-neutral-50 dark:bg-neutral-800 rounded-lg overflow-hidden border border-neutral-100 dark:border-neutral-700">
                       <img
-                        src={`${import.meta.env.VITE_STORAGE_URL}/${item.menu?.menu_image}`}
+                        src={`${import.meta.env.VITE_STORAGE_URL}/${
+                          item.menu?.menu_image
+                        }`}
                         alt={item.menu?.name}
                         className="w-full h-full object-cover"
                       />
@@ -241,13 +249,15 @@ const handleRetryPayment = async (orderId: number) => {
               {t("ov_section_bill")}
             </h3>
           </div>
+
           <Card className="p-5 border-neutral-100 dark:border-neutral-800 rounded-lg shadow-none bg-white dark:bg-neutral-900 space-y-3">
             <div className="flex justify-between text-sm">
-              <span className="text-neutral-400">{t("ov_bill_subtotal")}</span>
+              <span className="text-neutral-400">Subtotal</span>
               <span className="font-bold text-neutral-800 dark:text-neutral-200">
                 Rp {new Intl.NumberFormat("id-ID").format(subtotal)}
               </span>
             </div>
+
             {isServiceActive && (
               <div className="flex justify-between text-sm">
                 <span className="text-neutral-400">
@@ -258,6 +268,7 @@ const handleRetryPayment = async (orderId: number) => {
                 </span>
               </div>
             )}
+
             {isTaxActive && (
               <div className="flex justify-between text-sm">
                 <span className="text-neutral-400">
@@ -268,6 +279,7 @@ const handleRetryPayment = async (orderId: number) => {
                 </span>
               </div>
             )}
+
             <div className="pt-3 border-t border-dashed border-neutral-200 dark:border-neutral-700 flex justify-between items-center">
               <span className="text-base font-bold text-neutral-800 dark:text-neutral-200">
                 {t("ov_bill_total")}
@@ -293,7 +305,7 @@ const handleRetryPayment = async (orderId: number) => {
 
   return (
     <div className="space-y-3 animate-in fade-in duration-300 pb-10">
-      <h2 className="text-xs font-bold text-neutral-400 uppercase tracking-widest px-1 mb-4">
+      <h2 className="text-lg font-semibold text-neutral-400 px-1 mb-4">
         {t("ov_title")}
       </h2>
 
@@ -314,11 +326,15 @@ const handleRetryPayment = async (orderId: number) => {
                     ? order?.details[0]?.menu?.name
                     : `Order #${order.id}`}
                   {order?.details?.length > 1 &&
-                    ` +${order.details.length - 1} ${t("ov_item_more")}`}
+                    ` +${order.details.length - 1} ${t("ov_item_count")}`}
                 </h4>
               </div>
               <span
-                className={`text-[9px] px-2 py-0.5 rounded-full font-bold uppercase ${["paid", "completed"].includes(order.status) ? "bg-green-50 text-green-600 dark:bg-green-950/30" : "bg-yellow-50 text-yellow-600 dark:bg-yellow-950/30"}`}
+                className={`text-[9px] px-2 py-0.5 rounded-full font-bold uppercase ${
+                  ["paid", "completed"].includes(order.status)
+                    ? "bg-green-50 text-green-600 dark:bg-green-950/30"
+                    : "bg-yellow-50 text-yellow-600 dark:bg-yellow-950/30"
+                }`}
               >
                 {order.status}
               </span>

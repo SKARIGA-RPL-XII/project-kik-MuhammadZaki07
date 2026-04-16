@@ -171,7 +171,7 @@ export function MenuDetailView({ menu, isOpen, onClose, onAddToCart }: any) {
                 <div className="flex items-center justify-between gap-4">
                   <div className="flex flex-col min-w-0">
                     <div className="flex items-center gap-2">
-                      <p className="text-2xl font-bold text-neutral-900 dark:text-white tracking-tighter leading-none">
+                      <p className="lg:text-2xl text-xl font-bold text-neutral-900 dark:text-white tracking-tighter leading-none">
                         {formatCurrency(activePrice * quantity)}
                       </p>
                       {hasDiscount && (
@@ -183,7 +183,7 @@ export function MenuDetailView({ menu, isOpen, onClose, onAddToCart }: any) {
 
                     <div className="flex items-center gap-1.5 mt-2">
                       <div className="w-1.5 h-1.5 rounded-full bg-yellow-300 animate-pulse" />
-                      <span className="text-[10px] font-normal text-neutral-400 dark:text-neutral-500 italic leading-none">
+                      <span className="lg:text-[10px] text-[8px] font-normal text-neutral-400 dark:text-neutral-500 italic leading-none">
                         {quantity > 1
                           ? `Harga update otomatis (${quantity} item)`
                           : "Belum termasuk pajak & layanan"}
@@ -211,7 +211,7 @@ export function MenuDetailView({ menu, isOpen, onClose, onAddToCart }: any) {
                     </div>
 
                     <Button
-                      className={`text-sm rounded-sm h-10 flex font-medium items-center gap-2 group transition-all duration-300 ${
+                      className={`lg:text-sm text-xs rounded-sm h-10 flex font-medium items-center gap-2 group transition-all duration-300 ${
                         isAllAttributesSelected
                           ? "bg-red-600 hover:bg-red-700 text-white"
                           : "bg-neutral-100 text-neutral-400 cursor-not-allowed"
@@ -221,11 +221,9 @@ export function MenuDetailView({ menu, isOpen, onClose, onAddToCart }: any) {
                     >
                       <ShoppingBag
                         size={18}
-                        className={
-                          isAllAttributesSelected
-                            ? "group-hover:rotate-12 transition-transform"
-                            : ""
-                        }
+                        className={`transition-transform group-hover:rotate-12 ${
+                          isAllAttributesSelected ? "block" : "hidden"
+                        }`}
                       />
                       <span>
                         {isAllAttributesSelected

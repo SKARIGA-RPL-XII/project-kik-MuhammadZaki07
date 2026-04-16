@@ -81,7 +81,7 @@ export function AIAssistant({ isCartOpen }: { isCartOpen?: boolean }) {
     fetchAiResponse(messageToSend)
   }
 
-  if (["/transaction", "/admin", "/login"].some(path => location.pathname.includes(path))) return null
+  if (["/transaction", "/admin", "/login", "booking"].some(path => location.pathname.includes(path))) return null
 
   return (
     <>

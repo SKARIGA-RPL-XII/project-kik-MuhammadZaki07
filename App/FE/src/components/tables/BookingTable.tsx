@@ -7,10 +7,20 @@ import {
   TableRow,
 } from "../../components/ui/table";
 import Badge from "../../components/ui/badge/Badge";
-import { Loader2, Pencil, Trash2, CheckCircle, Trash2Icon } from "lucide-react";
+import {
+  Loader2,
+  Pencil,
+  Trash2,
+  CheckCircle,
+  Trash2Icon,
+  XCircle,
+  Info,
+} from "lucide-react";
 import { ActionGuard } from "../guard/ActionGuard";
 import { Button } from "../../components/ui/button";
 import DeleteAlertDialog from "../dialog/DeleteAlertDialog";
+import { useState } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
 
 interface BookingTableProps {
   bookings: any[];
@@ -37,6 +47,7 @@ export default function BookingTable({
   onDelete,
   onEdit,
 }: BookingTableProps) {
+  const [selectedBooking, setSelectedBooking] = useState<any>(null);
   const getStatusColor = (status: string) => {
     switch (status) {
       case "confirmed":
@@ -65,6 +76,9 @@ export default function BookingTable({
                 </TableHead>
                 <TableHead className="px-5 py-3 text-start text-theme-xs uppercase">
                   Schedule
+                </TableHead>
+                <TableHead className="px-5 py-3 text-start text-theme-xs uppercase">
+                  Code
                 </TableHead>
                 <TableHead className="px-5 py-3 text-start text-theme-xs uppercase">
                   Guests
@@ -107,7 +121,7 @@ export default function BookingTable({
                 bookings.map((booking) => (
                   <TableRow
                     key={booking.id}
-                    className="hover:bg-neutral-50/50 dark:hover:bg-white/[0.02] transition-colors"
+                    className="hover:bg-neutral-50/50 dark:hover:bg-white/[0.02] cursor-pointer transition-colors"
                   >
                     <TableCell className="px-5 py-4">
                       <div className="flex flex-col">
@@ -144,6 +158,9 @@ export default function BookingTable({
                     </TableCell>
 
                     <TableCell className="px-5 py-4 text-theme-sm text-neutral-700 dark:text-neutral-300">
+                      {booking.transaction.transaction_code} Pax
+                    </TableCell>
+                    <TableCell className="px-5 py-4 text-theme-sm text-neutral-700 dark:text-neutral-300">
                       {booking.number_of_people} Pax
                     </TableCell>
 
@@ -154,37 +171,50 @@ export default function BookingTable({
                     </TableCell>
 
                     <TableCell className="px-5 py-4">
-                      <div className="flex items-center justify-end gap-1">
-                        {booking.status === "pending_payment" && (
-                          <ActionGuard module="booking" action="write">
-                            <button
-                              title="Confirm Payment"
-                              className="p-2 rounded text-green-500 hover:bg-green-50 dark:hover:bg-green-500/10 transition-colors"
-                              onClick={() => onConfirm(booking.id)}
+                      <div className="flex items-center justify-end gap-2">
+                        {booking.status === "pending_confirmation" && (
+                          <ActionGuard module="reservation" action="write">
+                            <DeleteAlertDialog
+                              trashIcon={false}
+                              onConfirm={() => onConfirm(booking.id)}
+                              title="Terima Pesanan?"
+                              description={`Apakah Anda yakin ingin menyetujui booking atas nama ${
+                                booking.user?.username || "tamu"
+                              }?`}
                             >
-                              <CheckCircle size={18} />
-                            </button>
+                              <button
+                                title="Approve Booking"
+                                className="p-2 rounded-lg text-green-500 hover:bg-green-50 dark:hover:bg-green-500/10 transition-colors border border-transparent hover:border-green-200"
+                              >
+                                <CheckCircle size={18} />
+                              </button>
+                            </DeleteAlertDialog>
                           </ActionGuard>
                         )}
 
-                        {/* <ActionGuard module="reservation" action="write">
-                        <button
-                          title="Edit / Detail"
-                          className="p-2 rounded text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-500/10 transition-colors"
-                          onClick={() => onEdit(booking.id)}
-                        >
-                          <Pencil size={18} />
-                        </button>
-                      </ActionGuard> */}
+                        <ActionGuard module="reservation" action="delete">
+                          <button
+                            title="Reject/Delete"
+                            onClick={() => setSelectedBooking(booking)}
+                            className="p-2 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg border border-transparent hover:border-red-200"
+                          >
+                            <Info size={18} />
+                          </button>
+                        </ActionGuard>
 
                         <ActionGuard module="reservation" action="delete">
                           <DeleteAlertDialog
                             onConfirm={() => onDelete(booking.id)}
-                            title="Hapus Booking?"
-                            description={`Apakah Anda yakin ingin menghapus booking atas nama ${booking.user?.username || "tamu"}?`}
+                            title="Tolak/Hapus Booking?"
+                            description={`Apakah Anda yakin ingin menolak atau menghapus booking atas nama ${
+                              booking.user?.username || "tamu"
+                            }?`}
                           >
-                            <button className="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg">
-                              <Trash2Icon size={18} />
+                            <button
+                              title="Reject/Delete"
+                              className="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg border border-transparent hover:border-red-200"
+                            >
+                              <XCircle size={18} />
                             </button>
                           </DeleteAlertDialog>
                         </ActionGuard>
@@ -197,7 +227,6 @@ export default function BookingTable({
         </div>
       </div>
 
-      {/* Pagination UI */}
       <div className="flex items-center justify-between mt-6">
         <p className="text-sm text-neutral-500 font-medium italic">
           Showing {bookings.length} of {totalItems} items (Page {page + 1} of{" "}
@@ -226,6 +255,117 @@ export default function BookingTable({
           </Button>
         </div>
       </div>
+
+      <Dialog
+        open={!!selectedBooking}
+        onOpenChange={() => setSelectedBooking(null)}
+      >
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Detail Booking</DialogTitle>
+          </DialogHeader>
+
+          {selectedBooking && (
+            <div className="space-y-3 text-sm mt-2">
+              <div className="flex justify-between">
+                <span className="text-neutral-500">Nama</span>
+                <span className="font-medium">
+                  {selectedBooking.user?.username}
+                </span>
+              </div>
+
+              <div className="flex justify-between">
+                <span className="text-neutral-500">Email</span>
+                <span className="font-medium">
+                  {selectedBooking.user?.email || "-"}
+                </span>
+              </div>
+
+              <div className="flex justify-between">
+                <span className="text-neutral-500">Meja</span>
+                <span className="font-medium">
+                  T-{selectedBooking.table?.table_number}
+                </span>
+              </div>
+
+              <div className="flex justify-between">
+                <span className="text-neutral-500">Jumlah Tamu</span>
+                <span className="font-medium">
+                  {selectedBooking.number_of_people}
+                </span>
+              </div>
+
+              <div className="flex justify-between">
+                <span className="text-neutral-500">Waktu</span>
+                <span className="font-medium">
+                  {new Date(selectedBooking.booking_time).toLocaleString(
+                    "id-ID",
+                  )}
+                </span>
+              </div>
+
+              <div className="flex justify-between">
+                <span className="text-neutral-500">Status</span>
+                <span className="font-medium capitalize">
+                  {selectedBooking.status}
+                </span>
+              </div>
+
+              <div className="flex justify-between">
+                <span className="text-neutral-500">Transaction</span>
+                <span className="font-mono text-xs">
+                  {selectedBooking.transaction?.transaction_code}
+                </span>
+              </div>
+
+              <div className="flex justify-between border-t pt-3 mt-2">
+                <span className="font-semibold">Total</span>
+                <span className="font-bold text-red-600">
+                  Rp{" "}
+                  {new Intl.NumberFormat("id-ID").format(
+                    selectedBooking.transaction?.total_amount || 0,
+                  )}
+                </span>
+              </div>
+
+              {selectedBooking?.transaction?.details?.length > 0 && (
+                <div className="border-t pt-3 mt-3 space-y-2">
+                  <h4 className="font-semibold text-sm">Menu Pesanan</h4>
+
+                  <div className="space-y-2 max-h-[200px] overflow-y-auto pr-1">
+                    {selectedBooking.transaction.details.map((item: any) => (
+                      <div
+                        key={item.id}
+                        className="flex justify-between items-center text-sm border rounded-lg p-2"
+                      >
+                        <div className="flex flex-col">
+                          <span className="font-medium">
+                            {item.menu?.name || "Unknown Menu"}
+                          </span>
+                          <span className="text-xs text-neutral-500">
+                            {item.menu_qty} x Rp{" "}
+                            {new Intl.NumberFormat("id-ID").format(item.price)}
+                          </span>
+                        </div>
+
+                        <span className="font-bold text-red-600">
+                          Rp{" "}
+                          {new Intl.NumberFormat("id-ID").format(item.subtotal)}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div className="pt-2">
+                <span className="text-neutral-500 text-xs">Notes</span>
+                <p className="text-sm">{selectedBooking.notes || "-"}</p>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

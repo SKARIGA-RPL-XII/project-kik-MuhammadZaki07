@@ -43,11 +43,10 @@ export default function InvoicePage() {
 
   if (loading) return <InvoiceSkeleton />;
 
-  const subtotal =
-    transactionData.details?.reduce(
-      (acc: number, item: any) => acc + (item.subtotal || 0),
-      0,
-    ) || 0;
+ const subtotal =
+  transactionData.details
+    ?.filter((item: any) => item.menu_id !== null)
+    .reduce((acc: number, item: any) => acc + (item.subtotal || 0), 0) || 0;
   const taxAmount = settings.is_tax_active
     ? subtotal * (settings.tax_percent / 100)
     : 0;
@@ -175,7 +174,7 @@ export default function InvoicePage() {
                     className="flex justify-between items-start text-[13px] font-bold text-slate-700"
                   >
                     <span className="flex-1 leading-tight uppercase tracking-tight">
-                      {item.menu.name}
+                      {item.menu?.name || item.notes || "Item"}
                     </span>
                     <span className="w-10 text-center text-muted-foreground">
                       {item.menu_qty}x

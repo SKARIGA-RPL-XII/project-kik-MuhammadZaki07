@@ -3,11 +3,19 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Calendar, Users, ChevronRight, MessageSquare, Plus } from "lucide-react";
+import {
+  Calendar,
+  Users,
+  ChevronRight,
+  MessageSquare,
+  Plus,
+} from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { useToast } from "@/context/ToastContext";
 
 export default function Step1Form({ data, onNext }: any) {
   const { t } = useTranslation();
+  const { toast } = useToast();
   const [localData, setLocalData] = useState({
     ...data,
     number_of_people: data.number_of_people || 2,
@@ -16,6 +24,19 @@ export default function Step1Form({ data, onNext }: any) {
   const [isCustom, setIsCustom] = useState(false);
 
   const presets = [2, 4, 6, 8];
+
+  const isInvalidDate = (dateStr: string) => {
+    if (!dateStr) return true;
+
+    const selected = new Date(dateStr);
+    const now = new Date();
+
+    return selected.getTime() < now.getTime();
+  };
+
+  const showError = (msg: string) => {
+    toast("warning", "WARNING!!", msg);
+  };
 
   return (
     <div className="max-w-md mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4">
@@ -35,11 +56,26 @@ export default function Step1Form({ data, onNext }: any) {
           </Label>
           <Input
             type="datetime-local"
+            className="w-full"
             value={localData.booking_time}
-            min={new Date().toISOString().slice(0, 16)}
-            onChange={(e) =>
-              setLocalData({ ...localData, booking_time: e.target.value })
-            }
+            min={(() => {
+              const tomorrow = new Date();
+              tomorrow.setDate(tomorrow.getDate() + 1);
+              return tomorrow.toISOString().slice(0, 16);
+            })()}
+            max={(() => {
+              const maxDate = new Date();
+              maxDate.setFullYear(maxDate.getFullYear() + 1);
+              return maxDate.toISOString().slice(0, 16);
+            })()}
+            onChange={(e) => {
+              const selectedDate = e.target.value;
+              const year = parseInt(selectedDate.split("-")[0]);
+
+              if (year > 2100) return;
+
+              setLocalData({ ...localData, booking_time: selectedDate });
+            }}
           />
         </div>
 
@@ -52,8 +88,16 @@ export default function Step1Form({ data, onNext }: any) {
               <Button
                 key={num}
                 type="button"
-                variant={!isCustom && localData.number_of_people === num ? "default" : "outline"}
-                className={`shadow-none ${!isCustom && localData.number_of_people === num ? "bg-red-600 hover:bg-red-600 text-white" : ""}`}
+                variant={
+                  !isCustom && localData.number_of_people === num
+                    ? "default"
+                    : "outline"
+                }
+                className={`shadow-none ${
+                  !isCustom && localData.number_of_people === num
+                    ? "bg-red-600 hover:bg-red-600 text-white"
+                    : ""
+                }`}
                 onClick={() => {
                   setIsCustom(false);
                   setLocalData({ ...localData, number_of_people: num });
@@ -65,7 +109,9 @@ export default function Step1Form({ data, onNext }: any) {
             <Button
               type="button"
               variant={isCustom ? "default" : "outline"}
-              className={`shadow-none ${isCustom ? "bg-red-600 hover:bg-red-600 text-white" : ""}`}
+              className={`shadow-none ${
+                isCustom ? "bg-red-600 hover:bg-red-600 text-white" : ""
+              }`}
               onClick={() => setIsCustom(true)}
             >
               <Plus className="w-4 h-4" />
@@ -79,7 +125,12 @@ export default function Step1Form({ data, onNext }: any) {
                 placeholder="Masukkan jumlah orang..."
                 min="1"
                 value={localData.number_of_people}
-                onChange={(e) => setLocalData({ ...localData, number_of_people: parseInt(e.target.value) || "" })}
+                onChange={(e) =>
+                  setLocalData({
+                    ...localData,
+                    number_of_people: parseInt(e.target.value) || "",
+                  })
+                }
                 className="focus-visible:ring-red-500"
               />
             </div>
@@ -88,22 +139,45 @@ export default function Step1Form({ data, onNext }: any) {
 
         <div className="space-y-2">
           <Label className="flex items-center gap-2">
-            <MessageSquare className="w-4 h-4" /> {t("booking.step1.notes_label", "Catatan Khusus")}
+            <MessageSquare className="w-4 h-4" />{" "}
+            {t("booking.step1.notes_label", "Catatan Khusus")}
           </Label>
           <Textarea
             placeholder="Contoh: Kursi bayi, alergi, atau request meja pojok..."
             value={localData.notes}
-            onChange={(e) => setLocalData({ ...localData, notes: e.target.value })}
+            onChange={(e) =>
+              setLocalData({ ...localData, notes: e.target.value })
+            }
             className="resize-none"
           />
         </div>
 
         <Button
           disabled={!localData.booking_time || localData.number_of_people <= 0}
-          onClick={() => onNext(localData)}
+          onClick={() => {
+            if (isInvalidDate(localData.booking_time)) {
+              const selectedTime = new Date(localData.booking_time);
+              const now = new Date();
+
+              showError(
+                `Waktu yang Anda pilih (${selectedTime.toLocaleString(
+                  "id-ID",
+                )}) tidak valid. ` +
+                  `Waktu tidak boleh lebih kecil dari waktu saat ini (${now.toLocaleString(
+                    "id-ID",
+                  )}). ` +
+                  `Silakan pilih waktu yang lebih sesuai.`,
+              );
+
+              return;
+            }
+
+            onNext(localData);
+          }}
           className="bg-red-500 hover:bg-red-600 text-white w-full transition-all"
         >
-          {t("booking.step1.btn_next")} <ChevronRight className="ml-2 w-5 h-5" />
+          {t("booking.step1.btn_next")}{" "}
+          <ChevronRight className="ml-2 w-5 h-5" />
         </Button>
       </div>
     </div>

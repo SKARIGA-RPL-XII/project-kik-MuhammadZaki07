@@ -10,7 +10,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Trash2Icon } from "lucide-react";
+import { Check, Trash2Icon } from "lucide-react";
 import { ReactNode, useState } from "react";
 
 interface DeleteAlertDialogProps {
@@ -18,6 +18,7 @@ interface DeleteAlertDialogProps {
   description?: string;
   onConfirm: () => Promise<void> | void;
   children: ReactNode;
+  trashIcon?:boolean
 }
 
 export default function DeleteAlertDialog({
@@ -25,6 +26,7 @@ export default function DeleteAlertDialog({
   description = "This action cannot be undone. This will permanently delete the selected data.",
   onConfirm,
   children,
+  trashIcon = true
 }: DeleteAlertDialogProps) {
   const [loading, setLoading] = useState(false);
 
@@ -40,8 +42,9 @@ export default function DeleteAlertDialog({
 
       <AlertDialogContent size="sm">
         <AlertDialogHeader>
-          <AlertDialogMedia className="bg-destructive/10 text-destructive dark:bg-destructive/20">
-            <Trash2Icon />
+          <AlertDialogMedia className={`${trashIcon ? "bg-destructive/10 text-destructive dark:bg-destructive/20" : "bg-green-100 text-green-500"}`}>
+          {trashIcon ? 
+            <Trash2Icon /> : <Check/>}
           </AlertDialogMedia>
 
           <AlertDialogTitle>{title}</AlertDialogTitle>
