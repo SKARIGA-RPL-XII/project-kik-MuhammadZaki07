@@ -46,7 +46,7 @@ class BookingController extends Controller
             'settings.service_percent' => 'nullable|numeric',
         ]);
 
-        //  Log::info('BOOKING_REQUEST', $data);
+         Log::info('BOOKING_REQUEST', $data);
 
         return response()->json([
             'status' => 'success',

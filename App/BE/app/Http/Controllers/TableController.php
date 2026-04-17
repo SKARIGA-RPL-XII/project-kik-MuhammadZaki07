@@ -9,13 +9,13 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Log;
 
 class TableController extends Controller
 {
     public function index(Request $request)
     {
         $search = $request->query('search');
-        $status = $request->query('status');
         $roomId = $request->query('room_id');
         $available = $request->query('available');
 
@@ -23,36 +23,81 @@ class TableController extends Controller
         $size = (int) $request->query('size', 1000);
 
         $now = now();
-        $threeHoursLater = now()->addHours(3);
 
-        $query = Table::with('room')
-            ->when($search, fn($q) => $q->where('table_number', 'like', "%{$search}%"))
-            ->when($status, fn($q) => $q->where('status', $status))
-            ->when($roomId, fn($q) => $q->where('room_id', $roomId))
-            ->when($available, fn($q) => $q->whereNull('room_id'));
+        $query = Table::with(['room', 'bookings.user'])
+            ->when(
+                $search,
+                fn($q) =>
+                $q->where('table_number', 'like', "%{$search}%")
+            )
+            ->when(
+                $roomId,
+                fn($q) =>
+                $q->where('room_id', $roomId)
+            )
+            ->when(
+                $available,
+                fn($q) =>
+                $q->whereNull('room_id')
+            );
 
         $total = $query->count();
+
         $tables = $query->latest()
             ->skip(($page - 1) * $size)
             ->take($size)
             ->get();
 
+        // Log::info('TABLE INDEX HIT', [
+        //     'search' => $search,
+        //     'room_id' => $roomId,
+        //     'available' => $available,
+        //     'page' => $page,
+        //     'size' => $size,
+        // ]);
+
         $tables->transform(function ($table) {
-            if ($table->status === 'available') {
-                $now = now();
 
-                $hasActiveBooking = Booking::where('table_id', $table->id)
-                    ->whereIn('status', ['confirmed', 'paid'])
-                    ->where(function ($query) use ($now) {
-                        $query->whereRaw('DATE_SUB(booking_time, INTERVAL 3 HOUR) <= ?', [$now])
-                            ->where('end_time', '>=', $now);
-                    })
-                    ->exists();
+            $now = now();
 
-                if ($hasActiveBooking) {
-                    $table->status = 'reserved';
+            $bookings = Booking::with('user')
+                ->where('table_id', $table->id)
+                ->whereIn('status', ['confirmed', 'pending_confirmation'])
+                ->get();
+
+            $active = null;
+            $todayUpcoming = null;
+
+            foreach ($bookings as $b) {
+
+                if ($b->booking_time <= $now && $b->end_time >= $now) {
+                    $active = $b;
+                    break;
+                }
+
+                if (
+                    !$active &&
+                    $b->booking_time->isToday() &&
+                    $b->booking_time > $now
+                ) {
+                    $todayUpcoming = $todayUpcoming ?? $b;
                 }
             }
+
+            $table->ui_status = 'available';
+            $table->reserved_until = null;
+            $table->reserved_by = null;
+
+            if ($active) {
+                $table->ui_status = 'occupied';
+                $table->reserved_until = $active->end_time;
+                $table->reserved_by = $active->user?->username;
+            } elseif ($todayUpcoming) {
+                $table->ui_status = 'upcoming';
+                $table->reserved_until = $todayUpcoming->booking_time;
+                $table->reserved_by = $todayUpcoming->user?->username;
+            }
+
             return $table;
         });
 
@@ -68,7 +113,6 @@ class TableController extends Controller
             ]
         ]);
     }
-
 
     public function store(Request $request)
     {

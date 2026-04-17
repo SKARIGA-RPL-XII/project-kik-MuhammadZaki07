@@ -116,9 +116,23 @@ class PosService
                 ]);
             }
 
+            $pricing = [
+                'subtotal' => $subtotal,
+                'service' => $serviceAmount,
+                'tax' => $taxAmount,
+                'total' => $grandTotal,
+            ];
+
             $snapToken = null;
+
             if ($data['payment_method'] !== 'cash') {
-                $snapToken = $this->generateMidtransToken($transaction, $tempItems, $data['settings'] ?? []);
+                // $snapToken = $this->generateMidtransToken($transaction, $tempItems, $data['settings'] ?? []);
+                $snapToken = $this->generateMidtransToken(
+                    $transaction,
+                    $pricing,
+                    $tempItems,
+                    $data['settings'] ?? []
+                );
             }
 
             return [
@@ -433,65 +447,41 @@ class PosService
             Config::$isSanitized = true;
             Config::$is3ds = true;
 
-            // Log::info('MIDTRANS INPUT', [
-            //     'transaction' => $transaction->id,
-            //     'pricing' => $pricing,
-            //     'items' => $items,
-            // ]);
+            Log::info('MIDTRANS START', [
+                'transaction_id' => $transaction->id,
+                'total' => $pricing['total'],
+                'items_count' => count($items),
+            ]);
 
-            $itemDetails = [];
+            // 🔥 Normalize items (biar booking & normal sama)
+            $normalizedItems = $this->normalizeItems($items);
 
-            if (empty($items)) {
-                $itemDetails[] = [
-                    'id'       => 'BOK-' . $transaction->id,
-                    'price'    => (int) $pricing['subtotal'],
-                    'quantity' => 1,
-                    'name'     => 'Booking Fee'
-                ];
-            } else {
-                $itemDetails = collect($items)->map(function ($item) {
+            // 🔥 Ambil semua menu sekaligus (hindari N+1)
+            $menus = $this->getMenus($normalizedItems);
 
-                    $menu = Menu::with('discount')->find($item['menu_id']);
+            // 🔥 Build item details
+            $itemDetails = $this->buildItemDetails($normalizedItems, $menus, $transaction, $pricing);
 
-                    if (!$menu) {
-                        Log::warning('MIDTRANS MENU NOT FOUND', $item);
-                        return null;
-                    }
+            // ➕ Tambahin service & tax
+            $this->appendAdditionalCharges($itemDetails, $pricing);
 
-                    if ($menu->discount && $menu->discount->is_active) {
-                        $price = $menu->price * (1 - $menu->discount->value_discount / 100);
-                    } else {
-                        $price = $menu->price;
-                    }
+            // 🚨 Guard (biar ga kejadian item kosong lagi)
+            if (empty($itemDetails)) {
+                Log::error('MIDTRANS NO VALID ITEMS', [
+                    'transaction_id' => $transaction->id
+                ]);
 
-                    return [
-                        'id'       => 'MN-' . $menu->id,
-                        'price'    => (int) round($price),
-                        'quantity' => (int) ($item['quantity'] ?? 1),
-                        'name'     => substr($menu->name, 0, 50),
-                    ];
-                })
-                    ->filter()
-                    ->values()
-                    ->toArray();
+                throw new \Exception('No valid items for Midtrans');
             }
 
-            if ($pricing['service'] > 0) {
-                $itemDetails[] = [
-                    'id' => 'SVC',
-                    'price' => (int) $pricing['service'],
-                    'quantity' => 1,
-                    'name' => 'Service Charge'
-                ];
-            }
+            // 🔍 Validasi total
+            $itemSum = collect($itemDetails)->sum(fn($i) => $i['price'] * $i['quantity']);
 
-            if ($pricing['tax'] > 0) {
-                $itemDetails[] = [
-                    'id' => 'TAX',
-                    'price' => (int) $pricing['tax'],
-                    'quantity' => 1,
-                    'name' => 'Tax'
-                ];
+            if ($itemSum !== (int) $pricing['total']) {
+                Log::error('MIDTRANS TOTAL MISMATCH', [
+                    'gross' => $pricing['total'],
+                    'item_sum' => $itemSum
+                ]);
             }
 
             $params = [
@@ -506,23 +496,110 @@ class PosService
                 ],
             ];
 
-            // Log::info('MIDTRANS PARAMS', $params);
+            Log::info('MIDTRANS REQUEST READY', [
+                'gross_amount' => $pricing['total'],
+                'item_sum' => $itemSum,
+            ]);
 
             $token = Snap::getSnapToken($params);
 
-            // Log::info('MIDTRANS TOKEN RESULT', [
-            //     'token' => $token
-            // ]);
-
-            if (!$token) {
-                throw new Exception('Failed generate Midtrans token');
-            }
+            Log::info('MIDTRANS TOKEN GENERATED', [
+                'token_exists' => !empty($token)
+            ]);
 
             return $token;
-        } catch (Exception $e) {
-            Log::error("Midtrans Error: " . $e->getMessage());
+        } catch (\Exception $e) {
+            Log::error('MIDTRANS ERROR', [
+                'message' => $e->getMessage()
+            ]);
+
             return null;
         }
+    }
+
+    private function normalizeItems($items)
+    {
+        return collect($items)->map(function ($item) {
+            return [
+                'menu_id' => $item['menu_id'] ?? ($item['menu']->id ?? null),
+                'quantity' => (int) ($item['quantity'] ?? 1),
+            ];
+        })->filter(fn($i) => !empty($i['menu_id']))->values();
+    }
+
+    private function buildItemDetails($items, $menus, $transaction, $pricing)
+    {
+        if ($items->isEmpty()) {
+            // 👉 BOOKING ONLY (no items)
+            Log::info('MIDTRANS BOOKING ONLY', [
+                'transaction_id' => $transaction->id
+            ]);
+
+            return [[
+                'id'       => 'BOK-' . $transaction->id,
+                'price'    => (int) $pricing['subtotal'],
+                'quantity' => 1,
+                'name'     => 'Booking Fee'
+            ]];
+        }
+
+        return $items->map(function ($item) use ($menus) {
+
+            $menu = $menus[$item['menu_id']] ?? null;
+
+            if (!$menu) {
+                Log::warning('MIDTRANS MENU NOT FOUND', [
+                    'menu_id' => $item['menu_id']
+                ]);
+                return null;
+            }
+
+            $useDiscount = $menu->discount
+                && $menu->discount->is_active
+                && now() <= $menu->discount->end_date;
+
+            $price = $useDiscount
+                ? $menu->final_price
+                : $menu->price;
+
+            return [
+                'id'       => 'MN-' . $menu->id,
+                'price'    => (int) round($price),
+                'quantity' => $item['quantity'],
+                'name'     => substr($menu->name, 0, 50),
+            ];
+        })->filter()->values()->toArray();
+    }
+
+    private function appendAdditionalCharges(&$itemDetails, $pricing)
+    {
+        if ($pricing['service'] > 0) {
+            $itemDetails[] = [
+                'id' => 'SVC',
+                'price' => (int) $pricing['service'],
+                'quantity' => 1,
+                'name' => 'Service Charge'
+            ];
+        }
+
+        if ($pricing['tax'] > 0) {
+            $itemDetails[] = [
+                'id' => 'TAX',
+                'price' => (int) $pricing['tax'],
+                'quantity' => 1,
+                'name' => 'Tax'
+            ];
+        }
+    }
+
+    private function getMenus($items)
+    {
+        $menuIds = collect($items)->pluck('menu_id')->unique();
+
+        return Menu::with('discount')
+            ->whereIn('id', $menuIds)
+            ->get()
+            ->keyBy('id');
     }
 
     public function updateUserBadge($userId)

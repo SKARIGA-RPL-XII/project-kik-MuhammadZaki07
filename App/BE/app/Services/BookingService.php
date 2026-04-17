@@ -4,6 +4,8 @@ namespace App\Services;
 
 use App\Models\Booking;
 use App\Models\Menu;
+use App\Models\User;
+use App\Notifications\GeneralNotification;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -37,6 +39,12 @@ class BookingService
                     'status' => 'booked'
                 ]);
             }
+
+            $booking->user->notify(new GeneralNotification(
+                'Booking kamu sudah dikonfirmasi.',
+                'success',
+                '/profile-customer'
+            ));
 
             return $booking;
         });
@@ -122,6 +130,22 @@ class BookingService
                 'status' => 'pending_confirmation',
                 'notes' => $data['notes'] ?? null,
             ]);
+
+            auth()->user()->notify(new GeneralNotification(
+                'Booking berhasil dibuat, menunggu persetujuan admin.',
+                'booking',
+                '/my-bookings'
+            ));
+
+            $admins = User::whereIn('role', ['admin', 'cashier'])->get();
+
+            foreach ($admins as $admin) {
+                $admin->notify(new GeneralNotification(
+                    'Ada booking baru dari customer.',
+                    'booking',
+                    '/admin/bookings'
+                ));
+            }
 
             return [
                 'booking' => $booking,
