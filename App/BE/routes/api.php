@@ -217,6 +217,16 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
 
     Route::resource('tables', TableController::class)->only("store", 'update', 'destroy');
     Route::resource('rooms', RoomController::class)->only("store", 'update', 'destroy', 'updateLayout', 'availableTables');
+
+    Route::prefix('customers')->group(function () {
+        Route::get('/chart', [UserController::class, 'getCustomerChart']);
+        Route::get('/stats', [UserController::class, 'getCustomerStats']);
+        Route::get('/', [UserController::class, 'getCustomers']);
+        Route::get('/{id}', [UserController::class, 'showCustomer']);
+        Route::patch('/{id}/toggle-block', [UserController::class, 'toggleBlock']);
+        Route::delete('/{id}', [UserController::class, 'deleteCustomer']);
+        Route::put('/{id}', [UserController::class, 'updateCustomer']);
+    });
 });
 
 

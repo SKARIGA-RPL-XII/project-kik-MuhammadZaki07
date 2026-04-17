@@ -9,10 +9,15 @@ import CalendarWidget from "@/components/ui/CalendarWidget";
 import WelcomeBanner from "@/components/ui/WelcomeBanner";
 import { useDashboard } from "@/hooks/react-query/useDashboard";
 import { AdminDashboardSkeleton } from "@/components/skeleton/DashboardSkeleton";
+import CustomerChart from "@/components/charts/CustomerChart";
+import { useCustomerStats } from "@/hooks/react-query/useCustomers";
+import CustomerStatsCards from "@/components/ui/CustomerStatsCards";
 
 export default function AdminDashboard() {
   const { useMetrics } = useDashboard();
-  const { isLoading } = useMetrics(); 
+  const { isLoading } = useMetrics();
+   const { data: statsData, isLoading: statsLoading } = useCustomerStats();
+
 
   if (isLoading) {
     return (
@@ -34,6 +39,7 @@ export default function AdminDashboard() {
         <div className="col-span-12 space-y-6 xl:col-span-7">
           <EcommerceMetrics />
           <MonthlySalesChart />
+            <CustomerStatsCards data={statsData} loading={statsLoading} />
         </div>
 
         <div className="col-span-12 xl:col-span-5 space-y-3">
@@ -41,8 +47,9 @@ export default function AdminDashboard() {
           <MonthlyTarget />
         </div>
 
-        <div className="col-span-12">
+        <div className="col-span-12 space-y-3">
           <StatisticsChart />
+            <CustomerChart />
         </div>
 
         <div className="col-span-12 xl:col-span-5">

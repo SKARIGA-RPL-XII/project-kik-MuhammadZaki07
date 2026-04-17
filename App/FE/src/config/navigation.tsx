@@ -149,6 +149,7 @@ export const navConfig = {
       subItems: [
         { name: "Staff", path: "/staf" },
         { name: "Admin", path: "/admin" },
+        { name: "Customers", path: "/customers" },
         { name: "User Profile", path: "/profile" },
         { name: "General Settings", path: "/settings/general" },
         { name: "Tax & Service", path: "/settings/tax" },

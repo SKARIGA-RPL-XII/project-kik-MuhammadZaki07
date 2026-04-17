@@ -251,13 +251,15 @@ function Employe() {
 
       <ComponentCard title="Management Employe" desc="Manage all employe data">
         <div className="flex flex-wrap justify-between items-center gap-4 mb-4">
-          <div className="flex gap-3">
+          <div className="flex gap-3 w-lg">
             <Input
               placeholder="Search username..."
+              className="max-w-xl w-full"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
             <Select
+            className="max-w-[200px]"
               value={genderFilter}
               onChange={(val: any) => setGenderFilter(val)}
               placeholder="Gender"

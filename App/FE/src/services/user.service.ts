@@ -28,9 +28,7 @@ export const UserService = {
 
     try {
       const { data } = await apiClient.post(`/users/${userId}`, formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
+        headers: { "Content-Type": "multipart/form-data" },
       });
       return { data, error: null };
     } catch (err: any) {
@@ -41,32 +39,85 @@ export const UserService = {
     }
   },
 
-
-getTransactions: async (page: number = 1) => {
+  getTransactions: async (page: number = 1) => {
     const res = await apiClient.get(`/user/transactions?page=${page}`);
     return res.data.data;
   },
-  
+
   getTransactionById: async (id: string | undefined) => {
     if (!id) return null;
+    const res = await apiClient.get(`/transactions/${id}`);
+    return res.data.data;
+  },
+
+  deleteAccount: async () => {
     try {
-      const response = await apiClient.get(`/transactions/${id}`);
-      return response.data.data;
-    } catch (error) {
-      console.error("Error fetching transaction detail:", error);
-      throw error;
+      const res = await apiClient.delete(`/user/delete`);
+      return { data: res.data, error: null };
+    } catch (err: any) {
+      return {
+        data: null,
+        error: err.response?.data?.message || "Gagal menghapus akun",
+      };
     }
   },
 
-  deleteAccount: async (userId: string) => {
+getCustomers: async (params: any) => {
+  const res = await apiClient.get("/customers", {
+    params: {
+      ...params,
+      page: params.page + 1,
+    },
+  });
+  return res.data.data;
+},
+
+  getCustomerStats: async () => {
+    const res = await apiClient.get("/customers/stats");
+    return res.data.data;
+  },
+
+  getCustomerById: async (id: number) => {
+    const res = await apiClient.get(`/customers/${id}`);
+    return res.data.data;
+  },
+
+  updateCustomer: async (id: number, payload: UpdateProfilePayload) => {
+    const formData = new FormData();
+    formData.append("_method", "PUT");
+
+    Object.entries(payload).forEach(([key, value]) => {
+      if (value !== null && value !== undefined) {
+        formData.append(key, value instanceof File ? value : String(value));
+      }
+    });
+
     try {
-      const response = await apiClient.delete(`/user/delete`);
-      return { data: response.data, error: null };
-    } catch (error: any) {
+      const res = await apiClient.post(`/customers/${id}`, formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+
+      return { data: res.data, error: null };
+    } catch (err: any) {
       return {
         data: null,
-        error: error.response?.data?.message || "Gagal menghapus akun",
+        error: err.response?.data?.errors || err.message,
       };
     }
+  },
+
+  toggleBlockCustomer: async (id: number) => {
+    const res = await apiClient.patch(`/customers/${id}/toggle-block`);
+    return res.data;
+  },
+
+  deleteCustomer: async (id: number) => {
+    const res = await apiClient.delete(`/customers/${id}`);
+    return res.data;
+  },
+
+  getCustomerChart: async () => {
+    const res = await apiClient.get("/customers/chart");
+    return res.data.data;
   },
 };
