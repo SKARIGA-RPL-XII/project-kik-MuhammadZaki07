@@ -83,15 +83,27 @@ export default function PaymentPage() {
     [items],
   );
 
-  const tax = settings?.is_tax_active
-    ? Math.round(subtotal * (settings.tax_percent / 100))
-    : 0;
+  // const tax = settings?.is_tax_active
+  //   ? Math.round(subtotal * (settings.tax_percent / 100))
+  //   : 0;
+
+  // const service = settings?.is_service_active
+  //   ? Math.round(subtotal * (settings.service_percent / 100))
+  //   : 0;
+
+  // const total = Math.round(subtotal + tax + service);
+
+  const baseSubtotal = subtotal;
 
   const service = settings?.is_service_active
-    ? Math.round(subtotal * (settings.service_percent / 100))
+    ? Math.round(baseSubtotal * (settings.service_percent / 100))
     : 0;
 
-  const total = Math.round(subtotal + tax + service);
+  const tax = settings?.is_tax_active
+    ? Math.round((baseSubtotal + service) * (settings.tax_percent / 100))
+    : 0;
+
+  const total = baseSubtotal + service + tax;
 
   const change = Math.max(0, (parseInt(amountPaid) || 0) - total);
 
@@ -363,7 +375,9 @@ export default function PaymentPage() {
                       }`}
                     >
                       <method.icon
-                        className={`h-5 w-5 mb-2 ${paymentMethod === method.id ? "text-red-600" : ""}`}
+                        className={`h-5 w-5 mb-2 ${
+                          paymentMethod === method.id ? "text-red-600" : ""
+                        }`}
                       />
                       <span className="text-sm font-medium dark:text-zinc-200">
                         {method.label}

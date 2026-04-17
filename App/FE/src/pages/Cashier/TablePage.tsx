@@ -10,6 +10,7 @@ import { useToast } from "@/context/ToastContext";
 import { useTranslation } from "react-i18next";
 import { Badge } from "@/components/ui/badge";
 import PageMeta from "@/components/common/PageMeta";
+import dayjs from "dayjs";
 
 const TableSkeleton = () => (
   <div className="flex flex-col items-center">
@@ -123,28 +124,164 @@ export default function TablePage() {
 
   const getStatusStyles = (status: string, isSelected: boolean) => {
     const base = "border-2 transition-all duration-300";
+
     switch (status) {
       case "occupied":
-        return `${base} bg-red-50 dark:bg-red-950/20 hover:border-red-500 ${isSelected ? "ring-4 ring-red-300 scale-105" : ""}`;
-      case "reserved":
+        return `${base}
+        bg-red-100 dark:bg-red-950/20
+        border-red-400 hover:border-red-500
+        ${isSelected ? "ring-4 ring-red-300 scale-105" : ""}`;
+
       case "booked":
-        return `${base} bg-yellow-50 dark:bg-yellow-950/20 hover:border-yellow-500 ${isSelected ? "ring-4 ring-yellow-300 scale-105" : ""}`;
+        return `${base}
+        bg-yellow-100 dark:bg-yellow-950/20
+        border-yellow-400 hover:border-yellow-500
+        ${isSelected ? "ring-4 ring-yellow-300 scale-105" : ""}`;
+
       default:
-        return `${base} bg-green-50 dark:bg-green-950/20 hover:border-green-500 ${isSelected ? "ring-2 ring-green-300 dark:ring-green-500 scale-105" : ""}`;
+        return `${base}
+        bg-green-100 dark:bg-green-950/20
+        border-green-400 hover:border-green-500
+        ${isSelected ? "ring-4 ring-green-300 scale-105" : ""}`;
     }
   };
 
   const getSeatColor = (status: string) => {
     switch (status) {
       case "occupied":
-        return "hover:bg-red-50 bg-neutral-200 dark:bg-neutral-800";
-      case "reserved":
+        return "bg-red-200 dark:bg-red-900";
       case "booked":
-        return "hover:bg-yellow-50 bg-neutral-200 dark:bg-neutral-800";
+        return "bg-yellow-200 dark:bg-yellow-900";
       default:
-        return "hover:bg-green-50 bg-neutral-200 dark:bg-neutral-800";
+        return "bg-green-200 dark:bg-green-900";
     }
   };
+
+  const getTableState = (table: any) => {
+    return getDerivedStatus(table);
+  };
+
+  const isBlockedTable = (table: any) => {
+    const state = getTableState(table);
+    return state.status === "occupied";
+  };
+
+  const getDerivedStatus = (table: any) => {
+    const now = dayjs();
+    const reservedTime = table.reserved_until
+      ? dayjs(table.reserved_until)
+      : null;
+
+    if (table.status === "occupied") {
+      return {
+        status: "occupied",
+        color: "bg-red-500",
+        labelClass:
+          "w-10 h-10 flex justify-center items-center rounded-full bg-red-500 text-white",
+        label: `T-${table.table_number}`,
+        subLabel: "IN USE",
+        disabled: true,
+      };
+    }
+
+    if (table.status === "booked" || table.status === "reserved") {
+      if (reservedTime) {
+        const isToday = reservedTime.isSame(now, "day");
+        const isFuture = reservedTime.isAfter(now, "day");
+
+        if (isToday) {
+          return {
+            status: "booked",
+            color: "bg-yellow-500",
+            labelClass:
+              "w-10 h-10 flex justify-center items-center rounded-full bg-yellow-500 text-white",
+            label: reservedTime.format("HH:mm"),
+            subLabel: `BOOKED TODAY • ${reservedTime.format("HH:mm")}`,
+            disabled: false,
+          };
+        }
+
+        if (isFuture) {
+          return {
+            status: "available",
+            color: "bg-emerald-500",
+            labelClass:
+              "w-10 h-10 flex justify-center items-center rounded-full bg-emerald-500 text-white",
+            label: `T-${table.table_number}`,
+            subLabel: `BOOKED TOMORROW • ${reservedTime.format("DD/MM HH:mm")}`,
+            disabled: false,
+          };
+        }
+      }
+
+      // fallback booked
+      return {
+        status: "booked",
+        color: "bg-yellow-500",
+        labelClass:
+          "w-10 h-10 flex justify-center items-center rounded-full bg-yellow-500 text-white",
+        label: `T-${table.table_number}`,
+        subLabel: "BOOKED",
+        disabled: false,
+      };
+    }
+
+    // 🟢 AVAILABLE
+    return {
+      status: "available",
+      color: "bg-emerald-500",
+      labelClass:
+        "w-10 h-10 flex justify-center items-center rounded-full bg-emerald-500 text-white",
+      label: `T-${table.table_number}`,
+      subLabel: null,
+      disabled: false,
+    };
+  };
+
+  // const getTodayAndTomorrowBookingsJSON = (tables: any[]) => {
+  //   const now = dayjs();
+  //   const start = now.startOf("day");
+  //   const end = now.add(2, "day").endOf("day");
+
+  //   const result: any[] = [];
+
+  //   tables.forEach((table) => {
+  //     const bookings = table.bookings || [];
+
+  //     bookings.forEach((b: any) => {
+  //       if (!b.booking_time) return;
+
+  //       const bookingTime = dayjs(b.booking_time);
+
+  //       const inRange = bookingTime.isAfter(start) && bookingTime.isBefore(end);
+
+  //       const validStatus = ["booked", "reserved", "confirmed"].includes(
+  //         b.status,
+  //       );
+
+  //       if (inRange && validStatus) {
+  //         console.log("BOOKING FOUND:", {
+  //           table_id: table.id,
+  //           table_number: table.table_number,
+  //           booking_time: b.booking_time,
+  //           status: b.status,
+  //         });
+
+  //         result.push({
+  //           table_id: table.id,
+  //           table_number: table.table_number,
+  //           booking_id: b.id,
+  //           booking_time: b.booking_time,
+  //           status: b.status,
+  //           type: "TODAY_TOMORROW_BOOKING",
+  //           display_as: "GREEN_TABLE",
+  //         });
+  //       }
+  //     });
+  //   });
+
+  //   return result;
+  // };
 
   return (
     <div className="flex flex-col h-screen overflow-hidden relative max-w-7xl mx-auto">
@@ -153,7 +290,9 @@ export default function TablePage() {
         description="Real-time restaurant floor plan management, table status tracking, and reservation scheduling."
       />
       <header
-        className={`sticky ${isCustomerSide ? "pb-4 pt-5" : "pb-4"} top-0 z-30 border-b`}
+        className={`sticky ${
+          isCustomerSide ? "pb-4 pt-5" : "pb-4"
+        } top-0 z-30 border-b`}
       >
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <div>
@@ -184,7 +323,11 @@ export default function TablePage() {
         <Button
           variant={selectedRoomId === "all" ? "default" : "outline"}
           onClick={() => setSelectedRoomId("all")}
-          className={`h-9 rounded-full px-6 text-sm hover:bg-red-50 hover:text-red-500 ${selectedRoomId === "all" ? "bg-red-600 text-white" : "border-zinc-100 dark:border-neutral-700 text-zinc-400"}`}
+          className={`h-9 rounded-full px-6 text-sm hover:bg-red-50 hover:text-red-500 ${
+            selectedRoomId === "all"
+              ? "bg-red-600 text-white"
+              : "border-zinc-100 dark:border-neutral-700 text-zinc-400"
+          }`}
         >
           {t("tp_filter_all")}
         </Button>
@@ -195,7 +338,11 @@ export default function TablePage() {
               selectedRoomId === room.id.toString() ? "default" : "outline"
             }
             onClick={() => setSelectedRoomId(room.id.toString())}
-            className={`h-9 rounded-full text-sm font-normal shadow-none hover:bg-red-50 hover:text-red-500 ${selectedRoomId === room.id.toString() ? "bg-red-600 text-white" : "border-zinc-100 dark:border-neutral-700 text-zinc-400"}`}
+            className={`h-9 rounded-full text-sm font-normal shadow-none hover:bg-red-50 hover:text-red-500 ${
+              selectedRoomId === room.id.toString()
+                ? "bg-red-600 text-white"
+                : "border-zinc-100 dark:border-neutral-700 text-zinc-400"
+            }`}
           >
             {room.name}
           </Button>
@@ -211,7 +358,7 @@ export default function TablePage() {
                 ))
               : tableList.map((table: any) => {
                   const isSelected = selectedTable?.id === table.id;
-                  const isOccupied = table.status === "occupied";
+                  const status = getDerivedStatus(table);
                   return (
                     <div
                       key={table.id}
@@ -223,23 +370,38 @@ export default function TablePage() {
                         }).map((_, i) => (
                           <div
                             key={i}
-                            className={`w-10 h-3.5 bg-neutral-100 dark:bg-neutral-800 rounded-t-full transition-all duration-300 ${getSeatColor(table.status)}`}
+                            className={`w-10 h-3.5 bg-neutral-100 dark:bg-neutral-800 rounded-t-full transition-all duration-300 ${getSeatColor(
+                              table.status,
+                            )}`}
                           />
                         ))}
                       </div>
 
                       <button
-                        disabled={(isFromCart || isCustomerSide) && isOccupied}
+                        disabled={
+                          (isFromCart || isCustomerSide) && status.disabled
+                        }
                         onClick={() => handleTableClick(table)}
-                        className={`relative rounded-xl flex flex-col bg-white dark:bg-neutral-900 items-center justify-center p-4 
-                        ${table.capacity > 4 ? "w-48 h-24" : table.capacity > 2 ? "w-36 h-24" : "w-24 h-24"}
-                        ${getStatusStyles(table.status, isSelected)}`}
+                        className={`relative rounded-xl flex flex-col bg-white dark:bg-neutral-900 items-center cursor-pointer justify-center p-4
+                              ${
+                                table.capacity > 4
+                                  ? "w-48 h-24"
+                                  : table.capacity > 2
+                                  ? "w-36 h-24"
+                                  : "w-24 h-24"
+                              }
+                              ${getStatusStyles(status.status, isSelected)}
+                              ${
+                                (isFromCart || isCustomerSide) &&
+                                (isFromCart || isCustomerSide) &&
+                                isBlockedTable(table)
+                                  ? "opacity-50 cursor-not-allowed pointer-events-none"
+                                  : ""
+                              }
+                            `}
                       >
-                        <span
-                          className={`font-black w-10 h-10 rounded-full flex justify-center items-center text-sm mb-1 text-white
-  ${table.status === "occupied" ? "bg-red-500" : table.status === "reserved" || table.status === "booked" ? "bg-yellow-500" : "bg-green-500"}`}
-                        >
-                          T-{table.table_number}
+                        <span className={status.labelClass}>
+                          {status.label}
                         </span>
                         <div className="flex items-center gap-1 opacity-40">
                           <Users className="h-3 w-3" />
@@ -247,6 +409,28 @@ export default function TablePage() {
                             {table.capacity}
                           </span>
                         </div>
+                        {getDerivedStatus(table).subLabel && (
+                          <div
+                            className={`text-[9px] mt-1 font-bold uppercase
+                              ${
+                                getDerivedStatus(table).status === "occupied"
+                                  ? "text-red-600"
+                                  : "text-yellow-600"
+                              }`}
+                          >
+                            {status.subLabel && (
+                              <div
+                                className={`text-[9px] mt-1 font-bold uppercase ${
+                                  status.status === "occupied"
+                                    ? "text-red-600"
+                                    : "text-yellow-600"
+                                }`}
+                              >
+                                {status.subLabel}
+                              </div>
+                            )}
+                          </div>
+                        )}
                       </button>
 
                       <div className="flex gap-4 mt-1">
@@ -255,7 +439,9 @@ export default function TablePage() {
                         }).map((_, i) => (
                           <div
                             key={i}
-                            className={`w-10 h-3.5 bg-neutral-100 dark:bg-neutral-800 rounded-b-full transition-all duration-300 ${getSeatColor(table.status)}`}
+                            className={`w-10 h-3.5 bg-neutral-100 dark:bg-neutral-800 rounded-b-full transition-all duration-300 ${getSeatColor(
+                              status.status,
+                            )}`}
                           />
                         ))}
                       </div>
@@ -267,7 +453,9 @@ export default function TablePage() {
       </ScrollArea>
 
       <footer
-        className={`fixed ${isCustomerSide ? "w-full" : "w-[1230px]"} bottom-0 right-0 z-50 bg-white dark:bg-neutral-900 backdrop-blur border-t dark:border-neutral-800 px-4 sm:px-6 py-3 shadow-lg`}
+        className={`fixed ${
+          isCustomerSide ? "w-full" : "w-[1230px]"
+        } bottom-0 right-0 z-50 bg-white dark:bg-neutral-900 backdrop-blur border-t dark:border-neutral-800 px-4 sm:px-6 py-3 shadow-lg`}
       >
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div className="flex flex-col text-zinc-500">
@@ -342,7 +530,9 @@ export default function TablePage() {
                 <div className="bg-white p-3 rounded-2xl shadow-2xl transform hover:scale-105 transition-transform duration-500">
                   {selectedTable?.qr_code ? (
                     <img
-                      src={`${import.meta.env.VITE_STORAGE_URL}/${selectedTable.qr_code}`}
+                      src={`${import.meta.env.VITE_STORAGE_URL}/${
+                        selectedTable.qr_code
+                      }`}
                       alt="Table QR"
                       className="w-32 h-32 object-contain"
                     />

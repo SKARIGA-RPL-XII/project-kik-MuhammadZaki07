@@ -44,9 +44,17 @@ export default function CustomerProfilePage() {
     try {
       await logout();
       window.location.href = "/";
-      toast("success", t("profile_logout_success_title"), t("profile_logout_success_desc"));
+      toast(
+        "success",
+        t("profile_logout_success_title"),
+        t("profile_logout_success_desc"),
+      );
     } catch (error) {
-      toast("error", t("profile_logout_error_title"), t("profile_logout_error_desc"));
+      toast(
+        "error",
+        t("profile_logout_error_title"),
+        t("profile_logout_error_desc"),
+      );
     }
   };
 
@@ -100,12 +108,21 @@ export default function CustomerProfilePage() {
 
                   <span className="relative flex items-center justify-center w-40 h-40 mb-2">
                     <img
-                      src={`${import.meta.env.VITE_STORAGE_URL}/${logic.viewedBadge?.badge_image}`}
+                      src={
+                        logic.viewedBadge?.badge_image
+                          ? `${import.meta.env.VITE_STORAGE_URL}/${
+                              logic.viewedBadge.badge_image
+                            }`
+                          : "/image-dumy.png"
+                      }
+                      onError={(e) => {
+                        e.currentTarget.src = "/image-dumy.png";
+                      }}
                       alt={logic.viewedBadge?.name}
-                      className={`w-full h-full object-contain transition-all duration-500 ${
+                      className={`w-full h-full rounded-full object-contain transition-all duration-500 ${
                         logic.isUnlocked
                           ? "drop-shadow-[0_0_10px_rgba(251,191,36,0.4)]"
-                          : "grayscale opacity-20"
+                          : ""
                       }`}
                     />
 
@@ -131,13 +148,17 @@ export default function CustomerProfilePage() {
           </div>
 
           <p
-            className={`text-sm font-medium ${logic.isUnlocked ? "text-red-600" : "text-neutral-400"}`}
+            className={`text-sm font-medium ${
+              logic.isUnlocked ? "text-red-600" : "text-neutral-400"
+            }`}
           >
             {logic.isCurrentBadge
               ? t("profile_rank_primary")
               : logic.isUnlocked
-                ? t("profile_rank_unlocked")
-                : t("profile_rank_requires", { amount: logic.viewedBadge?.min_spend.toLocaleString() })}
+              ? t("profile_rank_unlocked")
+              : t("profile_rank_requires", {
+                  amount: logic.viewedBadge?.min_spend.toLocaleString(),
+                })}
           </p>
         </section>
 
@@ -146,7 +167,7 @@ export default function CustomerProfilePage() {
           onValueChange={(value) => {
             setActiveTab(value);
             logic.setActiveTab(value);
-          }} 
+          }}
           className="w-full"
         >
           <TabsList className="flex p-1 mb-8 h-auto overflow-x-auto dan flex-nowrap">
@@ -220,7 +241,9 @@ export default function CustomerProfilePage() {
           <Link to={"/"}>
             <Button variant={"link"}>
               <ArrowLeft size={16} className="mr-3" />
-              <span className="text-sm font-medium">{t("profile_btn_back")}</span>
+              <span className="text-sm font-medium">
+                {t("profile_btn_back")}
+              </span>
             </Button>
           </Link>
           <Button
@@ -229,7 +252,9 @@ export default function CustomerProfilePage() {
             className="w-full justify-start text-neutral-400 hover:text-red-600 hover:bg-red-50 h-11 rounded-xl transition-all"
           >
             <LogOut size={16} className="mr-3" />
-            <span className="text-sm font-medium">{t("profile_btn_logout")}</span>
+            <span className="text-sm font-medium">
+              {t("profile_btn_logout")}
+            </span>
           </Button>
         </div>
       </div>
