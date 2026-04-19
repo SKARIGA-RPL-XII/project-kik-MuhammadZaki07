@@ -1,14 +1,23 @@
 import logService from "@/services/log.service";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
-export const useActivityLogs = (filters?: any) => {
+export type ActivityLogFilters = {
+  search?: string;
+  module?: string;
+  action?: string;
+  date?: string;
+  include_deleted?: boolean;
+  page?: number;
+};
+
+export const useActivityLogs = (filters: ActivityLogFilters = {}) => {
   const queryClient = useQueryClient();
 
   const logsQuery = useQuery({
     queryKey: ["activity-logs", filters],
     queryFn: () => logService.getAll(filters),
     refetchInterval: 20 * 1000,
-    placeholderData: (previousData) => previousData,
+    keepPreviousData: true,
   });
 
   const response = logsQuery.data;
@@ -39,15 +48,15 @@ export const useActivityLogs = (filters?: any) => {
       total: response?.meta?.total ?? 0,
       from: response?.meta?.from ?? 0,
       to: response?.meta?.to ?? 0,
-      per_page: response?.meta?.per_page ?? 10
+      per_page: response?.meta?.per_page ?? 10,
     },
+
     isLoading: logsQuery.isLoading,
     isFetching: logsQuery.isFetching,
     isError: logsQuery.isError,
 
     getLogById: logDetailMutation.mutateAsync,
     isFetchingDetail: logDetailMutation.isPending,
-    logDetail: logDetailMutation.data,
 
     deleteLog: deleteLogMutation.mutate,
     isDeleting: deleteLogMutation.isPending,

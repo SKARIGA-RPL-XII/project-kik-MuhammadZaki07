@@ -3,6 +3,7 @@
 use App\Http\Controllers\ActivityLogController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AiAssistantController;
+use App\Http\Controllers\AIController;
 use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\StockController;
 use App\Http\Controllers\SettingController;
@@ -246,4 +247,6 @@ Route::get('/settings', [SettingController::class, 'index']);
 Broadcast::routes(['middleware' => ['auth:sanctum']]);
 Route::post('/midtrans/callback', [MidtransWebhookController::class, 'callback']);
 
-Route::post('/ai/chat', [AiAssistantController::class, 'chat']);
+// Route::post('/ai/chat', [AiAssistantController::class, 'chat']);
+Route::post('/ai/chat', [AIController::class, 'chat'])->middleware(['auth:sanctum', 'throttle:20,1']);
+Route::post('/ai/guest-chat', [AIController::class, 'guestChat'])->middleware('throttle:15,1');

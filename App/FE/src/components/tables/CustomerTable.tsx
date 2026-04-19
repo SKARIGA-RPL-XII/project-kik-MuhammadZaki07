@@ -30,7 +30,7 @@ export default function CustomerTable({
   loading,
   onRefresh,
   onEdit,
-  onView
+  onView,
 }: CustomerTableProps) {
   const { toast } = useToast();
 
@@ -82,9 +82,7 @@ export default function CustomerTable({
             {!loading && customers.length === 0 && (
               <TableRow>
                 <TableCell colSpan={6} className="py-10 text-center">
-                  <span className="text-neutral-400">
-                    No customers found
-                  </span>
+                  <span className="text-neutral-400">No customers found</span>
                 </TableCell>
               </TableRow>
             )}
@@ -153,7 +151,12 @@ export default function CustomerTable({
                       <ActionGuard module="customers" action="write">
                         <button
                           title={user.is_active ? "Block" : "Unblock"}
-                          className={`p-2 rounded ${
+                          disabled={toggleBlock.isPending}
+                          className={`p-2 rounded transition ${
+                            toggleBlock.isPending
+                              ? "opacity-50 cursor-not-allowed"
+                              : ""
+                          } ${
                             user.is_active
                               ? "text-orange-500 hover:bg-orange-50"
                               : "text-green-500 hover:bg-green-50"
@@ -161,24 +164,24 @@ export default function CustomerTable({
                           onClick={async () => {
                             try {
                               await toggleBlock.mutateAsync(user.id);
+
                               toast(
                                 "success",
                                 "Success",
                                 user.is_active
                                   ? "User diblokir"
-                                  : "User diaktifkan"
+                                  : "User diaktifkan",
                               );
+
                               onRefresh();
                             } catch (err: any) {
-                              toast(
-                                "error",
-                                "Error",
-                                "Gagal update status"
-                              );
+                              toast("error", "Error", "Gagal update status");
                             }
                           }}
                         >
-                          {user.is_active ? (
+                          {toggleBlock.isPending ? (
+                            <Loader2 size={18} className="animate-spin" />
+                          ) : user.is_active ? (
                             <Ban size={18} />
                           ) : (
                             <CheckCircle size={18} />
@@ -196,14 +199,14 @@ export default function CustomerTable({
                               toast(
                                 "success",
                                 "Deleted",
-                                "Customer berhasil dihapus"
+                                "Customer berhasil dihapus",
                               );
                               onRefresh();
                             } catch (err: any) {
                               toast(
                                 "error",
                                 "Delete Failed",
-                                "Gagal hapus customer"
+                                "Gagal hapus customer",
                               );
                             }
                           }}

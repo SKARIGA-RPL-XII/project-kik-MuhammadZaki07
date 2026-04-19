@@ -94,6 +94,7 @@ class UserController extends Controller
                 "role_id" => $user->role_id,
                 "role_name" => $user->role->name ?? 'user',
                 "badge_id" => $user->badge_id,
+                "is_active" => $user->is_active,
                 "badge" => $user->badge ? [
                     "id" => $user->badge->id,
                     "name" => $user->badge->name,
@@ -207,14 +208,16 @@ class UserController extends Controller
     {
         $user = User::findOrFail($id);
 
-        $user->update([
-            'is_active' => !$user->is_active
-        ]);
+        $user->is_active = !$user->is_active;
+        $user->save();
 
         return response()->json([
             'status' => 'success',
             'message' => $user->is_active ? 'User diaktifkan' : 'User diblokir',
-            'data' => $user
+            'data' => [
+                'id' => $user->id,
+                'is_active' => $user->is_active,
+            ]
         ]);
     }
 

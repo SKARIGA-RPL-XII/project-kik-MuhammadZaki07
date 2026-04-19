@@ -7,7 +7,7 @@ import {
   TableRow,
 } from "../../components/ui/table";
 import Badge from "../../components/ui/badge/Badge";
-import { Eye, Trash2, Loader2, ActivitySquareIcon } from "lucide-react";
+import { Eye, Trash2, Loader2, ActivitySquareIcon, RotateCcw } from "lucide-react";
 import { formatDate } from "@/utils/dateHelper";
 import DeleteAlertDialog from "../dialog/DeleteAlertDialog";
 
@@ -16,6 +16,7 @@ interface LogTableProps {
   isLoading: boolean;
   onView: (id: number) => void;
   onDelete: (id: number) => Promise<void> | void;
+  onRestore: (id: number) => Promise<void> | void;
 }
 
 export default function LogTable({
@@ -23,6 +24,7 @@ export default function LogTable({
   isLoading,
   onView,
   onDelete,
+  onRestore
 }: LogTableProps) {
   const getBadgeColor = (action: string) => {
     switch (action.toLowerCase()) {
@@ -107,7 +109,7 @@ export default function LogTable({
                         size="sm"
                         color={getBadgeColor(log.action)}
                       >
-                       <ActivitySquareIcon size={10}/> {log.action}
+                        <ActivitySquareIcon size={10} /> {log.action}
                       </Badge>
                     </div>
                   </TableCell>
@@ -123,6 +125,16 @@ export default function LogTable({
                       >
                         <Eye size={18} />
                       </button>
+
+                      {log.deleted_at && (
+                        <button
+                          onClick={() => onRestore(log.id)}
+                          title="Restore"
+                          className="p-2 text-green-500 hover:bg-green-50 rounded"
+                        >
+                          <RotateCcw size={18} />
+                        </button>
+                      )}
 
                       <DeleteAlertDialog
                         title="Hapus Log Riwayat?"

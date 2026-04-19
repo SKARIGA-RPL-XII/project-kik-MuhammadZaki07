@@ -14,6 +14,8 @@ import {
 } from "@/hooks/react-query/useCustomers";
 import { Trash2 } from "lucide-react";
 import DeleteAlertDialog from "./DeleteAlertDialog";
+import { MdAccountCircle } from "react-icons/md";
+import { FcGoogle } from "react-icons/fc";
 
 export default function CustomerDetailDialog({
   open,
@@ -22,13 +24,6 @@ export default function CustomerDetailDialog({
 }: any) {
   const { data, isLoading } = useCustomerDetail(customerId);
   const { mutateAsync: deleteCustomer, isPending } = useDeleteCustomer();
-
-  const handleDelete = async () => {
-    if (!confirm("Yakin mau hapus customer ini?")) return;
-
-    await deleteCustomer(customerId);
-    onOpenChange(false);
-  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -57,6 +52,7 @@ export default function CustomerDetailDialog({
                   <Badge variant={data.is_active ? "default" : "destructive"}>
                     {data.is_active ? "Active" : "Blocked"}
                   </Badge>
+                  {data?.google_id != null ? <FcGoogle size={20}/> : <MdAccountCircle/>}
                 </div>
               </div>
             </div>

@@ -9,13 +9,25 @@ class ActivityLogController extends Controller
 {
     public function index(Request $request)
     {
-        $query = ActivityLog::with('user');
+        $query = ActivityLog::query()
+            ->with('user:id,username');
+
+
+        if ($request->trashed === 'only') {
+            $query->onlyTrashed();
+        } elseif ($request->trashed === 'all') {
+            $query->withTrashed();
+        }
 
         $query->when($request->search, function ($q) use ($request) {
-            $q->where(function ($sq) use ($request) {
-                $sq->where('message', 'like', '%' . $request->search . '%')
-                    ->orWhereHas('user', function ($u) use ($request) {
-                        $u->where('username', 'like', '%' . $request->search . '%');
+            $search = $request->search;
+
+            $q->where(function ($sq) use ($search) {
+                $sq->where('message', 'like', "%{$search}%")
+                    ->orWhere('module', 'like', "%{$search}%")
+                    ->orWhere('action', 'like', "%{$search}%")
+                    ->orWhereHas('user', function ($u) use ($search) {
+                        $u->where('username', 'like', "%{$search}%");
                     });
             });
         });
@@ -23,6 +35,7 @@ class ActivityLogController extends Controller
         $query->when($request->module, function ($q) use ($request) {
             $q->where('module', $request->module);
         });
+
 
         $query->when($request->action, function ($q) use ($request) {
             $q->where('action', $request->action);
@@ -32,7 +45,18 @@ class ActivityLogController extends Controller
             $q->whereDate('created_at', $request->date);
         });
 
-        $logs = $query->orderBy('created_at', 'desc')->paginate(10);
+        $logs = $query
+            ->select([
+                'id',
+                'user_id',
+                'module',
+                'action',
+                'message',
+                'created_at',
+                'deleted_at'
+            ])
+            ->orderByDesc('id')
+            ->paginate(10);
 
         return response()->json([
             'status' => 'success',
@@ -42,8 +66,6 @@ class ActivityLogController extends Controller
                 'last_page' => $logs->lastPage(),
                 'total' => $logs->total(),
                 'per_page' => $logs->perPage(),
-                'from' => $logs->firstItem(),
-                'to' => $logs->lastItem(),
             ]
         ]);
     }
@@ -56,10 +78,21 @@ class ActivityLogController extends Controller
 
     public function destroy($id)
     {
-        $log = ActivityLog::findOrFail($id);
+        $log = ActivityLog::withTrashed()->findOrFail($id);
+
+        if ($log->trashed()) {
+            $log->forceDelete();
+
+            return response()->json([
+                'message' => 'Log berhasil dihapus permanen'
+            ]);
+        }
+
         $log->delete();
 
-        return response()->json(['message' => 'Log berhasil dihapus (Soft Delete)']);
+        return response()->json([
+            'message' => 'Log berhasil dihapus (Soft Delete)'
+        ]);
     }
 
     public function restore($id)

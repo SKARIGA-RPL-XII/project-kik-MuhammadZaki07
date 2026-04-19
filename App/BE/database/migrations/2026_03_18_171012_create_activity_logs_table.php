@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('activity_logs', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('user_id')->nullable()->constrained()->cascadeOnDelete();
             $table->string('action');
             $table->string('module');
             $table->json('payload_before')->nullable();
@@ -22,6 +22,10 @@ return new class extends Migration
             $table->text('message');
             $table->timestamps();
             $table->softDeletes();
+
+            $table->index('created_at');
+            $table->index('module');
+            $table->index('action');
         });
     }
 

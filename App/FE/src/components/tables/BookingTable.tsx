@@ -319,7 +319,10 @@ export default function BookingTable({
               </div>
 
               <div className="flex justify-between border-t pt-3 mt-2">
+                <div className="flex flex-col">
                 <span className="font-semibold">Total</span>
+                  <span className="text-[10px] italic text-neutral-400 font-medium flex items-center gap-1"><Info size={10}/> sudah termasuk pelayanan dan pajak</span>
+                </div>
                 <span className="font-bold text-red-600">
                   Rp{" "}
                   {new Intl.NumberFormat("id-ID").format(

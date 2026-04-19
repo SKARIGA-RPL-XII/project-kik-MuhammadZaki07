@@ -1,4 +1,11 @@
-import { createContext, useContext, useState, ReactNode, useEffect, useCallback } from "react";
+import {
+  createContext,
+  useContext,
+  useState,
+  ReactNode,
+  useEffect,
+  useCallback,
+} from "react";
 import { apiClient } from "../lib/apiClient";
 
 type User = {
@@ -10,7 +17,7 @@ type User = {
   gender: "LK" | "PR";
   profile_image?: string;
   no_tlp?: string;
-  google_id?:string
+  google_id?: string;
 };
 
 type AuthContextType = {
@@ -52,6 +59,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       const res = await apiClient.get("/user/me");
       const userData = res.data.data;
+
+      if (userData.is_active == false) {
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        setUser(null);
+
+        window.location.href = "/banned";
+        return;
+      }
+      
       setUser(userData);
       localStorage.setItem("user", JSON.stringify(userData));
     } catch (err) {
@@ -79,7 +96,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       return { status: "success", user: userData };
     } catch (err: any) {
       const response = err.response?.data;
-      setErrors({ errorMessage: response?.message, errorField: response?.errors });
+      setErrors({
+        errorMessage: response?.message,
+        errorField: response?.errors,
+      });
       return response;
     } finally {
       setLoading(false);
@@ -98,7 +118,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       return { status: "success", user: userData };
     } catch (err: any) {
       const response = err.response?.data;
-      setErrors({ errorMessage: response?.message, errorField: response?.errors });
+      setErrors({
+        errorMessage: response?.message,
+        errorField: response?.errors,
+      });
       return response;
     } finally {
       setLoading(false);
@@ -117,7 +140,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       return { status: "success", user: userData };
     } catch (err: any) {
       const response = err.response?.data;
-      setErrors({ errorMessage: response?.message, errorField: response?.errors });
+      setErrors({
+        errorMessage: response?.message,
+        errorField: response?.errors,
+      });
       return response;
     } finally {
       setLoading(false);
@@ -137,7 +163,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, errors, login, register, loginWithGoogle, logout, refreshUser }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        loading,
+        errors,
+        login,
+        register,
+        loginWithGoogle,
+        logout,
+        refreshUser,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

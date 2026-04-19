@@ -24,7 +24,10 @@ trait LogsActivity
                 class_basename($model),
                 'Update',
                 "Memperbarui data pada " . class_basename($model),
-                $model->getOriginal(),
+                $model->getOriginal() ? array_intersect_key(
+                    $model->getOriginal(),
+                    array_flip(['id', 'is_active', 'status'])
+                ) : null,
                 $model->getChanges()
             );
         });

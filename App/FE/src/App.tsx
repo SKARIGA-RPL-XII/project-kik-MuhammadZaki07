@@ -15,6 +15,7 @@ import { PermissionMiddleware } from "./middleware/PermissionMiddleware";
 import { isDesktop } from "./utils/platform";
 import AttributePage from "./pages/Attributes/AttributePage";
 import CustomersPage from "./pages/Customer/CustomersPage";
+import BannedPage from "./pages/OtherPage/BannedPage";
 
 const AppLayout = lazy(() => import("./layout/AppLayout"));
 const CustomerLayout = lazy(() => import("./layout/CustomerLayout"));
@@ -503,6 +504,7 @@ const router = createBrowserRouter([
       { path: "invoice/:id", element: <InvoicePage /> },
       { path: "order-success", element: <InvoiceCashPage /> },
       { path: "404", element: <NotFound /> },
+      { path: "/banned", element: <BannedPage /> },
       { path: "*", element: <Navigate to="/404" replace /> },
     ],
   },

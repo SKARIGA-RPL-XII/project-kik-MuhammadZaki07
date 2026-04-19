@@ -86,7 +86,7 @@ function Show() {
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           <div className="lg:col-span-5 space-y-6">
-            <div className="relative rounded-3xl overflow-hidden bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 ">
+            <div className="relative rounded-xl overflow-hidden bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 ">
               <img
                 src={
                   menu.menu_image
@@ -128,7 +128,7 @@ function Show() {
           </div>
 
           <div className="lg:col-span-7 space-y-6">
-            <div className="bg-white dark:bg-neutral-900 rounded-3xl p-8 border border-neutral-200 dark:border-neutral-800  relative overflow-hidden">
+            <div className="bg-white dark:bg-neutral-900 rounded-xl p-8 border border-neutral-200 dark:border-neutral-800  relative overflow-hidden">
               <div className="relative z-10">
                 <h1 className="text-4xl font-bold text-neutral-900 dark:text-white mb-4">
                   {menu.name}
@@ -214,7 +214,7 @@ function Show() {
                           return (
                             <div
                               key={attrName}
-                              className="p-3 rounded-2xl bg-red-50/50 dark:bg-red-500/5 border border-red-100/50 dark:border-red-500/10"
+                              className="p-3 rounded-xl bg-red-50/50 dark:bg-red-500/5 border border-red-100/50 dark:border-red-500/10"
                             >
                               <p className="text-xs text-red-600 dark:text-red-400 font-medium mb-1">
                                 {attrName}

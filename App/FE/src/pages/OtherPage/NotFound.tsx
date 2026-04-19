@@ -1,13 +1,14 @@
 import GridShape from "../../components/common/GridShape";
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 import PageMeta from "../../components/common/PageMeta";
 
 export default function NotFound() {
+  const navigate = useNavigate();
   return (
     <>
       <PageMeta
-        title="React.js 404 Dashboard | TailAdmin - React.js Admin Dashboard Template"
-        description="This is React.js 404 Dashboard page for TailAdmin - React.js Tailwind CSS Admin Dashboard Template"
+        title="404 - Page Not Found"
+        description="The page you are looking for doesn't exist or has been moved. Return to the dashboard or go back to continue browsing."
       />
       <div className="relative flex flex-col items-center justify-center min-h-screen p-6 overflow-hidden z-1">
         <GridShape />
@@ -28,7 +29,7 @@ export default function NotFound() {
           </p>
 
           <Link
-            to="/"
+            to={navigate(-1)}
             className="inline-flex items-center justify-center rounded-lg border border-neutral-300 bg-white px-5 py-3.5 text-sm font-medium text-neutral-700 shadow-theme-xs hover:bg-neutral-50 hover:text-neutral-800 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-400 dark:hover:bg-white/[0.03] dark:hover:text-neutral-200"
           >
             Back to Home Page

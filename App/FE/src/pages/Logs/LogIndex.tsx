@@ -24,10 +24,11 @@ const LogIndex = () => {
     action: "",
     date: "",
     page: 1,
+    trashed: "false",
   });
 
-  const { logs, isLoading, isFetching, pagination, deleteLog } =
-    useActivityLogs(filters);    
+  const { logs, isLoading, isFetching, pagination, deleteLog, restoreLog } =
+    useActivityLogs(filters);
 
   const { toast } = useToast();
 
@@ -59,9 +60,30 @@ const LogIndex = () => {
     }
   };
 
+  const handleRestoreLog = async (id: number) => {
+    try {
+      await restoreLog(id);
+
+      toast(
+        "success",
+        "Success",
+        `Activity log with ID #${id} has been Restore from the system.`,
+      );
+    } catch (error) {
+      toast(
+        "error",
+        "Failed to delete log",
+        "A server error occurred, please try again later.",
+      );
+    }
+  };
+
   return (
     <div className="space-y-6">
-      <PageMeta description="System activity and change logs" title="Activity Logs" />
+      <PageMeta
+        description="System activity and change logs"
+        title="Activity Logs"
+      />
       <PageBreadcrumb pageTitle="History" />
       <Card className="p-5 border shadow-none">
         <div className="flex flex-col gap-2 mb-5">
@@ -73,7 +95,7 @@ const LogIndex = () => {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 my-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 my-3">
           <div className="relative">
             <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-neutral-400">
               <Search size={16} />
@@ -135,6 +157,28 @@ const LogIndex = () => {
               className="w-full pl-10 pr-4 py-2.5 text-sm border rounded-lg dark:bg-white/[0.03] dark:border-white/[0.08] dark:border-neutral-800 outline-none text-neutral-600 hover:border-neutral-300 transition-colors cursor-pointer"
             />
           </div>
+
+          <div className="mb-4">
+            <select
+              name="trashed"
+              value={filters.trashed}
+              onChange={(e) =>
+                setFilters((prev) => ({
+                  ...prev,
+                  trashed: e.target.value,
+                  page: 1,
+                }))
+              }
+              className="w-full sm:w-48 px-3 py-2 text-sm border rounded-lg 
+               dark:bg-white/[0.03] dark:border-neutral-800 
+               outline-none text-neutral-600 
+               cursor-pointer hover:border-neutral-300 transition-colors"
+            >
+              <option value="false">Active</option>
+              <option value="only">Deleted</option>
+              <option value="all">All</option>
+            </select>
+          </div>
         </div>
 
         <LogTable
@@ -142,6 +186,7 @@ const LogIndex = () => {
           isLoading={isLoading}
           onView={(id) => navigate(`/system/logs/${id}`)}
           onDelete={(id) => handleDeleteLog(id)}
+          onRestore={(id) => handleRestoreLog(id)}
         />
 
         <div className="flex items-center justify-between mt-6 pt-5 border-t border-neutral-100 dark:border-white/[0.05]">
@@ -165,7 +210,10 @@ const LogIndex = () => {
             <Button
               size="sm"
               variant="outline"
-              disabled={Number(pagination?.current_page) >= Number(pagination?.last_page) || isFetching}
+              disabled={
+                Number(pagination?.current_page) >=
+                  Number(pagination?.last_page) || isFetching
+              }
               onClick={() => setFilters((p) => ({ ...p, page: p.page + 1 }))}
             >
               Next

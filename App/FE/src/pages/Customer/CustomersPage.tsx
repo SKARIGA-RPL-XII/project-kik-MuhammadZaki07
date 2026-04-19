@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
-import { Card } from "@/components/ui/card";
 import {
   Select,
   SelectContent,
@@ -18,6 +17,8 @@ import CustomerTable from "@/components/tables/CustomerTable";
 import { Button } from "@/components/ui/button";
 import CustomerDetailDialog from "@/components/dialog/CustomerDetailDialog";
 import CustomerEditDialog from "@/components/dialog/CustomerEditDialog";
+import PageMeta from "@/components/common/PageMeta";
+import PageBreadcrumb from "@/components/common/PageBreadCrumb";
 
 export default function CustomersPage() {
   const [search, setSearch] = useState("");
@@ -53,9 +54,13 @@ export default function CustomersPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-        <h1 className="text-xl font-semibold">Customers Management</h1>
+      <PageMeta
+        title="Customers Management"
+        description="Manage all customers data including profile, transaction history, and account status in the Gagal Lapar admin dashboard."
+      />
 
+      <PageBreadcrumb pageTitle="Customers Management" />
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-end">
         <div className="flex gap-3 w-full md:w-auto">
           <Input
             placeholder="Search customer..."

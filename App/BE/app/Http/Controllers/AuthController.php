@@ -31,6 +31,14 @@ class AuthController extends Controller
             );
         }
 
+        if (!$user->is_active) {
+            return Controller::ERROR(
+                'account_blocked',
+                'Your account has been blocked by admin',
+                403
+            );
+        }
+
         $token = $user->createToken('token')->plainTextToken;
         $user->role_name = $user->role->name;
         unset($user->role);
@@ -115,6 +123,14 @@ class AuthController extends Controller
                     'gender' => null,
                 ]);
 
+                if (!$user->is_active) {
+                    return Controller::ERROR(
+                        'account_blocked',
+                        'Your account has been blocked by admin',
+                        403
+                    );
+                }
+
                 event(new UserRegistered($user));
             } else {
                 $updateData = [];
@@ -129,6 +145,14 @@ class AuthController extends Controller
                 if (!empty($updateData)) {
                     $user->update($updateData);
                 }
+            }
+
+            if (!$user->is_active) {
+                return Controller::ERROR(
+                    'account_blocked',
+                    'Your account has been blocked by admin',
+                    403
+                );
             }
 
             $token = $user->createToken('token')->plainTextToken;
