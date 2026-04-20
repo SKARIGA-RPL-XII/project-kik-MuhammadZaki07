@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from "react";
+import { useState, useMemo } from "react";
 import {
   ArrowLeft,
   ChevronRight,
@@ -159,8 +159,8 @@ const [cart, setCart] = useState<any[]>(() => {
                     exit={{ height: 0, opacity: 0 }}
                     className="border-b border-neutral-100 dark:border-white/5"
                   >
-                    <div className="p-6 lg:max-h-[300px] max-h-[200px] overflow-y-auto custom-scrollbar">
-                      <div className="flex sticky top-0 bg-inherit items-center justify-between mb-4 z-10">
+                    <div className="px-6 pb-6 lg:max-h-[300px] max-h-[200px] overflow-y-auto custom-scrollbar">
+                      <div className="flex sticky top-0 bg-white py-4 items-center justify-between mb-4 z-10">
                         <h3 className="text-sm font-semibold text-neutral-500">
                           Detail Pesanan
                         </h3>

@@ -118,7 +118,7 @@ const AppSidebar: React.FC = () => {
       <div
         className={`py-8 flex ${!showFull ? "lg:justify-center" : "justify-start"}`}
       >
-        <Link to="/" className="flex items-center gap-3">
+        <Link to="/dashboard" className="flex items-center gap-3">
           <img
             src={getLogoUrl(config.logo_light, "/image-dumy.png")}
             alt="Logo"

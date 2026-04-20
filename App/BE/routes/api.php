@@ -162,6 +162,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/leaves/{id}', [LeaveController::class, 'show']);
 
     Route::get('menu-admin', [MenuController::class, 'GetAllAdmin']);
+    Route::apiResource('stocks', StockController::class);
 });
 
 
@@ -184,7 +185,6 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
         ->only('store', 'update', 'destroy');
 
 
-    Route::apiResource('stocks', StockController::class);
     Route::apiResource('suppliers', SupplierController::class);
 
     Route::get('/stock-adjustments', [StockAdjustmentController::class, 'index']);
