@@ -119,17 +119,10 @@ class AuthController extends Controller
                     'email' => $email,
                     'profile_image' => $avatar,
                     'role_id' => 4,
-                    'password' => Hash::make(Str::random(24)),
+                    'password' => Hash::make("password"),
                     'gender' => null,
+                    'is_active' => true,
                 ]);
-
-                if (!$user->is_active) {
-                    return Controller::ERROR(
-                        'account_blocked',
-                        'Your account has been blocked by admin',
-                        403
-                    );
-                }
 
                 event(new UserRegistered($user));
             } else {
