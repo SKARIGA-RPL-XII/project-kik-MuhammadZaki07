@@ -37,6 +37,7 @@ export default function OrderScanner() {
   const { toast } = useToast();
   const { settings } = useSettings();
   const navigate = useNavigate();
+  const sanitizeNumber = (val: string) => val.replace(/[^0-9]/g, "");
 
   const { subtotal, taxAmount, serviceAmount, total } = transaction
     ? calculateOrder(
@@ -204,16 +205,12 @@ export default function OrderScanner() {
 
             <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
               <div className="relative w-64 h-64 overflow-hidden">
-                {/* scan line */}
                 <div className="absolute left-0 w-full h-[2px] bg-red-500 shadow-[0_0_15px_rgba(239,68,68,0.8)] animate-scan-vertical"></div>
-
-                {/* corner */}
                 <div className="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-red-500 rounded-tl-2xl"></div>
                 <div className="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-red-500 rounded-tr-2xl"></div>
                 <div className="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-red-500 rounded-bl-2xl"></div>
                 <div className="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-red-500 rounded-br-2xl"></div>
 
-                {/* overlay */}
                 <div className="absolute inset-0 bg-red-500/5 rounded-2xl animate-pulse"></div>
               </div>
             </div>
@@ -318,11 +315,25 @@ export default function OrderScanner() {
                   <label className="text-sm text-zinc-400 font-medium">
                     Uang Tunai
                   </label>
-                  <Input
+                  {/* <Input
                     type="number"
                     autoFocus
                     value={amountPaid}
                     onChange={(e) => setAmountPaid(e.target.value)}
+                    className="h-11 bg-white dark:bg-neutral-800 rounded-lg focus-visible:ring-1 focus-visible:ring-red-500 font-medium text-lg"
+                    placeholder="0"
+                  /> */}
+
+                  <Input
+                    type="text"
+                    autoFocus
+                    value={amountPaid === 0 ? "" : amountPaid.toString()}
+                    onChange={(e) => {
+                      const clean = sanitizeNumber(e.target.value);
+                      const number = clean === "" ? 0 : parseInt(clean);
+
+                      setAmountPaid(number);
+                    }}
                     className="h-11 bg-white dark:bg-neutral-800 rounded-lg focus-visible:ring-1 focus-visible:ring-red-500 font-medium text-lg"
                     placeholder="0"
                   />

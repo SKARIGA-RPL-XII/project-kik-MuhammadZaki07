@@ -27,9 +27,9 @@ return Application::configure(basePath: dirname(__DIR__))
             "customer" => CustomerMidlleware::class,
         ]);
 
-        $middleware->api(prepend: [
-            \Illuminate\Routing\Middleware\SubstituteBindings::class,
-        ]);
+        // $middleware->api([
+        //     \Illuminate\Routing\Middleware\SubstituteBindings::class,
+        // ]);
 
     $middleware->validateCsrfTokens(except: [
         'broadcasting/auth',

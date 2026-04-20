@@ -172,7 +172,7 @@ Route::middleware('auth:sanctum')->group(function () {
 |--------------------------------------------------------------------------
 */
 
-Route::middleware(['auth:sanctum', 'admin'])->group(function () {
+Route::middleware(['auth:sanctum'])->group(function () {
 
     Route::resource('category', CategoryController::class)
         ->only('store', 'update', 'destroy');

@@ -16,177 +16,267 @@ class AIService
 
     public function handle(AIRequestDTO $dto)
     {
-        $isCustomer = $dto->isCustomer();
+        $message = strtolower(trim($dto->message));
 
-        if ($this->isGreeting($dto->message)) {
+        // =========================
+        // 0. GREETING FAST PATH
+        // =========================
+        if ($this->isGreeting($message)) {
             return [
-                'reply' => 'Hai 👋 lagi pengen makan apa hari ini? aku bantu cariin yang enak ya 😋',
+                'reply' => 'Halo 👋 mau cari menu apa hari ini?',
                 'type' => 'general',
                 'data' => [],
                 'actions' => []
             ];
         }
 
-        $tools = $isCustomer
-            ? $this->toolRegistry->getCustomerTools()
-            : $this->toolRegistry->getGuestTools();
+        // =========================
+        // 1. INTENT DETECTION
+        // =========================
+        $intent = $this->detectIntent($message);
 
-        $cartContext = '';
+        $data = [];
+        $type = 'general';
 
-        if (!empty($dto->context['cart'])) {
-            $cartItems = collect($dto->context['cart'])
-                ->map(fn($item) => "{$item['name']} (qty: {$item['qty']})")
-                ->implode(', ');
+        // =========================
+        // 2. HANDLE INTENT
+        // =========================
+        switch ($intent['intent']) {
 
-            $cartContext = "CART_USER: {$cartItems}";
+            case 'menu_list':
+                $data = $this->toolExecutor->execute('getMenuList', [], $dto);
+                $type = 'menu';
+                break;
+
+            case 'recommendation':
+                $data = $this->toolExecutor->execute(
+                    'getRecommendedMenu',
+                    $intent['filters'] ?? [],
+                    $dto
+                );
+                $type = 'menu';
+                break;
+
+            case 'profile':
+                $data = $this->toolExecutor->execute('get_user_profile', [], $dto);
+                $type = 'profile';
+                break;
+
+            case 'follow_up':
+                $context = $this->getLastContext($dto->userId);
+
+                if (!$context) {
+                    return $this->fallback("Maksudnya yang mana ya? 😅");
+                }
+
+                // 🔥 refresh context biar chaining jalan
+                $this->storeContext($dto->userId, $context['type'], $context['data']);
+
+                return [
+                    'reply' => 'Ini yang tadi kamu maksud 👇',
+                    'type' => $context['type'],
+                    'data' => $context['data'],
+                    'actions' => []
+                ];
+
+            default:
+                return [
+                    'reply' => 'Lagi pengen makan apa nih? 🔥',
+                    'type' => 'general',
+                    'data' => [],
+                    'actions' => []
+                ];
         }
 
-        $messages = array_merge(
-            [
-                [
-                    'role' => 'system',
-                    'content' => $this->systemPrompt($dto->role) . "\n" . $cartContext
-                ],
-            ],
-            $isCustomer ? $this->getConversation($dto->userId) : [],
-            [
-                ['role' => 'user', 'content' => $dto->message],
-            ]
-        );
+        // =========================
+        // 3. SANITIZE TOOL RESULT
+        // =========================
+        $data = $this->sanitizeToolResult($data);
 
-        $response = Http::withToken(config('services.groq.key'))
-            ->timeout(20)
-            ->post('https://api.groq.com/openai/v1/chat/completions', [
-                'model' => 'llama-3.3-70b-versatile',
-                'messages' => $messages,
-                'tools' => $tools,
-                'tool_choice' => 'auto',
-                'temperature' => 0.2,
-                'max_tokens' => 600,
-            ]);
-
-        if (!$response->successful()) {
-            return $this->errorResponse();
-        }
-
-        $message = data_get($response->json(), 'choices.0.message');
-
-        if (isset($message['tool_calls'])) {
-
-            $toolCall = $message['tool_calls'][0];
-            $toolName = $toolCall['function']['name'];
-
-            Log::info('TOOL CALLED', [
-                'tool' => $toolName,
-                'message' => $dto->message,
-            ]);
-
-            $result = $this->toolExecutor->execute(
-                $toolName,
-                json_decode($toolCall['function']['arguments'], true) ?? [],
-                $dto
-            );
-
-            Log::info('RAW TOOL RESULT', [
-                'type' => gettype($result),
-                'result' => $result
-            ]);
-
-            if (empty($result)) {
-                return $this->errorResponse();
-            }
-
-            if (in_array($toolName, ['getMenuList', 'getRecommendedMenu'])) {
-
-                $menus = collect($result)
-                    ->filter(fn($item) => isset($item['id']))
-                    ->map(function ($item) {
-
-                        $image = data_get($item, 'image');
-
-                        $finalImage = null;
-
-                        if ($image) {
-                            $finalImage = str_starts_with($image, 'http')
-                                ? $image
-                                : asset('storage/' . $image);
-                        }
-
-                        return [
-                            'id' => $item['id'],
-                            'name' => $item['name'] ?? 'Unknown',
-                            'price' => $item['final_price'] ?? $item['price'] ?? 0,
-                            'final_price' => $item['final_price'] ?? $item['price'] ?? 0,
-                            'image' => $finalImage,
-                            'stock' => $item['stock'] ?? 0,
-                            'discount_id' => $item['discount_id'] ?? null,
-                            'description' => $item['description'] ?? '',
-                            'attributes' => collect($item['attributes'] ?? [])
-                                ->map(fn($attr) => [
-                                    'id' => $attr['id'] ?? null,
-                                    'name' => $attr['name'] ?? '',
-                                    'levels' => collect($attr['levels'] ?? [])
-                                        ->map(fn($lvl) => [
-                                            'id' => $lvl['id'] ?? null,
-                                            'name' => $lvl['name'] ?? '',
-                                        ])
-                                        ->values()
-                                        ->toArray(),
-                                ])
-                                ->values()
-                                ->toArray(),
-                        ];
-                    })
-                    ->values()
-                    ->toArray();
-
-                Log::info('MENU RESPONSE', [
-                    'count' => count($menus)
-                ]);
-
-                return [
-                    "reply" => 'Oke, aku cariin yang cocok buat kamu ya 🔥Ini beberapa yang lagi enak banget:',
-                    'type' => 'menu',
-                    'data' => $menus,
-                    'actions' => []
-                ];
-            }
-
-            if ($toolName === 'get_user_profile') {
-
-                return [
-                    'reply' => 'ini data profil kamu 👇',
-                    'type' => 'profile',
-                    'data' => $result,
-                    'actions' => []
-                ];
-            }
-
-            Log::warning('UNKNOWN TOOL', [
-                'tool' => $toolName,
-                'result' => $result
-            ]);
-
-            if (is_array($result) && isset($result[0]['name'])) {
-                return [
-                    'reply' => 'ini data yang kamu minta 🔥',
-                    'type' => 'menu',
-                    'data' => $result,
-                    'actions' => []
-                ];
-            }
-
+        // =========================
+        // 4. VALIDASI DATA (FIXED)
+        // =========================
+        if (!is_array($data) || count($data) === 0) {
             return [
-                'reply' => 'data berhasil diproses',
+                'reply' => 'Belum nemu yang cocok 😅 mau coba yang lain?',
                 'type' => 'general',
-                'data' => $result,
+                'data' => [],
                 'actions' => []
             ];
         }
 
-        return $this->finalizeResponse($messages, $dto, $isCustomer);
+        // =========================
+        // 5. NORMALIZE MENU
+        // =========================
+        if ($type === 'menu') {
+            $data = $this->formatMenu($data);
+        }
+
+        // =========================
+        // 6. SAVE CONTEXT
+        // =========================
+        $this->storeContext($dto->userId, $type, $data);
+
+        // =========================
+        // 7. BUILD RESPONSE
+        // =========================
+        $response = [
+            'reply' => $this->buildReply($intent),
+            'type' => $type,
+            'data' => $data,
+            'actions' => []
+        ];
+
+        // =========================
+        // 8. SAVE CONVERSATION
+        // =========================
+        $this->storeConversation(
+            $dto->userId,
+            $dto->message,
+            $response['reply']
+        );
+
+        return $response;
     }
 
+    protected function formatMenu(array $menus): array
+    {
+        return collect($menus)
+            ->filter(fn($item) => isset($item['id']))
+            ->map(function ($item) {
+
+                $image = data_get($item, 'image');
+                return [
+                    'id' => $item['id'],
+                    'name' => $item['name'] ?? 'Unknown',
+                    'price' => $item['final_price'] ?? $item['price'] ?? 0,
+                    'final_price' => $item['final_price'] ?? $item['price'] ?? 0,
+                    'original_price' => $item['original_price'] ?? $item['price'] ?? 0,
+                    'description' => $item['description'] ?? '',
+                    'stock' => $item['stock'] ?? 0,
+                    'image' => $image,
+
+                    'discount' => data_get($item, 'discount') ? [
+                        'id' => data_get($item, 'discount.id'),
+                        'type' => data_get($item, 'discount.type'),
+                        'value' => data_get($item, 'discount.value'),
+                    ] : null,
+
+                    'attributes' => collect($item['attributes'] ?? [])
+                        ->map(fn($attr) => [
+                            'id' => $attr['id'] ?? null,
+                            'name' => $attr['name'] ?? '',
+                            'levels' => collect($attr['levels'] ?? [])
+                                ->map(fn($lvl) => [
+                                    'id' => $lvl['id'] ?? null,
+                                    'name' => $lvl['name'] ?? '',
+                                ])
+                                ->values()
+                                ->toArray(),
+                        ])
+                        ->values()
+                        ->toArray(),
+                ];
+            })
+            ->values()
+            ->toArray();
+    }
+
+    protected function buildReply(array $intent): string
+    {
+        switch ($intent['intent']) {
+
+            case 'menu_list':
+                return 'Ini dia menu yang bisa kamu pilih 🍽️';
+
+            case 'recommendation':
+                if (!empty($intent['filters']['spicy'])) {
+                    return 'Lagi pengen yang pedas ya 🔥 ini rekomendasi buat kamu 👇';
+                }
+                return 'Ini beberapa rekomendasi yang lagi enak banget 😋';
+
+            case 'profile':
+                return 'Ini data profil kamu 👇';
+
+            default:
+                return 'Siap, aku bantu ya 👍';
+        }
+    }
+
+    protected function fallback(string $message = 'Terjadi kesalahan, coba lagi ya'): array
+    {
+        return [
+            'reply' => $message,
+            'type' => 'general',
+            'data' => [],
+            'actions' => []
+        ];
+    }
+
+    protected function detectIntent(string $msg): array
+    {
+        if (
+            str_contains($msg, 'menu') ||
+            str_contains($msg, 'makanan') ||
+            str_contains($msg, 'ada apa') ||
+            str_contains($msg, 'list')
+        ) {
+            return ['intent' => 'menu_list'];
+        }
+
+        if (
+            str_contains($msg, 'pedas') ||
+            str_contains($msg, 'rekomendasi') ||
+            str_contains($msg, 'enak') ||
+            str_contains($msg, 'best')
+        ) {
+            return [
+                'intent' => 'recommendation',
+                'filters' => [
+                    'spicy' => str_contains($msg, 'pedas')
+                ]
+            ];
+        }
+
+        if (
+            str_contains($msg, 'profil') ||
+            str_contains($msg, 'akun')
+        ) {
+            return ['intent' => 'profile'];
+        }
+
+        if (in_array($msg, ['mana', 'lagi', 'yang tadi'])) {
+            return ['intent' => 'follow_up'];
+        }
+
+        return ['intent' => 'general'];
+    }
+
+    protected function storeContext($userId, $type, $data)
+    {
+        DB::table('ai_contexts')->insert([
+            'user_id' => $userId,
+            'type' => $type,
+            'data' => json_encode($data),
+            'created_at' => now(),
+            'updated_at' => now()
+        ]);
+    }
+
+    protected function getLastContext($userId)
+    {
+        $ctx = DB::table('ai_contexts')
+            ->where('user_id', $userId)
+            ->latest()
+            ->first();
+
+        if (!$ctx) return null;
+
+        return [
+            'type' => $ctx->type,
+            'data' => json_decode($ctx->data, true)
+        ];
+    }
 
     protected function errorResponse(): array
     {

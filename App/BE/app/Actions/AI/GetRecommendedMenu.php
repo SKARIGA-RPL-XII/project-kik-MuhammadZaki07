@@ -9,62 +9,25 @@ use Illuminate\Support\Facades\DB;
 
 class GetRecommendedMenu
 {
-    public function handle(AIRequestDTO $dto)
+    public function handle(AIRequestDTO $dto, array $filters = [])
     {
-        $cacheKey = "ai:recommend:user:{$dto->userId}";
+        $query = Menu::query()
+            ->with(['discount', 'attributes.levels'])
+            ->where('is_active', true)
+            ->where('calculated_stock', '>', 0);
 
-        return Cache::remember($cacheKey, now()->addMinutes(10), function () use ($dto) {
+        if (!empty($filters['spicy'])) {
+            $query->where(function ($q) {
+                $q->where('name', 'like', '%pedas%')
+                    ->orWhereHas('attributes', function ($attr) {
+                        $attr->where('name', 'like', '%pedas%');
+                    });
+            });
+        }
 
-            $menuIds = DB::table('transaction_details')
-                ->join('transactions', 'transactions.id', '=', 'transaction_details.transaction_id')
-                ->where('transactions.user_id', $dto->userId)
-                ->where('transactions.status', 'completed')
-                ->select(
-                    'transaction_details.menu_id',
-                    DB::raw('COUNT(*) as freq'),
-                    DB::raw('MAX(transactions.transaction_date) as last_order')
-                )
-                ->groupBy('transaction_details.menu_id')
-                ->orderByDesc('last_order')
-                ->orderByDesc('freq')
-                ->limit(5)
-                ->pluck('menu_id');
+        $menus = $query->limit(10)->get();
 
-            if ($menuIds->isNotEmpty()) {
-                return $this->mapMenus(
-                    Menu::query()
-                        ->with(['discount', 'attributes'])
-                        ->whereIn('id', $menuIds)
-                        ->where('is_active', true)
-                        ->get()
-                );
-            }
-
-            $popularIds = DB::table('transaction_details')
-                ->select('menu_id', DB::raw('COUNT(*) as total'))
-                ->groupBy('menu_id')
-                ->orderByDesc('total')
-                ->limit(5)
-                ->pluck('menu_id');
-
-            if ($popularIds->isNotEmpty()) {
-                return $this->mapMenus(
-                    Menu::query()
-                        ->with(['discount', 'attributes'])
-                        ->whereIn('id', $popularIds)
-                        ->where('is_active', true)
-                        ->get()
-                );
-            }
-
-            return $this->mapMenus(
-                Menu::query()
-                    ->with(['discount', 'attributes'])
-                    ->where('is_active', true)
-                    ->limit(5)
-                    ->get()
-            );
-        });
+        return $this->mapMenus($menus);
     }
 
     protected function mapMenus($menus)
@@ -73,17 +36,28 @@ class GetRecommendedMenu
             return [
                 'id' => $menu->id,
                 'name' => $menu->name,
-                'price' => $menu->final_price,
-                'final_price' => $menu->final_price,
+
                 'original_price' => $menu->price,
+                'final_price' => $menu->final_price,
+
                 'description' => $menu->description,
                 'stock' => $menu->calculated_stock,
                 'image' => $menu->menu_image,
-                'discount_id' => $menu->discount_id,
+
+                'discount' => $menu->discount ? [
+                    'id' => $menu->discount->id,
+                    'type' => $menu->discount->type,
+                    'value' => $menu->discount->value_discount,
+                ] : null,
+
                 'attributes' => $menu->attributes->map(fn($attr) => [
                     'id' => $attr->id,
                     'name' => $attr->name,
-                ])->values(),
+                    'levels' => $attr->levels->map(fn($lvl) => [
+                        'id' => $lvl->id,
+                        'name' => $lvl->name,
+                    ])
+                ])
             ];
         })->values()->toArray();
     }

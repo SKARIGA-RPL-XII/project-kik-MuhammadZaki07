@@ -19,7 +19,7 @@ export function MenuCardAI({
       whileHover={{ scale: 1.01 }}
       className="bg-white dark:bg-neutral-900 rounded-xl border shadow-sm overflow-hidden flex flex-row"
     >
-      <div className="w-28 h-28 bg-slate-100 relative shrink-0">
+      <div className="w-28 h-30 bg-slate-100 relative shrink-0">
         {item.image ? (
           <img
             src={

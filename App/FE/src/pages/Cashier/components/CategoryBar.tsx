@@ -50,14 +50,14 @@ export function CategoryBar({
         {categories.map((cat: any) => (
           <button
             key={cat.id}
-            onClick={() => onCategoryChange(cat.name)}
+            onClick={() => onCategoryChange(cat.slug)}
             className={`relative h-10 px-6 rounded-full text-sm font-medium transition-colors duration-300 z-10 shrink-0 ${
-              activeCategory === cat.name
+              activeCategory === cat.slug
                 ? "text-white"
                 : "text-zinc-500 hover:text-zinc-800 dark:hover:text-neutral-200"
           }`}
           >
-            {activeCategory === cat.name && (
+            {activeCategory === cat.slug && (
               <motion.div
                 layoutId="activeCategory"
                 className="absolute inset-0 bg-red-600 rounded-full -z-10"

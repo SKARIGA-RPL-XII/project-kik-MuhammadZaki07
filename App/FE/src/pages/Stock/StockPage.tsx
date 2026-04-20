@@ -85,8 +85,16 @@ const StockPage: React.FC = () => {
     const newErrors: Record<string, string> = {};
     if (!formData.name.trim()) newErrors.name = "Stock name is required";
     if (!formData.unit.trim()) newErrors.unit = "Unit is required";
+    if (formData.low_stock_threshold > formData.quantity) {
+      newErrors.low_stock_threshold =
+        "Low stock tidak boleh lebih dari quantity";
+    }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
+  };
+
+  const sanitizeNumber = (value: string) => {
+    return value.replace(/[^0-9]/g, "");
   };
 
   const handleSubmit = async () => {
@@ -158,7 +166,9 @@ const StockPage: React.FC = () => {
               <Input
                 placeholder="e.g. Chicken Meat"
                 value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, name: e.target.value })
+                }
                 error={!!errors.name}
               />
               {errors.name && (
@@ -170,7 +180,9 @@ const StockPage: React.FC = () => {
               <Input
                 placeholder="e.g. kg, pcs, ml"
                 value={formData.unit}
-                onChange={(e) => setFormData({ ...formData, unit: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, unit: e.target.value })
+                }
                 error={!!errors.unit}
               />
               {errors.unit && (
@@ -181,26 +193,38 @@ const StockPage: React.FC = () => {
               <div className="grid gap-2">
                 <Label>Quantity</Label>
                 <Input
-                  type="number"
+                  type="text"
                   placeholder="0"
                   value={formData.quantity}
-                  onChange={(e) =>
-                    setFormData({ ...formData, quantity: e.target.valueAsNumber || 0 })
-                  }
+                  onChange={(e) => {
+                    const val = sanitizeNumber(e.target.value);
+
+                    setFormData({
+                      ...formData,
+                      quantity: val === "" ? 0 : parseInt(val),
+                    });
+                  }}
                 />
               </div>
               <div className="grid gap-2">
                 <Label>Low Stock Threshold</Label>
                 <Input
-                  type="number"
+                  type="text"
                   placeholder="10"
                   value={formData.low_stock_threshold}
-                  onChange={(e) =>
-                    setFormData({ 
-                      ...formData, 
-                      low_stock_threshold: e.target.valueAsNumber || 0 
-                    })
-                  }
+                  onChange={(e) => {
+                    const val = sanitizeNumber(e.target.value);
+                    let num = val === "" ? 0 : parseInt(val);
+
+                    if (num > formData.quantity) {
+                      num = formData.quantity;
+                    }
+
+                    setFormData({
+                      ...formData,
+                      low_stock_threshold: num,
+                    });
+                  }}
                 />
               </div>
             </div>

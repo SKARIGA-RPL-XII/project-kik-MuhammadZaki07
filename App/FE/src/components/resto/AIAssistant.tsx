@@ -16,6 +16,7 @@ import { useAI } from "@/hooks/useAI";
 import { useCart } from "@/hooks/useCart";
 import { AttributeModal } from "../ui/AttributeModal";
 import { MenuCardAI } from "../ui/MenuCardAI";
+import { useAuth } from "@/context/AuthContext";
 
 const quickActions = [
   { emoji: <Flame size={18} color="red" />, text: "Menu Pedas", id: "spicy" },
@@ -44,8 +45,9 @@ export function AIAssistant({ isCartOpen }: { isCartOpen?: boolean }) {
 
   const [selectedMenu, setSelectedMenu] = useState<any>(null);
   const [attrOpen, setAttrOpen] = useState(false);
+  const { token } = useAuth();
 
-  const { addToCart } = useCart();
+  const { addToCart, cartItems } = useCart();
   const { messages, loading, sendMessage, handleAction } = useAI([], addToCart);
 
   useEffect(() => {
@@ -67,8 +69,10 @@ export function AIAssistant({ isCartOpen }: { isCartOpen?: boolean }) {
     setInputValue("");
   };
 
+  const noAuth = !token;
+
   if (
-    ["/transaction", "/admin", "/login", "booking"].some((path) =>
+    ["/transaction", "/admin", "/login", "booking", noAuth].some((path) =>
       location.pathname.includes(path),
     )
   )
@@ -116,7 +120,10 @@ export function AIAssistant({ isCartOpen }: { isCartOpen?: boolean }) {
       {
         id: menu.id,
         name: menu.name,
-        price: menu.price ?? 0,
+        price: menu.original_price ?? 0,
+        discount_price: menu.final_price ?? 0,
+        original_price: menu.original_price,
+        final_price: menu.final_price,
         menu_image: menu.image,
         attributes: menu.attributes || [],
         selectedAttributes: {},
@@ -148,6 +155,7 @@ export function AIAssistant({ isCartOpen }: { isCartOpen?: boolean }) {
 
     setAttrOpen(false);
   };
+
 
   return (
     <>
@@ -268,7 +276,7 @@ export function AIAssistant({ isCartOpen }: { isCartOpen?: boolean }) {
                       </div>
 
                       {m.type === "menu" && Array.isArray(m.data) && (
-                        <div className="grid grid-cols-2 gap-3">
+                        <div className="grid grid-cols-1 gap-3">
                           {m.data.map((item: any) => (
                             <MenuCardAI
                               key={item.id}

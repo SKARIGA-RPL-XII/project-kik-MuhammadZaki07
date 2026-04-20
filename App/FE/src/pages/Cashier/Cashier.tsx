@@ -185,18 +185,18 @@ export default function CashierPage() {
         </ScrollArea>
       </div>
 
-  <ActionGuard module="cashier" action="write">
-      <CartSidebar
-        isOpen={isCartOpen}
-        onClose={() => setIsCartOpen(!isCartOpen)}
-        items={cartItems}
-        onUpdateQty={updateQuantity}
-        onRemove={removeFromCart}
-        onClear={clearCart}
-        handleCheckout={handleNavigation}
-        isPending={false}
-      />
-  </ActionGuard>
+      <ActionGuard module="cashier" action="write">
+        <CartSidebar
+          isOpen={isCartOpen}
+          onClose={() => setIsCartOpen(!isCartOpen)}
+          items={cartItems}
+          onUpdateQty={updateQuantity}
+          onRemove={removeFromCart}
+          onClear={clearCart}
+          handleCheckout={handleNavigation}
+          isPending={false}
+        />
+      </ActionGuard>
 
       <Dialog
         open={!!selectedProduct}

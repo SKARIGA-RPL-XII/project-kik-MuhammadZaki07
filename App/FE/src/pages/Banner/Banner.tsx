@@ -49,6 +49,16 @@ function Banner() {
     }));
   }, [bannerRes]);
 
+  const getImageSrc = (path: string | null) => {
+  if (!path) return "";
+
+  // 🔥 kalau blob → langsung pakai
+  if (path.startsWith("blob:")) return path;
+
+  // 🔥 kalau dari backend
+  return `${import.meta.env.VITE_STORAGE_URL}/${path}`;
+};
+
   const onDrop = (files: File[]) => {
     if (files.length) {
       setBannerImage(files[0]);
@@ -203,7 +213,7 @@ function Banner() {
                     {bannerPreview ? (
                       <div className="relative w-full h-full group">
                         <img
-                          src={`${import.meta.env.VITE_STORAGE_URL}/${bannerPreview}`}
+                       src={getImageSrc(bannerPreview)}
                           className="w-full h-60 object-cover"
                           alt="Preview"
                         />

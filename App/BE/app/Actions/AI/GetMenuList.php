@@ -28,7 +28,7 @@ class GetMenuList
                         'stock' => $menu->calculated_stock,
 
                         'image' => $menu->menu_image,
-                        
+
                         'discount' => $menu->discount ? [
                             'id' => $menu->discount->id,
                             'type' => $menu->discount->type,
