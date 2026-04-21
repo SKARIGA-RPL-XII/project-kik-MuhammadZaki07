@@ -1,4 +1,4 @@
-import { useState, ChangeEvent, useMemo } from "react";
+import { useState, ChangeEvent, useMemo, useEffect } from "react";
 import ComponentCard from "../../components/common/ComponentCard";
 import PageBreadcrumb from "../../components/common/PageBreadCrumb";
 import PageMeta from "../../components/common/PageMeta";
@@ -40,6 +40,7 @@ function Banner() {
   const { toast } = useToast();
   const { data: bannerRes, isLoading, refetch } = useBannersAdmin();
   const { createBanner, updateBanner } = useBannerMutations();
+const isBlob = (url: string | null) => url?.startsWith("blob:");
 
   const banners = useMemo(() => {
     if (!bannerRes?.data?.data) return [];
@@ -49,22 +50,28 @@ function Banner() {
     }));
   }, [bannerRes]);
 
-  const getImageSrc = (path: string | null) => {
+const getImageSrc = (path: string | null) => {
   if (!path) return "";
 
-  // 🔥 kalau blob → langsung pakai
-  if (path.startsWith("blob:")) return path;
+  if (path.startsWith("blob:") || path.startsWith("http")) {
+    return path;
+  }
 
-  // 🔥 kalau dari backend
   return `${import.meta.env.VITE_STORAGE_URL}/${path}`;
 };
 
-  const onDrop = (files: File[]) => {
-    if (files.length) {
-      setBannerImage(files[0]);
-      setBannerPreview(URL.createObjectURL(files[0]));
-    }
-  };
+const onDrop = (files: File[]) => {
+  if (!files.length) return;
+
+  const file = files[0];
+
+  if (bannerPreview?.startsWith("blob:")) {
+    URL.revokeObjectURL(bannerPreview);
+  }
+
+  setBannerImage(file);
+  setBannerPreview(URL.createObjectURL(file));
+};
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
@@ -135,6 +142,14 @@ function Banner() {
     setBannerImage(null);
     setBannerPreview(banner.banner_image);
   };
+
+  useEffect(() => {
+  return () => {
+    if (bannerPreview?.startsWith("blob:")) {
+      URL.revokeObjectURL(bannerPreview);
+    }
+  };
+}, [bannerPreview]);
 
   const submitting = createBanner.isPending || updateBanner.isPending;
 
@@ -213,7 +228,7 @@ function Banner() {
                     {bannerPreview ? (
                       <div className="relative w-full h-full group">
                         <img
-                       src={getImageSrc(bannerPreview)}
+                          src={bannerPreview}
                           className="w-full h-60 object-cover"
                           alt="Preview"
                         />
