@@ -58,27 +58,27 @@ function Banner() {
   };
 
   const onDrop = (files: File[]) => {
-    if (!files.length) return;
-    const file = files[0];
-    if (bannerPreview && isBlob(bannerPreview)) {
-      URL.revokeObjectURL(bannerPreview);
+    if (files.length) {
+      if (bannerPreview && isBlob(bannerPreview)) {
+        URL.revokeObjectURL(bannerPreview);
+      }
+      const file = files[0];
+      setBannerFile(file);
+      setBannerPreview(URL.createObjectURL(file));
+      setErrors((prev) => ({ ...prev, banner_image: "" }));
     }
-    const preview = URL.createObjectURL(file);
-    setBannerFile(file);
-    setBannerPreview(preview);
   };
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
     multiple: false,
-    accept: {
-      "image/png": [],
-      "image/jpeg": [],
-      "image/webp": [],
-    },
+    accept: { "image/*": [".jpeg", ".jpg", ".png", ".webp"] },
   });
 
   const resetForm = () => {
+    if (bannerPreview && isBlob(bannerPreview)) {
+      URL.revokeObjectURL(bannerPreview);
+    }
     setEditingId(null);
     setTitle("");
     setDescription("");
@@ -213,9 +213,11 @@ function Banner() {
                   <div
                     {...getRootProps()}
                     className={`relative group border-2 border-dashed rounded-2xl transition-all flex flex-col items-center justify-center cursor-pointer min-h-[240px] overflow-hidden ${
-                      isDragActive
-                        ? "border-red-500 bg-red-50/50 dark:bg-red-500/5"
-                        : "border-gray-200 dark:border-gray-700 hover:border-red-400 bg-gray-50/50 dark:bg-neutral-900/50"
+                      errors.banner_image 
+                        ? "border-red-500 bg-red-50/50" 
+                        : isDragActive
+                          ? "border-red-500 bg-red-50/50 dark:bg-red-500/5"
+                          : "border-gray-200 dark:border-gray-700 hover:border-red-400 bg-gray-50/50 dark:bg-neutral-900/50"
                     }`}
                   >
                     <input {...getInputProps()} />
@@ -240,15 +242,15 @@ function Banner() {
                         <p className="text-gray-700 dark:text-gray-300 font-medium">
                           Click to upload or drag and drop
                         </p>
-                        <p className="text-xs text-gray-500 mt-1">
-                          SVG, PNG, JPG or WEBP (Max. 2MB)
+                        <p className="text-xs text-gray-500 mt-1 uppercase tracking-wider">
+                          JPG, JPEG, PNG, WEBP (Max. 2MB)
                         </p>
                       </div>
                     )}
                   </div>
                   {errors.banner_image && (
-                    <p className="text-xs font-medium text-red-500 -mt-2 ml-1">
-                      {errors.banner_image}
+                    <p className="text-xs font-medium text-red-500 -mt-2 ml-1 italic">
+                      *{errors.banner_image}
                     </p>
                   )}
 
