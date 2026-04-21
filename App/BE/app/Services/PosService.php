@@ -453,19 +453,14 @@ class PosService
                 'items_count' => count($items),
             ]);
 
-            // 🔥 Normalize items (biar booking & normal sama)
             $normalizedItems = $this->normalizeItems($items);
 
-            // 🔥 Ambil semua menu sekaligus (hindari N+1)
             $menus = $this->getMenus($normalizedItems);
 
-            // 🔥 Build item details
             $itemDetails = $this->buildItemDetails($normalizedItems, $menus, $transaction, $pricing);
 
-            // ➕ Tambahin service & tax
             $this->appendAdditionalCharges($itemDetails, $pricing);
 
-            // 🚨 Guard (biar ga kejadian item kosong lagi)
             if (empty($itemDetails)) {
                 Log::error('MIDTRANS NO VALID ITEMS', [
                     'transaction_id' => $transaction->id
@@ -474,7 +469,6 @@ class PosService
                 throw new \Exception('No valid items for Midtrans');
             }
 
-            // 🔍 Validasi total
             $itemSum = collect($itemDetails)->sum(fn($i) => $i['price'] * $i['quantity']);
 
             if ($itemSum !== (int) $pricing['total']) {
@@ -486,7 +480,8 @@ class PosService
 
             $params = [
                 'transaction_details' => [
-                    'order_id'     => $transaction->transaction_code . '-' . time(),
+                    // 'order_id'     => $transaction->transaction_code . '-' . time(),
+                    'order_id' => $transaction->transaction_code,
                     'gross_amount' => (int) $pricing['total'],
                 ],
                 'item_details' => $itemDetails,
@@ -501,6 +496,8 @@ class PosService
                 'item_sum' => $itemSum,
             ]);
 
+            Log::info('MIDTRANS PARAMS', $params);
+
             $token = Snap::getSnapToken($params);
 
             Log::info('MIDTRANS TOKEN GENERATED', [
@@ -508,12 +505,12 @@ class PosService
             ]);
 
             return $token;
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Log::error('MIDTRANS ERROR', [
                 'message' => $e->getMessage()
             ]);
 
-            return null;
+            throw $e;
         }
     }
 

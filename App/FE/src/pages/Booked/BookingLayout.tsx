@@ -56,6 +56,7 @@ export default function BookingLayout() {
       // console.log(bookingInfo);
       
       const snapToken = res.data?.data?.snap_token;
+      // console.log(res);
 
       if (snapToken) {
         await openSnapPopup(snapToken, {

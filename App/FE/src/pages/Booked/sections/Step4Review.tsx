@@ -94,6 +94,7 @@ export default function Step4Review({ data, onBack, onConfirm }: any) {
     localStorage.removeItem("booking_step");
     navigation("/");
   };
+  
 
   return (
     <div className="space-y-4 max-w-3xl mx-auto pb-32 animate-in fade-in slide-in-from-bottom-4">
@@ -197,9 +198,7 @@ export default function Step4Review({ data, onBack, onConfirm }: any) {
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 overflow-hidden rounded bg-zinc-100 dark:bg-neutral-800 flex items-center justify-center font-black text-red-600">
                       <img
-                        src={`${import.meta.env.VITE_STORAGE_URL}/${
-                          item.menu_image
-                        }`}
+                        src={!item.menu_image ? "/image-dumy.png" : `${import.meta.env.VITE_STORAGE_URL}${item.menu_image}`}
                         alt={item.name}
                         className="w-full h-full object-cover"
                       />

@@ -115,6 +115,10 @@ class BookingService
                     $settings
                 );
 
+                if (!$snapToken) {
+                    throw new \Exception('Snap token gagal dibuat');
+                }
+
                 $transaction->update([
                     'snap_token' => $snapToken
                 ]);
@@ -137,7 +141,7 @@ class BookingService
                 '/my-bookings'
             ));
 
-            $admins = User::whereIn('role', ['admin', 'cashier'])->get();
+            $admins = User::roleIn(['admin', 'cashier'])->get();
 
             foreach ($admins as $admin) {
                 $admin->notify(new GeneralNotification(

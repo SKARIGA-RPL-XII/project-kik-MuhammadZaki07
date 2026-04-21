@@ -57,6 +57,13 @@ class User extends Authenticatable
         return $this->hasMany(Attendance::class);
     }
 
+    public function scopeRoleIn($query, array $roles)
+    {
+        return $query->whereHas('role', function ($q) use ($roles) {
+            $q->whereIn('name', $roles);
+        });
+    }
+
     public function leaves()
     {
         return $this->hasMany(Leave::class);
