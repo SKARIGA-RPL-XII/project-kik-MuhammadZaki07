@@ -32,16 +32,16 @@ function Banner() {
   const [editingId, setEditingId] = useState<number | null>(null);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [bannerImage, setBannerImage] = useState<File | null>(null);
   const [isActive, setIsActive] = useState(true);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [bannerPreview, setBannerPreview] = useState<string | null>(null);
+  const [bannerFile, setBannerFile] = useState<File | null>(null);
 
   const { toast } = useToast();
   const { data: bannerRes, isLoading, refetch } = useBannersAdmin();
   const { createBanner, updateBanner } = useBannerMutations();
-const isBlob = (url: string | null) => url?.startsWith("blob:");
-const isHttp = (url: string | null) => url?.startsWith("http");
+  
+  const isBlob = (url: string | null) => url?.startsWith("blob:");
 
   const banners = useMemo(() => {
     if (!bannerRes?.data?.data) return [];
@@ -51,30 +51,22 @@ const isHttp = (url: string | null) => url?.startsWith("http");
     }));
   }, [bannerRes]);
 
-const getImageSrc = (path: string | null) => {
-  if (!path) return "";
+  const getImageSrc = (path: string | null) => {
+    if (!path) return "";
+    if (path.startsWith("blob:") || path.startsWith("http")) return path;
+    return `${import.meta.env.VITE_STORAGE_URL}/${path}`;
+  };
 
-  if (path.startsWith("blob:")) return path;
-
-  if (path.startsWith("http")) return path;
-
-  return `${import.meta.env.VITE_STORAGE_URL}/${path}`;
-};
-
-const onDrop = (files: File[]) => {
-  if (!files.length) return;
-
-  const file = files[0];
-
-  if (bannerPreview?.startsWith("blob:")) {
-    URL.revokeObjectURL(bannerPreview);
-  }
-
-  const preview = URL.createObjectURL(file);
-
-  setBannerImage(file);
-  setBannerPreview(preview);
-};
+  const onDrop = (files: File[]) => {
+    if (!files.length) return;
+    const file = files[0];
+    if (bannerPreview && isBlob(bannerPreview)) {
+      URL.revokeObjectURL(bannerPreview);
+    }
+    const preview = URL.createObjectURL(file);
+    setBannerFile(file);
+    setBannerPreview(preview);
+  };
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
@@ -90,7 +82,7 @@ const onDrop = (files: File[]) => {
     setEditingId(null);
     setTitle("");
     setDescription("");
-    setBannerImage(null);
+    setBannerFile(null);
     setBannerPreview(null);
     setIsActive(true);
     setErrors({});
@@ -98,12 +90,11 @@ const onDrop = (files: File[]) => {
 
   const handleSubmit = async () => {
     setErrors({});
-
     const fd = new FormData();
     fd.append("title", title);
     fd.append("description", description);
     fd.append("is_active", isActive ? "1" : "0");
-    if (bannerImage) fd.append("banner_image", bannerImage);
+    if (bannerFile) fd.append("banner_image", bannerFile);
 
     const mutation = editingId ? updateBanner : createBanner;
 
@@ -140,19 +131,19 @@ const onDrop = (files: File[]) => {
     setEditingId(banner.id);
     setTitle(banner.title);
     setDescription(banner.description);
-    setIsActive(banner.is_active === 1 || banner.is_active === true);
-    setOpenDialog(true);
-    setBannerImage(null);
+    setIsActive(banner.is_active === 1);
+    setBannerFile(null);
     setBannerPreview(banner.banner_image);
+    setOpenDialog(true);
   };
 
-useEffect(() => {
-  return () => {
-    if (bannerPreview?.startsWith("blob:")) {
-      URL.revokeObjectURL(bannerPreview);
-    }
-  };
-}, []);
+  useEffect(() => {
+    return () => {
+      if (bannerPreview && isBlob(bannerPreview)) {
+        URL.revokeObjectURL(bannerPreview);
+      }
+    };
+  }, [bannerPreview]);
 
   const submitting = createBanner.isPending || updateBanner.isPending;
 
@@ -231,11 +222,7 @@ useEffect(() => {
                     {bannerPreview ? (
                       <div className="relative w-full h-full group">
                         <img
-                        src={
-    isBlob(bannerPreview)
-      ? bannerPreview
-      : getImageSrc(bannerPreview)
-  }
+                          src={getImageSrc(bannerPreview)}
                           className="w-full h-60 object-cover"
                           alt="Preview"
                         />
