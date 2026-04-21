@@ -40,7 +40,7 @@ function Banner() {
   const { toast } = useToast();
   const { data: bannerRes, isLoading, refetch } = useBannersAdmin();
   const { createBanner, updateBanner } = useBannerMutations();
-const isBlob = (url: string | null) => url?.startsWith("blob:");
+  const isBlob = (url: string | null) => url?.startsWith("blob:");
 
   const banners = useMemo(() => {
     if (!bannerRes?.data?.data) return [];
@@ -50,15 +50,15 @@ const isBlob = (url: string | null) => url?.startsWith("blob:");
     }));
   }, [bannerRes]);
 
-const getImageSrc = (path: string | null) => {
-  if (!path) return "";
+  const getImageSrc = (path: string | null) => {
+    if (!path) return "";
 
-  if (path.startsWith("blob:") || path.startsWith("http")) {
-    return path;
-  }
+    if (path.startsWith("blob:")) return path;
 
-  return `${import.meta.env.VITE_STORAGE_URL}/${path}`;
-};
+    if (path.startsWith("http")) return path;
+
+    return `${import.meta.env.VITE_STORAGE_URL}/${path}`;
+  };
 
 const onDrop = (files: File[]) => {
   if (!files.length) return;
@@ -69,8 +69,10 @@ const onDrop = (files: File[]) => {
     URL.revokeObjectURL(bannerPreview);
   }
 
+  const preview = URL.createObjectURL(file);
+
   setBannerImage(file);
-  setBannerPreview(URL.createObjectURL(file));
+  setBannerPreview(preview);
 };
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
@@ -143,13 +145,13 @@ const onDrop = (files: File[]) => {
     setBannerPreview(banner.banner_image);
   };
 
-  useEffect(() => {
+useEffect(() => {
   return () => {
     if (bannerPreview?.startsWith("blob:")) {
       URL.revokeObjectURL(bannerPreview);
     }
   };
-}, [bannerPreview]);
+}, []);
 
   const submitting = createBanner.isPending || updateBanner.isPending;
 
