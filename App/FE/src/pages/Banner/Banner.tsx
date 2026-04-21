@@ -40,7 +40,8 @@ function Banner() {
   const { toast } = useToast();
   const { data: bannerRes, isLoading, refetch } = useBannersAdmin();
   const { createBanner, updateBanner } = useBannerMutations();
-  const isBlob = (url: string | null) => url?.startsWith("blob:");
+const isBlob = (url: string | null) => url?.startsWith("blob:");
+const isHttp = (url: string | null) => url?.startsWith("http");
 
   const banners = useMemo(() => {
     if (!bannerRes?.data?.data) return [];
@@ -50,15 +51,15 @@ function Banner() {
     }));
   }, [bannerRes]);
 
-  const getImageSrc = (path: string | null) => {
-    if (!path) return "";
+const getImageSrc = (path: string | null) => {
+  if (!path) return "";
 
-    if (path.startsWith("blob:")) return path;
+  if (path.startsWith("blob:")) return path;
 
-    if (path.startsWith("http")) return path;
+  if (path.startsWith("http")) return path;
 
-    return `${import.meta.env.VITE_STORAGE_URL}/${path}`;
-  };
+  return `${import.meta.env.VITE_STORAGE_URL}/${path}`;
+};
 
 const onDrop = (files: File[]) => {
   if (!files.length) return;
@@ -230,7 +231,11 @@ useEffect(() => {
                     {bannerPreview ? (
                       <div className="relative w-full h-full group">
                         <img
-                          src={bannerPreview}
+                        src={
+    isBlob(bannerPreview)
+      ? bannerPreview
+      : getImageSrc(bannerPreview)
+  }
                           className="w-full h-60 object-cover"
                           alt="Preview"
                         />
