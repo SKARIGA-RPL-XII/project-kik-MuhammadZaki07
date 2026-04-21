@@ -40,84 +40,86 @@ class BannerController extends Controller
     {
         try {
             Log::info('🚀 Banner STORE HIT', [
-                'request_all' => $request->all(),
                 'has_file' => $request->hasFile('banner_image'),
+                'request' => $request->except(['banner_image']),
             ]);
 
-            $request->merge([
-                'is_active' => filter_var($request->is_active, FILTER_VALIDATE_BOOLEAN)
+            // normalize boolean
+            $isActive = filter_var($request->input('is_active'), FILTER_VALIDATE_BOOLEAN);
+
+            // validation
+            $validated = $request->validate([
+                "banner_image" => "required|image|mimes:png,jpg,jpeg,webp|max:5120", // 5MB
+                "title" => "required|string|max:255",
+                "description" => "required|string|max:200",
             ]);
 
-            $validate = $request->validate([
-                "banner_image" => "required|mimes:png,jpg,jpeg,webp|max:2040",
-                "title" => "required|string",
-                "description" => "required|max:200|string",
-                "is_active" => "boolean"
-            ]);
-
-            Log::info('✅ Validation OK', $validate);
+            Log::info('✅ Validation OK');
 
             if (!$request->hasFile('banner_image')) {
-                Log::error('❌ File banner_image tidak terkirim');
+                Log::warning('❌ No file uploaded');
                 return response()->json([
-                    'message' => 'File banner_image tidak ditemukan'
+                    'message' => 'banner_image is required'
                 ], 422);
             }
 
             $file = $request->file('banner_image');
 
             Log::info('📁 File received', [
-                'original_name' => $file->getClientOriginalName(),
+                'name' => $file->getClientOriginalName(),
                 'size' => $file->getSize(),
                 'mime' => $file->getMimeType(),
             ]);
 
-            $filename = 'banner-' . uniqid() . '.webp';
-            $directory = 'banners/';
-            $fullPath = storage_path('app/public/' . $directory . $filename);
+            // folder storage
+            $folder = 'banners';
+            $filename = 'banner-' . Str::uuid() . '.webp';
 
-            Log::info('🛠 Preparing storage path', [
-                'full_path' => $fullPath
-            ]);
+            $path = storage_path("app/public/{$folder}/{$filename}");
 
-            if (!file_exists(storage_path('app/public/' . $directory))) {
-                mkdir(storage_path('app/public/' . $directory), 0755, true);
-                Log::info('📂 Directory created', [
-                    'dir' => $directory
-                ]);
+            // pastikan folder ada
+            if (!Storage::disk('public')->exists($folder)) {
+                Storage::disk('public')->makeDirectory($folder);
             }
 
-            Image::read($file)
-                ->scale(1000)
-                ->encodeByExtension('webp', 90)
-                ->save($fullPath);
+            // convert + compress image
+            $image = Image::read($file)
+                ->resize(1000, null, function ($constraint) {
+                    $constraint->aspectRatio();
+                    $constraint->upsize();
+                })
+                ->encodeByExtension('webp', 85);
 
-            Log::info('🖼 Image processed & saved', [
-                'saved_path' => $fullPath
+            $image->save($path);
+
+            Log::info('🖼 Image saved', [
+                'path' => $path
             ]);
 
-            $validate['banner_image'] = $directory . $filename;
+            // save DB path
+            $validated['banner_image'] = "{$folder}/{$filename}";
+            $validated['is_active'] = $isActive;
 
-            $banner = Banner::create($validate);
+            $banner = Banner::create($validated);
 
-            Log::info('🎉 Banner created successfully', [
-                'id' => $banner->id,
-                'data' => $banner->toArray()
+            Log::info('🎉 Banner CREATED', [
+                'id' => $banner->id
             ]);
 
-            return Controller::OKE('success', 'success create data', [], 201);
+            return response()->json([
+                'message' => 'success',
+                'data' => $banner
+            ], 201);
         } catch (\Throwable $e) {
 
-            Log::error('💥 Banner STORE ERROR', [
+            Log::error('💥 BANNER STORE ERROR', [
                 'message' => $e->getMessage(),
                 'line' => $e->getLine(),
                 'file' => $e->getFile(),
-                'trace' => $e->getTraceAsString(),
             ]);
 
             return response()->json([
                 'message' => 'Server error',
-                'error' => $e->getMessage()
             ], 500);
         }
     }
