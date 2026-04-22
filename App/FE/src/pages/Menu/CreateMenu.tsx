@@ -443,7 +443,7 @@ function CreateMenu() {
                 <Label>Product Name</Label>
                 <Input
                   name="name"
-                  placeholder="e.g. Special Roasted Coffee"
+                  placeholder="Special Roasted Coffee"
                   value={form.name}
                   error={errors.name}
                   onChange={(e) =>
