@@ -14,4 +14,12 @@ class AttributeLevel extends Model
     {
         return $this->belongsTo(Attribute::class);
     }
+
+
+    public function stocks()
+    {
+        return $this->belongsToMany(Stock::class, 'attribute_level_stocks')
+            ->withPivot('unit_id', 'amount')
+            ->withTimestamps();
+    }
 }

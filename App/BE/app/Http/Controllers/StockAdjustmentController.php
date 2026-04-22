@@ -14,7 +14,7 @@ class StockAdjustmentController extends Controller
         $page = max(0, (int) $request->query('page', 0));
         $size = max(1, (int) $request->query('size', 10));
 
-        $query = StockAdjustment::with(['stock', 'user']);
+       $query = StockAdjustment::with(['stock.unit', 'user']);  
 
         if ($request->filled('search')) {
             $query->whereHas('stock', function($q) use ($request) {

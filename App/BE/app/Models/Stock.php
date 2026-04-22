@@ -18,4 +18,19 @@ class Stock extends Model
     {
         return $this->hasMany(AttributeLevel::class);
     }
+
+    public function supplier()
+    {
+        return $this->belongsTo(Supplier::class);
+    }
+
+    public function unit()
+    {
+        return $this->belongsTo(Unit::class);
+    }
+
+    public function adjustments()
+    {
+        return $this->hasMany(StockAdjustment::class);
+    }
 }

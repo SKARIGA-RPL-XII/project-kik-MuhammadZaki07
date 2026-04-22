@@ -182,7 +182,7 @@ class TransactionController extends Controller
             $transaction->update($updateData);
 
             if ($request->status === 'completed' && $transaction->user) {
-                $msg = "Pesanan #TRX-{$transaction->id} sudah selesai! Silakan ambil atau tunggu pelayan mengantarkannya.";
+                $msg = "Pesanan Anda dengan nomor #TRX-{$transaction->id} telah selesai diproses. Silakan mengambil pesanan di area pengambilan yang telah disediakan.";
 
                 $transaction->user->notify(new GeneralNotification(
                     $msg,

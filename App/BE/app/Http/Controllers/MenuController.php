@@ -6,6 +6,8 @@ use App\Models\Menu;
 use App\Models\User;
 use App\Events\MenuDiscountCreated;
 use App\Events\MenuDiscountUpdate;
+use App\Models\Stock;
+use App\Models\Unit;
 use App\Notifications\GeneralNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -111,9 +113,19 @@ class MenuController extends Controller
             "price" => "required|integer|min:0",
             "is_active" => "required|boolean",
             "attributes" => "nullable|array",
+            "attributes.*.attribute_id" => "required|exists:attributes,id",
+            "attributes.*.levels" => "required|array",
+            "attributes.*.levels.*.attribute_level_id" => "required|exists:attribute_levels,id",
+            "attributes.*.levels.*.price" => "nullable|numeric",
             "stocks" => "required|array|min:1",
             "stocks.*.stock_id" => "required|exists:stocks,id",
-            "stocks.*.amount" => "required|numeric|min:0.01"
+            "stocks.*.amount" => "required|numeric|min:0.01",
+            "stocks.*.unit_id" => "required|exists:units,id",
+            "level_stocks" => "nullable|array",
+            "level_stocks.*.level_id" => "required|exists:attribute_levels,id",
+            "level_stocks.*.stock_id" => "required|exists:stocks,id",
+            "level_stocks.*.unit_id" => "required|exists:units,id",
+            "level_stocks.*.amount" => "required|numeric|min:0",
         ]);
 
         return DB::transaction(function () use ($request, $validated) {
@@ -123,26 +135,51 @@ class MenuController extends Controller
             foreach ($validated['stocks'] as $stockItem) {
                 $menu->stocks()->attach($stockItem['stock_id'], [
                     'amount' => $stockItem['amount'],
+                    'unit_id' => $stockItem['unit_id'],
                     'created_at' => now(),
                     'updated_at' => now()
                 ]);
             }
 
             if (!empty($validated['attributes'])) {
-                $this->syncAttributes($menu, $validated['attributes']);
+                foreach ($validated['attributes'] as $attr) {
+                    foreach ($attr['levels'] as $level) {
+                        $menu->attributeLevels()->attach($level['attribute_level_id'], [
+                            'price' => $level['price'] ?? 0
+                        ]);
+                    }
+                }
             }
 
-            if ($menu->discount_id) {
-                $this->notifyDiscount($menu, new MenuDiscountCreated($menu));
+            if (!empty($validated['level_stocks'])) {
+                foreach ($validated['level_stocks'] as $ls) {
+                    DB::table('attribute_level_stocks')->insert([
+                        'attribute_level_id' => $ls['level_id'],
+                        'stock_id'           => $ls['stock_id'],
+                        'unit_id'            => $ls['unit_id'],
+                        'amount'             => $ls['amount'],
+                        'created_at'         => now(),
+                        'updated_at'         => now()
+                    ]);
+                }
             }
 
-            return Controller::OKE('success', 'success create menu', $menu->load(['stocks', 'attributes.levels']), 201);
+            return Controller::OKE('success', 'success create menu', $menu->load(['stocks']), 201);
         });
     }
 
     public function show($id)
     {
-        $menu = Menu::with(['category', 'discount', 'attributes.levels', 'stocks'])->findOrFail($id);
+        $menu = Menu::with([
+            'category',
+            'discount',
+            'stocks',
+            'attributes.levels' => function ($query) use ($id) {
+                $query->wherePivot('menu_id', $id);
+            },
+            'attributeLevels.stocks'
+        ])->findOrFail($id);
+
         return Controller::OKE('success', 'success get menu', $menu, 200);
     }
 
@@ -156,15 +193,17 @@ class MenuController extends Controller
             "description" => "nullable|string",
             "price" => "sometimes|integer|min:0",
             "is_active" => "sometimes|boolean",
-            "attributes" => "nullable|array",
-            "stocks" => "sometimes|array|min:1",
+            "stocks" => "sometimes|array",
             "stocks.*.stock_id" => "required|exists:stocks,id",
-            "stocks.*.amount" => "required|numeric|min:0.01"
+            "stocks.*.amount" => "required|numeric|min:0",
+            "stocks.*.unit_id" => "required|exists:units,id",
+            "attributes" => "nullable|array",
+            "attributes.*.levels" => "required|array",
+            "attributes.*.levels.*.attribute_level_id" => "required|exists:attribute_levels,id",
+            "level_stocks" => "nullable|array",
         ]);
 
         return DB::transaction(function () use ($request, $menu, $validated) {
-            $oldDiscountId = $menu->discount_id;
-
             if ($request->hasFile('menu_image')) {
                 if ($menu->menu_image) Storage::disk('public')->delete($menu->menu_image);
                 $validated['menu_image'] = $this->handleUpload($request->file('menu_image'));
@@ -177,22 +216,44 @@ class MenuController extends Controller
             $menu->update($validated);
 
             if (isset($validated['stocks'])) {
-                $syncStocks = collect($validated['stocks'])->mapWithKeys(fn($item) => [
-                    $item['stock_id'] => ['amount' => $item['amount'], 'updated_at' => now()]
-                ])->toArray();
+                $syncStocks = [];
+                foreach ($validated['stocks'] as $s) {
+                    $syncStocks[$s['stock_id']] = [
+                        'amount' => $s['amount'],
+                        'unit_id' => $s['unit_id']
+                    ];
+                }
                 $menu->stocks()->sync($syncStocks);
             }
 
-            if (isset($validated['attributes'])) {
-                DB::table('menu_attributes')->where('menu_id', $menu->id)->delete();
-                $this->syncAttributes($menu, $validated['attributes']);
+            $menu->attributeLevels()->detach();
+            if (!empty($validated['attributes'])) {
+                foreach ($validated['attributes'] as $attr) {
+                    foreach ($attr['levels'] as $level) {
+                        $menu->attributeLevels()->attach($level['attribute_level_id'], [
+                            'price' => $level['price'] ?? 0
+                        ]);
+                    }
+                }
             }
 
-            if ($menu->discount_id && ($oldDiscountId != $menu->discount_id)) {
-                $this->notifyDiscount($menu, new MenuDiscountUpdate($menu));
+            if (!empty($validated['level_stocks'])) {
+                $levelIds = collect($validated['level_stocks'])->pluck('level_id')->unique();
+                DB::table('attribute_level_stocks')->whereIn('attribute_level_id', $levelIds)->delete();
+
+                foreach ($validated['level_stocks'] as $ls) {
+                    DB::table('attribute_level_stocks')->insert([
+                        'attribute_level_id' => $ls['level_id'],
+                        'stock_id'           => $ls['stock_id'],
+                        'unit_id'            => $ls['unit_id'],
+                        'amount'             => $ls['amount'],
+                        'created_at'         => now(),
+                        'updated_at'         => now()
+                    ]);
+                }
             }
 
-            return Controller::OKE('success', 'success update menu', $menu->load(['stocks', 'attributes.levels']), 200);
+            return Controller::OKE('success', 'success update menu', $menu->load(['stocks', 'attributeLevels']), 200);
         });
     }
 
@@ -207,9 +268,6 @@ class MenuController extends Controller
         });
     }
 
-    /**
-     * Helper: Handle Image Upload & Optimization
-     */
     private function handleUpload($file)
     {
         $filename = 'menu-' . uniqid() . '.webp';
@@ -228,20 +286,37 @@ class MenuController extends Controller
      */
     private function syncAttributes($menu, $attributes)
     {
-        $syncData = [];
-        foreach ($attributes as $attrId => $levelIds) {
-            if (!is_array($levelIds)) continue;
-            foreach (array_unique($levelIds) as $levelId) {
-                $syncData[] = [
+        foreach ($attributes as $attr) {
+            foreach ($attr['levels'] as $level) {
+                DB::table('menu_attributes')->insert([
                     'menu_id' => $menu->id,
-                    'attribute_id' => $attrId,
-                    'attribute_level_id' => $levelId,
+                    'attribute_id' => $attr['attribute_id'],
+                    'attribute_level_id' => $level['attribute_level_id'],
                     'created_at' => now(),
                     'updated_at' => now()
-                ];
+                ]);
+
+                if (!empty($level['stocks'])) {
+                    foreach ($level['stocks'] as $s) {
+                        $stock = Stock::find($s['stock_id']);
+                        $unit = Unit::find($s['unit_id']);
+
+                        if ($stock->unit->category !== $unit->category) {
+                            throw new \Exception("Unit {$unit->name} tidak cocok untuk {$stock->name}");
+                        }
+
+                        DB::table('attribute_level_stocks')->insert([
+                            'attribute_level_id' => $level['attribute_level_id'],
+                            'stock_id' => $s['stock_id'],
+                            'unit_id' => $s['unit_id'],
+                            'amount' => $s['amount'],
+                            'created_at' => now(),
+                            'updated_at' => now()
+                        ]);
+                    }
+                }
             }
         }
-        if (!empty($syncData)) DB::table('menu_attributes')->insert($syncData);
     }
 
     /**

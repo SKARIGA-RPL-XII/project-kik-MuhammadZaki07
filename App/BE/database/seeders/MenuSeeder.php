@@ -5,7 +5,9 @@ namespace Database\Seeders;
 use App\Models\Menu;
 use App\Models\Category;
 use App\Models\Stock;
+use App\Models\Attribute;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
 
 class MenuSeeder extends Seeder
 {
@@ -13,6 +15,7 @@ class MenuSeeder extends Seeder
     {
         $categories = Category::all();
         $stocks = Stock::all();
+        $attributes = Attribute::with('levels')->get();
 
         if ($categories->isEmpty() || $stocks->isEmpty()) {
             return;
@@ -23,51 +26,64 @@ class MenuSeeder extends Seeder
                 'name' => 'Nasi Goreng Spesial',
                 'description' => 'Nasi goreng dengan bumbu rahasia dan telur mata sapi.',
                 'price' => 25000,
-                'category_id' => $categories->where('name', 'Makanan')->first()?->id ?? $categories->first()->id,
-            ],
-            [
-                'name' => 'Mie Goreng Jawa',
-                'description' => 'Mie goreng khas jawa dengan sayuran segar.',
-                'price' => 20000,
-                'category_id' => $categories->where('name', 'Makanan')->first()?->id ?? $categories->first()->id,
+                'category' => 'Makanan',
+                'ingredients' => [
+                    'Nasi Putih' => 250,
+                    'Telur Ayam' => 1,
+                    'Bawang Merah' => 10,
+                ],
+                'attr' => ['Pedas']
             ],
             [
                 'name' => 'Es Teh Manis',
                 'description' => 'Minuman segar teh asli.',
                 'price' => 5000,
-                'category_id' => $categories->where('name', 'Minuman')->first()?->id ?? $categories->first()->id,
-            ],
-            [
-                'name' => 'Ayam Bakar Madu',
-                'description' => 'Ayam bakar dengan olesan madu murni.',
-                'price' => 35000,
-                'category_id' => $categories->where('name', 'Makanan')->first()?->id ?? $categories->first()->id,
-            ],
-            [
-                'name' => 'Kopi Susu Gagal Lapar',
-                'description' => 'Kopi susu signature dengan gula aren.',
-                'price' => 18000,
-                'category_id' => $categories->where('name', 'Minuman')->first()?->id ?? $categories->first()->id,
+                'category' => 'Minuman',
+                'ingredients' => [
+                    'Teh Celup' => 1,
+                    'Gula Pasir' => 20,
+                ],
+                'attr' => ['Manis']
             ],
         ];
 
         foreach ($menuData as $data) {
+            $category = $categories->where('name', $data['category'])->first() ?? $categories->first();
+
             $menu = Menu::create([
-                // 'menu_image' => '/image-dumy.png',
                 'name' => $data['name'],
                 'description' => $data['description'],
                 'price' => $data['price'],
                 'is_active' => true,
-                'category_id' => $data['category_id'],
+                'category_id' => $category->id,
             ]);
 
-            $randomStocks = $stocks->random(rand(1, 2));
-            foreach ($randomStocks as $stock) {
-                $menu->stocks()->attach($stock->id, [
-                    'amount' => rand(1, 5) / 10,
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]);
+            foreach ($data['ingredients'] as $stockName => $amount) {
+                $stock = $stocks->where('name', $stockName)->first();
+                if ($stock) {
+                    $menu->stocks()->attach($stock->id, [
+                        'amount' => $amount,
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]);
+                }
+            }
+
+            if (isset($data['attr'])) {
+                foreach ($data['attr'] as $attrName) {
+                    $attribute = $attributes->where('name', $attrName)->first();
+                    if ($attribute) {
+                        foreach ($attribute->levels as $level) {
+                            DB::table('menu_attributes')->insert([
+                                'menu_id' => $menu->id,
+                                'attribute_id' => $attribute->id,
+                                'attribute_level_id' => $level->id,
+                                'created_at' => now(),
+                                'updated_at' => now(),
+                            ]);
+                        }
+                    }
+                }
             }
         }
     }

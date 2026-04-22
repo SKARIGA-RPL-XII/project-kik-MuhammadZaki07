@@ -10,19 +10,15 @@ class SettingSeeder extends Seeder
     public function run(): void
     {
         $settings = [
-            // General
             ['key' => 'store_name', 'value' => 'Gagal Lapar', 'group' => 'general'],
             ['key' => 'phone', 'value' => '083846871126', 'group' => 'general'],
             ['key' => 'address', 'value' => 'Jl Mega Permai VI 138 Kompl Koveri RT 002/12, Ngaliyan, Semarang, 024 7628516', 'group' => 'general'],
-
-            // Billing
             ['key' => 'tax_percent', 'value' => 10, 'group' => 'billing'],
             ['key' => 'service_percent', 'value' => 5, 'group' => 'billing'],
             ['key' => 'is_tax_active', 'value' => 1, 'group' => 'billing'],
             ['key' => 'is_service_active', 'value' => 1, 'group' => 'billing'],
             ['key' => 'tax_type', 'value' => 'subtotal_only', 'group' => 'billing'],
 
-            // Payment
             [
                 'key' => 'available_methods',
                 'group' => 'payment',
@@ -36,7 +32,6 @@ class SettingSeeder extends Seeder
                 ]
             ],
 
-            // System
             ['key' => 'company_name', 'value' => 'PT Nero Coffee & Roastery APP', 'group' => 'system'],
             ['key' => 'currency_symbol', 'value' => 'Rp', 'group' => 'system'],
             ['key' => 'timezone', 'value' => 'Asia/Jakarta', 'group' => 'system'],
@@ -45,7 +40,6 @@ class SettingSeeder extends Seeder
             ['key' => 'session_timeout', 'value' => 120, 'group' => 'system'],
             ['key' => 'maintenance_mode', 'value' => false, 'group' => 'system'],
 
-            // Security (Permissions)
             [
                 'key' => 'role_permissions',
                 'group' => 'security',

@@ -13,6 +13,7 @@ import Select from "../../components/form/Select";
 import { CategoryService } from "../../services/category.service";
 import { DiscountService } from "../../services/discount.service";
 import { stockService } from "../../services/stock.service";
+import { UnitService } from "../../services/unit.service";
 import { useToast } from "@/context/ToastContext";
 import { useNavigate } from "react-router";
 import LoadingSpinner from "@/components/skeleton/LoadingSpinner";
@@ -33,10 +34,18 @@ interface Stock {
   id: number;
   name: string;
   unit: string;
+  unit_id: number;
+  unit_category: string;
 }
 
 interface SelectedStock extends Stock {
   amount: string;
+}
+
+interface LevelStockImpact {
+  stock_id: number;
+  amount: string;
+  unit_id: number;
 }
 
 function CreateMenu() {
@@ -46,7 +55,7 @@ function CreateMenu() {
     category_id: "",
     discount_id: "",
     description: "",
-    price: 0,
+    price: "",
     is_active: 1,
   });
 
@@ -59,10 +68,14 @@ function CreateMenu() {
   const [selectedLevels, setSelectedLevels] = useState<
     Record<number, number[]>
   >({});
+  const [levelPrices, setLevelPrices] = useState<Record<number, string>>({});
+  const [levelStocks, setLevelStocks] = useState<
+    Record<number, LevelStockImpact[]>
+  >({});
   const [discounts, setDiscounts] = useState<
     { label: string; value: string }[]
   >([]);
-
+  const [allUnits, setAllUnits] = useState<any[]>([]);
   const [availableStocks, setAvailableStocks] = useState<Stock[]>([]);
   const [selectedIngredients, setSelectedIngredients] = useState<
     SelectedStock[]
@@ -71,53 +84,56 @@ function CreateMenu() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   useEffect(() => {
-    AttributeService.getAttributes().then(({ data }) =>
-      setAttributes(data || []),
-    );
-    CategoryService.getCategories().then(({ data }) =>
-      setCategories(
-        data?.map((c: any) => ({ label: c.name, value: c.id.toString() })) ||
-          [],
-      ),
-    );
-    DiscountService.getDiscounts().then(({ data }) =>
-      setDiscounts(
-        data?.map((d: any) => ({ label: d.title, value: d.id.toString() })) ||
-          [],
-      ),
-    );
-    stockService
-      .getAll(0, 100)
-      .then((res) => setAvailableStocks(res.data || []));
+    const fetchData = async () => {
+      try {
+        const [resAttr, resCat, resDisc, resStock, resUnits] =
+          await Promise.all([
+            AttributeService.getAttributes(),
+            CategoryService.getCategories(),
+            DiscountService.getDiscounts(),
+            stockService.getAll(0, 100),
+            UnitService.getUnits({ size: 100 }),
+          ]);
+
+        setAttributes(resAttr.data || []);
+        setCategories(
+          resCat.data?.map((c: any) => ({
+            label: c.name,
+            value: c.id.toString(),
+          })) || [],
+        );
+        setDiscounts(
+          resDisc.data?.map((d: any) => ({
+            label: d.title,
+            value: d.id.toString(),
+          })) || [],
+        );
+        setAvailableStocks(resStock.data || []);
+        setAllUnits(resUnits.data || []);
+      } catch (err) {
+        toast("error", "Error", "Failed to load initial data");
+      }
+    };
+    fetchData();
   }, []);
 
-  const handleNumberInput = (field: string, value: string) => {
-    if (!/^\d*$/.test(value)) return;
-
-    if (value === "") {
-      setForm((p) => ({ ...p, [field]: 0 }));
-      return;
-    }
-
-    const cleaned = value.replace(/^0+(?=\d)/, "");
-
-    const numValue = parseInt(cleaned, 10);
-
-    setForm((p) => ({ ...p, [field]: numValue }));
-    setErrors((prev) => ({ ...prev, [field]: "" }));
+  const validateAndFormatNumber = (value: string) => {
+    const cleaned = value.replace(/[^0-9]/g, "");
+    if (cleaned === "" || cleaned === "0") return "";
+    return cleaned.replace(/^0+/, "");
   };
 
-  // const handleNumberInput = (field: string, value: string) => {
-  //   if (value === "") {
-  //     setForm((prev) => ({ ...prev, [field]: 0 }));
-  //     return;
-  //   }
-  //   const numValue = Math.max(0, parseInt(value, 10));
-  //   setForm((prev) => ({ ...prev, [field]: numValue }));
-  //   if (numValue >= 0) setErrors((prev) => ({ ...prev, [field]: "" }));
-  // };
+  const handlePriceInput = (value: string) => {
+    setForm((p) => ({ ...p, price: validateAndFormatNumber(value) }));
+  };
+
+  const handleLevelPriceInput = (levelId: number, value: string) => {
+    const formatted = validateAndFormatNumber(value);
+    setLevelPrices((prev) => ({ ...prev, [levelId]: formatted }));
+  };
 
   const toggleAttribute = (attributeId: number) => {
     if (activeAttributes.includes(attributeId)) {
@@ -139,6 +155,16 @@ function CreateMenu() {
         ...prev,
         [attributeId]: current.filter((id) => id !== levelId),
       }));
+      setLevelStocks((prev) => {
+        const copy = { ...prev };
+        delete copy[levelId];
+        return copy;
+      });
+      setLevelPrices((prev) => {
+        const copy = { ...prev };
+        delete copy[levelId];
+        return copy;
+      });
     } else {
       setSelectedLevels((prev) => ({
         ...prev,
@@ -150,7 +176,7 @@ function CreateMenu() {
   const addIngredient = (stockId: string) => {
     const stock = availableStocks.find((s) => s.id.toString() === stockId);
     if (stock) {
-      setSelectedIngredients((prev) => [...prev, { ...stock, amount: 1 }]);
+      setSelectedIngredients((prev) => [...prev, { ...stock, amount: "1" }]);
     }
   };
 
@@ -158,13 +184,51 @@ function CreateMenu() {
     setSelectedIngredients((prev) => prev.filter((item) => item.id !== id));
   };
 
-const updateIngredientAmount = (id: number, amount: string) => {
-  setSelectedIngredients((prev) =>
-    prev.map((item) =>
-      item.id === id ? { ...item, amount } : item
-    )
-  );
-};
+  const updateIngredientAmount = (id: number, value: string) => {
+    const cleaned = value.replace(/[^0-9.]/g, "");
+    setSelectedIngredients((prev) =>
+      prev.map((item) =>
+        item.id === id ? { ...item, amount: cleaned } : item,
+      ),
+    );
+  };
+
+  const addStockToLevel = (levelId: number, stockId: string) => {
+    const stock = availableStocks.find((s) => s.id.toString() === stockId);
+    if (!stock) return;
+    setLevelStocks((prev) => ({
+      ...prev,
+      [levelId]: [
+        ...(prev[levelId] || []),
+        { stock_id: stock.id, amount: "1", unit_id: stock.unit_id },
+      ],
+    }));
+  };
+
+  const updateLevelStock = (
+    levelId: number,
+    stockId: number,
+    field: string,
+    value: any,
+  ) => {
+    let finalValue = value;
+    if (field === "amount") {
+      finalValue = value.replace(/[^0-9.]/g, "");
+    }
+    setLevelStocks((prev) => ({
+      ...prev,
+      [levelId]: prev[levelId].map((s) =>
+        s.stock_id === stockId ? { ...s, [field]: finalValue } : s,
+      ),
+    }));
+  };
+
+  const removeLevelStock = (levelId: number, stockId: number) => {
+    setLevelStocks((prev) => ({
+      ...prev,
+      [levelId]: prev[levelId].filter((s) => s.stock_id !== stockId),
+    }));
+  };
 
   const onDrop = (files: File[]) => {
     if (files.length) {
@@ -178,58 +242,112 @@ const updateIngredientAmount = (id: number, amount: string) => {
     accept: { "image/*": [".jpeg", ".jpg", ".png", ".webp"] },
     multiple: false,
   });
-  const queryClient = useQueryClient();
 
   const handleSubmit = async () => {
     setErrors({});
     setLoading(true);
 
+    const payload = {
+      ...form,
+      attributes: Object.entries(selectedLevels || {}).map(
+        ([attrId, levels]) => ({
+          attribute_id: attrId,
+          levels: (levels || [])
+            .filter((lId) => lId !== undefined && lId !== null)
+            .map((lId) => ({
+              attribute_level_id: lId.toString(),
+              price: levelPrices?.[lId]?.toString() || "0",
+            })),
+        }),
+      ),
+
+      stocks: (selectedIngredients || []).map((ing) => ({
+        stock_id: ing.id?.toString() || "",
+        amount: ing.amount?.toString() || "0",
+        unit_id: ing.unit_id?.toString() || "",
+      })),
+
+      level_stocks: Object.entries(levelStocks || {}).flatMap(
+        ([levelId, stocks]) =>
+          (stocks || []).map((s) => ({
+            level_id: levelId?.toString() || "",
+            stock_id: s.stock_id?.toString() || "",
+            amount: s.amount?.toString() || "0",
+            unit_id: s.unit_id?.toString() || "",
+          })),
+      ),
+    };
+    console.log("Payload Object:", JSON.stringify(payload, null, 2));
+
     try {
       const fd = new FormData();
+      fd.append("name", payload.name);
+      fd.append("category_id", payload.category_id);
+      fd.append("description", payload.description);
+      fd.append("price", payload.price || "0");
+      fd.append("is_active", payload.is_active.toString());
+      if (payload.menu_image) fd.append("menu_image", payload.menu_image);
+      if (payload.discount_id && payload.discount_id !== "null")
+        fd.append("discount_id", payload.discount_id);
 
-      Object.entries(form).forEach(([k, v]) => {
-        if (k === "discount_id") {
-          if (v && v !== "" && v !== "null") fd.append(k, v as string);
-        } else if (k === "is_active") {
-          fd.append(k, v ? "1" : "0");
-        } else if (v !== null && v !== undefined && v !== "") {
-          fd.append(k, v as any);
-        }
-      });
+      payload.attributes.forEach((attr, aIdx) => {
+        if (!attr?.attribute_id) return;
 
-      Object.entries(selectedLevels).forEach(([attrId, levels]) => {
-        const uniqueLevels = Array.from(new Set(levels));
-        uniqueLevels.forEach((levelId, index) => {
-          fd.append(`attributes[${attrId}][${index}]`, levelId.toString());
+        fd.append(
+          `attributes[${aIdx}][attribute_id]`,
+          attr.attribute_id.toString(),
+        );
+
+        (attr.levels || []).forEach((lvl, lIdx) => {
+          if (!lvl?.attribute_level_id) return;
+
+          fd.append(
+            `attributes[${aIdx}][levels][${lIdx}][attribute_level_id]`,
+            lvl.attribute_level_id.toString(),
+          );
+
+          fd.append(
+            `attributes[${aIdx}][levels][${lIdx}][price]`,
+            lvl.price?.toString() || "0",
+          );
         });
       });
 
-      selectedIngredients.forEach((ing, index) => {
-        fd.append(`stocks[${index}][stock_id]`, ing.id.toString());
-        fd.append(`stocks[${index}][amount]`, ing.amount.toString());
+      payload.stocks.forEach((s, sIdx) => {
+        fd.append(`stocks[${sIdx}][stock_id]`, s.stock_id.toString());
+        fd.append(`stocks[${sIdx}][amount]`, s.amount);
+        fd.append(`stocks[${sIdx}][unit_id]`, s.unit_id.toString());
+      });
+
+      payload.level_stocks.forEach((ls, lsIdx) => {
+        fd.append(`level_stocks[${lsIdx}][level_id]`, ls.level_id);
+        fd.append(`level_stocks[${lsIdx}][stock_id]`, ls.stock_id.toString());
+        fd.append(`level_stocks[${lsIdx}][amount]`, ls.amount);
+        fd.append(`level_stocks[${lsIdx}][unit_id]`, ls.unit_id.toString());
       });
 
       const response = await MenuService.createMenu(fd);
+      console.log("Server Response:", response);
 
       if (response.error) {
-        if (typeof response.error === "object") {
-          const validationErrors: Record<string, string> = {};
-          Object.entries(response.error).forEach(([key, messages]) => {
+        const validationErrors: Record<string, string> = {};
+        const rawErrors = response.error.errors || response.error;
+        if (typeof rawErrors === "object") {
+          Object.entries(rawErrors).forEach(([key, messages]) => {
             validationErrors[key] = Array.isArray(messages)
               ? messages[0]
               : (messages as string);
           });
-          setErrors(validationErrors?.errors);
-          toast("error", "Validation Error", "Please check the form again.");
-        } else {
-          toast("error", "Failed", response.error);
+          setErrors(validationErrors);
         }
+        toast("error", "Validation Error", "Please check the form again.");
       } else {
         toast("success", "Success", "Menu created successfully!");
         queryClient.invalidateQueries({ queryKey: ["menus-admin"] });
         navigate("/menu");
       }
     } catch (err: any) {
+      console.error("Submission Error:", err);
       toast(
         "error",
         "Error",
@@ -240,17 +358,22 @@ const updateIngredientAmount = (id: number, amount: string) => {
     }
   };
 
-  const formatFileSize = (bytes: number) => {
-    if (bytes === 0) return "0 Bytes";
-    const k = 1024;
-    const sizes = ["Bytes", "KB", "MB", "GB"];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
-  };
-
   const filteredStockOptions = availableStocks
     .filter((s) => !selectedIngredients.find((si) => si.id === s.id))
-    .map((s) => ({ label: `${s.name} (${s.unit})`, value: s.id.toString() }));
+    .map((s) => ({
+      label: `${s.name} (${
+        typeof s.unit === "object" ? (s.unit as any).abbreviation : s.unit
+      })`,
+      value: s.id.toString(),
+    }));
+
+  const updateIngredientUnit = (id: number, unitId: string) => {
+    setSelectedIngredients((prev) =>
+      prev.map((item) =>
+        item.id === id ? { ...item, unit_id: parseInt(unitId) } : item,
+      ),
+    );
+  };
 
   return (
     <>
@@ -275,7 +398,7 @@ const updateIngredientAmount = (id: number, amount: string) => {
                 <div className="space-y-4">
                   <div className="relative group">
                     <img
-                      src={URL.createObjectURL(form?.menu_image)}
+                      src={URL.createObjectURL(form.menu_image)}
                       className="w-full max-h-[400px] object-cover mx-auto rounded-xl shadow-md"
                       alt="Preview"
                     />
@@ -312,53 +435,6 @@ const updateIngredientAmount = (id: number, amount: string) => {
                 </div>
               )}
             </div>
-            {form?.menu_image !== null && (
-              <div className="flex items-center justify-between px-4 py-3 bg-white dark:bg-gray-900 rounded-md border border-gray-200 dark:border-gray-700">
-                <div className="flex items-center gap-3 overflow-hidden">
-                  <div className="p-2 bg-red-50 dark:bg-red-500/10 rounded">
-                    <svg
-                      className="w-5 h-5 text-red-500"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-                      />
-                    </svg>
-                  </div>
-                  <div className="text-left overflow-hidden">
-                    <p className="text-sm font-semibold text-gray-700 dark:text-gray-200 truncate">
-                      {form?.menu_image.name}
-                    </p>
-                    <p className="text-xs text-gray-400 font-medium">
-                      {formatFileSize(form?.menu_image.size)}
-                    </p>
-                  </div>
-                </div>
-                <div className="text-red-500">
-                  <svg
-                    className="w-5 h-5"
-                    fill="currentColor"
-                    viewBox="0 0 20 20"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                </div>
-              </div>
-            )}
-            {errors?.menu_image && (
-              <p className="text-xs text-red-500 mt-1 font-medium italic">
-                *{errors?.menu_image}
-              </p>
-            )}
           </div>
 
           <div className="space-y-6">
@@ -374,11 +450,6 @@ const updateIngredientAmount = (id: number, amount: string) => {
                     setForm((prev) => ({ ...prev, name: e.target.value }))
                   }
                 />
-                {errors.name && (
-                  <p className="text-xs text-red-500 mt-1 font-medium">
-                    {errors.name}
-                  </p>
-                )}
               </div>
               <div className="col-span-2 lg:col-span-1">
                 <Label>Category</Label>
@@ -393,11 +464,6 @@ const updateIngredientAmount = (id: number, amount: string) => {
                     }))
                   }
                 />
-                {errors.category_id && (
-                  <p className="text-xs text-red-500 mt-1 font-medium">
-                    {errors.category_id}
-                  </p>
-                )}
               </div>
               <div className="col-span-2 lg:col-span-1">
                 <Label>Discount</Label>
@@ -412,11 +478,6 @@ const updateIngredientAmount = (id: number, amount: string) => {
                     }))
                   }
                 />
-                {errors.discount_id && (
-                  <p className="text-xs text-red-500 mt-1 font-medium">
-                    {errors.discount_id}
-                  </p>
-                )}
               </div>
             </div>
 
@@ -430,28 +491,16 @@ const updateIngredientAmount = (id: number, amount: string) => {
                   setForm((prev) => ({ ...prev, description: v }))
                 }
               />
-              {errors.description && (
-                <p className="text-xs text-red-500 mt-1 font-medium">
-                  {errors.description}
-                </p>
-              )}
             </div>
 
-            <div className="grid grid-cols-1 gap-4">
-              <div>
-                <Label>Price (IDR)</Label>
-                <Input
-                  type="text"
-                  placeholder="0"
-                  value={form.price === 0 ? "" : form.price}
-                  onChange={(e) => handleNumberInput("price", e.target.value)}
-                />
-                {errors.price && (
-                  <p className="text-xs text-red-500 mt-1 font-medium">
-                    {errors.price}
-                  </p>
-                )}
-              </div>
+            <div>
+              <Label>Base Price (IDR)</Label>
+              <Input
+                type="text"
+                placeholder="e.g. 25000"
+                value={form.price}
+                onChange={(e) => handlePriceInput(e.target.value)}
+              />
             </div>
 
             <div className="bg-gray-50 dark:bg-gray-800/40 p-4 rounded-2xl border border-gray-100 dark:border-gray-700">
@@ -462,9 +511,6 @@ const updateIngredientAmount = (id: number, amount: string) => {
                   setForm((prev) => ({ ...prev, is_active: v ? 1 : 0 }))
                 }
               />
-              <p className="text-xs text-gray-500 mt-1 ml-12">
-                Make this menu visible to customers on the main page.
-              </p>
             </div>
 
             <div className="space-y-4">
@@ -476,59 +522,84 @@ const updateIngredientAmount = (id: number, amount: string) => {
                   { label: "Select ingredient to add...", value: "" },
                   ...filteredStockOptions,
                 ]}
-                error={errors.stocks}
                 value=""
                 onChange={(val) => val && addIngredient(val as string)}
               />
-              {errors.stocks && (
-                <p className="text-xs text-red-500 mt-1 font-medium">
-                  {errors.stocks}
-                </p>
-              )}
-
               <div className="space-y-2 mt-3">
-                {selectedIngredients.map((ing) => (
-                  <div
-                    key={ing.id}
-                    className="flex items-center justify-between bg-white dark:bg-gray-900 p-3 rounded-xl border border-gray-200 dark:border-gray-700"
-                  >
-                    <div className="flex-1">
-                      <p className="text-sm font-bold text-gray-700 dark:text-gray-200 uppercase">
-                        {ing.name}
-                      </p>
-                      <p className="text-xs text-gray-400">Unit: {ing.unit}</p>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <input
-                        type="number"
-                        className="w-20 px-2 py-1 text-sm border rounded-lg dark:bg-gray-800 dark:border-gray-700"
-                        value={ing.amount}
-                        step="0.01"
-                        onChange={(e) =>
-                          updateIngredientAmount(ing.id, e.target.value)
-                        }
-                      />
-                      <button
-                        onClick={() => removeIngredient(ing.id)}
-                        className="text-red-500 hover:bg-red-50 p-2 rounded-lg transition-colors"
-                      >
-                        <svg
-                          className="w-5 h-5"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
+                {selectedIngredients.map((ing: any) => {
+                  const stockCategory =
+                    ing.unit_category ||
+                    (typeof ing.unit === "object" ? ing.unit?.category : null);
+                  const filteredUnits = allUnits.filter(
+                    (u) => u.category === stockCategory,
+                  );
+
+                  return (
+                    <div
+                      key={ing.id}
+                      className="flex items-center justify-between bg-white dark:bg-gray-900 p-3 rounded-xl border border-gray-200 dark:border-gray-700"
+                    >
+                      <div className="flex-1">
+                        <p className="text-sm font-bold text-gray-700 dark:text-gray-200 uppercase">
+                          {ing.name}
+                        </p>
+                        <p className="text-[10px] text-gray-400">
+                          Default:{" "}
+                          {typeof ing.unit === "object"
+                            ? ing.unit?.abbreviation
+                            : ing.unit}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="text"
+                          className="w-16 px-2 py-1 text-sm border rounded-lg dark:bg-gray-800 dark:border-gray-700"
+                          value={ing.amount}
+                          onChange={(e) =>
+                            updateIngredientAmount(ing.id, e.target.value)
+                          }
+                        />
+                        <select
+                          className="text-xs p-1 border rounded-lg bg-transparent dark:bg-gray-800 dark:border-gray-700"
+                          value={
+                            ing.unit_id ||
+                            (typeof ing.unit === "object" ? ing.unit.id : "")
+                          }
+                          onChange={(e) =>
+                            updateIngredientUnit(ing.id, e.target.value)
+                          }
                         >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth="2"
-                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                          />
-                        </svg>
-                      </button>
+                          {(filteredUnits.length > 0
+                            ? filteredUnits
+                            : allUnits
+                          ).map((u) => (
+                            <option key={u.id} value={u.id}>
+                              {u.abbreviation}
+                            </option>
+                          ))}
+                        </select>
+                        <button
+                          onClick={() => removeIngredient(ing.id)}
+                          className="text-red-500 hover:bg-red-50 p-1 rounded-lg"
+                        >
+                          <svg
+                            className="w-5 h-5"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth="2"
+                              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                            />
+                          </svg>
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
 
@@ -542,8 +613,8 @@ const updateIngredientAmount = (id: number, amount: string) => {
                     key={attr.id}
                     className={`flex items-center gap-2 px-4 py-2 rounded-sm border cursor-pointer transition-all ${
                       activeAttributes.includes(attr.id)
-                        ? "border-red-500 bg-red-50 dark:bg-red-500/10 text-red-600 shadow-sm"
-                        : "border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500"
+                        ? "border-red-500 bg-red-50 text-red-600"
+                        : "border-gray-200 text-gray-500"
                     }`}
                   >
                     <input
@@ -552,17 +623,6 @@ const updateIngredientAmount = (id: number, amount: string) => {
                       checked={activeAttributes.includes(attr.id)}
                       onChange={() => toggleAttribute(attr.id)}
                     />
-                    <span
-                      className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
-                        activeAttributes.includes(attr.id)
-                          ? "border-red-500 bg-red-500"
-                          : "border-gray-300"
-                      }`}
-                    >
-                      {activeAttributes.includes(attr.id) && (
-                        <div className="w-1.5 h-1.5 bg-white rounded-full" />
-                      )}
-                    </span>
                     <span className="text-sm font-semibold uppercase tracking-tight">
                       {attr.name}
                     </span>
@@ -576,28 +636,156 @@ const updateIngredientAmount = (id: number, amount: string) => {
                   .map((attr) => (
                     <div
                       key={attr.id}
-                      className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg p-5 animate-in fade-in slide-in-from-top-2"
+                      className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg p-5"
                     >
-                      <div className="flex items-center gap-2 mb-4">
-                        <div className="w-1.5 h-4 bg-red-500 rounded-full" />
-                        <p className="font-bold text-gray-800 dark:text-white uppercase tracking-wider text-xs">
-                          {attr.name} Options
-                        </p>
-                      </div>
-                      <div className="flex gap-4 flex-wrap">
+                      <p className="font-bold text-gray-800 dark:text-white uppercase text-xs mb-4">
+                        {attr.name} Options
+                      </p>
+                      <div className="space-y-4">
                         {attr.levels.map((level) => (
-                          <button
-                            key={level.id}
-                            type="button"
-                            onClick={() => toggleLevel(attr.id, level.id)}
-                            className={`px-4 py-2 rounded-sm text-xs transition-all duration-300 ${
-                              selectedLevels[attr.id]?.includes(level.id)
-                                ? "bg-red-500 text-white scale-105 ring-1 ring-red-500 ring-offset-2 dark:ring-offset-gray-900"
-                                : "bg-gray-100 dark:bg-gray-800 text-gray-500 hover:bg-gray-200 dark:hover:bg-gray-700"
-                            }`}
-                          >
-                            {level.name}
-                          </button>
+                          <div key={level.id} className="w-full">
+                            <div className="flex items-center gap-4">
+                              <button
+                                type="button"
+                                onClick={() => toggleLevel(attr.id, level.id)}
+                                className={`px-4 py-2 rounded-sm text-xs transition-all min-w-[100px] ${
+                                  selectedLevels[attr.id]?.includes(level.id)
+                                    ? "bg-red-500 text-white"
+                                    : "bg-gray-100 text-gray-500"
+                                }`}
+                              >
+                                {level.name}
+                              </button>
+                              {selectedLevels[attr.id]?.includes(level.id) && (
+                                <div className="flex-1">
+                                  <input
+                                    type="text"
+                                    placeholder="Extra Price (e.g. 5000)"
+                                    className="w-full px-3 py-1.5 text-xs border rounded bg-transparent dark:border-gray-700"
+                                    value={levelPrices[level.id] || ""}
+                                    onChange={(e) =>
+                                      handleLevelPriceInput(
+                                        level.id,
+                                        e.target.value,
+                                      )
+                                    }
+                                  />
+                                </div>
+                              )}
+                            </div>
+
+                            {selectedLevels[attr.id]?.includes(level.id) && (
+                              <div className="mt-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg border-l-4 border-red-500 space-y-3 ml-4">
+                                <p className="text-[10px] font-bold uppercase">
+                                  Stock Impact: {level.name}
+                                </p>
+                                <Select
+                                  options={[
+                                    {
+                                      label: "+ Add Ingredient Impact",
+                                      value: "",
+                                    },
+                                    ...availableStocks.map((s) => ({
+                                      label: s.name,
+                                      value: s.id.toString(),
+                                    })),
+                                  ]}
+                                  value=""
+                                  onChange={(val) =>
+                                    val &&
+                                    addStockToLevel(level.id, val as string)
+                                  }
+                                />
+                                {levelStocks[level.id]?.map((ls) => {
+                                  const sInfo = availableStocks.find(
+                                    (as) => as.id === ls.stock_id,
+                                  );
+
+                                  const stockCategory = sInfo?.unit?.category;
+                                  const filteredUnits = allUnits?.filter(
+                                    (u) => u.category === stockCategory,
+                                  );
+
+                                  return (
+                                    <div
+                                      key={ls.stock_id}
+                                      className="flex gap-2 items-center bg-white dark:bg-gray-900 p-2 rounded border border-gray-100 dark:border-gray-700"
+                                    >
+                                      <div className="flex-1">
+                                        <span className="text-xs block font-medium">
+                                          {sInfo?.name}
+                                        </span>
+                                        <span className="text-[10px] text-gray-500 dark:text-gray-400">
+                                          Standard: {sInfo?.unit?.name}
+                                        </span>
+                                      </div>
+
+                                      <input
+                                        type="text"
+                                        className="w-16 p-1 text-xs border rounded bg-transparent dark:border-gray-600"
+                                        value={ls.amount}
+                                        onChange={(e) =>
+                                          updateLevelStock(
+                                            level.id,
+                                            ls.stock_id,
+                                            "amount",
+                                            e.target.value,
+                                          )
+                                        }
+                                      />
+
+                                      <select
+                                        className="text-xs p-1 border rounded bg-transparent dark:bg-gray-800 dark:border-gray-600"
+                                        value={ls.unit_id}
+                                        onChange={(e) =>
+                                          updateLevelStock(
+                                            level.id,
+                                            ls.stock_id,
+                                            "unit_id",
+                                            e.target.value,
+                                          )
+                                        }
+                                      >
+                                        {(filteredUnits &&
+                                        filteredUnits.length > 0
+                                          ? filteredUnits
+                                          : allUnits
+                                        ).map((u) => (
+                                          <option key={u.id} value={u.id}>
+                                            {u.abbreviation} ({u.name})
+                                          </option>
+                                        ))}
+                                      </select>
+
+                                      <button
+                                        onClick={() =>
+                                          removeLevelStock(
+                                            level.id,
+                                            ls.stock_id,
+                                          )
+                                        }
+                                        className="text-red-500"
+                                      >
+                                        <svg
+                                          className="w-4 h-4"
+                                          fill="none"
+                                          stroke="currentColor"
+                                          viewBox="0 0 24 24"
+                                        >
+                                          <path
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            strokeWidth="2"
+                                            d="M6 18L18 6M6 6l12 12"
+                                          />
+                                        </svg>
+                                      </button>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            )}
+                          </div>
                         ))}
                       </div>
                     </div>
@@ -609,7 +797,7 @@ const updateIngredientAmount = (id: number, amount: string) => {
               <Button
                 onClick={handleSubmit}
                 disabled={loading}
-                className="w-full py-4 rounded-2xl shadow-lg shadow-red-100 dark:shadow-none font-bold text-sm tracking-wide transition-transform active:scale-[0.98]"
+                className="w-full py-4 rounded-2xl font-bold text-sm"
               >
                 {loading ? <LoadingSpinner /> : <span>Create & Save Menu</span>}
               </Button>

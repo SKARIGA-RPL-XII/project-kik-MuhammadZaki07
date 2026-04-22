@@ -9,17 +9,25 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
-  public function up(): void
-{
-    Schema::create('stocks', function (Blueprint $table) {
-        $table->id();
-        $table->string('name');
-        $table->string('unit')->default('pcs');
-        $table->integer('quantity')->default(0);
-        $table->integer('low_stock_threshold')->default(10);
-        $table->timestamps();
-    });
-}
+    public function up(): void
+    {
+        Schema::create('stocks', function (Blueprint $table) {
+            $table->id();
+            $table->string('name');
+            $table->foreignId('min_unit_id')->nullable()->constrained('units');
+            $table->foreignId('supplier_id')
+                ->nullable()
+                ->constrained('suppliers')
+                ->onDelete('set null');
+            $table->foreignId('unit_id')
+                ->nullable()
+                ->constrained('units')
+                ->onDelete('set null');
+            $table->decimal('quantity', 15, 2)->nullable();
+            $table->decimal('low_stock_threshold', 15, 2)->nullable();
+            $table->timestamps();
+        });
+    }
 
     /**
      * Reverse the migrations.

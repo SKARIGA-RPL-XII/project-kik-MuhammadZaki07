@@ -16,6 +16,7 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/context/ToastContext";
 import { ActionGuard } from "../guard/ActionGuard";
 import { formatDate } from "@/utils/dateHelper";
+import { fromBaseValue } from "@/utils/unitHelper";
 
 interface TableAdjustmentProps {
   data: Adjustment[];
@@ -50,7 +51,7 @@ const TableAdjustment: React.FC<TableAdjustmentProps> = ({
       <Table>
         <TableHeader>
           <TableRow className="bg-muted/50">
-            <TableHead>Date</TableHead>
+            <TableHead>Time</TableHead>
             <TableHead>Stock Item</TableHead>
             <TableHead>Type</TableHead>
             <TableHead>Amount</TableHead>
@@ -81,7 +82,7 @@ const TableAdjustment: React.FC<TableAdjustmentProps> = ({
                 className="hover:bg-muted/30 transition-colors"
               >
                 <TableCell className="text-xs text-muted-foreground">
-                  {formatDate(item.created_at)}
+                  {formatDate(item.created_at, true)}
                 </TableCell>
                 <TableCell className="font-medium">
                   {item.stock?.name}
@@ -99,7 +100,11 @@ const TableAdjustment: React.FC<TableAdjustmentProps> = ({
                 </TableCell>
                 <TableCell className="font-bold">
                   {item.type === "in" ? "+" : "-"}
-                  {item.amount} {item.stock?.unit}
+                  {fromBaseValue(
+                    Number(item.amount),
+                    Number(item.stock?.unit?.multiplier || 1),
+                  )}{" "}
+                  {item.stock?.unit?.abbreviation || "Unit"}
                 </TableCell>
                 <TableCell className="max-w-[200px] truncate italic text-sm">
                   "{item.reason}"

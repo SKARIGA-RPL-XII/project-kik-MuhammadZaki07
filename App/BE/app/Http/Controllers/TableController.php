@@ -196,7 +196,8 @@ class TableController extends Controller
             'height' => 'nullable|integer|min:50|max:500',
             'rotation' => 'nullable|integer|max:360',
             'reserved_until' => 'nullable|date_format:Y-m-d H:i:s',
-            'notes' => 'nullable|string'
+            'notes' => 'nullable|string',
+            'capacity' => "nullable|integer"
         ]);
 
         if (isset($validated['status'])) {

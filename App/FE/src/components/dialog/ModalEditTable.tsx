@@ -39,6 +39,7 @@ export default function ModalEditTable({
     width: 100,
     height: 100,
     rotation: 0,
+    capacity: 4,
   });
 
   const [isLoading, setIsLoading] = useState(false);
@@ -57,7 +58,7 @@ export default function ModalEditTable({
   ];
 
   useEffect(() => {
-    if (table && isOpen) {
+    if (table && isOpen) {  
       setFormData({
         table_number: table.table_number ?? "",
         shape: table.shape ?? "square",
@@ -65,6 +66,7 @@ export default function ModalEditTable({
         width: table.width ?? 100,
         height: table.height ?? 100,
         rotation: table.rotation ?? 0,
+        capacity: table.capacity ?? 4,
       });
       setErrors({});
     }
@@ -93,7 +95,7 @@ export default function ModalEditTable({
   };
 
   const processDelete = async (e: React.MouseEvent<HTMLButtonElement>) => {
-    e.preventDefault(); 
+    e.preventDefault();
     if (!table?.id || isLoading) return;
 
     setIsLoading(true);
@@ -109,8 +111,13 @@ export default function ModalEditTable({
 
   return (
     <>
-      <AlertDialog open={isOpen} onOpenChange={(open) => !isLoading && onClose()}>
-        <AlertDialogContent onEscapeKeyDown={(e) => isLoading && e.preventDefault()}>
+      <AlertDialog
+        open={isOpen}
+        onOpenChange={(open) => !isLoading && onClose()}
+      >
+        <AlertDialogContent
+          onEscapeKeyDown={(e) => isLoading && e.preventDefault()}
+        >
           <AlertDialogHeader className="flex flex-row justify-between items-start">
             <div className="space-y-1">
               <AlertDialogTitle className="text-2xl font-bold">
@@ -132,13 +139,17 @@ export default function ModalEditTable({
 
           <div className="space-y-6 my-4">
             <div className="space-y-2">
-              <Label className="text-sm font-semibold text-neutral-400">Table Number</Label>
+              <Label className="text-sm font-semibold text-neutral-400">
+                Table Number
+              </Label>
               <Input
                 type="text"
                 disabled={isLoading}
                 value={formData.table_number || ""}
                 error={errors.table_number}
-                onChange={(e) => setFormData({ ...formData, table_number: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, table_number: e.target.value })
+                }
               />
               {errors.table_number && (
                 <span className="text-[10px] text-red-500 font-bold ml-2 mt-1 block">
@@ -146,52 +157,94 @@ export default function ModalEditTable({
                 </span>
               )}
             </div>
+            <div className="space-y-2">
+              <Label className="text-sm font-semibold text-neutral-400">
+                Capacity
+              </Label>
+              <Input
+                type="number"
+                disabled={isLoading}
+                value={formData.capacity || ""}
+                error={errors.capacity}
+                onChange={(e) =>
+                  setFormData({ ...formData, capacity: Number(e.target.value) })
+                }
+              />
+              {errors.capacity && (
+                <span className="text-[10px] text-red-500 font-bold ml-2 mt-1 block">
+                  {errors.capacity[0]}
+                </span>
+              )}
+            </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label className="text-sm font-semibold text-neutral-400">Shape</Label>
+                <Label className="text-sm font-semibold text-neutral-400">
+                  Shape
+                </Label>
                 <Select
                   options={shapeOptions}
                   value={formData.shape || ""}
-                  onChange={(val) => setFormData({ ...formData, shape: val as any })}
+                  onChange={(val) =>
+                    setFormData({ ...formData, shape: val as any })
+                  }
                 />
               </div>
               <div className="space-y-2">
-                <Label className="text-sm font-semibold text-neutral-400">Status</Label>
+                <Label className="text-sm font-semibold text-neutral-400">
+                  Status
+                </Label>
                 <Select
                   options={statusOptions}
                   value={formData.status || ""}
-                  onChange={(val) => setFormData({ ...formData, status: val as any })}
+                  onChange={(val) =>
+                    setFormData({ ...formData, status: val as any })
+                  }
                 />
               </div>
             </div>
 
             <div className="grid grid-cols-3 gap-4">
               <div className="space-y-2">
-                <Label className="text-sm font-semibold text-neutral-400">Width</Label>
+                <Label className="text-sm font-semibold text-neutral-400">
+                  Width
+                </Label>
                 <Input
                   type="number"
                   disabled={isLoading}
                   value={formData.width ?? 0}
-                  onChange={(e) => setFormData({ ...formData, width: Number(e.target.value) })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, width: Number(e.target.value) })
+                  }
                 />
               </div>
               <div className="space-y-2">
-                <Label className="text-sm font-semibold text-neutral-400">Height</Label>
+                <Label className="text-sm font-semibold text-neutral-400">
+                  Height
+                </Label>
                 <Input
                   type="number"
                   disabled={isLoading}
                   value={formData.height ?? 0}
-                  onChange={(e) => setFormData({ ...formData, height: Number(e.target.value) })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, height: Number(e.target.value) })
+                  }
                 />
               </div>
               <div className="space-y-2">
-                <Label className="text-sm font-semibold text-neutral-400">Rotation</Label>
+                <Label className="text-sm font-semibold text-neutral-400">
+                  Rotation
+                </Label>
                 <Input
                   type="number"
                   disabled={isLoading}
                   value={formData.rotation ?? 0}
-                  onChange={(e) => setFormData({ ...formData, rotation: Number(e.target.value) })}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      rotation: Number(e.target.value),
+                    })
+                  }
                 />
               </div>
             </div>
@@ -228,8 +281,9 @@ export default function ModalEditTable({
             </div>
             <AlertDialogTitle>Delete table?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently delete Table <span className="font-bold">{table?.table_number}</span>. 
-              This action cannot be undone.
+              This will permanently delete Table{" "}
+              <span className="font-bold">{table?.table_number}</span>. This
+              action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

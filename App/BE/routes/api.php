@@ -33,6 +33,7 @@ use App\Http\Controllers\TableController;
 use App\Http\Controllers\TasksController;
 use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\TransactionDetailController;
+use App\Http\Controllers\UnitController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Broadcast;
 use Illuminate\Support\Facades\Route;
@@ -243,6 +244,7 @@ Route::get('tables/{table}', [TableController::class, 'show']);
 Route::get('rooms', [RoomController::class, 'index']);
 Route::get('rooms/{id}', [RoomController::class, 'show']);
 Route::get('/settings', [SettingController::class, 'index']);
+Route::apiResource('units', UnitController::class);
 
 Broadcast::routes(['middleware' => ['auth:sanctum']]);
 Route::post('/midtrans/callback', [MidtransWebhookController::class, 'callback']);

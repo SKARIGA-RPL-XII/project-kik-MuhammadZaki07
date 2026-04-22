@@ -36,6 +36,12 @@ class Menu extends Model
             ->withTimestamps();
     }
 
+    public function attributeLevels()
+    {
+        return $this->belongsToMany(AttributeLevel::class, 'menu_attribute_level', 'menu_id', 'attribute_level_id')
+            ->withPivot('price')
+            ->withTimestamps();
+    }
 
     public function ingredients()
     {
@@ -86,7 +92,7 @@ class Menu extends Model
 
         return $this->price - ($this->price * $this->discount->value_discount / 100);
     }
-    
+
 
     public $hidden = ['category_id', 'discount_id'];
 }

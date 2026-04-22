@@ -25,15 +25,18 @@ class DatabaseSeeder extends Seeder
             RoomSeeder::class,
             TableSeeder::class,
             SettingSeeder::class,
+            UnitSeeder::class,
+            SupplierSeeder::class,
+            StockSeeder::class,
+            StockAdjustmentSeeder::class,
             AttributeSeeder::class,
             AttributeLevelSeeder::class,
-            StockSeeder::class,
             MenuSeeder::class,
             UserSeeder::class,
             EmployeSeeder::class,
-            StockAdjustmentSeeder::class,
             CustomerSimulatedSeeder::class,
-            ShiftSeeder::class
+            ShiftSeeder::class,
+            AttributeLevelStockSeeder::class
         ]);
 
         DB::statement('SET FOREIGN_KEY_CHECKS=1;');

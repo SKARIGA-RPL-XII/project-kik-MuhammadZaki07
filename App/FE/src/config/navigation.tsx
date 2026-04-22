@@ -104,6 +104,7 @@ export const navConfig = {
         { name: "Badge", path: "/badge" },
         { name: "Table & Room", path: "/table" },
         { name: "Atribute", path: "/attributes" },
+        { name: "Units", path: "/units" },
       ],
     },
     {

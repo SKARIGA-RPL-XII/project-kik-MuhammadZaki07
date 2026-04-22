@@ -13,6 +13,7 @@ export interface TableInterface {
   height: number;
   rotation: number;
   shape: TableShape;
+  capacity?:number;
 }
 
 export interface RoomInterface {

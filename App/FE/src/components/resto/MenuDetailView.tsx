@@ -1,6 +1,6 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect, useMemo } from "react";
-import { X, Minus, Plus, ShoppingBag, ChevronRight } from "lucide-react";
+import { X, Minus, Plus, ShoppingBag, Crown } from "lucide-react";
 import Button from "../ui/button/Button";
 import { useTranslation } from "react-i18next";
 import { Badge } from "../ui/badge";
@@ -76,12 +76,12 @@ export function MenuDetailView({ menu, isOpen, onClose, onAddToCart }: any) {
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            className="relative w-full max-w-[1000px] bg-white dark:bg-neutral-900 rounded-xl overflow-hidden flex flex-col md:flex-row h-[60vh] shadow-[0_32px_64px_-12px_rgba(0,0,0,0.3)]"
+            className="relative w-full max-w-[1000px] bg-white dark:bg-neutral-900 rounded-xl lg:overflow-hidden flex flex-col md:flex-row lg:h-[60vh] max-h-[80vh] overflow-y-auto custom-scrollbar shadow-[0_32px_64px_-12px_rgba(0,0,0,0.3)]"
           >
             <div className="relative w-full md:w-[48%] h-72 md:h-auto bg-neutral-100 dark:bg-neutral-900 overflow-hidden">
               <img
                 src={imageUrl}
-                className="w-full h-full object-cover transition-transform duration-1000 scale-105 hover:scale-110"
+                className="w-full h-full object-cover transition-transform duration-1000 scale-90 rounded-xl hover:scale-110"
                 alt={menu.name}
               />
 
@@ -102,13 +102,32 @@ export function MenuDetailView({ menu, isOpen, onClose, onAddToCart }: any) {
             </div>
 
             <div className="flex-1 flex flex-col min-w-0 bg-white dark:bg-neutral-900">
-              <div className="px-5 py-5 flex justify-between items-start">
+              <div className="px-5 py-5 sticky flex justify-between items-start">
                 <div className="space-y-2">
                   <div className="flex items-center gap-2 text-red-600">
                     <div className="">
                       <Badge variant={"outline"}>{menu.category?.name}</Badge>
                     </div>
-                    <div className="h-1 w-20 bg-red-600 rounded-full" />
+                    {menu.is_best_seller && (
+                      <div className="">
+                        <motion.div
+                          initial={{ scale: 0 }}
+                          animate={{ scale: 1 }}
+                        >
+                          <div className="relative bg-gradient-to-br from-amber-300 via-amber-500 to-amber-600 text-amber-950 px-2.5 py-1 rounded-lg flex items-center gap-1.5 shadow-xl border border-amber-200/50 overflow-hidden">
+                            <Crown
+                              size={12}
+                              strokeWidth={3}
+                              className="fill-amber-950/80 relative z-10"
+                            />
+                            <span className="text-[10px] font-black uppercase tracking-tight relative z-10">
+                              Best Seller
+                            </span>
+                          </div>
+                        </motion.div>
+                      </div>
+                    )}
+                    {/* <div className="h-1 w-20 bg-red-600 rounded-full" /> */}
                   </div>
                   <h2 className="text-4xl font-bold text-neutral-900 dark:text-neutral-300 leading-none">
                     {menu.name}
@@ -123,10 +142,38 @@ export function MenuDetailView({ menu, isOpen, onClose, onAddToCart }: any) {
                 </button>
               </div>
 
-              <div className="px-5 overflow-y-auto custom-scrollbar flex-1">
+              <div className="px-5 overflow-y-auto max-h-50 lg:max-h-none custom-scrollbar flex-1">
                 <p className="text-neutral-500 dark:text-neutral-300 text-sm leading-relaxed mb-10 font-normal max-w-md">
                   {menu.description}
                 </p>
+
+                {menu?.stocks?.length > 0 && (
+                  <div className="my-3 space-y-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-medium text-neutral-500">
+                        Komposisi
+                      </span>
+                      <div className="flex-1 h-px bg-neutral-200 dark:bg-neutral-800" />
+                    </div>
+
+                    <div className="flex flex-wrap gap-2">
+                      {menu.stocks.slice(0, 3).map((stock: any) => (
+                        <div
+                          key={stock.id}
+                          className="flex items-center gap-1 px-2 py-1 rounded-full bg-neutral-100 dark:bg-neutral-800 text-[11px] text-neutral-600 dark:text-neutral-300"
+                        >
+                          <span className="truncate max-w-[90px]">
+                            {stock.name}
+                          </span>
+                          <span className="text-neutral-400">
+                            {stock.pivot?.amount}
+                            {stock.unit}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 <div className="space-y-10 mb-5">
                   {uniqueAttributes.map((attr: any) => (
@@ -151,11 +198,10 @@ export function MenuDetailView({ menu, isOpen, onClose, onAddToCart }: any) {
                                   [attr.id]: level.id,
                                 }))
                               }
-                              className={`group relative w-25 h-8 rounded border text-xs font-normal transition-all duration-300 ${
-                                isSelected
+                              className={`group relative w-25 h-8 rounded border text-xs font-normal transition-all duration-300 ${isSelected
                                   ? "border-red-600 bg-red-600 text-white dark:text-neutral-300 -translate-y-1"
                                   : "bg-neutral-50/50 dark:bg-neutral-900 text-neutral-400"
-                              }`}
+                                }`}
                             >
                               {level.name}
                             </button>
@@ -211,19 +257,17 @@ export function MenuDetailView({ menu, isOpen, onClose, onAddToCart }: any) {
                     </div>
 
                     <Button
-                      className={`lg:text-sm text-xs rounded-sm h-10 flex font-medium items-center gap-2 group transition-all duration-300 ${
-                        isAllAttributesSelected
+                      className={`lg:text-sm text-xs rounded-sm h-10 flex font-medium items-center gap-2 group transition-all duration-300 ${isAllAttributesSelected
                           ? "bg-red-600 hover:bg-red-700 text-white"
                           : "bg-neutral-100 text-neutral-400 cursor-not-allowed"
-                      }`}
+                        }`}
                       onClick={handleAdd}
                       disabled={!isAllAttributesSelected}
                     >
                       <ShoppingBag
                         size={18}
-                        className={`transition-transform group-hover:rotate-12 ${
-                          isAllAttributesSelected ? "block" : "hidden"
-                        }`}
+                        className={`transition-transform group-hover:rotate-12 ${isAllAttributesSelected ? "block" : "hidden"
+                          }`}
                       />
                       <span>
                         {isAllAttributesSelected
